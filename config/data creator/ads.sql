@@ -1,0 +1,1 @@
+CREATE TABLE `apretaste`.`ads` ( `ads_id` INT(11) NOT NULL , `time_inserted` TIMESTAMP NOT NULL , `active` BOOLEAN NOT NULL , `impresions` INT(11) NOT NULL , `owner` VARCHAR(50) NOT NULL , `title` VARCHAR(20) NOT NULL , `description` VARCHAR(250) NULL DEFAULT NULL , `expiration_date` DATETIME NOT NULL , `paid_date` DATETIME NOT NULL ) ENGINE = InnoDB;

@@ -1,0 +1,1 @@
+CREATE TABLE `apretaste`.`jumper` ( `email` VARCHAR(50) NOT NULL , `sent_count` INT(11) NOT NULL , `blocked_domains` VARCHAR(1000) NOT NULL , `error` BOOLEAN NOT NULL , `error_count` INT(11) NOT NULL , `last_usage` TIMESTAMP NOT NULL , `provider` VARCHAR(20) NOT NULL , PRIMARY KEY (`email`) ) ENGINE = InnoDB;
