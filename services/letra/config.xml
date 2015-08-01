@@ -1,0 +1,28 @@
+<service>
+	<serviceName>letra</serviceName>
+	<serviceDescription>Este servicio devuelve letras de canciones basado en su titulo</serviceDescription>
+	<creatorEmail>salvi.pascual@pragres.com</creatorEmail>
+	<serviceCategory>ocio</serviceCategory>
+	<serviceUsage>
+		<![CDATA[
+			Escriba un correo a apretaste@mail.com y en el asunto ponga la palabra LETRA seguida del titulo de una cancion.
+			Por ejemplo:
+
+			Para: apretaste@mail.com
+			Asunto: LETRA before I forgot
+
+			Espere tres minutos y debera recibir un correo de respeuesta con su cancion.
+		]]>
+	</serviceUsage>
+	<database>
+		<table name="letras">
+			<column type="varchar" length="20">titulo</column>
+			<column type="varchar" length="20">usuario</column>
+			<column type="float">puntos</column>
+		</table>
+		<table name="compradores">
+			<column type="varchar" length="20">usuario</column>
+			<column type="int" length="11">veces_comprado</column>
+		</table>
+	</database>
+</service>
