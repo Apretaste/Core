@@ -1,0 +1,41 @@
+[
+    {
+        "name": "gchartphp/gchartphp",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/aimfeld/gChartPhp.git",
+            "reference": "6d992c7536740c578b3e5a2685c46d79595e6c1a"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/aimfeld/gChartPhp/zipball/6d992c7536740c578b3e5a2685c46d79595e6c1a",
+            "reference": "6d992c7536740c578b3e5a2685c46d79595e6c1a",
+            "shasum": ""
+        },
+        "time": "2012-04-20 18:05:19",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-0": {
+                "gchart": ""
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "authors": [
+            {
+                "name": "pacbard",
+                "homepage": "https://github.com/pacbard"
+            }
+        ],
+        "description": "PHP Object wrapper for the Google Chart API.",
+        "homepage": "https://github.com/pacbard/gChartPhp",
+        "keywords": [
+            "Google Charts",
+            "charts",
+            "php",
+            "wrapper"
+        ]
+    }
+]
