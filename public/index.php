@@ -12,6 +12,9 @@ use Phalcon\DI\FactoryDefault;
 use Phalcon\Mvc\Url as UrlProvider;
 use Phalcon\Config\Adapter\Ini as ConfigIni;
 
+// include composer
+include_once "../vendor/autoload.php";
+
 try
 {
 	//Read configuration
