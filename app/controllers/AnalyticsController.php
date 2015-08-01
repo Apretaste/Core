@@ -12,4 +12,14 @@ class AnalyticsController extends Controller
 	{
 		echo "<h1>Analytics Home</h1>";
 	}
+        
+        public function searchPersonAction()
+        {
+            
+        }
+        
+        public function servicesAction()
+        {
+            
+        }
 }
