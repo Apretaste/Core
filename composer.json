@@ -1,5 +1,4 @@
 {
     "require": {
-		"gchartphp/gchartphp": "dev-master"
     }
 }

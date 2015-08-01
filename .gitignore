@@ -1,3 +1,5 @@
+composer.lock
 configs/config.ini
 temp/*
 logs/*
+vendor/*
