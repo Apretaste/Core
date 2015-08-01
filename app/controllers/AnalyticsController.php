@@ -11,64 +11,97 @@ class AnalyticsController extends Controller
 	public function homeAction()
 	{
 		// weecly visitors
-		$visitorsWeecly = new gchart\gLineChart(700,200);
-		$visitorsWeecly->addDataSet(array(112,315,66,40,321));
-		$visitorsWeecly->addDataSet(array(212,115,366,140,569));
-		$visitorsWeecly->setLegend(array("2014", "2015"));
-		$visitorsWeecly->setColors(array("ff3344", "11ff11", "22aacc", "3333aa"));
-		$visitorsWeecly->setVisibleAxes(array('x','y'));
-		$visitorsWeecly->addAxisLabel(0, array("Sun", "Mon","Tue","Wed","Thr","Fri","Sat"));
-		$visitorsWeecly->addAxisRange(1, 1, 569); // 1 to max
+		$visitorsWeecly = [
+			["day"=>"Sun", "emails"=>446],
+			["day"=>"Mon", "emails"=>565],
+			["day"=>"Tue", "emails"=>432],
+			["day"=>"Wed", "emails"=>23],
+			["day"=>"Thr", "emails"=>123],
+			["day"=>"Fri", "emails"=>123],
+			["day"=>"Sat", "emails"=>123]
+		];
 
 		// montly visitors
-		$visitorsMonthly = new gchart\gLineChart(700,200);
-		$visitorsMonthly->addDataSet(array(112,315,66,40,321,58,987,47,1354,564,987,123));
-		$visitorsMonthly->addDataSet(array(212,115,366,140,897,546,135,564,32,475,54,87));
-		$visitorsMonthly->setLegend(array("2014", "2015"));
-		$visitorsMonthly->setColors(array("ff3344", "11ff11", "22aacc", "3333aa"));
-		$visitorsMonthly->setVisibleAxes(array('x','y'));
-		$visitorsMonthly->addAxisLabel(0, array("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"));
-		$visitorsMonthly->addAxisRange(1, 1, 987); // 1 to max
+		$visitorsMonthly = [
+			["month"=>"Jan", "emails"=>4667],
+			["month"=>"Feb", "emails"=>467],
+			["month"=>"Mar", "emails"=>657],
+			["month"=>"Apr", "emails"=>3267],
+			["month"=>"May", "emails"=>4667],
+			["month"=>"Jun", "emails"=>46634],
+			["month"=>"Jul", "emails"=>4667],
+			["month"=>"Aug", "emails"=>437],
+			["month"=>"Sep", "emails"=>367],
+			["month"=>"Oct", "emails"=>4667],
+			["month"=>"Nov", "emails"=>4667],
+			["month"=>"Dec", "emails"=>24667]
+		];
 
 		// new user per month
-		$newUsers = new gchart\gLineChart(700,200);
-		$newUsers->addDataSet(array(112,315,66,40,321,58,987,47,1354,564,987,123));
-		$newUsers->addDataSet(array(212,115,366,140,897,546,135,564,32,475,54,87));
-		$newUsers->setLegend(array("2014", "2015"));
-		$newUsers->setColors(array("ff3344", "11ff11", "22aacc", "3333aa"));
-		$newUsers->setVisibleAxes(array('x','y'));
-		$newUsers->addAxisLabel(0, array("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"));
-		$newUsers->addAxisRange(1, 1, 987); // 1 to max
+		$newUsers = [
+			["month"=>"Jan", "emails"=>467],
+			["month"=>"Feb", "emails"=>467],
+			["month"=>"Mar", "emails"=>657],
+			["month"=>"Apr", "emails"=>3267],
+			["month"=>"May", "emails"=>4667],
+			["month"=>"Jun", "emails"=>4664],
+			["month"=>"Jul", "emails"=>467],
+			["month"=>"Aug", "emails"=>437],
+			["month"=>"Sep", "emails"=>367],
+			["month"=>"Oct", "emails"=>46],
+			["month"=>"Nov", "emails"=>4667],
+			["month"=>"Dec", "emails"=>24566]
+		];
 
 		// get services usage monthly
-		$servicesUsageMonthly = new gchart\gPieChart();
-		$servicesUsageMonthly->addDataSet(array(112,315,66,40));
-		$servicesUsageMonthly->setLegend(array("clima", "wikipedia", "revolico","chiste"));
-		$servicesUsageMonthly->setColors = array("ff3344", "11ff11", "22aacc", "3333aa");
+		$servicesUsageMonthly = [
+			["service"=>"clima", "usage"=>446],
+			["service"=>"wikipedia", "usage"=>565],
+			["service"=>"revolico", "usage"=>432],
+			["service"=>"chiste", "usage"=>23],
+			["service"=>"traduccion", "usage"=>123],
+		];
 
 		// active domains monthly
-		$activeDomainsMonthly = new gchart\gPieChart();
-		$activeDomainsMonthly->addDataSet(array(112,315,66,40));
-		$activeDomainsMonthly->setLegend(array("nauta.cu", "infomed.sld.cu", "enet.co.cu","cubanacan.cu"));
-		$activeDomainsMonthly->setColors = array("ff3344", "11ff11", "22aacc", "3333aa");
+		$activeDomainsMonthly = [
+			["domain"=>"nauta.cu", "usage"=>446],
+			["domain"=>"infomed.sld.cu", "usage"=>565],
+			["domain"=>"enet.co.cu", "usage"=>432],
+			["domain"=>"cubanacan.cu", "usage"=>23],
+			["domain"=>"gmail.com", "usage"=>15],
+		];
 
 		// bounce rate
-		$bounceRateMontly = new gchart\gBarChart(700,200,'g');
-		$bounceRateMontly->addDataSet(array(112,315,66,40,321,58,987,47,1354,564,987,123));
-		$bounceRateMontly->addDataSet(array(212,115,366,140,897,546,135,564,32,475,54,87));
-		$bounceRateMontly->setColors(array("ff3344", "11ff11", "22aacc"));
-		$bounceRateMontly->setLegend(array("2014", "2015"));
-		$bounceRateMontly->addAxisLabel(0, array("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"));
-		$bounceRateMontly->setAutoBarWidth();
+		$bounceRateMontly = [
+			["month"=>"Jan", "emails"=>46],
+			["month"=>"Feb", "emails"=>47],
+			["month"=>"Mar", "emails"=>57],
+			["month"=>"Apr", "emails"=>32],
+			["month"=>"May", "emails"=>67],
+			["month"=>"Jun", "emails"=>46],
+			["month"=>"Jul", "emails"=>47],
+			["month"=>"Aug", "emails"=>37],
+			["month"=>"Sep", "emails"=>37],
+			["month"=>"Oct", "emails"=>46],
+			["month"=>"Nov", "emails"=>41],
+			["month"=>"Dec", "emails"=>24]
+		];
 
 		// updated profiles
-		$updatedProfilesMontly = new gchart\gBarChart(700,200,'g');
-		$updatedProfilesMontly->addDataSet(array(112,315,66,40,321,58,987,47,1354,564,987,123));
-		$updatedProfilesMontly->addDataSet(array(212,115,366,140,897,546,135,564,32,475,54,87));
-		$updatedProfilesMontly->setColors(array("ff3344", "11ff11", "22aacc"));
-		$updatedProfilesMontly->setLegend(array("2014", "2015"));
-		$updatedProfilesMontly->addAxisLabel(0, array("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"));
-		$updatedProfilesMontly->setAutoBarWidth();
+		$updatedProfilesMontly = [
+			["month"=>"Jan", "emails"=>46],
+			["month"=>"Feb", "emails"=>47],
+			["month"=>"Mar", "emails"=>575],
+			["month"=>"Apr", "emails"=>329],
+			["month"=>"May", "emails"=>675],
+			["month"=>"Jun", "emails"=>46],
+			["month"=>"Jul", "emails"=>47],
+			["month"=>"Aug", "emails"=>357],
+			["month"=>"Sep", "emails"=>372],
+			["month"=>"Oct", "emails"=>426],
+			["month"=>"Nov", "emails"=>41],
+			["month"=>"Dec", "emails"=>284]
+		];
 
 		// send variables to the view
 		$this->view->visitorsWeecly = $visitorsWeecly;
@@ -80,5 +113,55 @@ class AnalyticsController extends Controller
 		$this->view->bounceRateMontly = $bounceRateMontly;
 		$this->view->updatedProfilesMontly = $updatedProfilesMontly;
 		$this->view->currentNumberOfRunningaAds = 150;
+	}
+	
+	public function profileAction()
+	{
+		// users with profile vs users without profile\
+		$usersWithProfile = 46466;
+		$usersWithoutProfile = 455859;
+
+		// profile completion
+		$profilesData = [
+			["caption"=>"Name", "number"=>12000, "percent"=>70],
+			["caption"=>"DOB", "number"=>56, "percent"=>50],
+			["caption"=>"Gender", "number"=>45, "percent"=>20],
+			["caption"=>"Phone", "number"=>343, "percent"=>58],
+			["caption"=>"Eyes", "number"=>234, "percent"=>12],
+			["caption"=>"Skin", "number"=>898, "percent"=>54],
+			["caption"=>"Body", "number"=>23, "percent"=>76],
+			["caption"=>"Hair", "number"=>878, "percent"=>12],
+			["caption"=>"City", "number"=>34, "percent"=>34],
+			["caption"=>"Province", "number"=>76, "percent"=>14],
+			["caption"=>"About Me", "number"=>23, "percent"=>54],
+			["caption"=>"Picture", "number"=>545, "percent"=>6]
+		];
+
+		// numbers of profiles per province
+		$profilesPerProvince = [
+			["region"=>"Pinar del Río", "profiles"=>1324110],
+			["region"=>"CU-X01", "profiles"=>959574],
+			["region"=>"Ciudad de La Habana", "profiles"=>2761477],
+			["region"=>"CU-X02", "profiles"=>907563],
+			["region"=>"Matanzas", "profiles"=>655875],
+			["region"=>"Cienfuegos", "profiles"=>607906],
+			["region"=>"Villa Clara", "profiles"=>380181],
+			["region"=>"Sancti Spíritus", "profiles"=>371282],
+			["region"=>"Ciego de Ávila", "profiles"=>67370],
+			["region"=>"Camagüey", "profiles"=>300],
+			["region"=>"Las Tunas", "profiles"=>38262],
+			["region"=>"Granma", "profiles"=>38262],
+			["region"=>"Holguín", "profiles"=>38262],
+			["region"=>"Santiago de Cuba", "profiles"=>3855262],
+			["region"=>"Guantánamo", "profiles"=>38262],
+			["region"=>"Isla de la Juventud", "profiles"=>3825562]
+		];
+
+		// send variables to the view
+		$this->view->usersWithProfile = $usersWithProfile;
+		$this->view->usersWithoutProfile = $usersWithoutProfile;
+		$this->view->usersWithProfileVsUsersWithoutProfile = $usersWithProfileVsUsersWithoutProfile;
+		$this->view->profilesData = $profilesData;
+		$this->view->profilesPerProvince = $profilesPerProvince;
 	}
 }
