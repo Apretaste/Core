@@ -21,7 +21,7 @@ try
 	$loaderAnalytics = new Loader();
 	$loaderAnalytics->registerDirs(array(
 		'../classes/',
-		'../packages/analytic/controllers/'
+		'../app/controllers/'
 	))->register();
 
 	//Create Run DI
@@ -30,7 +30,8 @@ try
 	// Setup the view component for Analytics
 	$di->set('view', function () {
 		$analyticsViews = new View();
-		$analyticsViews->setViewsDir('../packages/analytic/views/');
+		$analyticsViews->setViewsDir('../app/views/');
+		$analyticsViews->setLayoutsDir('../app/layouts/');
 		return $analyticsViews;
 	});
 

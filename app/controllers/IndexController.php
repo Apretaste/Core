@@ -6,6 +6,6 @@ class IndexController extends Controller
 {
 	public function indexAction()
 	{
-		echo "<h1>Hello World Apretaste</h1>";
+		echo "<h1>hOME pAGE</h1>";
 	}
 }
