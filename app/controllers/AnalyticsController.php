@@ -8,7 +8,7 @@ class AnalyticsController extends Controller
 	{
 	}
 
-	public function homeAction()
+	public function audienceAction()
 	{
 		// weecly visitors
 		$visitorsWeecly = [
