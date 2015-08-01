@@ -29,10 +29,10 @@ try
 
 	// Setup the view component for Analytics
 	$di->set('view', function () {
-		$analyticsViews = new View();
-		$analyticsViews->setViewsDir('../app/views/');
-		$analyticsViews->setLayoutsDir('../app/layouts/');
-		return $analyticsViews;
+		$view = new View();
+		$view->setLayoutsDir('../layouts/');
+		$view->setViewsDir('../app/views/');
+		return $view;
 	});
 
 	// Handle the request
