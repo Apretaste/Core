@@ -17,9 +17,6 @@ include_once "../vendor/autoload.php";
 
 try
 {
-	//Read configuration
-	$config = new ConfigIni('../configs/config.ini');
-
 	//Register autoLoader for Analytics
 	$loaderAnalytics = new Loader();
 	$loaderAnalytics->registerDirs(array(
@@ -30,12 +27,28 @@ try
 	//Create Run DI
 	$di = new FactoryDefault();
 
+	// Making the config global
+	$di->set('config', function () {
+		return new ConfigIni('../configs/config.ini');;
+	});
+
 	// Setup the view component for Analytics
 	$di->set('view', function () {
 		$view = new View();
 		$view->setLayoutsDir('../layouts/');
 		$view->setViewsDir('../app/views/');
 		return $view;
+	});
+
+	// Setup the database service
+	$config = $di->get('config');
+	$di->set('db', function () use ($config) {
+		return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
+			"host"     => $config['database']['host'],
+			"username" => $config['database']['user'],
+			"password" => $config['database']['password'],
+			"dbname"   => $config['database']['database']
+		));
 	});
 
 	// Handle the request
