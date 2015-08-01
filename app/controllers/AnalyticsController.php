@@ -8,6 +8,11 @@ class AnalyticsController extends Controller
 	{
 	}
 
+<<<<<<< HEAD
+	public function homeAction()
+	{
+		echo "<h1>Analytics Home</h1>";
+=======
 	public function audienceAction()
 	{
 		// weecly visitors
@@ -163,5 +168,16 @@ class AnalyticsController extends Controller
 		$this->view->usersWithProfileVsUsersWithoutProfile = $usersWithProfileVsUsersWithoutProfile;
 		$this->view->profilesData = $profilesData;
 		$this->view->profilesPerProvince = $profilesPerProvince;
+>>>>>>> 1ed78f61003ba470f577b07f4e24abfea574ad30
 	}
+        
+        public function searchPersonAction()
+        {
+            
+        }
+        
+        public function servicesAction()
+        {
+            
+        }
 }

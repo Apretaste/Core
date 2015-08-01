@@ -2,4 +2,8 @@ composer.lock
 configs/config.ini
 temp/*
 logs/*
+<<<<<<< HEAD
+/nbproject/private/
+=======
 vendor/*
+>>>>>>> 1ed78f61003ba470f577b07f4e24abfea574ad30
