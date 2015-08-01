@@ -12,15 +12,12 @@ class DeployController extends Controller
 
 	public function submitAction()
 	{
-		$connection = new Connection();
-		$connection->query("select * from services");
-		exit;
-
 		// check the file is a valid zip
 		$fileNameArray = explode(".", $_FILES["service"]["name"]);
 		$extensionIsZip = strtolower(end($fileNameArray)) == "zip";
 		$isZipFile = true; //$_FILES["service"]["type"] == "application/octet-stream"; // @TODO check if it is a valid zip file
-		if ( ! $isZipFile || ! $extensionIsZip) {
+		if ( ! $isZipFile || ! $extensionIsZip)
+		{
 			return $this->dispatcher->forward(array(
 				"action" => "index",
 				"params" => array("The file is not a valid zip")
@@ -28,7 +25,8 @@ class DeployController extends Controller
 		}
 
 		// check the service zip size is less than 1MB
-		if ($_FILES["service"]["size"] > 1048576) {
+		if ($_FILES["service"]["size"] > 1048576)
+		{
 			return $this->dispatcher->forward(array(
 				"action" => "index",
 				"params" => array("The file is too big. Our limit is 1 MB")
@@ -36,7 +34,8 @@ class DeployController extends Controller
 		}
 
 		// check for errors
-		if ($_FILES["service"]["error"] > 0) {
+		if ($_FILES["service"]["error"] > 0)
+		{
 			return $this->dispatcher->forward(array(
 				"action" => "index",
 				"params" => array("Unknow errors uploading your service. Please try again")
@@ -44,27 +43,29 @@ class DeployController extends Controller
 		}
 
 		// include and initialice Deploy class
-		include "$wwwroot/core/Deploy.php";
 		$deploy = new Deploy();
 
-		// save file
+		// get the zip name and path
+		$wwwroot = $this->di->get('path')['root'];
 		$zipPath = "$wwwroot/temp/" . $deploy->generateDeployKey() . ".zip";
-
 		$zipName = basename($zipPath);
-		if (isset( $_FILES["service"]["name"]))
-		    $zipName = $_FILES["service"]["name"];
-
+die("$zipPath, $zipName");
+		// save file
+		if (isset($_FILES["service"]["name"])) $zipName = $_FILES["service"]["name"];
 		move_uploaded_file($_FILES["service"]["tmp_name"], $zipPath);
-
-		// get the path to the zip file uploaded
-		if (!file_exists($zipPath)) {
-		    header("Location: {$framework->createLink('admin', 'deploy', '&error=There was a problem uploading the file')}");
-		    exit;
+		if ( ! file_exists($zipPath))
+		{
+			return $this->dispatcher->forward(array(
+				"action" => "index",
+				"params" => array("There was a problem uploading the file")
+			));
 		}
 
 		// get the deploy key
 		$deployKey = $_POST['deploykey'];
 
+		die("$zipPath, $deployKey, $zipName");
+		
 		// deploy the service
 		//
 		// @TODO uncomment error message once the deploy is tested and error-free
@@ -80,6 +81,9 @@ class DeployController extends Controller
 		*/
 
 		// redirect to the upload page with success message 
-		header("Location: {$framework->createLink('admin', 'services', '&message=Service deployed successfully. Your new deploy key is ' . $deployKey . '. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on')}");
+		return $this->dispatcher->forward(array(
+				"action" => "index",
+				"params" => array("Service deployed successfully. Your new deploy key is $deployKey. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on")
+		));
 	}
 }

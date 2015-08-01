@@ -1,0 +1,1 @@
+CREATE TABLE `apretaste`.`raffle` ( `raffle_id` INT NOT NULL AUTO_INCREMENT , `item_desc` VARCHAR(50) NOT NULL , `start_date` DATETIME NOT NULL , `end_date` DATETIME NOT NULL , `winner_1` VARCHAR(50) NOT NULL , `winner_2` VARCHAR(50) NOT NULL , `winner_3` VARCHAR(50) NOT NULL , PRIMARY KEY (`raffle_id`) ) ENGINE = InnoDB;

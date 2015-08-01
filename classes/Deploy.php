@@ -1,27 +1,7 @@
 <?php
 
-include_once "$wwwroot/core/Connection.php";
-include_once "$wwwroot/core/Servicer.php";
-include_once "$wwwroot/classes/Service.php";
-
 class Deploy
 {
-	private $db;
-	private $servicer;
-
-	/**
-	 * Connects to the database when the class is created
-	 */
-	public function __construct()
-	{
-		// connects to the database Apretaste
-		$this->db = new Connection ();
-		$this->db->connectTo('apretaste');
-
-		// create a new servicer
-		$this->servicer = new Servicer ();
-	}
-
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -107,8 +87,12 @@ class Deploy
 	 */
 	public function extractServiceZip($pathToZip)
 	{
-		global $wwwroot;
+		// get the path
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
 
+		die($wwwroot);
+		
 		$zip = new ZipArchive ();
 
 		if ($zip->open($pathToZip) === TRUE) {

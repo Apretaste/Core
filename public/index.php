@@ -27,6 +27,14 @@ try
 	//Create Run DI
 	$di = new FactoryDefault();
 
+	// Creating the global path to the root folder
+	$di->set('path', function () {
+		return array(
+			"root" => dirname(__DIR__), 
+			"http" => "http://{$_SERVER['HTTP_HOST']}"
+		);
+	});
+
 	// Making the config global
 	$di->set('config', function () {
 		return new ConfigIni('../configs/config.ini');;
