@@ -1,4 +1,5 @@
 temp/*
+services/*
 logs/*
 nbproject/*
 vendor/*
