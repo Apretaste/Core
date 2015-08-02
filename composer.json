@@ -1,4 +1,5 @@
 {
     "require": {
+    	"mandrill/mandrill": "1.0.*"
     }
 }
