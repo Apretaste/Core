@@ -53,7 +53,7 @@ class RunController extends Controller
 		$body = $event[0]->msg->html;
 
 		// save the webhook log
-		$line = date("Y-m-d H:i:s")." - $fromEmail - $subject\n\t$mandrill_events\n\n";
+		$line = date("Y-m-d H:i:s")." - From: $fromEmail, Subject: $subject\n$mandrill_events\n\n";
 		$wwwroot = $this->di->get('path')['root'];
 		file_put_contents("$wwwroot/logs/webhook.log",$line,FILE_APPEND);
 
