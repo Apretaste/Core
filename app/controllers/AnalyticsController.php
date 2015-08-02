@@ -10,69 +10,151 @@ class AnalyticsController extends Controller
 
     public function audienceAction()
     {
-        // weecly visitors
-        $visitorsWeecly = [
-            ["day"=>"Sun", "emails"=>446],
-            ["day"=>"Mon", "emails"=>565],
-            ["day"=>"Tue", "emails"=>432],
-            ["day"=>"Wed", "emails"=>23],
-            ["day"=>"Thr", "emails"=>123],
-            ["day"=>"Fri", "emails"=>123],
-            ["day"=>"Sat", "emails"=>123]
-        ];
+        $connection = new Connection();
+        
+        // weekly visitors
+        $queryWeecly = "SELECT DATE_FORMAT(request_time, '%a') as Weekday, count(request_time) as TimesRequested
+                        FROM  `utilization` 
+                        WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 7 DAY))
+                        group by date(request_time)
+                      ";
+        $visitorsWeeclyObj = $connection->deepQuery($queryWeecly);
+		foreach($visitorsWeeclyObj as $weeklyvisits)
+			$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=>$weeklyvisits->TimesRequested];
+       
+        //End // weekly visitors
 
         // montly visitors
-        $visitorsMonthly = [
-            ["month"=>"Jan", "emails"=>4667],
-            ["month"=>"Feb", "emails"=>467],
-            ["month"=>"Mar", "emails"=>657],
-            ["month"=>"Apr", "emails"=>3267],
-            ["month"=>"May", "emails"=>4667],
-            ["month"=>"Jun", "emails"=>46634],
-            ["month"=>"Jul", "emails"=>4667],
-            ["month"=>"Aug", "emails"=>437],
-            ["month"=>"Sep", "emails"=>367],
-            ["month"=>"Oct", "emails"=>4667],
-            ["month"=>"Nov", "emails"=>4667],
-            ["month"=>"Dec", "emails"=>24667]
-        ];
+        $queryMonthly = "SELECT DATE_FORMAT(request_time,'%b-%Y') as Month, count(request_time) as TimesRequested 
+						FROM `utilization` 
+						WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH)) 
+						group by EXTRACT(MONTH FROM date(request_time)) 
+						ORDER BY request_time";
+        $visitorsMonthlyObj = $connection->deepQuery($queryMonthly); 
+                
+        foreach($visitorsMonthlyObj as $visits)
+			$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=>$visits->TimesRequested];
+		//End Monthly Visitors
+		
+        // New users per month
+		$queryNewUsers = "SELECT DATE_FORMAT(insertion_date,'%b-%Y') as Month, count(insertion_date) as TimeInserted
+							FROM `person`
+							WHERE (insertion_date >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
+							group by EXTRACT(MONTH FROM date(insertion_date)) 
+							ORDER BY insertion_date";
+		$newUsersMonthly = $connection->deepQuery($queryNewUsers);
+		
+		foreach($newUsersMonthly as $newUsersList)
+			$newUsers[] = ["month"=>$newUsersList->Month, "emails"=>$newUsersList->TimeInserted];
+		//End new users per month
+		
+		//Current number of Users
+		$queryCurrentNoUsers = "SELECT COUNT(email) as CountUsers
+								FROM `person`";
+		$currentNoUsers = $connection->deepQuery($queryCurrentNoUsers);
+		//End Current number of Users
 
-        // new user per month
-        $newUsers = [
-            ["month"=>"Jan", "emails"=>467],
-            ["month"=>"Feb", "emails"=>467],
-            ["month"=>"Mar", "emails"=>657],
-            ["month"=>"Apr", "emails"=>3267],
-            ["month"=>"May", "emails"=>4667],
-            ["month"=>"Jun", "emails"=>4664],
-            ["month"=>"Jul", "emails"=>467],
-            ["month"=>"Aug", "emails"=>437],
-            ["month"=>"Sep", "emails"=>367],
-            ["month"=>"Oct", "emails"=>46],
-            ["month"=>"Nov", "emails"=>4667],
-            ["month"=>"Dec", "emails"=>24566]
-        ];
+        // Get services usage monthly
+		$queryMonthlyServiceUsage = "SELECT DATE_FORMAT(request_time,'%b-%Y') as Month, count(service) as ServicesCount 
+									FROM `utilization` 
+									WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
+									group by EXTRACT(MONTH FROM date(request_time)) 
+									ORDER BY request_time";
+		$MonthlyServiceUseage = $connection->deepQuery($queryMonthlyServiceUsage);
+		foreach($MonthlyServiceUseage as $serviceList)
+			$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=>$serviceList->ServicesCount];
+		//End Get services usage monthly
 
-        // get services usage monthly
-        $servicesUsageMonthly = [
-            ["service"=>"clima", "usage"=>446],
-            ["service"=>"wikipedia", "usage"=>565],
-            ["service"=>"revolico", "usage"=>432],
-            ["service"=>"chiste", "usage"=>23],
-            ["service"=>"traduccion", "usage"=>123],
-        ];
+        // Active domains monthly
+		$queryAciteDomain = "SELECT domain as Domains, count(domain) as DomainCount 
+							FROM `utilization` 
+							WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
+							group by domain";
+		$ActiveDomains = $connection->deepQuery($queryAciteDomain);
+		
+		foreach($ActiveDomains as $domainList)
+			$activeDomainsMonthly[] = ["domain"=>$domainList->Domains, "usage"=>$domainList->DomainCount];
+		//End Active domains monthly
 
-        // active domains monthly
-        $activeDomainsMonthly = [
-            ["domain"=>"nauta.cu", "usage"=>446],
-            ["domain"=>"infomed.sld.cu", "usage"=>565],
-            ["domain"=>"enet.co.cu", "usage"=>432],
-            ["domain"=>"cubanacan.cu", "usage"=>23],
-            ["domain"=>"gmail.com", "usage"=>15],
-        ];
-
-        // bounce rate
-        $bounceRateMontly = [
+        // Bounce rate
+		$queryBounceRate = "SELECT DATE_FORMAT(T.RequestTime, '%b') AS Month
+							FROM (SELECT DATE(R.request_time) AS RequestTime, COUNT( R.requestor) AS RequestorCount
+									FROM (SELECT request_time, requestor
+											FROM utilization
+											WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
+											ORDER BY `utilization`.`request_time`) R
+									GROUP BY R.requestor) T
+							WHERE T.RequestorCount = 1
+							GROUP BY T.RequestTime";
+		$bounceRate = $connection->deepQuery($queryBounceRate);
+		
+		//Month Count Variable
+		$countJan = $countFeb = $countMar = $countApr = $countMay = $countJun = $countJul = $countAug = $countSep = $countOct = $countNov = $countDic = 0;
+		
+		foreach($bounceRate as $bounceCount)
+		{
+			if($bounceCount->Month == "Jan")
+				$countJan++;
+			if($bounceCount->Month == "Feb")
+				$countFeb++;
+			if($bounceCount->Month == "Mar")
+				$countMar++;
+			if($bounceCount->Month == "Apr")
+				$countApr++;
+			if($bounceCount->Month == "May")
+				$countMay++;
+			if($bounceCount->Month == "Jun")
+				$countJun++;
+			if($bounceCount->Month == "Jul")
+				$countJul++;
+			if($bounceCount->Month == "Aug")
+				$countAug++;
+			if($bounceCount->Month == "Sep")
+				$countSep++;
+			if($bounceCount->Month == "Oct")
+				$countOct++;
+			if($bounceCount->Month == "Nov")
+				$countNov++;
+			if($bounceCount->Month == "Dic")
+				$countDic++;
+		}
+		
+		$queryForMonth = "SELECT DISTINCT DATE_FORMAT(request_time, '%b') AS MonthOrder
+							FROM utilization
+							WHERE(request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
+							ORDER BY request_time DESC";
+		$monthOrder = $connection->deepQuery($queryForMonth);
+		//print_r($monthOrder);
+		//exit;
+		foreach($monthOrder as $bounceList)
+		{
+			if($bounceList->MonthOrder == "Jan")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJan];
+			if($bounceList->MonthOrder = "Feb")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countFeb];
+			if($bounceList->MonthOrder == "Mar")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countMar];
+			if($bounceList->MonthOrder == "Apr")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countApr];
+			if($bounceList->MonthOrder == "May")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countMay];
+			if($bounceList->MonthOrder == "Jun")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJun];
+			if($bounceList->MonthOrder == "Jul")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJul];
+			if($bounceList->MonthOrder == "Aug")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countAug];
+			if($bounceList->MonthOrder == "Sep")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countSep];
+			if($bounceList->MonthOrder == "Oct")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countOct];
+			if($bounceList->MonthOrder == "Nov")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countNov];
+			if($bounceList->MonthOrder == "Dic")
+				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countDic];
+					
+		}
+		/*$bounceRateMontly = [
             ["month"=>"Jan", "emails"=>46],
             ["month"=>"Feb", "emails"=>47],
             ["month"=>"Mar", "emails"=>57],
@@ -85,7 +167,8 @@ class AnalyticsController extends Controller
             ["month"=>"Oct", "emails"=>46],
             ["month"=>"Nov", "emails"=>41],
             ["month"=>"Dec", "emails"=>24]
-        ];
+        ];*/
+		//End Bounce rate
 
         // updated profiles
         $updatedProfilesMontly = [
@@ -102,64 +185,113 @@ class AnalyticsController extends Controller
             ["month"=>"Nov", "emails"=>41],
             ["month"=>"Dec", "emails"=>284]
         ];
-
+		
+		//Current number of running ads
+		$queryRunningAds = "SELECT COUNT(active) AS CountAds
+							FROM ads 
+							WHERE active = 'TRUE'";
+		$runningAds = $connection->deepQuery($queryRunningAds);
+		//End Current number of running ads
+		
         // send variables to the view
         $this->view->visitorsWeecly = $visitorsWeecly;
         $this->view->visitorsMonthly = $visitorsMonthly;
         $this->view->newUsers = $newUsers;
-        $this->view->currentNumberOfActiveUsers = 261578;
+        $this->view->currentNumberOfActiveUsers = $currentNoUsers[0]->CountUsers;
         $this->view->servicesUsageMonthly = $servicesUsageMonthly;
         $this->view->activeDomainsMonthly = $activeDomainsMonthly;
         $this->view->bounceRateMontly = $bounceRateMontly;
         $this->view->updatedProfilesMontly = $updatedProfilesMontly;
-        $this->view->currentNumberOfRunningaAds = 150;
+        $this->view->currentNumberOfRunningaAds = $runningAds[0]->CountAds;
     }
 
     public function profileAction()
     {
-        // users with profile vs users without profile\
-        $usersWithProfile = 46466;
-        $usersWithoutProfile = 455859;
+		$connection = new Connection();
+		
+        // Users with profile vs users without profile
+		//Users with profiles
+		$queryUsersWithProfile = "SELECT COUNT(email) AS PersonWithProfiles
+								 FROM `person` 
+								 WHERE updated_by_user IS NOT NULL";
+		$usersWithProfile = $connection->deepQuery($queryUsersWithProfile);
+		
+		//Users without profiles
+		$queryUsersWithOutProfile = "SELECT COUNT(email) AS PersonWithOutProfiles
+									 FROM `person` 
+									 WHERE updated_by_user IS NULL";	
+		$usersWithOutProfile = $connection->deepQuery($queryUsersWithOutProfile);
+		//End Users with profile vs users without profile
+		
+        // Profile completion
+		$queryProfileData = "SELECT 'Name' AS Caption, COUNT(first_name) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
+							UNION
+							SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
+							UNION
+							SELECT 'Gender' AS Caption, COUNT(gender) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
+							UNION
+							SELECT 'Phone' AS Caption, COUNT(phone) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
+							UNION
+							SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
+							UNION
+							SELECT 'Skin' AS Caption, COUNT(skin) AS Number
+							FROM person
+							WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
+							UNION
+							SELECT 'Body' AS Caption, COUNT(body_type) AS Number
+							FROM person";
+		$profileData = $connection->deepQuery($queryProfileData);
+		
+		foreach($profileData as $profilesList)
+		{
+			$percent = ($profilesList->Number * 100)/$usersWithProfile[0]->PersonWithProfiles;
+			$percentFormated = number_format($percent, 2);
+			$profilesData[] = ["caption"=>$profilesList->Caption, "number"=>$profilesList->Number, "percent"=>$percentFormated];
+		}
+		//End Profile completion
 
-        // profile completion
-        $profilesData = [
-            ["caption"=>"Name", "number"=>12000, "percent"=>70],
-            ["caption"=>"DOB", "number"=>56, "percent"=>50],
-            ["caption"=>"Gender", "number"=>45, "percent"=>20],
-            ["caption"=>"Phone", "number"=>343, "percent"=>58],
-            ["caption"=>"Eyes", "number"=>234, "percent"=>12],
-            ["caption"=>"Skin", "number"=>898, "percent"=>54],
-            ["caption"=>"Body", "number"=>23, "percent"=>76],
-            ["caption"=>"Hair", "number"=>878, "percent"=>12],
-            ["caption"=>"City", "number"=>34, "percent"=>34],
-            ["caption"=>"Province", "number"=>76, "percent"=>14],
-            ["caption"=>"About Me", "number"=>23, "percent"=>54],
-            ["caption"=>"Picture", "number"=>545, "percent"=>6]
-        ];
-
-        // numbers of profiles per province
-        $profilesPerProvince = [
-            ["region"=>"Pinar del Río", "profiles"=>1324110],
-            ["region"=>"CU-X01", "profiles"=>959574],
-            ["region"=>"Ciudad de La Habana", "profiles"=>2761477],
-            ["region"=>"CU-X02", "profiles"=>907563],
-            ["region"=>"Matanzas", "profiles"=>655875],
-            ["region"=>"Cienfuegos", "profiles"=>607906],
-            ["region"=>"Villa Clara", "profiles"=>380181],
-            ["region"=>"Sancti Spíritus", "profiles"=>371282],
-            ["region"=>"Ciego de Ávila", "profiles"=>67370],
-            ["region"=>"Camagüey", "profiles"=>300],
-            ["region"=>"Las Tunas", "profiles"=>38262],
-            ["region"=>"Granma", "profiles"=>38262],
-            ["region"=>"Holguín", "profiles"=>38262],
-            ["region"=>"Santiago de Cuba", "profiles"=>3855262],
-            ["region"=>"Guantánamo", "profiles"=>38262],
-            ["region"=>"Isla de la Juventud", "profiles"=>3825562]
-        ];
+        // Numbers of profiles per province
+		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount, 
+										CASE province
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+											WHEN 'HAVANA' THEN 'Ciudad de La Habana'
+											WHEN 'ARTEMISA' THEN 'CU-X01'
+											WHEN 'MAYABEQUE' THEN 'CU-X02'
+											WHEN 'MATANZAS' THEN 'Matanzas'
+											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
+											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+											WHEN 'CAMAGUEY' THEN 'Camagüey'
+											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
+											WHEN 'HOLGUIN' THEN 'Holguín'
+											WHEN 'GRANMA' THEN 'Granma'
+											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
+											WHEN 'GUANTANAMO' THEN 'Guantánamo'
+											WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
+										END AS ProvinceName
+										FROM `person`
+										WHERE province IS NOT NULL
+										GROUP by province";
+		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
+		
+		foreach($prefilesPerPravinceList as $profilesList)
+			$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>$profilesList->EmailCount];
+		// numbers of profiles per province
 
         // send variables to the view
-        $this->view->usersWithProfile = $usersWithProfile;
-        $this->view->usersWithoutProfile = $usersWithoutProfile;
+        $this->view->usersWithProfile = $usersWithProfile[0]->PersonWithProfiles;
+        $this->view->usersWithoutProfile = $usersWithOutProfile[0]->PersonWithOutProfiles;
         $this->view->usersWithProfileVsUsersWithoutProfile = $usersWithProfileVsUsersWithoutProfile;
         $this->view->profilesData = $profilesData;
         $this->view->profilesPerProvince = $profilesPerProvince;
