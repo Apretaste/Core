@@ -165,7 +165,7 @@ class AnalyticsController extends Controller
 		$this->view->profilesPerProvince = $profilesPerProvince;
 	}
 
-	public function searchPersonAction()
+	public function profilesearchAction()
 	{
 		
 	}
