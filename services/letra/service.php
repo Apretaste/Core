@@ -6,39 +6,53 @@ class Letra extends Service
 	 * Function excecuted once the service Letra is called
 	 * 
 	 * @param Request
+	 * @return Response
 	 * */
-	public function main($request){
+	public function _main($request){
 		// search for the lyric
-		$letra = $this->searchForLyricOnTheWeb($request->argument);
+		$letra = $this->searchForLyricOnTheWeb($request->query);
 
 		// get similar lyrics
-		$otrasLetras = $this->searchForSimilarSongs($request->argument);
-
-		// saving into the private database of the app
-		$this->database->query("INSERT INTO letras VALUES ('{$request->argument}', '{$request->requestor->email}', 0)");
+		$otrasLetras = $this->searchForSimilarSongs($request->query);
 
 		// check number of times viewed from the private database
-		$views = $this->database->query("SELECT titulo FROM letras WHERE titulo = '{$request->argument}'");
-		$numero_letras = count($views);
+		$numero_letras = 153;
+
+		// create a new Utils object
+		$utils = new Utils();
 
 		// create a json object to send to the template
-		$json = '
-			{
-				"nombre_cancion": "'.$request->argument.'",
-				"letra_html": "'.$letra.'",
-				"veces_buscada": "'.$numero_letras.'",
-				"letra_1_caption": "'.$otrasLetras[0].'",
-				"letra_1_link": "'.$this->utils->getLinkToService("letra", "", $otrasLetras[0]).'",
-				"letra_2_caption": "'.$otrasLetras[1].'",
-				"letra_2_link": "'.$this->utils->getLinkToService("letra", "", $otrasLetras[1]).'",
-				"letra_3_caption": "'.$otrasLetras[2].'",
-				"letra_3_link": "'.$this->utils->getLinkToService("letra", "", $otrasLetras[2]).'"
-			}
-		';
+		$responseContent = array(
+			"nombre_cancion" => $request->query,
+			"letra_html" => $letra,
+			"veces_buscada" => $numero_letras,
+			"letra_1_caption" => $otrasLetras[0],
+			"letra_1_link" => $utils->getLinkToService("letra", "", $otrasLetras[0]),
+			"letra_2_caption" => $otrasLetras[1],
+			"letra_2_link" => $utils->getLinkToService("letra", "", $otrasLetras[1]),
+			"letra_3_caption" => $otrasLetras[2],
+			"letra_3_link" => $utils->getLinkToService("letra", "", $otrasLetras[2])
+		);
 
-		// configure the response object to use a user defined template
-		// display error if the JSON is invalid (http://www.json.com/)
-		$this->response->createUserDefinedResponse("basic.tpl", $json);
+		// create a new Response object and input the template and the content
+		$response = new Response();
+		$response->createFromTemplate("basic.tpl", $responseContent);
+		
+		// return the Response object to render the template
+		return $response;
+	}
+
+	/**
+	 * Function excecuted once the subservice sonido is called
+	 *
+	 * @param Request
+	 * @return Response
+	 * */
+	public function _ayuda($request){
+		$response = new Response();
+		$response->createFromText("Escriba en el asunto la palabra LETRA seguido de la letra de una cancion. Por ejemplo: LETRA before I forgot");
+
+		return $response;
 	}
 
 	/**

@@ -19,7 +19,8 @@ class Deploy
 		$service = $this->loadFromXML($pathToXML);
 
 		// remove the current project if it exist
-		if ($this->serviceExist($service['serviceName'])) {
+		$utils = new Utils();
+		if ($utils->serviceExist($service['serviceName'])) {
 			// check if the deploy key is valid
 			if ( ! $this->checkDeployValidity($service['serviceName'], $deployKey)) {
 				throw new Exception ("Deploy key is invalid");
@@ -102,20 +103,6 @@ class Deploy
 	}
 
 	/**
-	 * Check if the service exists in the database
-	 *
-	 * @author salvipascual
-	 * @param String , name of the service
-	 * @return Boolean, true if service exist
-	 * */
-	public function serviceExist($serviceName)
-	{
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT * FROM service WHERE LOWER(name)=LOWER('$serviceName')");
-		return count($res) > 0;
-	}
-
-	/**
 	 * Remove a service from the filesystem and database
 	 *
 	 * @author salvipascual
@@ -167,7 +154,7 @@ class Deploy
 		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,subservices,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','','$deployKey')";
 		$res = $connection->deepQuery($insertUserQuery);
 
-		// copy files to the service folder and removing temp files
+		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
 		unlink($pathToZip);
 
@@ -227,7 +214,7 @@ class Deploy
 		}
 
 		// get the main data of the service
-		$XMLData['serviceName'] = trim((String)$xml->serviceName);
+		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
 		$XMLData['creatorEmail'] = trim((String)$xml->creatorEmail);
 		$XMLData['serviceDescription'] = trim((String)$xml->serviceDescription);
 		$XMLData['serviceUsage'] = trim((String)$xml->serviceUsage);

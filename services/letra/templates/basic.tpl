@@ -3,7 +3,7 @@
 	<span style="color:gray;">Cantidad de veces vista: {$veces_buscada}</span>
 
 	<br/><br/>
-	
+
 	{$letra_html}
 
 	<br/><br/>
@@ -14,4 +14,8 @@
 		<a href="{$letra_2_link}">{$letra_2_caption}</a> | 
 		<a href="{$letra_3_link}">{$letra_3_caption}</a> 
 	</p>
+	
+	<br/><br/>
+
+	{button|buscar telefono|ver telefono}
 </center>

@@ -26,7 +26,6 @@ class Connection
 			{
 				$rows[] = $data;
 			}
-
 			// return the array of objects
 			return $rows;
 		}else{
