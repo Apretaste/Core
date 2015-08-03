@@ -32,6 +32,7 @@ class Render {
 			'_SERVICE_NAME' => strtoupper($serviceName),
 			'_SERVICE_EMAIL' => $utils->getValidEmailAddress(),
 			'_SERVICE_SUPPORT_EMAIL' => $di->get('config')['contact']['support'],
+			'_CURRENT_YEAR' => date("Y"),
 			'_USER_TEMPLATE' => $this->templateSource
 		);
 

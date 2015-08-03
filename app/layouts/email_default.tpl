@@ -92,7 +92,7 @@
 						<p>
 							<small>
 								Escriba dudas e ideas a <a href="mailto:{$_SERVICE_SUPPORT_EMAIL}">{$_SERVICE_SUPPORT_EMAIL}</a>. Lea nuestros <a href="mailto:{$_SERVICE_EMAIL}?subject=TERMINOS">T&eacute;rminos de uso</a>.<br/> 
-								<a href="#">Apretaste</a> pertenece a <a href="pragres.com">Pragres Corporation</a> &copy; Copyright 2015
+								Copyright &copy; {$_CURRENT_YEAR} Pragres Corporation
 							</small>
 						</p>
 					</td>
