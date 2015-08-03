@@ -36,7 +36,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Handle Mandrill inbound requests
+	 * Handle webhook requests
 	 * @author salvipascual
 	 * */
 	public function webhookAction(){
@@ -44,13 +44,13 @@ class RunController extends Controller
 		$mandrill_events = $_POST['mandrill_events'];
 
 		// get values from the json
-		// TODO get the attachments
 		$event = json_decode($mandrill_events);
 		$fromEmail = $event[0]->msg->from_email;
 		$toEmail = $event[0]->msg->email;
 		$sender = isset($event[0]->msg->headers->Sender) ? $event[0]->msg->headers->Sender : "";
 		$subject = $event[0]->msg->headers->Subject;
 		$body = $event[0]->msg->html;
+		$attachments = array(); // TODO get the attachments
 
 		// save the webhook log
 		$line = date("Y-m-d H:i:s")." - From: $fromEmail, Subject: $subject\n$mandrill_events\n\n";
@@ -58,7 +58,7 @@ class RunController extends Controller
 		file_put_contents("$wwwroot/logs/webhook.log",$line,FILE_APPEND);
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $sender, $body, array(), "email");
+		$this->renderResponse($fromEmail, $subject, $sender, $body, $attachments, "email");
 	}
 
 	/**
@@ -108,8 +108,16 @@ class RunController extends Controller
 		$request->subservice = $subServiceName;
 		$request->query = $query;
 
-		// run the service and get a response
+		// create a new service Object of the user type
 		$userService = new $serviceName();
+		$userService->serviceName = $serviceName;
+		$userService->serviceDescription = ""; // TODO fill this field
+		$userService->creatorEmail = ""; // TODO fill this field
+		$userService->serviceCategory = ""; // TODO fill this field
+		$userService->serviceUsage = ""; // TODO fill this field
+		$userService->insertionDate = ""; // TODO fill this field
+
+		// run the service and get a response
 		if(empty($subServiceName)) {
 			$response = $userService->_main($request);
 		}else{
@@ -124,12 +132,14 @@ class RunController extends Controller
 		if($format == "html")
 		{
 			echo $render->renderHTML($serviceName, $response);
+			return;
 		}
 
 		// echo the json on the screen
 		if($format == "json")
 		{
 			echo $render->renderJSON($response);
+			return;
 		}
 
 		// render the template email it to the user

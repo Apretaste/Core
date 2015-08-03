@@ -16,8 +16,7 @@ class DeployController extends Controller
 		// check the file is a valid zip
 		$fileNameArray = explode(".", $_FILES["service"]["name"]);
 		$extensionIsZip = strtolower(end($fileNameArray)) == "zip";
-		$isZipFile = true; //$_FILES["service"]["type"] == "application/octet-stream"; // @TODO check if it is a valid zip file
-		if ( ! $isZipFile || ! $extensionIsZip)
+		if ( ! $extensionIsZip)
 		{
 			return $this->response->redirect("deploy?e=The file is not a valid zip");
 		}
@@ -63,6 +62,9 @@ class DeployController extends Controller
 			$error = preg_replace("/\r|\n/", "", $e->getMessage());
 			return $this->response->redirect("deploy?e=$error");
 		}
+
+		// TODO send email to the user with the deploy key
+		// TODO
 
 		// redirect to the upload page with success message 
 		return $this->response->redirect("deploy?m=Service deployed successfully. Your new deploy key is $deployKey. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on");

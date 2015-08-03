@@ -96,9 +96,8 @@ class Deploy
 	 */
 	public function checkDeployValidity($serviceName, $deployKey)
 	{
-		// check if the plugin exist in the database and the deploy key is correct
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT * FROM service WHERE name='$serviceName' AND deploy_key='$deployKey'");
+		$res = $connection->deepQuery("SELECT name FROM service WHERE name='$serviceName' AND deploy_key='$deployKey'");
 		return count($res) > 0;
 	}
 
