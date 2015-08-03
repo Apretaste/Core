@@ -14,6 +14,10 @@ class Render {
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
+		// select the right file to load
+		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
+		else $userTemplateFile = "$wwwroot/services/$serviceName/templates/{$response->template}";
+
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
 		$smarty->setTemplateDir("$wwwroot/app/layouts/");
@@ -28,7 +32,7 @@ class Render {
 		// list the system variables
 		$utils = new Utils();
 		$systemVariables = array(
-			"_USER_TEMPLATE" => "$wwwroot/services/$serviceName/templates/{$response->template}",
+			"_USER_TEMPLATE" => $userTemplateFile,
 			"_SERVICE_NAME" => strtoupper($serviceName),
 			"_SERVICE_EMAIL" => $utils->getValidEmailAddress(),
 			"_SERVICE_RELATED" => $this->getServicesRelatedArray($serviceName),
@@ -74,7 +78,7 @@ class Render {
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
 			ORDER BY insertion_date
-			LIMIT 3";
+			LIMIT 5";
 		$connection = new Connection();
 		$result = $connection->deepQuery($query);
 

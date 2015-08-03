@@ -71,6 +71,7 @@
 				</tr>
 
 				<!--services related-->
+				{if  $_SERVICE_RELATED|@count gt 0} 
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
 						{$space10}
@@ -83,6 +84,7 @@
 						</small>
 					</td>
 				</tr>
+				{/if}
 
 				<!--footer-->
 				<tr>
