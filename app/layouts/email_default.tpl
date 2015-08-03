@@ -33,7 +33,7 @@
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
 		<center>
 			<table id="container" border="0" cellpadding="0" cellspacing="0" border="0" valign="top" align="center" width="600">
-				<!--{top links}-->
+				<!--top links-->
 					<tr>
 					<td align="right" bgcolor="#D0D0D0" style="padding: 5px;">
 						<small>
@@ -45,7 +45,7 @@
 					</td>
 				</tr>
 	
-				<!--{logo & service name}-->
+				<!--logo & service name-->
 				<tr>
 					<td bgcolor="#F2F2F2" align="center" valign="middle">
 						<table border="0">
@@ -62,30 +62,29 @@
 					</td>
 				</tr>
 
-				<!--{main section to load the user template}-->
+				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
 						{$space10}
-						{$_USER_TEMPLATE}
+						{include file="$_USER_TEMPLATE"}
 					</td>
 				</tr>
 
-				<!--{services related}-->
+				<!--services related-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
 						{$space10}
 						<small>
 							Servicios similares:
-							<a href="mailto:{$_SERVICE_EMAIL}?subject={$_SERVICE_RELATED_1}">{$_SERVICE_RELATED_1}</a>
-							{$separatorLinks}
-							<a href="mailto:{$_SERVICE_EMAIL}?subject={$_SERVICE_RELATED_2}">{$_SERVICE_RELATED_2}</a>
-							{$separatorLinks}
-							<a href="mailto:{$_SERVICE_EMAIL}?subject={$_SERVICE_RELATED_3}">{$_SERVICE_RELATED_3}</a>
+							{foreach $_SERVICE_RELATED as $_SERVICE}
+								<a href="mailto:{$_SERVICE_EMAIL}?subject={$_SERVICE}">{$_SERVICE}</a>
+								{if not $_SERVICE@last}{$separatorLinks}{/if}
+							{/foreach}
 						</small>
 					</td>
 				</tr>
 
-				<!--{ footer }-->
+				<!--footer-->
 				<tr>
 					<td align="center">
 						<hr style="border: 1px solid #A03E3B;" />

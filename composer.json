@@ -1,5 +1,6 @@
 {
     "require": {
-    	"mandrill/mandrill": "1.0.*"
+    	"mandrill/mandrill": "1.0.*",
+	"smarty/smarty": "~3.1"
     }
 }
