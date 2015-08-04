@@ -20,6 +20,7 @@ class Render {
 
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
+		$smarty->addPluginsDir("$wwwroot/app/plugins/");
 		$smarty->setTemplateDir("$wwwroot/app/layouts/");
 		$smarty->setCompileDir("$wwwroot/temp/templates_c/");
 		$smarty->setCacheDir("$wwwroot/temp/cache/");
@@ -32,17 +33,9 @@ class Render {
 		// list the system variables
 		$utils = new Utils();
 		$systemVariables = array(
-			"_USER_TEMPLATE" => $userTemplateFile,
-			"_SERVICE_NAME" => strtoupper($serviceName),
-			"_SERVICE_EMAIL" => $utils->getValidEmailAddress(),
-			"_SERVICE_RELATED" => $this->getServicesRelatedArray($serviceName),
-			"_CURRENT_YEAR" => date("Y"),
-			"_SERVICE_SUPPORT_EMAIL" => $di->get("config")["contact"]["support"],
-			"hr" => '<hr style="border:1px solid #D0D0D0; margin:0px;"/>',
-			"separatorLinks" => '<span class="separador-links" style="color: #A03E3B;">&nbsp;|&nbsp;</span>',
-			"space10" => '<div class="space_10">&nbsp;</div>',
-			"space15" => '<div class="space_15" style="margin-bottom: 15px;">&nbsp;</div>',
-			"space30" => '<div class="space_30" style="margin-bottom: 30px;">&nbsp;</div>',
+			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
+			"APRETASTE_SERVICE_NAME" => strtoupper($serviceName),
+			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($serviceName)
 		);
 
 		// merge all variable sets and assign them to Smarty
