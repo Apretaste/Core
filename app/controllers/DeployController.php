@@ -57,14 +57,19 @@ class DeployController extends Controller
 
 		// deploy the service
 		try{
-			$deployKey = $deploy->deployServiceFromZip($zipPath, $deployKey, $zipName);
+			$deployResults = $deploy->deployServiceFromZip($zipPath, $deployKey, $zipName);
 		}catch (Exception $e){
 			$error = preg_replace("/\r|\n/", "", $e->getMessage());
 			return $this->response->redirect("deploy?e=$error");
 		}
 
-		// TODO send email to the user with the deploy key
-		// TODO
+		// send email to the user with the deploy key
+		$today = date("Y-m-d H:i:s");
+		$serviceName = $deployResults["serviceName"];
+		$creatorEmail = $deployResults["creatorEmail"];
+		$deployKey = $deployResults["deployKey"];
+		$email = new Email();
+		$email->sendEmail($creatorEmail, "Your service $serviceName was deployed", "<h1>Service deployed</h1><p>Your service $serviceName was deployed on $today. Your Deploy Key is $deployKey. Please keep your Deploy Key secured as per you will need it to upgrade or remove your service later on.</p><p>Thank you for using Apretaste</p>");
 
 		// redirect to the upload page with success message 
 		return $this->response->redirect("deploy?m=Service deployed successfully. Your new deploy key is $deployKey. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on");

@@ -7,7 +7,7 @@ class Deploy
 	 *
 	 * @param String $path, path to the zip file of the service
 	 * @param String $deployKey, hash to avoid unauthorize updating of the service
-	 * @return String, new deploy key
+	 * @return array, results of the deploy [serviceName, creatorEmail, deployKey]
 	 */
 	public function deployServiceFromZip($pathToZip, $deployKey, $zipName)
 	{
@@ -40,7 +40,11 @@ class Deploy
 		@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
 		@system("rm -rfv " . escapeshellarg($pathToService)); // linux version 
 
-		return $deployKey;
+		// return deploy results
+		return array(
+			"serviceName"=>$service["serviceName"], 
+			"creatorEmail"=>$service["creatorEmail"], 
+			"deployKey"=>$deployKey);
 	}
 
 	/**
