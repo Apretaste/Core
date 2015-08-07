@@ -15,49 +15,36 @@ class Render {
 		$wwwroot = $di->get('path')['root'];
 
 		// select the right file to load
-		if($response->internal) $templateFile = "$wwwroot/app/templates/{$response->template}";
-		else $templateFile = "$wwwroot/services/$serviceName/templates/{$response->template}";
+		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
+		else $userTemplateFile = "$wwwroot/services/$serviceName/templates/{$response->template}";
 
-		// if there is a template name, load its code
-		if(file_exists($templateFile)) $this->templateSource = file_get_contents($templateFile);
-		else throw new Exception("Invalid template {$this->templateName}");
+		// creating and configuring a new Smarty object
+		$smarty = new Smarty;
+		$smarty->addPluginsDir("$wwwroot/app/plugins/");
+		$smarty->setTemplateDir("$wwwroot/app/layouts/");
+		$smarty->setCompileDir("$wwwroot/temp/templates_c/");
+		$smarty->setCacheDir("$wwwroot/temp/cache/");
 
-		// get the empty template from the layout
-		$layoutFile = "$wwwroot/app/layouts/email_default.tpl";
-		$template = file_get_contents($layoutFile);
+		// disabling cache and debugging
+		$smarty->force_compile = true;
+		$smarty->debugging = false;
+		$smarty->caching = false;		
 
 		// list the system variables
 		$utils = new Utils();
 		$systemVariables = array(
-			'_SERVICE_NAME' => strtoupper($serviceName),
-			'_SERVICE_EMAIL' => $utils->getValidEmailAddress(),
-			'_SERVICE_SUPPORT_EMAIL' => $di->get('config')['contact']['support'],
-			'_USER_TEMPLATE' => $this->templateSource
+			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
+			"APRETASTE_SERVICE_NAME" => strtoupper($serviceName),
+			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($serviceName)
 		);
 
-		// list the template elements
-		$templateVariables = array(
-			"hr" => '<hr style="border:1px solid #D0D0D0; margin:0px;"/>',
-			"separatorLinks" => '<span class="separador-links" style="color: #A03E3B;">&nbsp;|&nbsp;</span>',
-			"space10" => '<div class="space_10">&nbsp;</div>',
-			"space15" => '<div class="space_15" style="margin-bottom: 15px;">&nbsp;</div>',
-			"space30" => '<div class="space_30" style="margin-bottom: 30px;">&nbsp;</div>',
-		);
+		// merge all variable sets and assign them to Smarty
+		$templateVariables = array_merge($systemVariables, $response->content);
+		$smarty->assign($templateVariables);
 
-		// merge all variable sets
-		$allVariables = array_merge(
-			$systemVariables, 
-			$templateVariables, 
-			$this->getServicesRelatedArray($serviceName), 
-			$response->content);
-
-		// replace user variables
-		foreach ($allVariables as $key=>$value) {
-			$template = str_replace('{$'.$key.'}', $value, $template);
-		}
-
-		// remove all tabs, double spaces and break lines
-		return preg_replace('/\s+/S', " ", $template);
+		// renderig and removing tabs, double spaces and break lines
+		$renderedTemplate = $smarty->fetch("email_default.tpl");
+		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 
 	/**
@@ -84,17 +71,15 @@ class Render {
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
 			ORDER BY insertion_date
-			LIMIT 3";
+			LIMIT 5";
 		$connection = new Connection();
 		$result = $connection->deepQuery($query);
 
 		// create returning array
 		$servicesRelates = array();
-		for ($i=0; $i<count($result); $i++){
-			$serviceNumber = $i+1;
-			$servicesRelates["_SERVICE_RELATED_$serviceNumber"] = $result[$i]->name;
-		}
+		foreach($result as $res) $servicesRelates[] = $res->name;
 
+		// return the array
 		return $servicesRelates;
 	}
 }

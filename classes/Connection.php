@@ -1,7 +1,6 @@
 <?php
 
-class Connection
-{
+class Connection {
 	/**
 	 * Query the database and returs an array of objects
 	 *
@@ -31,17 +30,5 @@ class Connection
 		}else{
 			return NULL;
 		}
-	}
-
-	/**
-	 * Query the database of service and returs an array of objects
-	 *
-	 * @author salvipascual
-	 * @param String $sql, valid sql query
-	 * @return Array, list of rows or NULL if it is not a select
-	 */
-	public function query($sql)
-	{
-		// @TODO
 	}
 }

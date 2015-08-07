@@ -1,28 +1,73 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-  
+
 class RunController extends Controller
 {
 	public function indexAction()
 	{
-		// get the time when the service started executing
-		$execStartTime = date("Y-m-d H:i:s");
+		echo "You cannot execute this resource directly. Access to run/display or run/api";
+	}
 
-		// get details of the incoming request
-		$email = $this->request->get("email");
-		$name = $this->request->get("name");
+	/**
+	 * Executes an html request the outside. Display the HTML on screen
+	 * @author salvipascual
+	 * @param String $subject, subject line of the email
+	 * @param String $body, body of the email
+	 * */
+	public function displayAction()
+	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$attachments = $this->request->get("attachments");
-		$format = $this->request->get("format"); // [html|json|email]
+		$this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
+	}
 
-		// do not let pass empty emails
-		if(empty($email)){ throw new Exception("Email is required"); exit; }
+	/**
+	 * Executes an API request. Display the JSON on screen
+	 * @author salvipascual
+	 * @param String $subject, subject line of the email
+	 * @param String $body, body of the email
+	 * */
+	public function apiAction()
+	{
+		$subject = $this->request->get("subject");
+		$body = $this->request->get("body");
+		$this->renderResponse("api@apretaste.com", $subject, "API", $body, array(), "json");
+	}
 
-		// set default values
-		if(empty($attachments)) $attachments = array();
-		if(empty($format)) $format = "email";
+	/**
+	 * Handle webhook requests
+	 * @author salvipascual
+	 * */
+	public function webhookAction(){
+		// get the mandrill json structure from the post
+		$mandrill_events = $_POST['mandrill_events'];
+
+		// get values from the json
+		$event = json_decode($mandrill_events);
+		$fromEmail = $event[0]->msg->from_email;
+		$toEmail = $event[0]->msg->email;
+		$sender = isset($event[0]->msg->headers->Sender) ? $event[0]->msg->headers->Sender : "";
+		$subject = $event[0]->msg->headers->Subject;
+		$body = $event[0]->msg->html;
+		$attachments = array(); // TODO get the attachments
+
+		// save the webhook log
+		$line = date("Y-m-d H:i:s")." - From: $fromEmail, Subject: $subject\n$mandrill_events\n\n";
+		$wwwroot = $this->di->get('path')['root'];
+		file_put_contents("$wwwroot/logs/webhook.log",$line,FILE_APPEND);
+
+		// execute the query
+		$this->renderResponse($fromEmail, $subject, $sender, $body, $attachments, "email");
+	}
+
+	/**
+	 * Respond to a request based on the parameters passed
+	 * @author salvipascual
+	 * */
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html"){
+		// get the time when the service started executing
+		$execStartTime = date("Y-m-d H:i:s");
 
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
@@ -55,7 +100,7 @@ class RunController extends Controller
 		// create a new Request object
 		$request = new Request();
 		$request->email = $email;
-		$request->name = $name;
+		$request->name = $sender;
 		$request->subject = $subject;
 		$request->body = $body;
 		$request->attachments = $attachments;
@@ -63,8 +108,16 @@ class RunController extends Controller
 		$request->subservice = $subServiceName;
 		$request->query = $query;
 
-		// run the service and get a response
+		// create a new service Object of the user type
 		$userService = new $serviceName();
+		$userService->serviceName = $serviceName;
+		$userService->serviceDescription = ""; // TODO fill this field
+		$userService->creatorEmail = ""; // TODO fill this field
+		$userService->serviceCategory = ""; // TODO fill this field
+		$userService->serviceUsage = ""; // TODO fill this field
+		$userService->insertionDate = ""; // TODO fill this field
+
+		// run the service and get a response
 		if(empty($subServiceName)) {
 			$response = $userService->_main($request);
 		}else{
@@ -76,39 +129,50 @@ class RunController extends Controller
 		$render = new Render();
 
 		// render the template and echo on the screen
-		if($format == "html"){
+		if($format == "html")
+		{
 			echo $render->renderHTML($serviceName, $response);
+			return;
 		}
 
 		// echo the json on the screen
-		if($format == "json"){
+		if($format == "json")
+		{
 			echo $render->renderJSON($response);
+			return;
 		}
 
 		// render the template email it to the user
-		if($format == "email"){
+		// only save stadistics for email requests
+		if($format == "email")
+		{
 			// get params for the email
-			$from = "soporte@apretaste.com";
 			$subject = "Respondiendo a su email con asunto: $serviceName";
 			$body = $render->renderHTML($serviceName, $response);
 
 			// send the email
-			echo "send email"; // TODO send email
-			echo $body;
+			$emailSender = new Email();
+			$emailSender->sendEmail($email, $subject, $body);
+
+			// create the new Person if access for the 1st time
+			$connection = new Connection();
+			if ($utils->personExist($email)){
+				$sql = "INSERT INTO person (email) VALUES ('$email')";
+				$connection->deepQuery($sql);
+			}
+
+			// calculate execution time when the service stopped executing
+			$currentTime = new DateTime();
+			$startedTime = new DateTime($execStartTime);
+			$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+
+			// get the user email domainEmail
+			$emailPieces = explode("@", $email);
+			$domain = $emailPieces[1];
+
+			// save the logs on the utilization table
+			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$query','$email','$execStartTime','$executionTime','$domain','','')";
+			$connection->deepQuery($sql);
 		}
-
-		// calculate execution time when the service stopped executing
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-
-		// get the user email domain
-		$emailPieces = explode("@", $email);
-		$domain = $emailPieces[1];
-
-		// save the logs on the utilization table
-		$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$query','$email','$execStartTime','$executionTime','$domain','','')";
-		$connection = new Connection();
-		$result = $connection->deepQuery($sql);
 	}
 }

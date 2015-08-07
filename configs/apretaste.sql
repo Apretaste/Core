@@ -1,13 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 4.3.11
+-- version 3.4.10.1deb1
 -- http://www.phpmyadmin.net
 --
--- Host: 127.0.0.1
--- Generation Time: Jul 23, 2015 at 07:09 AM
--- Server version: 5.6.24
--- PHP Version: 5.6.8
+-- Host: localhost
+-- Generation Time: Aug 04, 2015 at 04:26 PM
+-- Server version: 5.5.40
+-- PHP Version: 5.4.36-1+deb.sury.org~precise+2
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 
@@ -26,6 +26,7 @@ SET time_zone = "+00:00";
 -- Table structure for table `ads`
 --
 
+DROP TABLE IF EXISTS `ads`;
 CREATE TABLE IF NOT EXISTS `ads` (
   `ads_id` int(11) NOT NULL,
   `time_inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -35,7 +36,8 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `title` varchar(20) NOT NULL,
   `description` varchar(250) DEFAULT NULL,
   `expiration_date` datetime NOT NULL,
-  `paid_date` datetime NOT NULL
+  `paid_date` datetime NOT NULL,
+  PRIMARY KEY (`ads_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -44,14 +46,16 @@ CREATE TABLE IF NOT EXISTS `ads` (
 -- Table structure for table `invitations`
 --
 
+DROP TABLE IF EXISTS `invitations`;
 CREATE TABLE IF NOT EXISTS `invitations` (
-  `invitation_id` int(11) NOT NULL,
+  `invitation_id` int(11) NOT NULL AUTO_INCREMENT,
   `invitation_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `email_inviter` varchar(50) NOT NULL,
   `email_invited` varchar(50) NOT NULL,
   `used` tinyint(1) NOT NULL,
-  `used_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `used_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`invitation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -59,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `invitations` (
 -- Table structure for table `jumper`
 --
 
+DROP TABLE IF EXISTS `jumper`;
 CREATE TABLE IF NOT EXISTS `jumper` (
   `email` varchar(50) NOT NULL,
   `sent_count` int(11) NOT NULL,
@@ -66,7 +71,8 @@ CREATE TABLE IF NOT EXISTS `jumper` (
   `error` tinyint(1) NOT NULL,
   `error_count` int(11) NOT NULL,
   `last_usage` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `provider` varchar(20) NOT NULL
+  `provider` varchar(20) NOT NULL,
+  PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -75,9 +81,10 @@ CREATE TABLE IF NOT EXISTS `jumper` (
 -- Table structure for table `person`
 --
 
+DROP TABLE IF EXISTS `person`;
 CREATE TABLE IF NOT EXISTS `person` (
   `email` varchar(50) NOT NULL,
-  `insertion_date` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `insertion_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `first_name` varchar(50) DEFAULT NULL,
   `middle_name` varchar(50) DEFAULT NULL,
   `last_name` varchar(50) DEFAULT NULL,
@@ -95,8 +102,9 @@ CREATE TABLE IF NOT EXISTS `person` (
   `credit` float DEFAULT NULL,
   `active` tinyint(1) DEFAULT NULL,
   `last_update_date` datetime DEFAULT NULL,
-  `updated_by_user` tinyint(1) DEFAULT NULL,
-  `picture` tinyint(1) DEFAULT NULL
+  `updated_by_user` tinyint(1) DEFAULT '0',
+  `picture` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -105,15 +113,17 @@ CREATE TABLE IF NOT EXISTS `person` (
 -- Table structure for table `raffle`
 --
 
+DROP TABLE IF EXISTS `raffle`;
 CREATE TABLE IF NOT EXISTS `raffle` (
-  `raffle_id` int(11) NOT NULL,
+  `raffle_id` int(11) NOT NULL AUTO_INCREMENT,
   `item_desc` varchar(50) NOT NULL,
   `start_date` datetime NOT NULL,
   `end_date` datetime NOT NULL,
   `winner_1` varchar(50) NOT NULL,
   `winner_2` varchar(50) NOT NULL,
-  `winner_3` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `winner_3` varchar(50) NOT NULL,
+  PRIMARY KEY (`raffle_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -121,16 +131,26 @@ CREATE TABLE IF NOT EXISTS `raffle` (
 -- Table structure for table `service`
 --
 
+DROP TABLE IF EXISTS `service`;
 CREATE TABLE IF NOT EXISTS `service` (
   `name` varchar(50) NOT NULL,
   `description` varchar(1000) NOT NULL,
-  `usage` text NOT NULL,
+  `usage_text` text NOT NULL,
   `creator_email` varchar(50) NOT NULL,
   `insertion_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `category` enum('listing','social_network') NOT NULL,
+  `category` enum('negocios','ocio','academico','social','comunicaciones','informativo','adulto','otros') NOT NULL,
   `subservices` varchar(250) NOT NULL,
-  `deploy_key` varchar(32) NOT NULL
+  `deploy_key` varchar(32) NOT NULL,
+  PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `service`
+--
+
+INSERT INTO `service` (`name`, `description`, `usage_text`, `creator_email`, `insertion_date`, `category`, `subservices`, `deploy_key`) VALUES
+('ayuda', 'Muestra la ayuda de Apretaste', 'Escriba un correo a apretaste@gmail.com y en el asunto ponga la palabra AYUDA\n			Por ejemplo:\n\n			Para: apretaste@gmail.com\n			Asunto: AYUDA\n\n			Debera recibir un email explicando como usar Apretaste y una lista de los servicios mas usados.', 'salvi.pascual@gmail.com', '2015-08-02 22:14:41', 'academico', '', '88388a73e7959ba3ac4862f4309dded4'),
+('letra', 'Este servicio devuelve letras de canciones basado en su titulo', 'Escriba un correo a apretaste@mail.com y en el asunto ponga la palabra LETRA seguida del titulo de una cancion.\n			Por ejemplo:\n\n			Para: apretaste@mail.com\n			Asunto: LETRA before I forgot\n\n			Espere tres minutos y debera recibir un correo de respeuesta con su cancion.', 'salvi.pascual@pragres.com', '2015-08-02 16:47:31', '', '', '2344a5ba680d3452dd29ab48a6090286');
 
 -- --------------------------------------------------------
 
@@ -138,22 +158,25 @@ CREATE TABLE IF NOT EXISTS `service` (
 -- Table structure for table `ticket`
 --
 
+DROP TABLE IF EXISTS `ticket`;
 CREATE TABLE IF NOT EXISTS `ticket` (
-  `ticket_id` int(11) NOT NULL,
+  `ticket_id` int(11) NOT NULL AUTO_INCREMENT,
   `creation_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `raffle_id` int(11) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `paid` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `paid` tinyint(1) NOT NULL,
+  PRIMARY KEY (`ticket_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `usage`
+-- Table structure for table `utilization`
 --
 
-CREATE TABLE IF NOT EXISTS `usage` (
-  `usage_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `utilization`;
+CREATE TABLE IF NOT EXISTS `utilization` (
+  `usage_id` int(11) NOT NULL AUTO_INCREMENT,
   `service` varchar(50) NOT NULL,
   `subservice` varchar(50) DEFAULT NULL,
   `query` varchar(100) DEFAULT NULL,
@@ -162,85 +185,25 @@ CREATE TABLE IF NOT EXISTS `usage` (
   `response_time` time NOT NULL DEFAULT '00:00:00',
   `domain` varchar(30) NOT NULL,
   `ad_top` int(11) DEFAULT NULL,
-  `ad_botton` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `ad_botton` int(11) DEFAULT NULL,
+  PRIMARY KEY (`usage_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10 ;
 
 --
--- Indexes for dumped tables
+-- Dumping data for table `utilization`
 --
 
---
--- Indexes for table `ads`
---
-ALTER TABLE `ads`
-  ADD PRIMARY KEY (`ads_id`);
+INSERT INTO `utilization` (`usage_id`, `service`, `subservice`, `query`, `requestor`, `request_time`, `response_time`, `domain`, `ad_top`, `ad_botton`) VALUES
+(1, 'letra', '', 'before I forgot', 'salvi.pascual@zgmail.com', '2015-08-02 16:47:55', '00:00:00', 'zgmail.com', 0, 0),
+(2, 'ayuda', '', 'is an example webhook message', 'example.sender@mandrillapp.com', '2015-08-02 22:18:33', '00:00:00', 'mandrillapp.com', 0, 0),
+(3, 'letra', '', 'before I forgot', 'salvi.pascual@gmail.com', '2015-08-02 22:19:30', '00:00:00', 'gmail.com', 0, 0),
+(4, 'letra', '', 'before I forgot', 'salvi.pascual@gmail.com', '2015-08-02 22:22:12', '00:00:01', 'gmail.com', 0, 0),
+(5, 'letra', '', 'before o forgot', 'salvi.pascual@gmail.com', '2015-08-02 22:36:10', '00:00:01', 'gmail.com', 0, 0),
+(6, 'letra', '', 'como los peces', 'salvi.pascual@gmail.com', '2015-08-02 22:39:15', '00:00:00', 'gmail.com', 0, 0),
+(7, 'ayuda', '', '', 'salvi.pascual@gmail.com', '2015-08-02 22:43:14', '00:00:01', 'gmail.com', 0, 0),
+(8, 'letra', '', 'before I forgot', 'Ibis@techyibis.com', '2015-08-02 23:39:24', '00:00:01', 'techyibis.com', 0, 0),
+(9, 'letra', '', 'no one', 'salvi.pascual@gmail.com', '2015-08-03 04:36:48', '00:00:00', 'gmail.com', 0, 0);
 
---
--- Indexes for table `invitations`
---
-ALTER TABLE `invitations`
-  ADD PRIMARY KEY (`invitation_id`);
-
---
--- Indexes for table `jumper`
---
-ALTER TABLE `jumper`
-  ADD PRIMARY KEY (`email`);
-
---
--- Indexes for table `person`
---
-ALTER TABLE `person`
-  ADD PRIMARY KEY (`email`);
-
---
--- Indexes for table `raffle`
---
-ALTER TABLE `raffle`
-  ADD PRIMARY KEY (`raffle_id`);
-
---
--- Indexes for table `service`
---
-ALTER TABLE `service`
-  ADD PRIMARY KEY (`name`);
-
---
--- Indexes for table `ticket`
---
-ALTER TABLE `ticket`
-  ADD PRIMARY KEY (`ticket_id`);
-
---
--- Indexes for table `usage`
---
-ALTER TABLE `usage`
-  ADD PRIMARY KEY (`usage_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `invitations`
---
-ALTER TABLE `invitations`
-  MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT;
---
--- AUTO_INCREMENT for table `raffle`
---
-ALTER TABLE `raffle`
-  MODIFY `raffle_id` int(11) NOT NULL AUTO_INCREMENT;
---
--- AUTO_INCREMENT for table `ticket`
---
-ALTER TABLE `ticket`
-  MODIFY `ticket_id` int(11) NOT NULL AUTO_INCREMENT;
---
--- AUTO_INCREMENT for table `usage`
---
-ALTER TABLE `usage`
-  MODIFY `usage_id` int(11) NOT NULL AUTO_INCREMENT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

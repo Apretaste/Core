@@ -35,13 +35,27 @@ class Utils {
 	 * Check if the service exists in the database
 	 *
 	 * @author salvipascual
-	 * @param String , name of the service
+	 * @param String, name of the service
 	 * @return Boolean, true if service exist
 	 * */
 	public function serviceExist($serviceName)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT * FROM service WHERE LOWER(name)=LOWER('$serviceName')");
+		$res = $connection->deepQuery("SELECT name FROM service WHERE LOWER(name)=LOWER('$serviceName')");
+		return count($res) > 0;
+	}
+
+	/**
+	 * Check if the Person exists in the database
+	 * 
+	 * @author salvipascual
+	 * @param String $personEmail, email of the person
+	 * @return Boolean, true if Person exist
+	 * */
+	public function personExist($personEmail)
+	{
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
 		return count($res) > 0;
 	}
 }
