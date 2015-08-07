@@ -1,27 +1,7 @@
 <?php
 
-include_once "$wwwroot/core/Connection.php";
-include_once "$wwwroot/core/Servicer.php";
-include_once "$wwwroot/classes/Service.php";
-
 class Deploy
 {
-	private $db;
-	private $servicer;
-
-	/**
-	 * Connects to the database when the class is created
-	 */
-	public function __construct()
-	{
-		// connects to the database Apretaste
-		$this->db = new Connection ();
-		$this->db->connectTo('apretaste');
-
-		// create a new servicer
-		$this->servicer = new Servicer ();
-	}
-
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -33,55 +13,34 @@ class Deploy
 	{
 		// extract file to the temp folder
 		$pathToService = $this->extractServiceZip($pathToZip);
-
-		$file_name = str_replace(".zip", "", basename($zipName));
-
-		if (!file_exists("$pathToService/config.xml") && file_exists("$pathToService/$file_name/config.xml"))
-			$pathToService = "$pathToService/$file_name";
-
 		$pathToXML = "$pathToService/config.xml";
 
-		// check if no prohibed tags were used on the service PHP code
-		if (!$this->checkForProhibedCode($pathToService))
-			throw new Exception ("Insecure code was found. Please refer to the coding directions");
-
 		// get the service data from the XML
-		$service = new Service ();
-		$service->loadFromXML($pathToXML);
+		$service = $this->loadFromXML($pathToXML);
 
 		// remove the current project if it exist
-		if ($this->servicer->serviceExist($service->name)) {
+		$utils = new Utils();
+		if ($utils->serviceExist($service['serviceName'])) {
 			// check if the deploy key is valid
-			if (!$this->checkDeployValidity($service->name, $deployKey))
+			if ( ! $this->checkDeployValidity($service['serviceName'], $deployKey)) {
 				throw new Exception ("Deploy key is invalid");
+			}
 
 			// clean database and files if the service existed before
-			$this->servicer->removeService($service);
+			$this->removeService($service);
 		}
 
 		// create a new deploy key
 		$deployKey = $this->generateDeployKey();
 
 		// add the new service
-		$this->servicer->addService($service, $deployKey, $pathToZip, $pathToService);
+		$this->addService($service, $deployKey, $pathToZip, $pathToService);
 
 		// remove temp service folder
-		system("rm -rfv " . escapeshellarg($pathToService)); // linux version TODO change to PHP version
+		@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
+		@system("rm -rfv " . escapeshellarg($pathToService)); // linux version 
 
 		return $deployKey;
-	}
-
-	/**
-	 * Check that the app do not have dangeros PHP code
-	 *
-	 * @author salvipascual
-	 * @param String $pathToService, path to the service to check
-	 * @return Boolean true if the app is clean
-	 */
-	public function checkForProhibedCode($pathToService)
-	{
-		// TODO
-		return true;
 	}
 
 	/**
@@ -107,10 +66,11 @@ class Deploy
 	 */
 	public function extractServiceZip($pathToZip)
 	{
-		global $wwwroot;
+		// get the path
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
 
 		$zip = new ZipArchive ();
-
 		if ($zip->open($pathToZip) === TRUE) {
 			// unzip service to the temp folder
 			$pathToService = "$wwwroot/temp/" . md5($pathToZip);
@@ -137,23 +97,11 @@ class Deploy
 	public function checkDeployValidity($serviceName, $deployKey)
 	{
 		// check if the plugin exist in the database and the deploy key is correct
-		$res = $this->db->query("SELECT * FROM service WHERE name='$serviceName' AND deploy_key='$deployKey'");
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT * FROM service WHERE name='$serviceName' AND deploy_key='$deployKey'");
 		return count($res) > 0;
 	}
 
-	/**
-	 * Check if the service exists in the database
-	 *
-	 * @author salvipascual
-	 * @param String , name of the service
-	 * @return Boolean, true if service exist
-	 * */
-	public function serviceExist($serviceName)
-	{
-		$res = $this->db->query("SELECT * FROM service WHERE LOWER(name)=LOWER('$serviceName')");
-		return count($res) > 0;
-	}
-	
 	/**
 	 * Remove a service from the filesystem and database
 	 *
@@ -162,24 +110,28 @@ class Deploy
 	 * */
 	public function removeService($service)
 	{
-		global $wwwroot;
-	
-		// remove all service tables
-		$this->db->query("DELETE FROM service WHERE name='{$service->name}'");
-		$this->db->query("DELETE FROM subservice WHERE service='{$service->name}'");
-	
-		// clean app-specific tables
-		foreach ($service->tables as $table)
-			$this->db->query("DROP TABLE IF EXISTS services.{$service->name}_{$table->name};");
-	
+		// get the path
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// create a new connection
+		$connection = new Connection();
+		// remove the service from the services table
+		$res = $connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
+
+		// clean service-specific tables
+		foreach ($service['database'] as $table) {
+			$res = $connection->deepQuery("DROP TABLE IF EXISTS __{$service['serviceName']}_{$table['name']};");
+		}
+
 		// remove the service folder
-		$dir = "$wwwroot/services/{$service->name}";
+		$dir = "$wwwroot/services/{$service['serviceName']}";
 		if (file_exists($dir)) {
-			//			system("rmdir ". escapeshellarg($dir) . " /s /q"); // TODO change to PHP version
-			system("rm -rfv " . escapeshellarg($dir)); // linux version
+			@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
+			@system("rm -rfv " . escapeshellarg($dir)); // linux version
 		}
 	}
-	
+
 	/**
 	 * Add a new service to the filesystem, database and create the specific service tables
 	 *
@@ -191,49 +143,94 @@ class Deploy
 	 * */
 	public function addService($service, $deployKey, $pathToZip, $pathToService)
 	{
-		global $wwwroot;
-	
-		$user = new User($service->author->email, false);
-		$user->setFullName($service->author->fullName);
-		$user->setCompany($service->author->company);
-		$user->setPhone($service->author->phone);
-	
-		// save new service in the database
-		$this->db->query("INSERT INTO service VALUES ('{$service->name}', '{$service->author->email}', '$deployKey', '{$service->description}', '{$service->account}', '{$service->category_id}', '{$service->license}', '{$service->support->email}', CURRENT_TIMESTAMP)");
-		$user->save();
-		$this->db->query("INSERT INTO support SELECT '{$service->support->email}', '{$service->support->fullName}', '{$service->support->company}', '{$service->support->phone}' WHERE NOT EXISTS(SELECT * FROM support WHERE email = '{$service->support->email}');");
-	
-		// save all subservices into the database
-		foreach ($service->subnames as $subname)
-			$this->db->query("INSERT INTO subservice VALUES ('{$service->name}', '{$subname->caption}', '{$subname->className}', 0)");
-	
-		// copy files to the service folder and removing temp files
-		rename($pathToService, "$wwwroot/services/{$service->name}");
+		// get the path
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// create a new connection
+		$connection = new Connection();
+
+		// save the new service in the database
+		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,subservices,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','','$deployKey')";
+		$res = $connection->deepQuery($insertUserQuery);
+
+		// copy files to the service folder and remove temp files
+		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
 		unlink($pathToZip);
-	
+
 		// create the service specific tables
 		$query = "";
-		foreach ($service->tables as $table) {
-			$tname = "services.{$service->name}_{$table->name}";
-	
-			$query = "CREATE TABLE $tname(";
-			foreach ($table->columns as $column) {
-				$length = empty($column->length) ? "" : "({$column->length})";
-	
-				$default = '';
-				if (isset($column->default))
-					$default = 'default ' . $column->default;
-	
-				if ($column->type == "uuid") {
-					$column->type = "varchar";
-					$default = "default get_uuid()";
-				}
-	
-				$query .= "{$column->name} {$column->type} $length $default,"; // TODO: think about $length,";
+		foreach ($service['database'] as $table) {
+			$tname = "__{$service['serviceName']}_{$table['name']}";
+			$query = "CREATE TABLE $tname (";
+			foreach ($table['columns'] as $column) {
+				$length = empty($column['length']) ? "" : "({$column['length']})";
+				$query .= "{$column['name']} {$column['type']} $length,";
 			}
-	
+
 			$query = rtrim($query, ",") . ");";
-			$this->db->query($query);
+			$res = $connection->deepQuery($query);
 		}
+	}
+
+	/**
+	 * Load all data from the XML and return an array with the information
+	 *
+	 * @author salvipascual
+	 * @param String $pathToXML, path to load the XML file
+	 * @return array, xml data
+	 * @throw Exception
+	 * */
+	public function loadFromXML($pathToXML)
+	{
+		// check if the XML file exists
+		if ( ! file_exists($pathToXML)) throw new Exception ("Cannot read configs.xml file");
+
+		// get a php object from the XML
+		$xml = simplexml_load_file($pathToXML);
+		$XMLData = array();
+
+		// get the tables if they exist
+		if (isset($xml->database)) {
+			$tables = array();
+			foreach ($xml->database->table as $table) {
+				$newtable = array("name"=>trim((String)$table->attributes()->name), "columns"=>NULL);
+				$columns = array();
+
+				foreach ($table->column as $column) {
+					$columns[] = array(
+						"name"=>trim((String)$column),
+						"type"=>trim((String)$column->attributes()->type), 
+						"length"=>trim((String)$column->attributes()->length)
+					);
+					$newtable['columns'] = $columns;
+				}
+				$tables[] = $newtable;
+			}
+
+			$XMLData['database'] = $tables;
+		}else{
+			$XMLData['database'] = array();
+		}
+
+		// get the main data of the service
+		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
+		$XMLData['creatorEmail'] = trim((String)$xml->creatorEmail);
+		$XMLData['serviceDescription'] = trim((String)$xml->serviceDescription);
+		$XMLData['serviceUsage'] = trim((String)$xml->serviceUsage);
+		$XMLData['serviceCategory'] = trim((String)$xml->serviceCategory);
+
+		// check if the email is valid
+		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL)) {
+			throw new Exception ("The email {$XMLData['creatorEmail']} is not valid.");
+		}
+
+		// check if the category is valid
+		$categories = array("negocios","compraventa","juegos","ocio","academico","social","comunicaciones","informativo","adulto","otros");
+		if( ! in_array($XMLData['serviceCategory'], $categories) ){
+			throw new Exception ("Category {$XMLData['serviceCategory']} is not valid. Categories are: " . implode(", ", $categories));
+		}
+
+		return $XMLData;
 	}
 }

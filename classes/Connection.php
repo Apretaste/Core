@@ -14,17 +14,23 @@ class Connection
 		// query the database
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$result = $di->get('db')->query($sql);
-		$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
 
-		// convert to array of objects
-		$rows = array();
-		while ($data = $result->fetch())
+		// only fetch for selects
+		if(stripos($sql, "select") === 0)
 		{
-			$rows[] = $data;
-		}
+			$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
 
-		// return the array of objects
-		return $rows;
+			// convert to array of objects
+			$rows = array();
+			while ($data = $result->fetch())
+			{
+				$rows[] = $data;
+			}
+			// return the array of objects
+			return $rows;
+		}else{
+			return NULL;
+		}
 	}
 
 	/**

@@ -1,0 +1,223 @@
+<div class="row">
+    <div class="col-xs-12">
+	<h1>Search for a Person</h1>
+    </div>
+</div>
+<?php 
+	if($noProfileFound == 0) 
+		echo "No Profile Found";
+	
+?>
+<div>
+    <div class="col-xs-12">
+        <form method="post">
+            <input type="text" name="email" placeholder="Email" />
+            <input type="submit" name="profilesearch" value="Search">
+        </form>
+    </div>
+</div>
+
+<div>
+    <div class="col-xs-12">
+        <label for="personImage">Image</label>
+        <?php 
+			if($email != 0)
+				"<img id='personImage' src='../public/profiles./'" . $email . "'>";
+			else
+				echo "No image available";
+		?>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personFirstName">Fist Name: </label>
+        <p id="personFirstName">
+			<?php	
+				if($firstName != 0)
+					echo $firstName;
+				else
+					echo "No First Name available";				
+			?>
+		</p>
+    </div>
+	
+	<div class="col-xs-12">
+        <label for="personMiddleName">Middle Name: </label>
+        <p id="personMiddleName">
+			<?php 
+				if($middleName != 0)
+					echo $middleName;
+				else
+					echo "No Middle Name available";
+			?>
+		</p>
+    </div>
+	
+	<div class="col-xs-12">
+        <label for="personLastName">Last Name: </label>
+        <p id="personLastName">
+			<?php
+				if($lastName != 0)
+					echo $lastName;
+				else
+					echo "No Last Name available";
+			?>
+		</p>
+    </div>
+	
+	<div class="col-xs-12">
+        <label for="personMotherName">Mother Name: </label>
+        <p id="personMotherName">
+			<?php
+				if($motherName != 0)
+					echo $motherName;
+				else
+					echo "No Mother Name available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="DoB">Date of Birth: </label>
+        <p id="DoB">
+			<?php 
+				if($dob != 0)
+					echo $dob;
+				else
+					echo "No Date of Birth available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personAge">Age: </label>            
+        <p id="personAge">
+			<?php
+				if($age != 0)
+					echo $age;
+				else
+					echo "No Age available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personGender">Gender: </label>
+        <p id="personGender">
+			<?php
+				if($gender != 0)
+					echo $gender;
+				else
+					echo "No gender available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="phoneNumber">Phone Number: </label>
+        <p id="phoneNumber">
+			<?php
+				if($phone != 0)
+					echo $phone;
+				else
+					echo "No Phone Number available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="eyesColor">Eyes Color: </label>
+        <p id="eyesColor">
+			<?php
+				if($eyes != 0)
+					echo $eyes;
+				else
+					echo "No eyes available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="skinColor">Skin Color: </label>
+        <p id="skinColor">
+			<?php
+				if($skin != 0)
+					echo $skin;
+				else
+					echo "No Skin is available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="bodyType">Body Type: </label>
+        <p id="bodyType">
+			<?php
+				if($body != 0)
+					echo $body;
+				else
+					echo "No Body Type available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="hairColor">Hair Color: </label>
+        <p id="hairColor">
+			<?php
+				if($hair != 0)
+					echo $hair;
+				else
+					echo "No Hair Color available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personCity">City: </label>
+        <p id="personCity">
+			<?php
+				if($city != 0)
+					echo $city;
+				else
+					echo "No City available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personProvince">Province: </label>
+        <p id="personProvince">
+			<?php
+				if($province)
+					echo $province;
+				else
+					echo "No province available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personAboutMe">About Me: </label>
+        <p id="personAboutMe">
+			<?php
+				if($aboutMe != 0)
+					echo $aboutMe;
+				else
+					echo "No About Me available";
+			?>
+		</p>
+    </div>
+    
+    <div class="col-xs-12">
+        <label for="personCredit">Credit: </label>
+        <p id="personCredit">
+			<?php
+				if($credit != 0)
+					echo $credit;
+				else
+					echo "No credit available";
+			?>
+		</p>
+    </div>
+</div>
+
