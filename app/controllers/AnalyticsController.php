@@ -124,36 +124,8 @@ class AnalyticsController extends Controller
 							WHERE(request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
 							ORDER BY request_time DESC";
 		$monthOrder = $connection->deepQuery($queryForMonth);
-		//print_r($monthOrder);
-		//exit;
-		foreach($monthOrder as $bounceList)
-		{
-			if($bounceList->MonthOrder == "Jan")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJan];
-			if($bounceList->MonthOrder = "Feb")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countFeb];
-			if($bounceList->MonthOrder == "Mar")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countMar];
-			if($bounceList->MonthOrder == "Apr")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countApr];
-			if($bounceList->MonthOrder == "May")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countMay];
-			if($bounceList->MonthOrder == "Jun")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJun];
-			if($bounceList->MonthOrder == "Jul")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countJul];
-			if($bounceList->MonthOrder == "Aug")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countAug];
-			if($bounceList->MonthOrder == "Sep")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countSep];
-			if($bounceList->MonthOrder == "Oct")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countOct];
-			if($bounceList->MonthOrder == "Nov")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countNov];
-			if($bounceList->MonthOrder == "Dic")
-				$bounceRateMontly[] = ["month"=>$bounceList->MonthOrder, "emails"=>$countDic];
-					
-		}
+		
+		
 		/*$bounceRateMontly = [
             ["month"=>"Jan", "emails"=>46],
             ["month"=>"Feb", "emails"=>47],
