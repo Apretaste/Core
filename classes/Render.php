@@ -7,6 +7,7 @@ class Render {
 	 * @author salvipascual
 	 * @param String $serviceName, name of the service
 	 * @param Response $response, response object to render
+	 * @return String, template in HTML
 	 * @throw Exception
 	 */
 	public function renderHTML($serviceName, $response) {
