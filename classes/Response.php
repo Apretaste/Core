@@ -44,6 +44,8 @@ class Response {
 	public function createFromTemplate($template, $content, $images=array(), $attachments=array()) {
 		$this->template = $template;
 		$this->content = $content;
+		$this->images = $images;
+		$this->attachments = $attachments;
 		$this->internal = false;
 	}
 }
