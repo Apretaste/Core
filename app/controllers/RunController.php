@@ -124,6 +124,7 @@ class RunController extends Controller
 		$userService->serviceUsage = $result[0]->usage_text;
 		$userService->insertionDate = $result[0]->insertion_date;
 		$userService->pathToService = $utils->getPathToService($serviceName);
+		$userService->utils = $utils;
 
 		// run the service and get a response
 		if(empty($subServiceName)) {

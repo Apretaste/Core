@@ -71,7 +71,7 @@ class Utils {
 		// get the path to service 
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		$path = "$wwwroot/$serviceName";
+		$path = "$wwwroot/services/$serviceName";
 
 		// check if the path exist and return it
 		if(file_exists($path)) return $path;
