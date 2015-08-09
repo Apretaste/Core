@@ -58,4 +58,23 @@ class Utils {
 		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
 		return count($res) > 0;
 	}
+
+	/**
+	 * Get the path to a service. 
+	 * 
+	 * @author salvipascual
+	 * @param String $serviceName, name of the service to access
+	 * @return Strinf, path to the service, or false if the service do not exist
+	 * */
+	public function getPathToService($serviceName)
+	{
+		// get the path to service 
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$path = "$wwwroot/services/$serviceName";
+
+		// check if the path exist and return it
+		if(file_exists($path)) return $path;
+		else return false;
+	}
 }

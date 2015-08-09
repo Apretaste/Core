@@ -32,7 +32,7 @@
 	</head>
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
 		<center>
-			<table id="container" border="0" cellpadding="0" cellspacing="0" border="0" valign="top" align="center" width="600">
+			<table id="container" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
 				<!--top links-->
 					<tr>
 					<td align="right" bgcolor="#D0D0D0" style="padding: 5px;">
@@ -62,6 +62,15 @@
 					</td>
 				</tr>
 
+				<!--top ad-->
+				{if $APRETASTE_TOP_AD}
+				<tr>
+					<td align="center">
+						{img src="{$APRETASTE_TOP_AD}" alt="Top Ad" width="100%"}
+					</td>
+				</tr>
+				{/if}
+
 				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
@@ -69,6 +78,15 @@
 						{include file="$APRETASTE_USER_TEMPLATE"}
 					</td>
 				</tr>
+
+				<!--bottom ad-->
+				{if $APRETASTE_BOTTOM_AD}
+				<tr>
+					<td align="center">
+						{img src="{$APRETASTE_BOTTOM_AD}" alt="Bottom Ad" width="100%"}
+					</td>
+				</tr>
+				{/if}
 
 				<!--services related-->
 				{if  $APRETASTE_SERVICE_RELATED|@count gt 0} 
@@ -92,6 +110,7 @@
 						<hr style="border: 1px solid #A03E3B;" />
 						<p>
 							<small>
+								<div style="margin-bottom:5px;">{$APRETASTE_SERVICE_NAME} fue creado por <b>{$APRETASTE_SERVICE_CREATOR}</b>. <a href="mailto:{apretaste_support_email}?subject=Como puedo implementar un servicio para Apretaste?">¿Sabes programar?</a></div>
 								Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a>. Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}.<br/> 
 								Copyright &copy; 2012 - {'Y'|date} Pragres Corporation
 							</small>

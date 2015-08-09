@@ -7,10 +7,11 @@ class Service {
 	public $serviceCategory;
 	public $serviceUsage;
 	public $insertionDate;
+	public $pathToService;
 	public $utils; // Instance of the Utils class
 
 	public function __construct() {
-		$this->utils = new Utils();
+		$this->utils = new Utils($this->serviceName);
 	}
 
 	/**

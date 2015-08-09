@@ -5,18 +5,19 @@ class Render {
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
-	 * @param String $serviceName, name of the service
+	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
+	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public function renderHTML($serviceName, $response) {
+	public function renderHTML($service, $response) {
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
 		// select the right file to load
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
-		else $userTemplateFile = "$wwwroot/services/$serviceName/templates/{$response->template}";
+		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
 
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
@@ -30,12 +31,22 @@ class Render {
 		$smarty->debugging = false;
 		$smarty->caching = false;		
 
+		// getting the ads
+		$adTop = $adBottom = "";
+		if( ! empty($response->getAds())){
+			$adTop = basename($response->getAds()[0]);
+			$adBottom = basename($response->getAds()[1]);
+		}
+
 		// list the system variables
 		$utils = new Utils();
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
-			"APRETASTE_SERVICE_NAME" => strtoupper($serviceName),
-			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($serviceName)
+			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
+			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
+			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
+			"APRETASTE_TOP_AD" => $adTop,
+			"APRETASTE_BOTTOM_AD" => $adBottom
 		);
 
 		// merge all variable sets and assign them to Smarty
@@ -59,14 +70,14 @@ class Render {
 	}
 
 	/**
-	 * Get three services related and return an array with them
+	 * Get up to five services related and return an array with them
 	 * 
 	 * @author salvipascual
 	 * @param String $serviceName, name of the service
 	 * @return Array
 	 */
 	private function getServicesRelatedArray($serviceName){
-		// get last 3 services inserted with the same category
+		// get last 5 services inserted with the same category
 		$query = "SELECT name FROM service 
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'

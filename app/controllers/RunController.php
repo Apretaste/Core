@@ -19,7 +19,8 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
+		$result = $this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
+		echo $result;
 	}
 
 	/**
@@ -32,7 +33,8 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$this->renderResponse("api@apretaste.com", $subject, "API", $body, array(), "json");
+		$result = $this->renderResponse("api@apretaste.com", $subject, "API", $body, array(), "json");
+		echo $result;
 	}
 
 	/**
@@ -53,9 +55,10 @@ class RunController extends Controller
 		$attachments = array(); // TODO get the attachments
 
 		// save the webhook log
-		$line = date("Y-m-d H:i:s")." - From: $fromEmail, Subject: $subject\n$mandrill_events\n\n";
 		$wwwroot = $this->di->get('path')['root'];
-		file_put_contents("$wwwroot/logs/webhook.log",$line,FILE_APPEND);
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("From: $fromEmail, Subject: $subject\n$mandrill_events\n\n");
+		$logger->close();
 
 		// execute the query
 		$this->renderResponse($fromEmail, $subject, $sender, $body, $attachments, "email");
@@ -108,14 +111,21 @@ class RunController extends Controller
 		$request->subservice = $subServiceName;
 		$request->query = $query;
 
+		// get details of the service from the database
+		$connection = new Connection();
+		$sql = "SELECT * FROM service WHERE name = '$serviceName'";
+		$result = $connection->deepQuery($sql);
+
 		// create a new service Object of the user type
 		$userService = new $serviceName();
 		$userService->serviceName = $serviceName;
-		$userService->serviceDescription = ""; // TODO fill this field
-		$userService->creatorEmail = ""; // TODO fill this field
-		$userService->serviceCategory = ""; // TODO fill this field
-		$userService->serviceUsage = ""; // TODO fill this field
-		$userService->insertionDate = ""; // TODO fill this field
+		$userService->serviceDescription = $result[0]->description;
+		$userService->creatorEmail = $result[0]->creator_email;
+		$userService->serviceCategory = $result[0]->category;
+		$userService->serviceUsage = $result[0]->usage_text;
+		$userService->insertionDate = $result[0]->insertion_date;
+		$userService->pathToService = $utils->getPathToService($serviceName);
+		$userService->utils = $utils;
 
 		// run the service and get a response
 		if(empty($subServiceName)) {
@@ -131,15 +141,13 @@ class RunController extends Controller
 		// render the template and echo on the screen
 		if($format == "html")
 		{
-			echo $render->renderHTML($serviceName, $response);
-			return;
+			return $render->renderHTML($userService, $response);
 		}
 
 		// echo the json on the screen
 		if($format == "json")
 		{
-			echo $render->renderJSON($response);
-			return;
+			return $render->renderJSON($response);
 		}
 
 		// render the template email it to the user
@@ -148,14 +156,15 @@ class RunController extends Controller
 		{
 			// get params for the email
 			$subject = "Respondiendo a su email con asunto: $serviceName";
-			$body = $render->renderHTML($serviceName, $response);
+			$body = $render->renderHTML($userService, $response);
+			$images = array_merge($response->images, $response->getAds());
+			$attachments = $response->attachments;
 
 			// send the email
 			$emailSender = new Email();
-			$emailSender->sendEmail($email, $subject, $body);
+			$emailSender->sendEmail($email, $subject, $body, $images, $attachments);
 
-			// create the new Person if access for the 1st time
-			$connection = new Connection();
+			// create the new Person if access for the first time
 			if ($utils->personExist($email)){
 				$sql = "INSERT INTO person (email) VALUES ('$email')";
 				$connection->deepQuery($sql);
@@ -173,6 +182,12 @@ class RunController extends Controller
 			// save the logs on the utilization table
 			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$query','$email','$execStartTime','$executionTime','$domain','','')";
 			$connection->deepQuery($sql);
+
+			// return positive answer to prove the email was quequed
+			return true;
 		}
+
+		// false if no action could be taken
+		return false;
 	}
 }
