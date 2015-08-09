@@ -6,7 +6,7 @@ class DeployController extends Controller
 {
 	public function indexAction()
 	{
-		$this->view->setLayout('analytics');
+		$this->view->setLayout('simple');
 		$this->view->deployingError = $this->request->get("e");
 		$this->view->deployingMesssage = $this->request->get("m");
 	}
