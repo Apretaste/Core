@@ -55,9 +55,10 @@ class RunController extends Controller
 		$attachments = array(); // TODO get the attachments
 
 		// save the webhook log
-		$line = date("Y-m-d H:i:s")." - From: $fromEmail, Subject: $subject\n$mandrill_events\n\n";
 		$wwwroot = $this->di->get('path')['root'];
-		file_put_contents("$wwwroot/logs/webhook.log",$line,FILE_APPEND);
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("From: $fromEmail, Subject: $subject\n$mandrill_events\n\n");
+		$logger->close();
 
 		// execute the query
 		$this->renderResponse($fromEmail, $subject, $sender, $body, $attachments, "email");
@@ -140,7 +141,7 @@ class RunController extends Controller
 		// render the template and echo on the screen
 		if($format == "html")
 		{
-			return $render->renderHTML($serviceName, $response);
+			return $render->renderHTML($userService, $response);
 		}
 
 		// echo the json on the screen
@@ -155,16 +156,15 @@ class RunController extends Controller
 		{
 			// get params for the email
 			$subject = "Respondiendo a su email con asunto: $serviceName";
-			$body = $render->renderHTML($serviceName, $response);
-			$images = $response->images;
+			$body = $render->renderHTML($userService, $response);
+			$images = array_merge($response->images, $response->getAds());
 			$attachments = $response->attachments;
 
 			// send the email
 			$emailSender = new Email();
 			$emailSender->sendEmail($email, $subject, $body, $images, $attachments);
 
-			// create the new Person if access for the 1st time
-			
+			// create the new Person if access for the first time
 			if ($utils->personExist($email)){
 				$sql = "INSERT INTO person (email) VALUES ('$email')";
 				$connection->deepQuery($sql);

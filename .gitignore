@@ -8,3 +8,5 @@ vendor/*
 .project
 composer.lock
 configs/config.ini
+public/profile/*
+public/ads/*
