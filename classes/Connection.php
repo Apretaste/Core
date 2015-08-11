@@ -8,6 +8,7 @@ class Connection {
 	 * @param String $sql, valid sql query
 	 * @return Array, list of rows or NULL if it is not a select
 	 */
+	//@NOTE SQL injection attack to Core Database
 	public function deepQuery($sql)
 	{
 		// query the database

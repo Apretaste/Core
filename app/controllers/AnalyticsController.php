@@ -12,6 +12,9 @@ class AnalyticsController extends Controller
 
     public function audienceAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
         $connection = new Connection();
         
         // Weekly visitors
@@ -322,6 +325,9 @@ class AnalyticsController extends Controller
 
     public function profileAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		$connection = new Connection();
 		
         // Users with profile vs users without profile
@@ -378,21 +384,21 @@ class AnalyticsController extends Controller
         // Numbers of profiles per province
 		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount, 
 										CASE province
-											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
 											WHEN 'HAVANA' THEN 'Ciudad de La Habana'
 											WHEN 'ARTEMISA' THEN 'CU-X01'
 											WHEN 'MAYABEQUE' THEN 'CU-X02'
 											WHEN 'MATANZAS' THEN 'Matanzas'
 											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-											WHEN 'SANTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
-											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de ï¿½?vila'
-											WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de ??vila'
+											WHEN 'CAMAGUEY' THEN 'Camagüey'
 											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-											WHEN 'HOLGUIN' THEN 'HolguÃ­n'
+											WHEN 'HOLGUIN' THEN 'Holguín'
 											WHEN 'GRANMA' THEN 'Granma'
 											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-											WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
+											WHEN 'GUANTANAMO' THEN 'Guantánamo'
 											WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
 										END AS ProvinceName
 										FROM `person`
@@ -415,6 +421,9 @@ class AnalyticsController extends Controller
     //Action for Analytic for Services
     public function servicesAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		$connection = new Connection();
 		
 		//Services
@@ -432,6 +441,9 @@ class AnalyticsController extends Controller
     //Action for Analytics for Ads
     public function adsAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
         $connection = new Connection();
 		
 		//Ads active
@@ -449,6 +461,9 @@ class AnalyticsController extends Controller
 	//Action for Analytic for Search a Person
 	public function profilesearchAction()
 	{
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		if($this->request->isPost())
 		{
 			$connection = new Connection();

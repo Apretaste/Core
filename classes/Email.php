@@ -43,7 +43,7 @@ class Email {
 
 		// queque the email to be sent by Mandrill
 		try {
-			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw');
+			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw'); // TODO put API_Key in the configuration
 			$result = $mandrill->messages->send($message, false);
 			// TODO log rejected emails
 		} catch(Mandrill_Error $e) {
