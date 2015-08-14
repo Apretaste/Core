@@ -6,46 +6,136 @@ class AnalyticsController extends Controller
 {
     public function indexAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
     }
 
     public function audienceAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
         $connection = new Connection();
         
-        // weekly visitors
-        $queryWeecly = "SELECT DATE_FORMAT(request_time, '%a') as Weekday, count(request_time) as TimesRequested
-                        FROM  `utilization` 
-                        WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 7 DAY))
-                        group by date(request_time)
-                      ";
+        // Weekly visitors
+		//DONE and Revised
+        $queryWeecly = "SELECT*
+						FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 DAY), '%a') AS Weekday
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 DAY), '%a') AS Weekday
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 DAY), '%a') AS Weekday
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 DAY), '%a') AS Weekday
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 DAY), '%a') AS Weekday
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 DAY), '%a') AS Weekday
+							UNION
+								SELECT DATE_FORMAT(now(), '%a') as Weekday) AS Weekdays
+						LEFT JOIN
+						(SELECT DATE_FORMAT(request_time, '%a') as DataWeekday, count(request_time) as TimesRequested
+						FROM  `utilization` 
+						WHERE (request_time >= DATE_SUB(now( ) , INTERVAL 7 DAY))
+						group by date(request_time)) AS DataWeek
+						ON DataWeek.DataWeekday = Weekdays.Weekday";
+		
         $visitorsWeeclyObj = $connection->deepQuery($queryWeecly);
 		foreach($visitorsWeeclyObj as $weeklyvisits)
-			$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=>$weeklyvisits->TimesRequested];
-       
+		{
+			if($weeklyvisits->TimesRequested != NULL)
+				$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=>$weeklyvisits->TimesRequested];
+			else
+				$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=> 0];
+		}
         //End weekly visitors
 
-        // montly visitors
-        $queryMonthly = "SELECT DATE_FORMAT(request_time,'%b-%Y') as Month, count(request_time) as TimesRequested 
-						FROM `utilization` 
-						WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH)) 
-						group by EXTRACT(MONTH FROM date(request_time)) 
-						ORDER BY request_time";
+        // Montly visitors
+		//DONE Revised 
+        $queryMonthly = "SELECT *
+						FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 11 MONTH), '%b-%Y') as Month
+							  UNION
+							 SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 10 MONTH), '%b-%Y') as Month
+							UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 9 MONTH), '%b-%Y') as Month
+							UNION 
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 8 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 7 MONTH), '%b-%Y') as Month
+							UNION 
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 MONTH), '%b-%Y') as Month
+							UNION 
+							  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 MONTH), '%b-%Y') as Month
+							 UNION
+							  SELECT DATE_FORMAT(now(), '%b-%Y') as Month) AS Months
+						LEFT JOIN
+						(SELECT DATE_FORMAT(request_time,'%b-%Y') as dataName, count(request_time) as TimesRequested 
+						 FROM `utilization` 
+						 WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`request_time`, '%Y%m'))<12 
+						 group by EXTRACT(MONTH FROM date(request_time)) 
+						 ORDER BY request_time) AS dataMonth
+						ON dataMonth.dataName = Months.Month";
         $visitorsMonthlyObj = $connection->deepQuery($queryMonthly); 
                 
         foreach($visitorsMonthlyObj as $visits)
-			$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=>$visits->TimesRequested];
+		{
+			if($visits->TimesRequested != NULL)
+				$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=>$visits->TimesRequested];
+			else
+				$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=> 0];
+		}
 		//End Monthly Visitors
 		
         // New users per month
-		$queryNewUsers = "SELECT DATE_FORMAT(insertion_date,'%b-%Y') as Month, count(insertion_date) as TimeInserted
-							FROM `person`
-							WHERE (insertion_date >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
-							group by EXTRACT(MONTH FROM date(insertion_date)) 
-							ORDER BY insertion_date";
+		//DONE and Revise
+		$queryNewUsers = "SELECT *
+							FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 11 MONTH), '%b-%Y') as Month
+								  UNION
+								 SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 10 MONTH), '%b-%Y') as Month
+								UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 9 MONTH), '%b-%Y') as Month
+								UNION 
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 8 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 7 MONTH), '%b-%Y') as Month
+								UNION 
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 MONTH), '%b-%Y') as Month
+								UNION 
+								  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 MONTH), '%b-%Y') as Month
+								 UNION
+								  SELECT DATE_FORMAT(now(), '%b-%Y') as Month) AS Months
+							LEFT JOIN
+							(SELECT DATE_FORMAT(insertion_date,'%b-%Y') as dataName, count(insertion_date) as TimeInserted
+							 FROM `person`
+							 WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`insertion_date`, '%Y%m'))<12
+							 group by EXTRACT(MONTH FROM date(insertion_date)) 
+							 ORDER BY insertion_date) AS dataMonth
+							ON dataMonth.dataName = Months.Month";
 		$newUsersMonthly = $connection->deepQuery($queryNewUsers);
 		
 		foreach($newUsersMonthly as $newUsersList)
-			$newUsers[] = ["month"=>$newUsersList->Month, "emails"=>$newUsersList->TimeInserted];
+		{
+			if($newUsersList->TimeInserted != NULL)
+				$newUsers[] = ["month"=>$newUsersList->Month, "emails"=>$newUsersList->TimeInserted];
+			else
+				$newUsers[] = ["month"=>$newUsersList->Month, "emails"=> 0];
+		}
 		//End new users per month
 		
 		//Current number of Users
@@ -55,21 +145,68 @@ class AnalyticsController extends Controller
 		//End Current number of Users
 
         // Get services usage monthly
-		$queryMonthlyServiceUsage = "SELECT DATE_FORMAT(request_time,'%b-%Y') as Month, count(service) as ServicesCount 
-									FROM `utilization` 
-									WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
-									group by EXTRACT(MONTH FROM date(request_time)) 
-									ORDER BY request_time";
+		//DONE and Revise
+		$queryMonthlyServiceUsage = "SELECT *
+									FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 11 MONTH), '%b-%Y') as Month
+										  UNION
+										 SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 10 MONTH), '%b-%Y') as Month
+										UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 9 MONTH), '%b-%Y') as Month
+										UNION 
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 8 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 7 MONTH), '%b-%Y') as Month
+										UNION 
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 MONTH), '%b-%Y') as Month
+										UNION 
+										  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 MONTH), '%b-%Y') as Month
+										 UNION
+										  SELECT DATE_FORMAT(now(), '%b-%Y') as Month) AS Months
+									LEFT JOIN
+										(SELECT DATE_FORMAT(request_time,'%b-%Y') as DataName, COUNT(service) as ServicesCount 
+										FROM utilization
+										WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`request_time`, '%Y%m'))<12
+										group by EXTRACT(MONTH FROM date(request_time)) 
+										ORDER BY request_time) AS dataMonth
+									ON dataMonth.dataName = Months.Month";
 		$MonthlyServiceUseage = $connection->deepQuery($queryMonthlyServiceUsage);
+		
 		foreach($MonthlyServiceUseage as $serviceList)
-			$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=>$serviceList->ServicesCount];
+		{
+			if($serviceList->ServicesCount != NULL)
+				$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=>$serviceList->ServicesCount];
+			else
+				$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=> 0];
+		}
+		/*$servicesUsageMonthly = 
+				[["service"=>"Sep", "usage"=>75],
+				["service"=>"Oct", "usage"=>85],
+				["service"=>"Nov", "usage"=>100],
+				["service"=>"Dec", "usage"=>89],
+				["service"=>"Jan", "usage"=>77],
+				["service"=>"Feb", "usage"=>90],
+				["service"=>"Mar", "usage"=>73],
+				["service"=>"Apr", "usage"=>88],
+				["service"=>May, "usage"=>80],
+				["service"=>"Jun", "usage"=>79],
+				["service"=>"Jul", "usage"=>48],
+				["service"=>Aug, "usage"=>1]];*/
 		//End Get services usage monthly
 
-        // Active domains monthly
+        // Active domains last 4 Month
+		//DONE and Revise
 		$queryAciteDomain = "SELECT domain as Domains, count(domain) as DomainCount 
 							FROM `utilization` 
-							WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
-							group by domain";
+							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`request_time`, '%Y%m'))<4
+							GROUP BY domain";
 		$ActiveDomains = $connection->deepQuery($queryAciteDomain);
 		
 		foreach($ActiveDomains as $domainList)
@@ -77,87 +214,94 @@ class AnalyticsController extends Controller
 		//End Active domains monthly
 
         // Bounce rate
-		$queryBounceRate = "SELECT DATE_FORMAT(T.RequestTime, '%b') AS Month
-							FROM (SELECT DATE(R.request_time) AS RequestTime, COUNT( R.requestor) AS RequestorCount
-									FROM (SELECT request_time, requestor
-											FROM utilization
-											WHERE (request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
-											ORDER BY `utilization`.`request_time`) R
-									GROUP BY R.requestor) T
-							WHERE T.RequestorCount = 1
-							GROUP BY T.RequestTime";
-		$bounceRate = $connection->deepQuery($queryBounceRate);
+		//DONE and Revised
 		
-		//Month Count Variable
-		$countJan = $countFeb = $countMar = $countApr = $countMay = $countJun = $countJul = $countAug = $countSep = $countOct = $countNov = $countDic = 0;
+		//Month Count Variable		
+		$queryBounceRate = "SELECT *
+						FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 11 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 10 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 9 MONTH), '%b-%Y') as Month
+							UNION 
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 8 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 7 MONTH), '%b-%Y') as Month
+							UNION 
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 MONTH), '%b-%Y') as Month
+							UNION 
+								SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 MONTH), '%b-%Y') as Month
+							UNION
+								SELECT DATE_FORMAT(now(), '%b-%Y') as Month) AS Months
+						LEFT JOIN
+							(SELECT CONCAT(SUBSTRING(DATE_FORMAT(request_time, '%b'),1,3),DATE_FORMAT(`request_time`,'-%Y')) as dateName, 
+									Count(Distinct requestor) AS RequestCount
+							FROM `utilization`
+							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`request_time`, '%Y%m'))<12
+							GROUP BY YEAR(`request_time`), MONTH(`request_time`)) AS dataMonth
+						ON dataMonth.dateName=Months.Month";
+		$dataBounceRate = $connection->deepQuery($queryBounceRate);
 		
-		foreach($bounceRate as $bounceCount)
+		foreach($dataBounceRate as $monthBounceList)
 		{
-			if($bounceCount->Month == "Jan")
-				$countJan++;
-			if($bounceCount->Month == "Feb")
-				$countFeb++;
-			if($bounceCount->Month == "Mar")
-				$countMar++;
-			if($bounceCount->Month == "Apr")
-				$countApr++;
-			if($bounceCount->Month == "May")
-				$countMay++;
-			if($bounceCount->Month == "Jun")
-				$countJun++;
-			if($bounceCount->Month == "Jul")
-				$countJul++;
-			if($bounceCount->Month == "Aug")
-				$countAug++;
-			if($bounceCount->Month == "Sep")
-				$countSep++;
-			if($bounceCount->Month == "Oct")
-				$countOct++;
-			if($bounceCount->Month == "Nov")
-				$countNov++;
-			if($bounceCount->Month == "Dic")
-				$countDic++;
+			if($monthBounceList->RequestCount != NULL)
+				$bounceRateMontly[] = ["month"=>$monthBounceList->Month, "emails"=>$monthBounceList->RequestCount];
+			else
+				$bounceRateMontly[] = ["month"=>$monthBounceList->Month, "emails"=> 0];
 		}
-		
-		$queryForMonth = "SELECT DISTINCT DATE_FORMAT(request_time, '%b') AS MonthOrder
-							FROM utilization
-							WHERE(request_time >= DATE_SUB( CURDATE( ) , INTERVAL 12 MONTH))
-							ORDER BY request_time DESC";
-		$monthOrder = $connection->deepQuery($queryForMonth);
-		
-		
-		/*$bounceRateMontly = [
-            ["month"=>"Jan", "emails"=>46],
-            ["month"=>"Feb", "emails"=>47],
-            ["month"=>"Mar", "emails"=>57],
-            ["month"=>"Apr", "emails"=>32],
-            ["month"=>"May", "emails"=>67],
-            ["month"=>"Jun", "emails"=>46],
-            ["month"=>"Jul", "emails"=>47],
-            ["month"=>"Aug", "emails"=>37],
-            ["month"=>"Sep", "emails"=>37],
-            ["month"=>"Oct", "emails"=>46],
-            ["month"=>"Nov", "emails"=>41],
-            ["month"=>"Dec", "emails"=>24]
-        ];*/
 		//End Bounce rate
 
         //Updated profiles
+		//DONE and Revised
+		$queryUpdatedProfiles = "SELECT *
+								FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 11 MONTH), '%b-%Y') as Month
+									  UNION
+									 SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 10 MONTH), '%b-%Y') as Month
+									UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 9 MONTH), '%b-%Y') as Month
+									UNION 
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 8 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 7 MONTH), '%b-%Y') as Month
+									UNION 
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 MONTH), '%b-%Y') as Month
+									UNION 
+									  SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 MONTH), '%b-%Y') as Month
+									 UNION
+									  SELECT DATE_FORMAT(now(), '%b-%Y') as Month) AS Months
+								LEFT JOIN
+								(SELECT CONCAT(SUBSTRING(DATE_FORMAT(last_update_date, '%b'),1,3),DATE_FORMAT(`last_update_date`,'-%Y')) as dateName, 
+								Count(email) AS UpdatedCount
+								FROM `person`
+								WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(`last_update_date`, '%Y%m'))<12
+								GROUP BY YEAR(`last_update_date`), MONTH(`last_update_date`)) AS dataMonth
+								ON dataMonth.dateName=Months.Month";
 		
-        $updatedProfilesMontly = [
-            ["month"=>"Jan", "emails"=>46],
-            ["month"=>"Feb", "emails"=>47],
-            ["month"=>"Mar", "emails"=>575],
-            ["month"=>"Apr", "emails"=>329],
-            ["month"=>"May", "emails"=>675],
-            ["month"=>"Jun", "emails"=>46],
-            ["month"=>"Jul", "emails"=>47],
-            ["month"=>"Aug", "emails"=>357],
-            ["month"=>"Sep", "emails"=>372],
-            ["month"=>"Oct", "emails"=>426],
-            ["month"=>"Nov", "emails"=>41],
-            ["month"=>"Dec", "emails"=>284]
-        ];
+		$updatedProfiles = $connection->deepQuery($queryUpdatedProfiles);
+		
+		foreach($updatedProfiles as $updatedProfile)
+		{
+			if($updatedProfile->UpdatedCount != NULL)
+				$updatedProfilesMontly[] = ["month"=>$updatedProfile->Month, "emails"=>$updatedProfile->UpdatedCount];
+			else
+				$updatedProfilesMontly[] = ["month"=>$updatedProfile->Month, "emails"=> 0];
+		}
 		//End Updated profiles
 		
 		//Current number of running ads
@@ -181,6 +325,9 @@ class AnalyticsController extends Controller
 
     public function profileAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		$connection = new Connection();
 		
         // Users with profile vs users without profile
@@ -237,21 +384,21 @@ class AnalyticsController extends Controller
         // Numbers of profiles per province
 		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount, 
 										CASE province
-											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
 											WHEN 'HAVANA' THEN 'Ciudad de La Habana'
 											WHEN 'ARTEMISA' THEN 'CU-X01'
 											WHEN 'MAYABEQUE' THEN 'CU-X02'
 											WHEN 'MATANZAS' THEN 'Matanzas'
 											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-											WHEN 'SANTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
-											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de ï¿½?vila'
-											WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de ??vila'
+											WHEN 'CAMAGUEY' THEN 'Camagüey'
 											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-											WHEN 'HOLGUIN' THEN 'HolguÃ­n'
+											WHEN 'HOLGUIN' THEN 'Holguín'
 											WHEN 'GRANMA' THEN 'Granma'
 											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-											WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
+											WHEN 'GUANTANAMO' THEN 'Guantánamo'
 											WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
 										END AS ProvinceName
 										FROM `person`
@@ -274,6 +421,9 @@ class AnalyticsController extends Controller
     //Action for Analytic for Services
     public function servicesAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		$connection = new Connection();
 		
 		//Services
@@ -291,6 +441,9 @@ class AnalyticsController extends Controller
     //Action for Analytics for Ads
     public function adsAction()
     {
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
         $connection = new Connection();
 		
 		//Ads active
@@ -308,6 +461,9 @@ class AnalyticsController extends Controller
 	//Action for Analytic for Search a Person
 	public function profilesearchAction()
 	{
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
 		if($this->request->isPost())
 		{
 			$connection = new Connection();

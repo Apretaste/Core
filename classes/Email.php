@@ -42,10 +42,10 @@ class Email {
 
 		// send the email via Mandrill
 		try {
-			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw');
+			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw'); // TODO put API_Key in the configuration
 			$result = $mandrill->messages->send($message, false);
 		} catch(Mandrill_Error $e) {
-			echo 'An error sending via mandrill occurred: ' . get_class($e) . ' - ' . $e->getMessage();
+			echo 'An error sending your email occurred: ' . get_class($e) . ' - ' . $e->getMessage();
 			throw $e;
 		}
 

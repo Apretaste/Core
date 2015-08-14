@@ -1,0 +1,45 @@
+<div class="row">
+	<div class="col-xs-12">
+		<?php if( ! empty($adsError)) { ?>
+			<br/>
+			<div class="alert alert-danger"><?php echo $adsError; ?></div>
+		<?php } ?>
+
+		<?php if( ! empty($adsMesssage)) { ?>
+			<br/>
+			<div class="alert alert-success"><?php echo $adsMesssage; ?></div>
+		<?php } ?>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-xs-12">
+		<h1>Insert Ads</h1>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-xs-12">
+		<form role="form" action="submitAds" method="POST" enctype="multipart/form-data">
+			<div class="form-group">
+				<h4>Email of the owner of the Ads</h4>
+				<input type="email" name="owner" placeholder="Owner's email"/>
+			</div>
+			<div class="form-group">
+				<h4>Tittle of the Ads</h4>
+				<input type="text" name="tittle"/>
+			</div>
+			<div class="form-group">
+				<h4>Description of the Ads<h4>
+				<input type="text" name="description"/>
+			</div>
+			<div class="form-group">
+				<h2>Upload Picture</h2>
+				<input type="file" name="pictureAds" >
+				<p class="help-block">Picture .png and size:600px by 100px</p>
+			</div>	
+				
+			<button type="submit" class="btn btn-default">Create Ads</button>
+		</form>
+	</div>
+</div>
