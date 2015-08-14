@@ -12,8 +12,8 @@ class Email {
 	 * @throw Mandrill_Error
 	 * */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array()) {
-		// TODO select the from email using the jumper
-		$from="soporte@apretaste.com";
+		// select the from email using the jumper
+		$from = $this->nextEmail($to);
 
 		// create the list of images
 		$messageImages = array();
@@ -28,12 +28,11 @@ class Email {
 		}
 
 		// crate the list of attachments
-		// TODO
+		// @TODO
 
 		// create the array send 	
 		$message = array(
 			'html' => $body,
-			'text' => '', // TODO convert from html to text automatically
 			'subject' => $subject,
 			'from_email' => $from,
 			'from_name' => 'Apretaste',
@@ -41,14 +40,48 @@ class Email {
 			'images' => $messageImages
 		);
 
-		// queque the email to be sent by Mandrill
+		// send the email via Mandrill
 		try {
 			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw');
 			$result = $mandrill->messages->send($message, false);
-			// TODO log rejected emails
 		} catch(Mandrill_Error $e) {
-			echo 'A mandrill error occurred: ' . get_class($e) . ' - ' . $e->getMessage();
+			echo 'An error sending via mandrill occurred: ' . get_class($e) . ' - ' . $e->getMessage();
 			throw $e;
 		}
+
+		// log rejected emails
+		$status = $result[0]["status"];
+		if(in_array($status, array("rejected", "invalid")))
+		{
+			$email = $result[0]["email"];
+			$reason = $result[0]["reject_reason"];
+			$mandrillId = $result[0]["_id"];
+
+			$connection = new Connection();
+			$connection->deepQuery("INSERT INTO delivery_error(user_email,response_email,reason, mandrill_id ) VALUES ('$email','$from',$reason','$mandrillId')");
+		}
+	}
+
+	/**
+	 * Brings the next email to be used by Apretaste using an even distribution
+	 * 
+	 * @author salvipascual
+	 * @param String $email, Email of the user
+	 * @return String, Email to use
+	 * */
+	private function nextEmail($email){
+		// get the domain from the user's email 
+		$domain = explode("@", $email)[1];
+
+		// get the email with less usage  
+		$connection = new Connection();
+		$result = $connection->deepQuery("SELECT * FROM jumper WHERE active=1 AND blocked_domains NOT LIKE '%$domain%' ORDER BY sent_count ASC LIMIT 1");
+
+		// increase the email counter
+		$email = $result[0]->email;
+		$counter = $result[0]->sent_count + 1;
+		$result = $connection->deepQuery("UPDATE jumper SET sent_count='$counter' WHERE email='$email'");
+
+		return $email;
 	}
 }
