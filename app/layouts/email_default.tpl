@@ -28,6 +28,17 @@
 					display: block;
 				}
 			}
+			h1{
+				color: #5EBB47;
+				text-decoration: underline;
+				font-size: 24px;
+				margin-top: 0px;
+			}
+			h2{
+				color: #5EBB47;
+				font-size: 16px;
+				margin-top: 0px;
+			}
 		</style>
 	</head>
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
@@ -97,7 +108,7 @@
 							Servicios similares:
 							{foreach $APRETASTE_SERVICE_RELATED as $APRETASTE_SERVICE}
 								{link href="{$APRETASTE_SERVICE}" caption="{$APRETASTE_SERVICE}"}
-								{if not $_SERVICE@last}{separator}{/if}
+								{if not $APRETASTE_SERVICE@last}{separator}{/if}
 							{/foreach}
 						</small>
 					</td>
