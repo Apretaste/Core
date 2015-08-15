@@ -1,57 +1,34 @@
 <div class="row">
+	<div class="col-xs-12">
+		<?php if( ! empty($adsError)) { ?>
+			<br/>
+			<div class="alert alert-danger"><?php echo $adsError; ?></div>
+		<?php } ?>
+
+		<?php if( ! empty($adsMesssage)) { ?>
+			<br/>
+			<div class="alert alert-success"><?php echo $adsMesssage; ?></div>
+		<?php } ?>
+	</div>
+</div>
+
+<div class="row">
     <div class="col-xs-12">
-        <h1>Raffle</h1>
+        <h1>Insert Raffle</h1>
     </div>   
 </div>
 
 <div class="row">
-    <div class="col-xs-6">
-        <label for="personImage">Image</label>
-        <image id="personImage" />
-    </div>
-    <div class="col-xs-6">
-        <div calss="row">
-            <div class="col-xs-12">
-                <label for="raffleID">ID: </label>
-                <p id="raffleID"></p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <p id="raffleDescrption"></p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-6">
-                <label for="raflleDateFrom">From: </label>
-                <p id="raflleDateFrom"></p>
-            </div>
-            <div class="col-xs-6">
-                <label for="raflleDateTo">to: </label>
-                <p id="raflleDateTo"></p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-3">
-                <p>Winnes: </p>
-            </div>
-            <div class="col-xs-3">
-                <p id="winnerOne"></p>
-            </div>
-            <div class="col-xs-3">
-                <p id="winnerTwo"></p>
-            </div>
-            <div class="col-xs-3">
-                <p id="winnerThree"></p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-12">
-                <label for="totalTickes">Total of Tickes: </label>
-                <p id="totalTickes"></p>
-            </div>
-        </div>        
-    </div>
+	<div class="col-xs-12">
+		<form role="form" action="submitRaffle" method="POST" enctype="multipart/form-data">
+			<div class="form-group">
+				<h4>Description of the Rafflo<h4>
+						<input type="text" name="raffleDescription" size="35"/>
+			</div>
+			<div class="form-group">
+				<input type="date" name="raffleStartDate" placeholder="From"/>
+				<input type="date" name="raffleFinishDate" placeholder="To"/>
+			</div>
+		</form>
+	</div>
 </div>
-
-

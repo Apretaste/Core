@@ -12,7 +12,9 @@ class AdminController extends Controller
     
     public function raffleAction() 
     {
-		$this->view->setLayout('simple'); 
+		$this->view->setLayout('simple');
+		$this->view->createAdsError = $this->request->get("e");
+		$this->view->createAdsMesssage = $this->request->get("m");
     }
 	
 	public function adsAction() 
@@ -65,5 +67,32 @@ class AdminController extends Controller
 					return $this->response->redirect("ads?m=Ads inserted successfully.");
 			}
 		}
+	}
+	
+	public function jumperAction()
+	{
+		$this->view->setLayout('simple');
+		$connection = new Connection();
+		
+		$queryJumper = "SELECT email, last_usage, sent_count, 'Errors' AS ErrorCount, blocked_domains, active
+						FROM jumper";
+		$jumperData = $connection->deepQuery($queryJumper);
+		
+		foreach($jumperData as $jumper)
+			$jumperList[] = ["email" => $jumper->email, "lastUsage" => $jumper->last_usage, "emailsSent" => $jumper->sent_count, "errors" => $jumper->ErrorCount, "blockDomains" => $jumper->blocked_domains, "active" => $jumper->active];
+	
+		$this->view->jumperData = $jumperList;
+	}
+
+	public function toggleStatusAction()
+	{
+		if($this->request->get("email"))
+		{
+			$email = $this->request->get("email");
+			$query = "UPDATE jumper SET active = !active WHERE email = '$email'";
+			$connection = new Connection();
+			$connection->deepQuery($query);
+		}
+		return $this->response->redirect('admin/jumper');
 	}
 }
