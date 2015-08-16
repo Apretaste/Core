@@ -73,7 +73,7 @@ class Response {
 		$ads = $connection->deepQuery("SELECT * FROM ads WHERE active = '1' AND expiration_date > CURRENT_TIMESTAMP");
 
 		// if there are not active ads stop processing here
-		if(empty($ads)) return array();
+		if(count($ads)==0) return array();
 
 		// get the ad counter
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
