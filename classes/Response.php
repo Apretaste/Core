@@ -1,6 +1,8 @@
 <?php
 
 class Response {
+	public $email;
+	public $subject;
 	public $template;
 	public $content;
 	public $images;
@@ -20,6 +22,27 @@ class Response {
 		$this->attachments = array();
 		$this->internal = true;
 		$this->ads = $this->getAdsToShow();
+	}
+
+	/**
+	 * Set the subject for the response
+	 *
+	 * @author salvipascual
+	 * @param String $subject
+	 * */
+	public function setResponseSubject($subject){
+		$this->subject = $subject;
+	}
+
+	/**
+	 * Set the email of the response in the cases where is not the same as the requestor
+	 * Useful for confirmations or for programmers to track actions/errors on their services
+	 * 
+	 * @author salvipascual
+	 * @param String $email
+	 * */
+	public function setResponseEmail($email){
+		$this->email = $email;
 	}
 
 	/**
