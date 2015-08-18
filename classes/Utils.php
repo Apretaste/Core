@@ -9,7 +9,7 @@ class Utils {
 	 */
 	public function getValidEmailAddress()
 	{
-		return "apretaste@gmail.com"; // TODO take a valid apretaste email
+		return "apretaste@apretaste.biz"; // TODO take a valid apretaste email
 	}
 
 	/**

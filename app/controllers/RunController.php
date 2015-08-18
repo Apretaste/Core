@@ -135,13 +135,22 @@ class RunController extends Controller
 			$response = $userService->$subserviceFunction($request);
 		}
 
+		// a service can return an array of Response or only one.
+		// we always treat the response as an array
+		$responses = is_array($response) ? $response : array($response);
+
 		// create a new render
 		$render = new Render();
 
 		// render the template and echo on the screen
 		if($format == "html")
 		{
-			return $render->renderHTML($userService, $response);
+			$html = "";
+			for ($i=0; $i<count($responses); $i++){
+				$html .= $render->renderHTML($userService, $responses[$i]);
+				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
+			}
+			return $html;
 		}
 
 		// echo the json on the screen
@@ -154,18 +163,20 @@ class RunController extends Controller
 		// only save stadistics for email requests
 		if($format == "email")
 		{
-			// get params for the email
-			$subject = "Respondiendo a su email con asunto: $serviceName";
-			$body = $render->renderHTML($userService, $response);
-			$images = array_merge($response->images, $response->getAds());
-			$attachments = $response->attachments;
-
-			// send the email
+			// get params for the email and send the response emails
 			$emailSender = new Email();
-			$emailSender->sendEmail($email, $subject, $body, $images, $attachments);
+			foreach($responses as $rs)
+			{
+				$emailTo = empty($rs->email) ? $email : $rs->email;
+				$subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
+				$body = $render->renderHTML($userService, $rs);
+				$images = array_merge($rs->images, $rs->getAds());
+				$attachments = $rs->attachments;
+				$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+			}
 
-			// create the new Person if access for the first time
-			if ($utils->personExist($email)){
+			// save a new Person if he/she access for the first time
+			if ( ! $utils->personExist($email)){
 				$sql = "INSERT INTO person (email) VALUES ('$email')";
 				$connection->deepQuery($sql);
 			}

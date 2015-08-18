@@ -1,6 +1,8 @@
 <?php
 
 class Response {
+	public $email;
+	public $subject;
 	public $template;
 	public $content;
 	public $images;
@@ -20,6 +22,27 @@ class Response {
 		$this->attachments = array();
 		$this->internal = true;
 		$this->ads = $this->getAdsToShow();
+	}
+
+	/**
+	 * Set the subject for the response
+	 *
+	 * @author salvipascual
+	 * @param String $subject
+	 * */
+	public function setResponseSubject($subject){
+		$this->subject = $subject;
+	}
+
+	/**
+	 * Set the email of the response in the cases where is not the same as the requestor
+	 * Useful for confirmations or for programmers to track actions/errors on their services
+	 * 
+	 * @author salvipascual
+	 * @param String $email
+	 * */
+	public function setResponseEmail($email){
+		$this->email = $email;
 	}
 
 	/**
@@ -73,7 +96,7 @@ class Response {
 		$ads = $connection->deepQuery("SELECT * FROM ads WHERE active = '1' AND expiration_date > CURRENT_TIMESTAMP");
 
 		// if there are not active ads stop processing here
-		if(empty($ads)) return array();
+		if(count($ads)==0) return array();
 
 		// get the ad counter
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
