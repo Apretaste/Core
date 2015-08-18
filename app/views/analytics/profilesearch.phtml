@@ -4,9 +4,13 @@
     </div>
 </div>
 <?php 
-	if($noProfileFound == 0) 
-		echo "No Profile Found";
-	
+	if( ! empty($searchError))
+	{
+?>
+	<br/>
+	<div class="alert alert-danger"><?php echo $searchError; ?></div>
+<?php
+	}
 ?>
 <div>
     <div class="col-xs-12">
@@ -20,8 +24,8 @@
 <div>
     <div class="col-xs-12">
         <label for="personImage">Image</label>
-        <?php 
-			if($email != 0)
+        <?php	
+			if($email != "")
 				"<img id='personImage' src='../public/profiles./'" . $email . "'>";
 			else
 				echo "No image available";
@@ -31,11 +35,11 @@
     <div class="col-xs-12">
         <label for="personFirstName">Fist Name: </label>
         <p id="personFirstName">
-			<?php	
-				if($firstName != 0)
+			<?php
+				if($firstName != "")
 					echo $firstName;
 				else
-					echo "No First Name available";				
+					echo "No First Name available";
 			?>
 		</p>
     </div>
@@ -44,7 +48,7 @@
         <label for="personMiddleName">Middle Name: </label>
         <p id="personMiddleName">
 			<?php 
-				if($middleName != 0)
+				if($middleName != 1)
 					echo $middleName;
 				else
 					echo "No Middle Name available";
@@ -56,10 +60,13 @@
         <label for="personLastName">Last Name: </label>
         <p id="personLastName">
 			<?php
-				if($lastName != 0)
-					echo $lastName;
-				else
-					echo "No Last Name available";
+				if(!empty($lastName))
+				{
+					if($lastName != 0)
+						echo $lastName;
+					else
+						echo "No Last Name available";
+				}
 			?>
 		</p>
     </div>
@@ -68,10 +75,13 @@
         <label for="personMotherName">Mother Name: </label>
         <p id="personMotherName">
 			<?php
-				if($motherName != 0)
-					echo $motherName;
-				else
-					echo "No Mother Name available";
+				if(!empty($motherName))
+				{
+					if($motherName != 0)
+						echo $motherName;
+					else
+						echo "No Mother Name available";
+				}
 			?>
 		</p>
     </div>

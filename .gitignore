@@ -10,3 +10,4 @@ composer.lock
 configs/config.ini
 public/profile/*
 public/ads/*
+public/raffle/*

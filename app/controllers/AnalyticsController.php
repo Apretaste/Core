@@ -384,21 +384,21 @@ class AnalyticsController extends Controller
         // Numbers of profiles per province
 		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount, 
 										CASE province
-											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Rï¿½o'
 											WHEN 'HAVANA' THEN 'Ciudad de La Habana'
 											WHEN 'ARTEMISA' THEN 'CU-X01'
 											WHEN 'MAYABEQUE' THEN 'CU-X02'
 											WHEN 'MATANZAS' THEN 'Matanzas'
 											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spï¿½ritus'
 											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de ??vila'
-											WHEN 'CAMAGUEY' THEN 'Camagüey'
+											WHEN 'CAMAGUEY' THEN 'Camagï¿½ey'
 											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-											WHEN 'HOLGUIN' THEN 'Holguín'
+											WHEN 'HOLGUIN' THEN 'Holguï¿½n'
 											WHEN 'GRANMA' THEN 'Granma'
 											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-											WHEN 'GUANTANAMO' THEN 'Guantánamo'
+											WHEN 'GUANTANAMO' THEN 'Guantï¿½namo'
 											WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
 										END AS ProvinceName
 										FROM `person`
@@ -463,7 +463,10 @@ class AnalyticsController extends Controller
 	{
 		//Include simple.phtml Layout
 		$this->view->setLayout('simple');
-		
+		if($this->request->get("m"))
+		{
+			$this->view->searchError = $this->request->get("m");
+		}
 		if($this->request->isPost())
 		{
 			$connection = new Connection();
@@ -478,59 +481,59 @@ class AnalyticsController extends Controller
 			{
 				//If the picture exist return the email, if not, return 0
 				$picture = $profileSearch[0]->picture;
-				($picture == 1)? $this->view->email = $profileSearch[0]->email : $this->view->email = 0;
+				($picture == 1)? $this->view->email = $profileSearch[0]->email : $this->view->email = "";
 				
 				$firstName = $profileSearch[0]->first_name;
-				($firstName != "NULL")? $this->view->firstName = $firstName : $this->view->firstName = 0;
+				($firstName != "NULL")? $this->view->firstName = $firstName : $this->view->firstName = "";
 				
 				$middleName = $profileSearch[0]->middle_name;
-				($middleName != "NULL")? $this->view->middleName = $middleName : $this->view->middleName = 0;
+				($middleName != "NULL")? $this->view->middleName = $middleName : $this->view->middleName = 1;
 				
 				$lastName = $profileSearch[0]->last_name;
-				($lastName != "NULL")? $this->view->lastName = $lastName : $this->view->lastName = 0;
+				($lastName != "NULL")? $this->view->lastName = $lastName : $this->view->lastName = "";
 				
 				$motherName = $profileSearch[0]->mother_name;
-				($motherName != "NULL")? $this->view->motherName = $motherName : $this->view->$motherName = 0;
+				($motherName != "NULL")? $this->view->motherName = $motherName : $this->view->$motherName = "";
 				
 				$dob = $profileSearch[0]->date_of_birth;
-				($dob != "NULL")? $this->view->dob = $dob : $this->view->dob = 0;
+				($dob != "NULL")? $this->view->dob = $dob : $this->view->dob = "";
 				
 				$age = $profileSearch[0]->Age;
-				($age != "NULL")? $this->view->age = $age : $this->view->age = 0;
+				($age != "NULL")? $this->view->age = $age : $this->view->age = "";
 				
 				$gender = $profileSearch[0]->gender;
-				($gender != "NULL")? $this->view->gender = $gender : $this->view->gender = 0;
+				($gender != "NULL")? $this->view->gender = $gender : $this->view->gender = "";
 				
 				$phone = $profileSearch[0]->phone;
-				($phone != "NULL")? $this->view->phone = $phone : $this->view->$this->view->phone = 0;
+				($phone != "NULL")? $this->view->phone = $phone : $this->view->$this->view->phone = "";
 						
 				$eyes = $profileSearch[0]->eyes;
-				($eyes != "NULL")? $this->view->eyes = $eyes : $this->view->eyes = 0;
+				($eyes != "NULL")? $this->view->eyes = $eyes : $this->view->eyes = "";
 						
 				$skin = $profileSearch[0]->skin;
-				($skin != "NULL")? $this->view->skin = $skin : $this->view->skin = 0;
+				($skin != "NULL")? $this->view->skin = $skin : $this->view->skin = "";
 						
 				$body = $profileSearch[0]->body_type;
-				($body != "NULL")? $this->view->body = $body : $this->view->body = 0;
+				($body != "NULL")? $this->view->body = $body : $this->view->body = "";
 						
 				$hair = $profileSearch[0]->hair;
-				($hair != "NULL")? $this->view->hair = $hair : $this->view->hair = 0;
+				($hair != "NULL")? $this->view->hair = $hair : $this->view->hair = "";
 						
 				$city = $profileSearch[0]->city;
-				($city != "NULL")? $this->view->city = $city : $this->view->city = 0;
+				($city != "NULL")? $this->view->city = $city : $this->view->city = "";
 						
 				$province = $profileSearch[0]->province;
-				($province != "NULL")? $this->view->province = $province : $this->view->province = 0;
+				($province != "NULL")? $this->view->province = $province : $this->view->province = "";
 						
 				$aboutMe = $profileSearch[0]->about_me;
-				($aboutMe != "NULL")? $this->view->aboutMe = $aboutMe : $this->view->aboutMe = 0;
+				($aboutMe != "NULL")? $this->view->aboutMe = $aboutMe : $this->view->aboutMe = "";
 						
 				$credit = $profileSearch[0]->credit;
-				($credit != "NULL")? $this->view->credit = $credit : $this->view->credit = 0;
+				($credit != "NULL")? $this->view->credit = $credit : $this->view->credit = "";
 			}
 			else
 			{
-				$this->view->noProfileFound = 0;
+				return $this->response->redirect("analytics/profilesearch?m=Profile no Found");
 			}		
 		}
 	}
