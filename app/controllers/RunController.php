@@ -147,6 +147,8 @@ class RunController extends Controller
 		{
 			$html = "";
 			for ($i=0; $i<count($responses); $i++){
+				$html .= "Email: " . $responses[$i]->email . "<br/>";
+				$html .= "Subject: " . $responses[$i]->subject . "<br/>";
 				$html .= $render->renderHTML($userService, $responses[$i]);
 				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
 			}
@@ -167,7 +169,7 @@ class RunController extends Controller
 			$emailSender = new Email();
 			foreach($responses as $rs)
 			{
-				$emailTo = empty($rs->email) ? $email : $rs->email;
+				$emailTo = empty($rs->email) ? $userService->creatorEmail : $rs->email;
 				$subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
 				$body = $render->renderHTML($userService, $rs);
 				$images = array_merge($rs->images, $rs->getAds());
