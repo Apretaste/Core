@@ -1,0 +1,32 @@
+<div class="row">
+    <div class="col-xs-12">
+        <h1>Raffle List</h1>
+    </div>   
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <table id="raffleListTable" class="table">
+			<thead>
+				<th>Item Description</th>
+				<th class="text-center">Start Day</th>
+				<th class="text-center">Finish Day</th>
+				<th class="text-center">Winner 1</th>
+				<th class="text-center">Winner 2</th>
+				<th class="text-center">Winner 3</th>
+			</thead>
+			<tbody>
+			<?php foreach($raffleListData as $raffleListView) { ?>
+				<tr>
+					<td><?php echo $raffleListView['itemDesc']; ?></td>
+					<td class="text-center"><?php echo $raffleListView['startDay']; ?></td>
+					<td class="text-center"><?php echo $raffleListView['finishDay']; ?></td>
+					<td class="text-center"><?php echo $raffleListView['winner1']; ?></td>
+					<td class="text-center"><?php echo $raffleListView['winner2']; ?></td>
+					<td class="text-center"><?php echo $raffleListView['winner3']; ?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
