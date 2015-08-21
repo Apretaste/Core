@@ -55,8 +55,25 @@ class AdminController extends Controller
 				return $this->response->redirect("admin/raffle?m=Raffle was unable to be inserted.");
 		}
 	}
+	
+	public function raffleListAction()
+	{
+		//Include simple.phtml Layout
+		$this->view->setLayout('simple');
+		
+		$connection = new Connection();
+		$queryraffleList = "SELECT item_desc, start_date, end_date, winner_1, winner_2, winner_3
+							FROM raffle
+							ORDER BY end_date DESC";
+		$raffleListData = $connection->deepQuery($queryraffleList);
+		
+		foreach($raffleListData as $raffleListItem)
+			$raffleListCollection[] = ["itemDesc"=>$raffleListItem->item_desc, "startDay"=>$raffleListItem->start_date, "finishDay"=>$raffleListItem->end_date, "winner1"=>$raffleListItem->winner_1, "winner2"=>$raffleListItem->winner_2, "winner3"=>$raffleListItem->winner_3];
+		
+		$this->view->raffleListData = $raffleListCollection;
+	}
 
-		public function adsAction() 
+	public function adsAction() 
     {
 		$this->view->setLayout('simple'); 
 		$this->view->createAdsError = $this->request->get("e");

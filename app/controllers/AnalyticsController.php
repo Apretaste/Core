@@ -463,6 +463,7 @@ class AnalyticsController extends Controller
 	{
 		//Include simple.phtml Layout
 		$this->view->setLayout('simple');
+		
 		if($this->request->get("m"))
 		{
 			$this->view->searchError = $this->request->get("m");
@@ -481,55 +482,55 @@ class AnalyticsController extends Controller
 			{
 				//If the picture exist return the email, if not, return 0
 				$picture = $profileSearch[0]->picture;
-				($picture == 1)? $this->view->email = $profileSearch[0]->email : $this->view->email = "";
+				($picture == 1)? $this->view->email = $profileSearch[0]->email : $this->view->email = 1;
 				
 				$firstName = $profileSearch[0]->first_name;
-				($firstName != "NULL")? $this->view->firstName = $firstName : $this->view->firstName = "";
+				($firstName != "")? $this->view->firstName = $firstName : $this->view->firstName = 1;
 				
 				$middleName = $profileSearch[0]->middle_name;
-				($middleName != "NULL")? $this->view->middleName = $middleName : $this->view->middleName = 1;
+				($middleName != "")? $this->view->middleName = $middleName : $this->view->middleName = 1;
 				
 				$lastName = $profileSearch[0]->last_name;
-				($lastName != "NULL")? $this->view->lastName = $lastName : $this->view->lastName = "";
+				($lastName != "")? $this->view->lastName = $lastName : $this->view->lastName = 1;
 				
 				$motherName = $profileSearch[0]->mother_name;
-				($motherName != "NULL")? $this->view->motherName = $motherName : $this->view->$motherName = "";
+				($motherName != "")? $this->view->motherName = $motherName : $this->view->$motherName = 1;
 				
 				$dob = $profileSearch[0]->date_of_birth;
-				($dob != "NULL")? $this->view->dob = $dob : $this->view->dob = "";
+				($dob != "")? $this->view->dob = $dob : $this->view->dob = 1;
 				
 				$age = $profileSearch[0]->Age;
-				($age != "NULL")? $this->view->age = $age : $this->view->age = "";
+				($age != "")? $this->view->age = $age : $this->view->age = 1;
 				
 				$gender = $profileSearch[0]->gender;
-				($gender != "NULL")? $this->view->gender = $gender : $this->view->gender = "";
+				($gender != "")? $this->view->gender = $gender : $this->view->gender = 1;
 				
 				$phone = $profileSearch[0]->phone;
-				($phone != "NULL")? $this->view->phone = $phone : $this->view->$this->view->phone = "";
+				($phone != "")? $this->view->phone = $phone : $this->view->$this->view->phone = 1;
 						
 				$eyes = $profileSearch[0]->eyes;
-				($eyes != "NULL")? $this->view->eyes = $eyes : $this->view->eyes = "";
+				($eyes != "")? $this->view->eyes = $eyes : $this->view->eyes = 1;
 						
 				$skin = $profileSearch[0]->skin;
-				($skin != "NULL")? $this->view->skin = $skin : $this->view->skin = "";
+				($skin != "")? $this->view->skin = $skin : $this->view->skin = 1;
 						
 				$body = $profileSearch[0]->body_type;
-				($body != "NULL")? $this->view->body = $body : $this->view->body = "";
+				($body != "")? $this->view->body = $body : $this->view->body = 1;
 						
 				$hair = $profileSearch[0]->hair;
-				($hair != "NULL")? $this->view->hair = $hair : $this->view->hair = "";
+				($hair != "")? $this->view->hair = $hair : $this->view->hair = 1;
 						
 				$city = $profileSearch[0]->city;
-				($city != "NULL")? $this->view->city = $city : $this->view->city = "";
+				($city != "")? $this->view->city = $city : $this->view->city = 1;
 						
 				$province = $profileSearch[0]->province;
-				($province != "NULL")? $this->view->province = $province : $this->view->province = "";
+				($province != "")? $this->view->province = $province : $this->view->province = 1;
 						
 				$aboutMe = $profileSearch[0]->about_me;
-				($aboutMe != "NULL")? $this->view->aboutMe = $aboutMe : $this->view->aboutMe = "";
+				($aboutMe != "")? $this->view->aboutMe = $aboutMe : $this->view->aboutMe = 1;
 						
 				$credit = $profileSearch[0]->credit;
-				($credit != "NULL")? $this->view->credit = $credit : $this->view->credit = "";
+				($credit != "")? $this->view->credit = $credit : $this->view->credit = 1;
 			}
 			else
 			{
