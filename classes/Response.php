@@ -7,8 +7,8 @@ class Response {
 	public $content;
 	public $images;
 	public $attachments;
-	private $ads;
 	public $internal; // false if the user provides the template
+	private $ads;
 
 	/**
 	 * Create default template

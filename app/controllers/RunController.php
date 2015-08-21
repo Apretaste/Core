@@ -139,6 +139,13 @@ class RunController extends Controller
 		// we always treat the response as an array
 		$responses = is_array($response) ? $response : array($response);
 
+		// clean the empty fields in the response  
+		foreach($responses as $rs)
+		{
+			$rs->email = empty($rs->email) ? $email : $rs->email;
+			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
+		}
+
 		// create a new render
 		$render = new Render();
 
@@ -147,8 +154,7 @@ class RunController extends Controller
 		{
 			$html = "";
 			for ($i=0; $i<count($responses); $i++){
-				$html .= "Email: " . $responses[$i]->email . "<br/>";
-				$html .= "Subject: " . $responses[$i]->subject . "<br/>";
+				$html .= "<br/><center><small><b>To:</b> " . $responses[$i]->email . ". <b>Subject:</b> " . $responses[$i]->subject . "</small></center><br/>";
 				$html .= $render->renderHTML($userService, $responses[$i]);
 				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
 			}
@@ -169,8 +175,8 @@ class RunController extends Controller
 			$emailSender = new Email();
 			foreach($responses as $rs)
 			{
-				$emailTo = empty($rs->email) ? $userService->creatorEmail : $rs->email;
-				$subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
+				$emailTo = $rs->email;
+				$subject = $rs->subject;
 				$body = $render->renderHTML($userService, $rs);
 				$images = array_merge($rs->images, $rs->getAds());
 				$attachments = $rs->attachments;
