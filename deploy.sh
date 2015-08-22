@@ -7,3 +7,4 @@ mkdir public/raffle
 chmod 777 temp
 chmod 777 services
 chmod 777 public/ads
+chmod 777 public/raffle

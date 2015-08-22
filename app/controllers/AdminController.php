@@ -4,18 +4,19 @@ use Phalcon\Mvc\Controller;
   
 class AdminController extends Controller
 {
-    public function indexAction()
-    {
+	public function indexAction()
+	{
 		//Include simple.phtml Layout
 		$this->view->setLayout('simple');
-    }
-    
-    public function raffleAction() 
-    {
+	}
+	
+	public function raffleAction() 
+	{
 		$this->view->setLayout('simple');
 		$this->view->createraffleError = $this->request->get("e");
 		$this->view->createraffleMesssage = $this->request->get("m");
-    }
+	}
+
 	public function submitRaffleAction()
 	{
 		if($this->request->isPost())
@@ -23,36 +24,34 @@ class AdminController extends Controller
 			$raffleDescription = $this->request->getPost("raffleDescription");
 			$raffleStartDate = $this->request->getPost("raffleStartDate");
 			$raffleFinishDate = $this->request->getPost("raffleFinishDate");
-			
-			//Insert the Ads
+
+			//Insert the Raffle
 			$connection = new Connection();
 			$queryInsertRaffle = "INSERT INTO raffle (item_desc, start_date, end_date)
-								VALUES ('$raffleDescription','$raffleStartDate','$raffleFinishDate')";
+								  VALUES ('$raffleDescription','$raffleStartDate','$raffleFinishDate')";
 			$insertRaffle = $connection->deepQuery($queryInsertRaffle);
-			
+
 			if($insertRaffle == NULL) //Inserted correctly
 			{
 				$queryGetRaffleID = "SELECT raffle_id
-									FROM raffle
-									WHERE item_desc = '$raffleDescription'
-									ORDER BY raffle_id DESC LIMIT 1";
+									 FROM raffle
+									 WHERE item_desc = '$raffleDescription'
+									 ORDER BY raffle_id DESC LIMIT 1";
 				$getRaffleID = $connection->deepQuery($queryGetRaffleID);
-				
 				$pictureFile = $this->request->getUploadedFiles(); //Get the file uploaded
-				$fileName = md5($getRaffleID[0]->ads_id); //Generate the picture name
-				
+				$fileName = md5($getRaffleID[0]->raffle_id); //Generate the picture name
+
 				// get the picture name and path
 				$wwwroot = $this->di->get('path')['root'];
 				$picPath = "$wwwroot/public/raffle/" . $fileName . ".png";
-				
 				move_uploaded_file($_FILES["pictureRaflle"]["tmp_name"], $picPath);
-				
+
 				// redirect to the upload page with success message 
 				return $this->response->redirect("admin/raffle?m=Raffle inserted successfully.");
 			}
-			else
-				// redirect to the upload page with error message 
-				return $this->response->redirect("admin/raffle?m=Raffle was unable to be inserted.");
+
+			// redirect to the upload page with error message 
+			return $this->response->redirect("admin/raffle?m=Raffle was unable to be inserted.");
 		}
 	}
 	
@@ -60,26 +59,29 @@ class AdminController extends Controller
 	{
 		//Include simple.phtml Layout
 		$this->view->setLayout('simple');
-		
+
 		$connection = new Connection();
 		$queryraffleList = "SELECT item_desc, start_date, end_date, winner_1, winner_2, winner_3
 							FROM raffle
 							ORDER BY end_date DESC";
 		$raffleListData = $connection->deepQuery($queryraffleList);
-		
+
+		$raffleListCollection = array();
 		foreach($raffleListData as $raffleListItem)
+		{
 			$raffleListCollection[] = ["itemDesc"=>$raffleListItem->item_desc, "startDay"=>$raffleListItem->start_date, "finishDay"=>$raffleListItem->end_date, "winner1"=>$raffleListItem->winner_1, "winner2"=>$raffleListItem->winner_2, "winner3"=>$raffleListItem->winner_3];
-		
+		}
+
 		$this->view->raffleListData = $raffleListCollection;
 	}
 
 	public function adsAction() 
-    {
+	{
 		$this->view->setLayout('simple'); 
 		$this->view->createAdsError = $this->request->get("e");
 		$this->view->createAdsMesssage = $this->request->get("m");
-    }
-	
+	}
+
 	public function submitAdsAction()
 	{
 		//Ads form pass by post
