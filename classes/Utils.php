@@ -64,7 +64,7 @@ class Utils {
 	 * 
 	 * @author salvipascual
 	 * @param String $serviceName, name of the service to access
-	 * @return Strinf, path to the service, or false if the service do not exist
+	 * @return String, path to the service, or false if the service do not exist
 	 * */
 	public function getPathToService($serviceName)
 	{
@@ -76,5 +76,37 @@ class Utils {
 		// check if the path exist and return it
 		if(file_exists($path)) return $path;
 		else return false;
+	}
+
+	/**
+	 * Return the current Raffle or false if no Raffle was found
+	 * 
+	 * @author salvipascual
+	 * @return Array or false
+	 * */
+	public function getCurrentRaffle()
+	{
+		// get the raffle
+		$connection = new Connection();
+		$raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+
+		// return false if there is no open raffle
+		if (count($raffle)==0) return false;
+		else $raffle = $raffle[0];
+
+		// get number of tickets opened
+		$openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = $openedTickets[0]->opened_tickets;
+
+		// get the image of the raffle
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwpath = $di->get('path')['http'];
+		$raffleImage = "$wwwpath/raffle/" . md5($raffle->raffle_id) . ".png";
+
+		// add elements to the response
+		$raffle->tickets = $openedTickets;
+		$raffle->image = $raffleImage;
+
+		return $raffle;
 	}
 }
