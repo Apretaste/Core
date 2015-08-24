@@ -51,7 +51,7 @@ class RunController extends Controller
 		$toEmail = $event[0]->msg->email;
 		$sender = isset($event[0]->msg->headers->Sender) ? $event[0]->msg->headers->Sender : "";
 		$subject = $event[0]->msg->headers->Subject;
-		$body = $event[0]->msg->html;
+		$body = $event[0]->msg->text;
 		$attachments = array(); // TODO get the attachments
 
 		// save the webhook log
@@ -108,8 +108,8 @@ class RunController extends Controller
 		$request->body = $body;
 		$request->attachments = $attachments;
 		$request->service = $serviceName;
-		$request->subservice = $subServiceName;
-		$request->query = $query;
+		$request->subservice = trim($subServiceName);
+		$request->query = trim($query);
 
 		// get details of the service from the database
 		$connection = new Connection();

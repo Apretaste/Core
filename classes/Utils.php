@@ -60,6 +60,50 @@ class Utils {
 	}
 
 	/**
+	 * Get a person's profile
+	 *
+	 * @author salvipascual
+	 * @return Array or false
+	 * */
+	public function getPerson($email)
+	{
+		// get the person
+		$connection = new Connection();
+		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
+
+		// return false if there is no person with that email
+		if (count($person)==0) return false;
+		else $person = $person[0];
+
+		// get number of tickets for the raffle adquired by the user
+		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+		$tickets = $tickets[0]->tickets;
+
+		// get the person's full name
+		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
+		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
+
+		// get the image of the person
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$image = "$wwwroot/public/profile/$email.png";
+
+		if(file_exists($image)) {
+			$wwwpath = $di->get('path')['http'];
+			$image = "$wwwpath/profile/$email.png";
+		} else $image = NULL;
+
+		// get the interests as an array
+		$person->interests = $exploded = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
+
+		// add elements to the response
+		$person->full_name = $fullName;
+		$person->picture = $image;
+		$person->raffle_tickets = $tickets;
+		return $person;
+	}
+
+	/**
 	 * Get the path to a service. 
 	 * 
 	 * @author salvipascual
