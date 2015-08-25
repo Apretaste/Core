@@ -88,7 +88,7 @@ class RunController extends Controller
 					fwrite($ifp, base64_decode($content));
 					fclose($ifp);
 				}
-		
+
 				// create new object
 				$object = new stdClass();
 				$object->path = $filePath;

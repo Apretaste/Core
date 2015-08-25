@@ -50,11 +50,8 @@ class SurveyParser {
 	 * */
 	private function textToArrayOfEntries($text)
 	{
-		// remove characters that may break the string 
-		$text = str_replace("!","", $text);
-
 		// convert and return
-		return parse_ini_string($text);
+		return parse_ini_string($text, false, INI_SCANNER_RAW);
 	}
 
 	/**
