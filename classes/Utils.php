@@ -153,4 +153,73 @@ class Utils {
 
 		return $raffle;
 	}
+
+	/**
+	 * Generate a new random hash. Mostly to be used for temporals
+	 *
+	 * @author salvipascual
+	 * @return String
+	 */
+	public function generateRandomHash()
+	{
+		$rand = rand(0, 1000000);
+		$today = date('full');
+		return md5($rand . $today);
+	}
+
+	/**
+	 * Reduce image size and optimize the image quality
+	 * 
+	 * @author salvipascual
+	 * @param String $imagePath, path to the image
+	 * */
+	public function optimizeImage($imagePath){
+		$factory = new \ImageOptimizer\OptimizerFactory();
+		$optimizer = $factory->get();
+		$optimizer->optimize($imagePath);
+	}
+
+	/**
+	 * Get the pieces of names from the full name
+	 *
+	 * @author salvipascual
+	 * @param String $name, full name
+	 * @return Array [$firstName, $middleName, $lastName, $motherName]
+	 * */
+	public function fullNameToNamePieces($name)
+	{
+		$firstName = "";
+		$middleName = "";
+		$lastName = "";
+		$motherName = "";
+		$namePieces = explode(" ", $name);
+
+		if(count($namePieces)>=4)
+		{
+			$firstName = $namePieces[0];
+			$middleName = $namePieces[1];
+			$lastName = $namePieces[2];
+			$motherName = $namePieces[3];
+		}
+
+		if(count($namePieces)==3)
+		{
+			$firstName = $namePieces[0];
+			$lastName = $namePieces[1];
+			$motherName = $namePieces[2];
+		}
+
+		if(count($namePieces)==2)
+		{
+			$firstName = $namePieces[0];
+			$lastName = $namePieces[1];
+		}
+
+		if(count($namePieces)==1)
+		{
+			$firstName = $namePieces[0];
+		}
+
+		return array($firstName, $middleName, $lastName, $motherName);
+	}
 }

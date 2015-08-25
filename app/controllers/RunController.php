@@ -48,11 +48,54 @@ class RunController extends Controller
 		// get values from the json
 		$event = json_decode($mandrill_events);
 		$fromEmail = $event[0]->msg->from_email;
+		$fromName = $event[0]->msg->from_name;
 		$toEmail = $event[0]->msg->email;
-		$sender = isset($event[0]->msg->headers->Sender) ? $event[0]->msg->headers->Sender : "";
 		$subject = $event[0]->msg->headers->Subject;
 		$body = $event[0]->msg->text;
-		$attachments = array(); // TODO get the attachments
+		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
+		$attachments = array();
+
+		// if there are attachments, download them all and create the files in the temp folder 
+		if(count($filesAttached)>0)
+		{
+			// save the attached files and create the response array
+			$utils = new Utils();
+			$wwwroot = $this->di->get('path')['root'];
+			foreach ($filesAttached as $key=>$values)
+			{
+				$mimeType = $values->type;
+				$content = $values->content;
+				$mimeTypePieces = explode("/",$mimeType);
+				$fileType = $mimeTypePieces[0];
+				$extension = $mimeTypePieces[1];
+				$fileNameNoExtension = $utils->generateRandomHash();
+		
+				// convert images to png and save it to temporal
+				if($fileType == "image")
+				{
+					// save image as a png file
+					$mimeType = image_type_to_mime_type(IMAGETYPE_PNG);
+					$filePath = "$wwwroot/temp/$fileNameNoExtension.png";
+					imagepng(imagecreatefromstring(base64_decode($content)), $filePath);
+		
+					// optimize the png image
+					$utils->optimizeImage($filePath);
+		
+					// save any other file to the temporals
+				}else{
+					$filePath = "$wwwroot/temp/$fileNameNoExtension.$extension";
+					$ifp = fopen($filePath, "wb");
+					fwrite($ifp, base64_decode($content));
+					fclose($ifp);
+				}
+		
+				// create new object
+				$object = new stdClass();
+				$object->path = $filePath;
+				$object->type = $mimeType;
+				$attachments[] = $object;
+			}
+		}
 
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -61,7 +104,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $sender, $body, $attachments, "email");
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email");
 	}
 
 	/**

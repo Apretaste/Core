@@ -23,16 +23,22 @@ class SurveyParser {
 			$name = $rule[0];
 			$type = $rule[1];
 			$enums = $rule[2];
-			$value = $entries[$name];
-
-			// check for date rules
-			switch ($type)
+	
+			// only work for the values passed
+			if(isset($entries[$name]))
 			{
-				case "date" : { $entries[$name] = $this->parseDate($value); break; }
-				case "gender" : { $entries[$name] = $this->parseGender($value); break; }
-				case "enum" : { $entries[$name] = $this->parseEnum($value, $enums); break; }
-				case "list" : { $entries[$name] = $this->parseList($value); break; }
-				default : $entries[$name] = trim($value);
+				// get the value passed by the user 
+				$value = $entries[$name];
+
+				// check for date rules
+				switch ($type)
+				{
+					case "date" : { $entries[$name] = $this->parseDate($value); break; }
+					case "gender" : { $entries[$name] = $this->parseGender($value); break; }
+					case "enum" : { $entries[$name] = $this->parseEnum($value, $enums); break; }
+					case "list" : { $entries[$name] = $this->parseList($value); break; }
+					default : $entries[$name] = trim($value);
+				}
 			}
 		}
 
@@ -53,7 +59,6 @@ class SurveyParser {
 
 	/**
 	 * Parse a date
-	 * @TODO parse dates on the way d/m/Y and text dates
 	 * */
 	private function parseDate($value)
 	{

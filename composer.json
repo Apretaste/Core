@@ -1,6 +1,7 @@
 {
     "require": {
     	"mandrill/mandrill": "1.0.*",
-	"smarty/smarty": "~3.1"
+		"smarty/smarty": "~3.1",
+		"ps/image-optimizer": "1.0.*"
     }
 }

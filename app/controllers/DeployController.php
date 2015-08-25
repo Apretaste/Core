@@ -37,8 +37,9 @@ class DeployController extends Controller
 		$deploy = new Deploy();
 
 		// get the zip name and path
+		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
-		$zipPath = "$wwwroot/temp/" . $deploy->generateDeployKey() . ".zip";
+		$zipPath = "$wwwroot/temp/" . $utils->generateRandomHash() . ".zip";
 		$zipName = basename($zipPath);
 
 		// save file

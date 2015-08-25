@@ -31,7 +31,8 @@ class Deploy
 		}
 
 		// create a new deploy key
-		$deployKey = $this->generateDeployKey();
+		$utils = new Utils();
+		$deployKey = $utils->generateRandomHash();
 
 		// add the new service
 		$this->addService($service, $deployKey, $pathToZip, $pathToService);
@@ -45,19 +46,6 @@ class Deploy
 			"serviceName"=>$service["serviceName"], 
 			"creatorEmail"=>$service["creatorEmail"], 
 			"deployKey"=>$deployKey);
-	}
-
-	/**
-	 * Generate a new deploy key
-	 *
-	 * @author salvipascual
-	 * @return String
-	 */
-	public function generateDeployKey()
-	{
-		$rand = rand(0, 1000000);
-		$today = date('full');
-		return md5($rand . $today);
 	}
 
 	/**
