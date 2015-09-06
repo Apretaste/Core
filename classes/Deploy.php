@@ -142,8 +142,8 @@ class Deploy
 		$connection = new Connection();
 
 		// save the new service in the database
-		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,subservices,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','','$deployKey')";
-		$res = $connection->deepQuery($insertUserQuery);
+		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','$deployKey')";
+		$connection->deepQuery($insertUserQuery);
 
 		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
@@ -160,7 +160,7 @@ class Deploy
 			}
 
 			$query = rtrim($query, ",") . ");";
-			$res = $connection->deepQuery($query);
+			$connection->deepQuery($query);
 		}
 	}
 
