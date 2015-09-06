@@ -227,7 +227,8 @@ class RunController extends Controller
 			}
 
 			// check if the person accessed for the first time
-			if ( ! $utils->personExist($email)) {
+			if ( ! $utils->personExist($email))
+			{
 				// save the new Person
 				$sql = "INSERT INTO person (email) VALUES ('$email')";
 				$connection->deepQuery($sql);
@@ -235,12 +236,15 @@ class RunController extends Controller
 			   	// check if the person was invited to use Apretaste
 				$sql = "SELECT * FROM invitations WHERE email_invited = '$email' AND used='0'";
 				$invitations = $connection->deepQuery($sql);
-				if(count($invitations)>0) {
+				if(count($invitations)>0)
+				{
 					// create tickets for all the invitors. When a person 
 					// is invited by more than one person, they all get tickets
 					$sql = "START TRANSACTION;";
-					foreach ($invitations as $invite) {
+					foreach ($invitations as $invite)
+					{
 						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 						$sql .= "UPDATE invitations SET used='1' WHERE invitation_id = '{$invite->invitation_id}';";
 					}
 					$sql .= "COMMIT;";

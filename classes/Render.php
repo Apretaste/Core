@@ -39,7 +39,6 @@ class Render {
 		}
 
 		// list the system variables
-		$utils = new Utils();
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
