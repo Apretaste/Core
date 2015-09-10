@@ -46,7 +46,7 @@ class DeployController extends Controller
 		if (isset($_FILES["service"]["name"])) $zipName = $_FILES["service"]["name"];
 		move_uploaded_file($_FILES["service"]["tmp_name"], $zipPath);
 		chmod($zipPath, 0777);
-		
+
 		// check if the file was moved correctly
 		if ( ! file_exists($zipPath))
 		{

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways">
+	<meta name="author" content="Salvi Pascual">
+	<link rel="icon" href="<?php echo $wwwhttp; ?>/images/apretaste.icon.png">
+	<link rel="canonical" href="https://apretaste.com">
+
+	<title>Thank You!</title>
+
+	<!-- Bootstrap Core CSS -->
+	<link href="<?php echo $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
+
+	<!-- Custom CSS -->
+	<link href="<?php echo $wwwhttp; ?>/css/welcome.css" rel="stylesheet">
+
+	<!-- Custom Fonts -->
+	<link href="<?php echo $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+
+<body>
+	<!-- Facebook button -->
+	<div id="fb-root"></div>
+	<script>(function(d, s, id) {
+	  var js, fjs = d.getElementsByTagName(s)[0];
+	  if (d.getElementById(id)) return;
+	  js = d.createElement(s); js.id = id;
+	  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.4&appId=548757281837358";
+	  fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));</script>
+
+
+	<!-- Twitter button -->
+	<script>window.twttr = (function(d, s, id) {
+  	var js, fjs = d.getElementsByTagName(s)[0],
+    t = window.twttr || {};
+	if (d.getElementById(id)) return t;
+  	js = d.createElement(s);
+  	js.id = id;
+  	js.src = "https://platform.twitter.com/widgets.js";
+  	fjs.parentNode.insertBefore(js, fjs);
+	t._e = [];
+  	t.ready = function(f) {
+    t._e.push(f);
+  	};
+  	return t;
+	}(document, "script", "twitter-wjs"));</script>
+
+	<!-- Thank You -->
+	<section>
+		<div class="container">
+			<div class="row inner-space-vertical">
+				<div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
+					<img style="width:100%;" src="<?php echo $wwwhttp; ?>/images/apretaste.logo.big.transp.png" alt="Apretaste"><br/>
+				</div>
+				<div class="col-lg-9 col-md-9 col-sm-8  col-xs-12">
+					<p class="lead high-note" style="margin:0px;"><span class="green">Thank You for Donating $<?php echo $amount;?></p>
+					<p class="lead big gray">You are changing the live of people who never had accessed the Web.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- A great idea -->
+	<section class="idea bg-customized">
+		<div class="container">
+			<div class="row inner-space-vertical">
+				<div class="col-xs-12">
+					<p class="lead high-note" style="margin:0px 0px 20px 0px;">As we promised:</p>
+					<ul class="lead">
+						<li>You will get your tax-deductible receipt shortly at <b><?php echo $email; ?></b></li>
+						<li>You will receive your certificate of appreciation shortly at <b><?php echo $email; ?></b></li>
+						<li>Your email was saved to our VIP users list</li>
+						<li>Access our analytics from <b>http://apretaste.co</b>. Username: <b>guest</b> and password: <b>+welc0me+</b></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<div class="blank-space-divider"></div>
+	
+	<!-- Share the Voice -->
+	<section style="margin-bottom: 40px;">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12 text-center">
+					<h2>Help us even more</h2>
+					<hr class="small">
+					<p class="lead">Share in Facebook and Twitter and Email friends who may not be aware of the work we are doing</p>
+				</div>
+				<div class="col-xs-6 text-right"> 
+					<div class="fb-share-button" data-href="https://facebook.com/apretaste" data-layout="button_count"></div>
+				</div>
+				<div class="col-xs-6 text-left">
+					<a class="twitter-share-button" href="https://twitter.com/intent/tweet?text=Apretaste: Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways" data-count="none" data-size="default">Tweet</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<?php require_once "$wwwroot/googleAnalyticsTracking.php"; ?>
+</body>
+</html>
