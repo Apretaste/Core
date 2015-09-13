@@ -16,16 +16,24 @@
 				<th class="text-center"></th>
 			</thead>
 			<tbody>
-			<?php foreach ($jumperData as $jumperView) { ?>
+			<?php 
+				if(! empty($jumperData)){
+				foreach ($jumperData as $jumperView){ ?>
 				<tr <?php if($jumperView['active'] == 0) echo 'class="danger"'; ?>>
 					<td><?php echo $jumperView['email']; ?></td>
 					<td class="text-center"><?php echo $jumperView['lastUsage']; ?></td>
 					<td class="text-center"><?php echo $jumperView['emailsSent']; ?></td>
 					<td class="text-center"><?php echo $jumperView['errors']; ?></td>
-					<td class="text-center"><?php echo $jumperView['blockDomains']; ?></td>
+					<td class="text-center">
+						<?php  
+							$blockDomain = explode(",",$jumperView['blockDomains']);
+							foreach($blockDomain as $blockDomainItem)
+								echo $blockDomainItem.", ";
+						?>
+					</td>
 					<td class="text-center"><a class="btn btn-xs btn-default" onclick="return confirm('Toggle status?');" href="toggleStatus?email=<?php echo $jumperView['email']; ?>">Toggle status</a></td>
 				</tr>
-			<?php } ?>
+			<?php }} ?>
 			</tbody>
         </table>
     </div>

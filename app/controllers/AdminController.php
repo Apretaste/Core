@@ -131,12 +131,13 @@ class AdminController extends Controller
 		$connection = new Connection();
 		
 		$queryJumper = "SELECT email, last_usage, sent_count, 'Errors' AS ErrorCount, blocked_domains, active
-						FROM jumper";
+						FROM jumper, delivery_error";
 		$jumperData = $connection->deepQuery($queryJumper);
 		
 		foreach($jumperData as $jumper)
 			$jumperList[] = ["email" => $jumper->email, "lastUsage" => $jumper->last_usage, "emailsSent" => $jumper->sent_count, "errors" => $jumper->ErrorCount, "blockDomains" => $jumper->blocked_domains, "active" => $jumper->active];
-	
+		print_r($jumperList);
+		exit;
 		$this->view->jumperData = $jumperList;
 	}
 
