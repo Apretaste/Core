@@ -31,7 +31,8 @@ class Deploy
 		}
 
 		// create a new deploy key
-		$deployKey = $this->generateDeployKey();
+		$utils = new Utils();
+		$deployKey = $utils->generateRandomHash();
 
 		// add the new service
 		$this->addService($service, $deployKey, $pathToZip, $pathToService);
@@ -45,19 +46,6 @@ class Deploy
 			"serviceName"=>$service["serviceName"], 
 			"creatorEmail"=>$service["creatorEmail"], 
 			"deployKey"=>$deployKey);
-	}
-
-	/**
-	 * Generate a new deploy key
-	 *
-	 * @author salvipascual
-	 * @return String
-	 */
-	public function generateDeployKey()
-	{
-		$rand = rand(0, 1000000);
-		$today = date('full');
-		return md5($rand . $today);
 	}
 
 	/**
@@ -154,8 +142,8 @@ class Deploy
 		$connection = new Connection();
 
 		// save the new service in the database
-		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,subservices,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','','$deployKey')";
-		$res = $connection->deepQuery($insertUserQuery);
+		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','$deployKey')";
+		$connection->deepQuery($insertUserQuery);
 
 		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
@@ -172,7 +160,7 @@ class Deploy
 			}
 
 			$query = rtrim($query, ",") . ");";
-			$res = $connection->deepQuery($query);
+			$connection->deepQuery($query);
 		}
 	}
 

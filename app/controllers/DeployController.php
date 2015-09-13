@@ -37,15 +37,16 @@ class DeployController extends Controller
 		$deploy = new Deploy();
 
 		// get the zip name and path
+		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
-		$zipPath = "$wwwroot/temp/" . $deploy->generateDeployKey() . ".zip";
+		$zipPath = "$wwwroot/temp/" . $utils->generateRandomHash() . ".zip";
 		$zipName = basename($zipPath);
 
 		// save file
 		if (isset($_FILES["service"]["name"])) $zipName = $_FILES["service"]["name"];
 		move_uploaded_file($_FILES["service"]["tmp_name"], $zipPath);
 		chmod($zipPath, 0777);
-		
+
 		// check if the file was moved correctly
 		if ( ! file_exists($zipPath))
 		{

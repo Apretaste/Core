@@ -14,9 +14,9 @@ class AnalyticsController extends Controller
     {
 		//Include simple.phtml Layout
 		$this->view->setLayout('simple');
-		
+
         $connection = new Connection();
-        
+
         // Weekly visitors
 		//DONE and Revised
         $queryWeecly = "SELECT*

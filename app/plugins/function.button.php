@@ -22,5 +22,5 @@ function smarty_function_button($params, $template)
 	$validEmailAddress = $utils->getValidEmailAddress();
 
 	// create and return button
-	return "<a href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='font-size:11pt;font-family:Arial,Helvetica,sans-serif;color:white;text-decoration:none;font-weight:bold;padding:10px;background-color:#5dbd00' target='_blank'>$caption</a>";
+	return "<nobr><a href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='white-space:nowrap;font-size:11pt;font-family:Arial,Helvetica,sans-serif;color:white;text-decoration:none;font-weight:bold;padding:10px;background-color:#5dbd00' target='_blank'>$caption</a></nobr>";
 }

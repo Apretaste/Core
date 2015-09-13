@@ -12,6 +12,9 @@ use Phalcon\DI\FactoryDefault;
 use Phalcon\Mvc\Url as UrlProvider;
 use Phalcon\Config\Adapter\Ini as ConfigIni;
 
+// set the date to come in Spanish
+setlocale(LC_TIME, "es_ES");
+
 // include composer
 include_once "../vendor/autoload.php";
 

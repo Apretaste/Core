@@ -50,23 +50,24 @@
 						<small>
 							{link href="AYUDA" caption="Ayuda"}{separator}
 							{link href="INVITAR escriba aqui las direcciones email de sus amigos" caption="Invitar" body=""}{separator}
-							{link href="ESTADO" caption="Mi estado"}{separator}
+							{link href="PERFIL" caption="Mi perfil"}{separator}
 							{link href="SERVICIOS" caption="M&aacute;s servicios"}
 						</small>
 					</td>
 				</tr>
-	
+
 				<!--logo & service name-->
 				<tr>
 					<td bgcolor="#F2F2F2" align="center" valign="middle">
 						<table border="0">
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
-									<font size="10" face="Tahoma" color="#5ebb47"><i>A</i>pretaste</font>
-									<font size="12" face="Curlz MT" color="#A03E3B">!</font>
-								</td>
-								<td class="phone-block" align="center" valign="middle">
-									<font size="5" face="Tahoma" color="#A03E3B"><b>{$APRETASTE_SERVICE_NAME}</b></font>
+									<span style="white-space:nowrap;">
+										<nobr>
+											<font size="10" face="Tahoma" color="#5ebb47"><i>A</i>pretaste</font>
+											<font style="margin-left:-5px;" size="18" face="Curlz MT" color="#A03E3B"><i>!</i></font>
+										</nobr>
+									</span>
 								</td>
 							</tr>
 						</table>
@@ -87,6 +88,7 @@
 					<td align="left" style="padding: 0px 5px;">
 						{space10}
 						{include file="$APRETASTE_USER_TEMPLATE"}
+						{space10}
 					</td>
 				</tr>
 
