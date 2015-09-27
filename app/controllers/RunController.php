@@ -77,11 +77,11 @@ class RunController extends Controller
 					$mimeType = image_type_to_mime_type(IMAGETYPE_PNG);
 					$filePath = "$wwwroot/temp/$fileNameNoExtension.png";
 					imagepng(imagecreatefromstring(base64_decode($content)), $filePath);
-		
+
 					// optimize the png image
 					$utils->optimizeImage($filePath);
-		
-					// save any other file to the temporals
+
+				// save any other file to the temporals
 				}else{
 					$filePath = "$wwwroot/temp/$fileNameNoExtension.$extension";
 					$ifp = fopen($filePath, "wb");
