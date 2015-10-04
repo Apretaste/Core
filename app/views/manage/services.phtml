@@ -1,7 +1,5 @@
 <div class="row">
-	<div class="col-xs-12">
-		<p class="alert-danger">We are currently hosting <b><?php echo count($services); ?></b> services</p> 
-
+	<div class="col-xs-12"> 
 		<table id="servicesTable" class="table">
 			<thead>
 				<tr>
@@ -16,9 +14,9 @@
 			<?php foreach ($services as $service) { ?>
 				<tr>
 					<td>
-						<b><?php echo $service->name; ?></b><br/>
+						<b><?php echo $service->name; ?></b> 
+						<span class="label label-primary"><?php echo $service->category; ?></span><br/>
 						<?php echo $service->creator_email; ?><br/>
-						<?php echo $service->category; ?>
 					</td>
 					<td><?php echo $service->description; ?></td>
 					<td class="text-center"><?php echo $service->deploy_key; ?></td>

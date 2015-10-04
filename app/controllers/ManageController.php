@@ -446,7 +446,7 @@ class ManageController extends Controller
 		$queryServices = "SELECT name, description, creator_email, category, deploy_key, insertion_date FROM service";
 		$services = $connection->deepQuery($queryServices);
 
-		$this->view->title = "List of services";
+		$this->view->title = "List of services (" . count($services) . ")";
 		$this->view->services = $services;
 	}
 
