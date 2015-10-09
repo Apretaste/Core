@@ -3,6 +3,7 @@
     	"mandrill/mandrill": "1.0.*",
 		"smarty/smarty": "~3.1",
 		"ps/image-optimizer": "1.0.*",
-		"stripe/stripe-php": "2.*"
+		"stripe/stripe-php": "2.*",
+		"fabpot/goutte": "2.*"
     }
 }

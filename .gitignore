@@ -6,6 +6,7 @@ vendor/*
 .settings/*
 .buildpath
 .project
+.htpasswd
 composer.lock
 configs/config.ini
 public/profile/*
