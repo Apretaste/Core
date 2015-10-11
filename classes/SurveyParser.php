@@ -48,7 +48,7 @@ class SurveyParser {
 	/**
 	 * Convert text to array of results
 	 * */
-	private function textToArrayOfEntries($text)
+	public function textToArrayOfEntries($text)
 	{
 		// convert and return
 		return parse_ini_string($text, false, INI_SCANNER_RAW);
@@ -57,7 +57,7 @@ class SurveyParser {
 	/**
 	 * Parse a date
 	 * */
-	private function parseDate($value)
+	public function parseDate($value)
 	{
 		// read date in Spanish
 		setlocale(LC_ALL,"es_ES");
@@ -73,7 +73,7 @@ class SurveyParser {
 	/**
 	 * Parse a gender
 	 * */
-	private function parseGender($value)
+	public function parseGender($value)
 	{
 		$upperValue = strtoupper($value);
 		$valueFirstCharacter = substr($upperValue, 0, 1);
@@ -86,7 +86,7 @@ class SurveyParser {
 	/**
 	 * Parse a comma separated list
 	 * */
-	private function parseList($value)
+	public function parseList($value)
 	{
 		// do not work if the list is empty
 		if(empty($value)) return null;
@@ -104,8 +104,12 @@ class SurveyParser {
 
 	/**
 	 * Parse an enum
+	 * 
+	 * @param String value to be parsed
+	 * @param Array of keys
+	 * @return String correct enum value
 	 * */
-	private function parseEnum($value, $enums)
+	public function parseEnum($value, $enums)
 	{
 		$value = trim(strtoupper($value));
 		$similarityPercent = array(); 
