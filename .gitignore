@@ -14,3 +14,4 @@ public/ads/*
 public/raffle/*
 public/tienda/*
 *~
+*.crawl
