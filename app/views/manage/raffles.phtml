@@ -1,0 +1,31 @@
+<div class="row">
+    <div class="col-xs-12">
+        <table id="raffleListTable" class="table">
+			<thead>
+				<tr>
+					<th>Item Description</th>
+					<th class="text-center">Start Day</th>
+					<th class="text-center">End Day</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach($raffleListData as $raffleListView) { ?>
+				<tr>
+					<td>
+						<p><?php echo $raffleListView['itemDesc']; ?></p>
+						<?php if( ! empty($raffleListView['winner1'])) { ?>
+						<p>
+							<b>W1:</b> <?php echo $raffleListView['winner1']; ?>
+							<b>W2:</b> <?php echo $raffleListView['winner2']; ?>
+							<b>W3:</b> <?php echo $raffleListView['winner3']; ?>
+						</p>
+						<?php } ?>
+					</td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['startDay'])); ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['finishDay'])); ?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

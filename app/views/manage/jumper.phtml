@@ -1,0 +1,28 @@
+<div class="row">
+    <div class="col-xs-12">
+        <table id="adsTable" class="table">
+			<thead>
+				<tr>
+					<th>Email</th>
+					<th class="text-center">Last Usage</th>
+					<th class="text-center">Emails Sent</th>
+					<th class="text-center">Errors</th>
+					<th class="text-center">Block Domains</th>
+					<th class="text-center"></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($jumperData as $jumper) { ?>
+				<tr <?php if($jumper->active == 0) echo 'class="danger"'; ?>>
+					<td><?php echo $jumper->email; ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($jumper->last_usage)); ?></td>
+					<td class="text-center"><?php echo $jumper->sent_count; ?></td>
+					<td class="text-center"><?php echo $jumper->ErrorCount; ?></td>
+					<td class="text-center"><?php echo $jumper->blocked_domains; ?></td>
+					<td class="text-center"><a class="btn btn-xs btn-default" onclick="return confirm('Toggle status?');" href="/manage/jumperToggleActiveStatus?email=<?php echo $jumper->email; ?>">Toggle status</a></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+        </table>
+    </div>
+</div>

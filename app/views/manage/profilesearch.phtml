@@ -1,0 +1,33 @@
+<?php  if(isset($profileNotFound)) { ?>
+	<div class="alert alert-danger"><?php echo $profileNotFound; ?></div>
+<?php } ?>
+
+<div class="col-xs-12">
+	<form method="post" style="margin-bottom: 20px;">
+		<input type="text" name="email" placeholder="Email" />
+		<input type="submit" name="profilesearch" value="Search">
+	</form>
+</div>
+
+<div class="col-xs-12">
+	<?php if(isset($picture) && $picture) { ?>
+		<img style="margin-bottom:10px;" src="/profile/<?php echo $email; ?>.png" />
+	<?php } ?>
+
+	<p><b>First name:</b> <?php if(isset($firstName)) echo $firstName; ?></p>
+	<p><b>Middle name:</b> <?php if(isset($middleName)) echo $middleName; ?></p>
+	<p><b>Last name:</b> <?php if(isset($lastName)) echo $lastName; ?></p>
+	<p><b>Mother name:</b> <?php if(isset($motherName)) echo $motherName; ?></p>
+	<p><b>Date of birth:</b> <?php if(isset($dob)) echo date("F j, Y", strtotime($dob)); ?></p>
+	<p><b>Age:</b> <?php if(isset($age)) echo $age; ?></p>
+	<p><b>Gender:</b> <?php if(isset($gender)) echo $gender; ?></p>
+	<p><b>Phone Number:</b> <?php if(isset($phone)) echo $phone; ?></p>
+	<p><b>Eyes Color:</b> <?php if(isset($eyes)) echo $eyes; ?></p>
+	<p><b>Skin Color:</b> <?php if(isset($skin)) echo $skin; ?></p>
+	<p><b>Body Type:</b> <?php if(isset($body)) echo $body; ?></p>
+	<p><b>Hair Color:</b> <?php if(isset($hair)) echo $hair; ?></p>
+	<p><b>City:</b> <?php if(isset($city)) echo $city; ?></p>
+	<p><b>Province:</b> <?php if(isset($province)) echo $province; ?></p>
+	<p><b>Credit:</b> <?php if(isset($credit)) echo $credit; ?></p>
+	<p><b>About Me:</b> <?php if(isset($aboutMe)) echo $aboutMe; ?></p>
+</div>

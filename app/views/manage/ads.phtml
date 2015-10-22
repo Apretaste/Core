@@ -1,0 +1,28 @@
+<div class="row">
+    <div class="col-xs-12">
+        <table id="adsTable" class="table">
+			<thead>
+				<tr>
+					<th>Owner</th>
+					<th class="text-center">Inserted</th>
+					<th class="text-center">Tittle</th>
+					<th class="text-center">Impressions</th>
+					<th class="text-center">Paid</th>
+					<th class="text-center">Expires</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($ads as $ad) { ?>
+				<tr>
+					<td class="text-left"><?php echo $ad->owner; ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($ad->time_inserted)); ?></td>
+					<td class="text-center"><?php echo $ad->title; ?></td>
+					<td class="text-center"><?php echo $ad->impresions; ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($ad->paid_date)); ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($ad->expiration_date)); ?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+        </table>
+    </div>
+</div>

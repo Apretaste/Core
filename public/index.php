@@ -4,7 +4,7 @@
 ** Apretaste's Bootstrap			 **
 ** Author: hcarras					 **
 ***************************************/
-	
+
 use Phalcon\Loader;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\Application;
@@ -34,7 +34,7 @@ try
 	$di->set('path', function () {
 		return array(
 			"root" => dirname(__DIR__), 
-			"http" => "http://{$_SERVER['HTTP_HOST']}"
+			"http" => "http://{$_SERVER['HTTP_HOST']}" // TODO take the https into account
 		);
 	});
 
