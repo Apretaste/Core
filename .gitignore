@@ -13,9 +13,5 @@ public/profile/*
 public/ads/*
 public/raffle/*
 public/tienda/*
-<<<<<<< HEAD
 migration/*
-*~
-=======
-*~
->>>>>>> 8693e3f7808d2804c020e9315a3d9b1239bac283
+*.crawl
