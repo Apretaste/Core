@@ -220,7 +220,8 @@ class Utils {
 					$indexPorsition++;
 				}
 			}
-			
+			print_r($indexPorsition);
+			exit;
 			while($indexPorsition < count($la) || !$found)
 			{
 				if($namePieces[$indexName] == $dela[$indexPorsition])

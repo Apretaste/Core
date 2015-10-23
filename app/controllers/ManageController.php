@@ -46,7 +46,6 @@ class ManageController extends Controller
 		//End weekly visitors
 	
 		// Montly visitors
-		//Chenged
 		$queryMonthly = "SELECT *
 						FROM
 						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
@@ -360,7 +359,7 @@ class ManageController extends Controller
 		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount,
 		CASE province
 			WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
-			WHEN 'HAVANA' THEN 'Ciudad de La Habana'
+			WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
 			WHEN 'ARTEMISA' THEN 'CU-X01'
 			WHEN 'MAYABEQUE' THEN 'CU-X02'
 			WHEN 'MATANZAS' THEN 'Matanzas'
