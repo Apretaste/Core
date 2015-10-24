@@ -9,72 +9,53 @@ include_once __DIR__."/../vendor/autoload.php";
 use Goutte\Client;
 $client = new Client();
 
-
-/*
-'http://www.revolico.com/computadoras/',
-'http://www.revolico.com/compra-venta/',
-'http://www.revolico.com/servicios/',
-'http://www.revolico.com/autos/',
-'http://www.revolico.com/empleos/',
-'http://www.revolico.com/vivienda/'
-*/
-
-
+// get connection params from the file
+$configs = parse_ini_file (__DIR__."/../configs/config.ini");
 
 // Create connection
-$conn = mysqli_connect("127.0.0.1", "root", "root", "apretaste");
+$conn = mysqli_connect($configs['host'], $configs['user'], $configs['password'], $configs['database']);
 if ( ! $conn) saveCrawlerLog("Connection failed: " . mysqli_connect_error());
 mysqli_set_charset($conn, "utf8");
 
-/*
-$url = 'http://www.revolico.com/computadoras/';
-$res = getRevolicoPagesFromMainURL($url, $client);
-exit;
-*/
+// starting points for the crawler
+$revolicoMainUrls= array(
+	'http://www.revolico.com/computadoras/',
+	'http://www.revolico.com/compra-venta/',
+	'http://www.revolico.com/servicios/',
+	'http://www.revolico.com/autos/',
+	'http://www.revolico.com/empleos/',
+	'http://www.revolico.com/vivienda/'
+);
 
-$url = 'http://www.revolico.com/compra-venta/celulares-lineas-accesorios/table-smartab-7-pulandroid-41cpu-1ghz512ram-ddr34gb53475313-7649-12660803.html';
-$res = crawlRevolicoURL($url, $client);
+echo "\n\nREVOLICO CRAWLER STARTED\n";
 
-// save into the database
-$sql = 
-"INSERT INTO _tienda_post (
-	contact_name,
-	contact_email_1, 
-	contact_phone, 
-	contact_cellphone, 
-	location_province, 
-	ad_title, 
-	ad_body, 
-	category, 
-	number_of_pictures, 
-	price, 
-	currency, 
-	date_time_posted, 
-	source, 
-	source_url
-) VALUES (
-	'{$res['owner']}',
-	'{$res['email']}', 
-	'{$res['phone']}', 
-	'{$res['cell']}', 
-	'{$res['province']}', 
-	'{$res['title']}', 
-	'{$res['body']}', 
-	'', 
-	'{$res['images']}', 
-	'{$res['price']}', 
-	'{$res['currency']}', 
-	'{$res['date']}', 
-	'revolico', 
-	'{$res['url']}'
-)";
+// for each main url
+foreach ($revolicoMainUrls as $url)
+{
+	echo "CRAWLING $url\n";
 
-if ( ! mysqli_query($conn, $sql)) saveCrawlerLog(mysqli_error($conn)); 
+	// get the list of pages that have not been inserted yet
+	$pages = getRevolicoPagesFromMainURL($url, $client);
+
+	echo "PROCESSING URLs $url\n";
+
+	// for every page
+	for($i=0; $i<count($pages); $i++)
+	{
+		echo "SAVING PAGE $i/".count($pages)."\n";
+
+		// get the page's data and images
+		$data = crawlRevolicoURL($pages[$i], $client);
+
+		// save the data into the database
+		saveToDatabase($data, $conn);
+	}
+}
+
+echo "\n\nREVOLICO CRAWLER ENDED\n\n";
 
 // close the connection
 mysqli_close($conn);
-
-
 
 
 
@@ -85,25 +66,19 @@ mysqli_close($conn);
 
 
 function getRevolicoPagesFromMainURL($url, $client) {
-	// load the contents of the incremental file in memory
-	$incFilePath = __DIR__."/revolico.crawl";
-	$inc = file($incFilePath, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES);
-	$inc = array_combine($inc, $inc);
-	echo "INCREMENTAL FILE LOADED\n";
-
-	// get the latest page
+	// get the latest page count
 	$crawler = $client->request('GET', $url);
 	$lastPage = $crawler->filter('[title="Final"]')->attr('href');
-	$pagesCount = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
+	$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10); 
+
+	// get the number of pages to parse
+	$pagesCount = $pagesTotal < 51 ? $pagesTotal : 51; // only get the first 50 pages
 
 	// get all valid links
 	$links = array();
 	for ($n=1; $n<$pagesCount; $n++)
 	{
 		echo "PAGE $n\n";
-
-		// mark the seccion as already crawled
-		$fullSectionMiss = true;
 
 		// move to the next page
 		$crawler = $client->request('GET', $url . "pagina-$n.html");
@@ -113,27 +88,13 @@ function getRevolicoPagesFromMainURL($url, $client) {
 		for ($i=0; $i<count($nodes); $i++)
 		{
 			// get the url from the list
-			$pageURL = "http://www.revolico.com" + $nodes->eq($i)->attr('href');
-
-			if( ! isset($inc[md5($pageURL)])) 
-			{
-				// mark the page to be crawled
-				$links[] = $pageURL;
-
-				// append to the incremental file so we don't crawl the same page twice
-				file_put_contents($incFilePath, md5($pageURL)."\n", FILE_APPEND | LOCK_EX);
-
-				// mark the seccion as not fully crawled
-				$fullSectionMiss = false;
-			}
+			$links[] = "http://www.revolico.com" . $nodes->eq($i)->attr('href');
 		}
-
-		// do not keep crawling if a full section was already in the inc file
-		if($fullSectionMiss) break;
 	}
 
 	return $links;
 }
+
 
 function crawlRevolicoURL($url, $client) {
 	// create crawler
@@ -222,7 +183,7 @@ function crawlRevolicoURL($url, $client) {
 			// save error log
 			saveCrawlerLog(date("Y-m-d H:i:s") . " Could not save image $path");
 		}
-	};
+	}
 
 	// return all values
 	return array(
@@ -237,8 +198,58 @@ function crawlRevolicoURL($url, $client) {
 		"title" => $title,
 		"body" => $body,
 		"images" => count($pictures),
+		"category" => "", // TODO get the category
 		"url" => $url
 	);
+}
+
+
+function saveToDatabase($data, $conn) {
+	// create the query to insert only if it is not repeated in the last month
+	$sql = "
+	INSERT INTO _tienda_post (
+		contact_name,
+		contact_email_1,
+		contact_phone,
+		contact_cellphone,
+		location_province,
+		ad_title,
+		ad_body,
+		category,
+		number_of_pictures,
+		price,
+		currency,
+		date_time_posted,
+		source,
+		source_url
+	) 
+	SELECT 
+		'{$data['owner']}',
+		'{$data['email']}',
+		'{$data['phone']}',
+		'{$data['cell']}',
+		'{$data['province']}',
+		'{$data['title']}',
+		'{$data['body']}',
+		'{$data['category']}',
+		'{$data['images']}',
+		'{$data['price']}',
+		'{$data['currency']}',
+		'{$data['date']}',
+		'revolico',
+		'{$data['url']}'
+	FROM _tienda_post
+	WHERE (
+		SELECT COUNT(id)
+		FROM _tienda_post
+		WHERE 
+			date_time_posted > (NOW() - INTERVAL 1 MONTH) AND
+			levenshtein('{$data['title']}', ad_title) < 10
+		) = 0
+	LIMIT 1";
+
+	// save into the database, log on error
+	if ( ! mysqli_query($conn, $sql)) saveCrawlerLog(mysqli_error($conn));
 }
 
 
