@@ -173,10 +173,48 @@ class Utils {
 	 * @author salvipascual
 	 * @param String $imagePath, path to the image
 	 * */
-	public function optimizeImage($imagePath){
+	public function optimizeImage($imagePath)
+	{
 		$factory = new \ImageOptimizer\OptimizerFactory();
 		$optimizer = $factory->get();
 		$optimizer->optimize($imagePath);
+	}
+
+	/**
+	 * Add a new subscriber to the email list in Mail Lite
+	 * 
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function subscribeToEmailList($email)
+	{
+		// get the path to the www folder
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// adding the new subscriber to the list
+		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72"); // TODO add this to the config file
+		$subscriber = array('email' => $email, 'resubscribe' => 1);
+		$ML_Subscribers->setId("1266487")->add($subscriber);
+	}
+
+	/**
+	 * Delete a subscriber from the email list in Mail Lite
+	 * 
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function unsubscribeFromEmailList($email)
+	{
+		// get the path to the www folder
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// adding the new subscriber to the list
+		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72"); // TODO add this to the config file		
+		$ML_Subscribers->setId("1266487")->remove($email);
 	}
 
 	/**

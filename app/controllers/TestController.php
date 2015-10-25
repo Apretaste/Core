@@ -6,7 +6,12 @@ class TestController extends Controller
 {
 	public function indexAction()
 	{
-		print_r($this->synonyms("mama"));
+/*
+		$utils = new Utils();
+		$utils->subscribeToEmailList("salvi.pascual@outlook.com");
+		$utils->unsubscribeFromEmailList("salvi.pascual@outlook.com");
+*/
+		echo "ran";
 	}
 
 	public function getSynonyms($word){

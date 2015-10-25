@@ -227,7 +227,7 @@ class RunController extends Controller
 			$emailSender = new Email();
 			foreach($responses as $rs)
 			{
-				if($rs->render) // if the response is not a blank response
+				if($rs->render) // ommit default Response()
 				{
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
@@ -238,8 +238,24 @@ class RunController extends Controller
 				}
 			}
 
-			// check if the person accessed for the first time
-			if ( ! $utils->personExist($email))
+			// get the person, false if the person does not exist 
+			$person = $utils->getPerson($email);
+
+			// if the person exist in Apretate
+			if ($person)
+			{
+				// if the person is inactive
+				if( ! $person->active)
+				{
+					// make the person active again 
+					$sql = "UPDATE person SET active=1 WHERE email='$email'";
+					$connection->deepQuery($sql);
+
+					//  add to the email list in Mail Lite
+					$utils->subscribeToEmailList($email);
+				}
+			}
+			else // if the person accessed for the first time, insert him/her 
 			{
 				// save the new Person
 				$sql = "INSERT INTO person (email) VALUES ('$email')";
@@ -262,6 +278,9 @@ class RunController extends Controller
 					$sql .= "COMMIT;";
 					$connection->deepQuery($sql);
 				}
+
+				//  add to the email list in Mail Lite
+				$utils->subscribeToEmailList($email);
 			}
 
 			// calculate execution time when the service stopped executing
