@@ -8,6 +8,7 @@ vendor/*
 .project
 .htpasswd
 composer.lock
+composer.phar
 configs/config.ini
 public/profile/*
 public/ads/*
@@ -15,4 +16,4 @@ public/raffle/*
 public/tienda/*
 migration/*
 services/*
-*.crawl
+
