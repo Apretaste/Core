@@ -11,7 +11,8 @@ class Email {
 	 * @param Array $attachments, paths to the files to attach 
 	 * @throw Mandrill_Error
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array()) {
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	{
 		// select the from email using the jumper
 		$from = $this->nextEmail($to);
 
@@ -19,7 +20,8 @@ class Email {
 		$messageImages = array();
 		if( ! empty($images))
 		{
-			foreach ($images as $image){
+			foreach ($images as $image)
+			{
 				$type = image_type_to_mime_type(exif_imagetype($image));
 				$name = basename($image);
 				$content = base64_encode(file_get_contents($image));
@@ -41,10 +43,13 @@ class Email {
 		);
 
 		// send the email via Mandrill
-		try {
+		try 
+		{
 			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw'); // TODO put API_Key in the configuration
 			$result = $mandrill->messages->send($message, false);
-		} catch(Mandrill_Error $e) {
+		} 
+		catch(Mandrill_Error $e)
+		{
 			echo 'An error sending your email occurred: ' . get_class($e) . ' - ' . $e->getMessage();
 			throw $e;
 		}
@@ -69,7 +74,8 @@ class Email {
 	 * @param String $email, Email of the user
 	 * @return String, Email to use
 	 * */
-	private function nextEmail($email){
+	private function nextEmail($email)
+	{
 		// get the domain from the user's email 
 		$domain = explode("@", $email)[1];
 

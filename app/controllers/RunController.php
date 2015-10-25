@@ -41,7 +41,8 @@ class RunController extends Controller
 	 * Handle webhook requests
 	 * @author salvipascual
 	 * */
-	public function webhookAction(){
+	public function webhookAction()
+	{
 		// get the mandrill json structure from the post
 		$mandrill_events = $_POST['mandrill_events'];
 
@@ -111,7 +112,8 @@ class RunController extends Controller
 	 * Respond to a request based on the parameters passed
 	 * @author salvipascual
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html"){
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html")
+	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
@@ -122,7 +124,8 @@ class RunController extends Controller
 
 		// check the service requested actually exists
 		$utils = new Utils();
-		if( ! $utils->serviceExist($serviceName)) {
+		if( ! $utils->serviceExist($serviceName))
+		{
 			$serviceName = "ayuda";
 		}
 
@@ -132,9 +135,11 @@ class RunController extends Controller
 
 		// check if a subservice is been invoked
 		$subServiceName = "";
-		if(isset($subjectPieces[1])) { // some services are requested only with name
+		if(isset($subjectPieces[1])) // some services are requested only with name
+		{
 			$serviceClassMethods = get_class_methods($serviceName);
-			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods)){
+			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods))
+			{
 				$subServiceName = strtolower($subjectPieces[1]);
 				unset($subjectPieces[1]);
 			}
@@ -171,9 +176,12 @@ class RunController extends Controller
 		$userService->utils = $utils;
 
 		// run the service and get a response
-		if(empty($subServiceName)) {
+		if(empty($subServiceName))
+		{
 			$response = $userService->_main($request);
-		}else{
+		}
+		else
+		{
 			$subserviceFunction = "_$subServiceName";
 			$response = $userService->$subserviceFunction($request);
 		}
@@ -196,7 +204,8 @@ class RunController extends Controller
 		if($format == "html")
 		{
 			$html = "";
-			for ($i=0; $i<count($responses); $i++){
+			for ($i=0; $i<count($responses); $i++)
+			{
 				$html .= "<br/><center><small><b>To:</b> " . $responses[$i]->email . ". <b>Subject:</b> " . $responses[$i]->subject . "</small></center><br/>";
 				$html .= $render->renderHTML($userService, $responses[$i]);
 				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
@@ -218,12 +227,15 @@ class RunController extends Controller
 			$emailSender = new Email();
 			foreach($responses as $rs)
 			{
-				$emailTo = $rs->email;
-				$subject = $rs->subject;
-				$body = $render->renderHTML($userService, $rs);
-				$images = array_merge($rs->images, $rs->getAds());
-				$attachments = $rs->attachments;
-				$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+				if($rs->render) // if the response is not a blank response
+				{
+					$emailTo = $rs->email;
+					$subject = $rs->subject;
+					$images = array_merge($rs->images, $rs->getAds());
+					$attachments = $rs->attachments;
+					$body = $render->renderHTML($userService, $rs);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+				}
 			}
 
 			// check if the person accessed for the first time

@@ -8,6 +8,7 @@ class Response {
 	public $images;
 	public $attachments;
 	public $internal; // false if the user provides the template
+	public $render; // false if the response should not be email to the user
 	private $ads;
 
 	/**
@@ -15,12 +16,15 @@ class Response {
 	 *
 	 * @author salvipascual
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>"Por favor no responda a este email.");
+		$this->content = array("text"=>"<b>Warning:</b> Default responses will never be emailed to the user.");
 		$this->images = array();
 		$this->attachments = array();
+
 		$this->internal = true;
+		$this->render = false;
 		$this->ads = $this->getAdsToShow();
 	}
 
@@ -30,7 +34,8 @@ class Response {
 	 * @author salvipascual
 	 * @param String $subject
 	 * */
-	public function setResponseSubject($subject){
+	public function setResponseSubject($subject)
+	{
 		$this->subject = $subject;
 	}
 
@@ -41,8 +46,20 @@ class Response {
 	 * @author salvipascual
 	 * @param String $email
 	 * */
-	public function setResponseEmail($email){
+	public function setResponseEmail($email)
+	{
 		$this->email = $email;
+	}
+
+	/**
+	 * Get the array of ads selected to be displayed
+	 *
+	 * @author salvipascual
+	 * @return Object[]
+	 * */
+	public function getAds()
+	{
+		return $this->ads;
 	}
 
 	/**
@@ -51,10 +68,12 @@ class Response {
 	 * @author salvipascual
 	 * @param String, $text
 	 */
-	public function createFromText($text) {
+	public function createFromText($text)
+	{
 		$this->template = "message.tpl";
 		$this->content = array("text"=>$text);
 		$this->internal = true;
+		$this->render = true;
 	}
 
 	/**
@@ -66,22 +85,14 @@ class Response {
 	 * @param String[] $images, paths to the images to embeb
 	 * @param String[] $attachments, paths to the files to attach 
 	 */
-	public function createFromTemplate($template, $content, $images=array(), $attachments=array()) {
+	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
+	{
 		$this->template = $template;
 		$this->content = $content;
 		$this->images = $images;
 		$this->attachments = $attachments;
 		$this->internal = false;
-	}
-	
-	/**
-	 * Get the array of ads selected to be displayed
-	 * 
-	 * @author salvipascual
-	 * @return Object[]
-	 * */
-	public function getAds(){
-		return $this->ads;
+		$this->render = true;
 	}
 
 	/**
@@ -89,7 +100,8 @@ class Response {
 	 * 
 	 * @author salvipascual
 	 * */
-	private function getAdsToShow(){
+	private function getAdsToShow()
+	{
 		// get the array of ads from the database if not cached
 		// TODO cache ads array
 		$connection = new Connection();
