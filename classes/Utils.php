@@ -188,127 +188,57 @@ class Utils {
 	 * */
 	public function fullNameToNamePieces($name)
 	{
+
+		$namePieces = explode(" ", $name);
+		$newNamePieces = array();
+		$tmp = "";
+		
+		foreach ($namePieces as $piece)
+		{
+			$tmp .= "$piece ";
+		
+			if(in_array(strtoupper($piece), array("DE","LA","Y","DEL")))
+			{
+				continue;
+			}
+			else
+			{
+				$newNamePieces[] = $tmp;
+				$tmp = "";
+			}
+		}
+		
 		$firstName = "";
 		$middleName = "";
 		$lastName = "";
 		$motherName = "";
-		$namePieces = explode(" ", $name);
-		$nameCount = count($namePieces);
-		$indexName = 1;
-		$indexPorsition = 0;
-		
-		$dela = $this->permute("de la");
-		$de = $this->permute("de");
-		$la = $this->permute("la");
-		
-		while($indexName < $nameCount - 1)
+
+		if(count($newNamePieces)>=4)
 		{
-			$found = false;
-			while($indexPorsition < count($dela) && !$found)
-			{
-				if($namePieces[$indexName] == $dela[$indexPorsition])
-				{
-					$temp = $namePieces[$indexName] . $dela[$indexPorsition];
-					$namePieces[$indexName] = $temp;
-					$namePieces = $this->arrayRezise($namePieces,$indexName + 1);
-					$found == true;
-					$indexPorsition = 0;
-					$indexName++;
-				}
-				else
-				{
-					$indexPorsition++;
-				}
-			}
-			print_r($indexPorsition);
-			exit;
-			while($indexPorsition < count($la) || !$found)
-			{
-				if($namePieces[$indexName] == $dela[$indexPorsition])
-				{
-					$temp = $namePieces[$indexName] . $dela[$indexPorsition];
-					$namePieces[$indexName] = $temp;
-					$namePieces = $this->arrayRezise($namePieces,$indexName + 1);
-					$found == true;
-					$indexPorsition = 0;
-					$indexName++;
-				}
-				else 
-				{
-					$indexPorsition++;
-				}
-			}
-			
-			while($indexPorsition < count($de) || !$found)
-			{
-				if($namePieces[$indexName] == $dela[$indexPorsition])
-				{
-					$temp = $namePieces[$indexName] . $dela[$indexPorsition];
-					$namePieces[$indexName] = $temp;
-					$namePieces = $this->arrayRezise($namePieces,$indexName + 1);
-					$found == true;
-					$indexPorsition = 0;
-					$indexName++;
-				}
-				else
-				{
-					$indexPorsition++;
-				}
-			}
+			$firstName = $newNamePieces[0];
+			$middleName = $newNamePieces[1];
+			$lastName = $newNamePieces[2];
+			$motherName = $newNamePieces[3];
 		}
 
-		if(count($namePieces)>=4)
+		if(count($newNamePieces)==3)
 		{
-			$firstName = $namePieces[0];
-			$middleName = $namePieces[1];
-			$lastName = $namePieces[2];
-			$motherName = $namePieces[3];
+			$firstName = $newNamePieces[0];
+			$lastName = $newNamePieces[1];
+			$motherName = $newNamePieces[2];
 		}
 
-		if(count($namePieces)==3)
+		if(count($newNamePieces)==2)
 		{
-			$firstName = $namePieces[0];
-			$lastName = $namePieces[1];
-			$motherName = $namePieces[2];
+			$firstName = $newNamePieces[0];
+			$lastName = $newNamePieces[1];
 		}
 
-		if(count($namePieces)==2)
+		if(count($newNamePieces)==1)
 		{
-			$firstName = $namePieces[0];
-			$lastName = $namePieces[1];
-		}
-
-		if(count($namePieces)==1)
-		{
-			$firstName = $namePieces[0];
+			$firstName = $newNamePieces[0];
 		}
 
 		return array($firstName, $middleName, $lastName, $motherName);
-	}
-	
-	private function permute($s)
-	{
-		if(strlen($s) == 1)
-			return array(strtoupper($s), strtolower($s));
-		$arr = $this->permute(substr($s,1));
-		for($i = 0; $i < count($arr); $i++)
-		{
-			$newArr[$i*2] = strtoupper(substr($s,0,1)).$arr[$i];
-			$newArr[$i*2+1] = strtolower(substr($s,0,1)).$arr[$i];
-		}
-		return $newArr;
-	}
-	
-	private function arrayRezise($arr, $pos)
-	{
-		$temp[strlen($arr) - 1] = array();
-	
-		for($i = 0, $j = $pos; $i < $pos && $j < strlen($arr) - 1; $i++, $j++)
-		{
-			$temp[$i] = $arr[$i];
-			$temp[$j] = $arr[$j + 1];
-		}
-	
-		return $temp;
 	}
 }
