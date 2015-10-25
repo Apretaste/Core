@@ -220,17 +220,16 @@ class Utils {
 	/**
 	 * Get the pieces of names from the full name
 	 *
-	 * @author salvipascual
+	 * @author hcarras
 	 * @param String $name, full name
 	 * @return Array [$firstName, $middleName, $lastName, $motherName]
 	 * */
 	public function fullNameToNamePieces($name)
 	{
-
 		$namePieces = explode(" ", $name);
 		$newNamePieces = array();
 		$tmp = "";
-		
+
 		foreach ($namePieces as $piece)
 		{
 			$tmp .= "$piece ";
@@ -245,7 +244,7 @@ class Utils {
 				$tmp = "";
 			}
 		}
-		
+
 		$firstName = "";
 		$middleName = "";
 		$lastName = "";
