@@ -50,7 +50,7 @@ foreach ($revolicoMainUrls as $url)
 		// save the data into the database
 		saveToDatabase($data, $conn);
 
-		echo "MEMORY: " . convert(memory_get_usage(true)) . "\n";
+		echo "\tMEMORY USED: " . convert(memory_get_usage(true)) . "\n";
 	}
 }
 
@@ -67,7 +67,8 @@ mysqli_close($conn);
  * * * * * * * * * * * * * * * * * * * * * */
 
 
-function getRevolicoPagesFromMainURL($url, $client) {
+function getRevolicoPagesFromMainURL($url, $client)
+{
 	// get the latest page count
 	$crawler = $client->request('GET', $url);
 	$lastPage = $crawler->filter('[title="Final"]')->attr('href');
@@ -98,7 +99,10 @@ function getRevolicoPagesFromMainURL($url, $client) {
 }
 
 
-function crawlRevolicoURL($url, $client) {
+function crawlRevolicoURL($url, $client)
+{
+	$timeStart  = time();
+
 	// create crawler
 	$crawler = $client->request('GET', $url);
 
@@ -187,6 +191,10 @@ function crawlRevolicoURL($url, $client) {
 		}
 	}
 
+	$timeEnd = time();
+	$timeDiff = $timeEnd - $timeStart;
+	echo "\tCRAWL TIME: $timeDiff \n";
+
 	// return all values
 	return array(
 		"date" => $date,
@@ -206,8 +214,12 @@ function crawlRevolicoURL($url, $client) {
 }
 
 
-function saveToDatabase($data, $conn) {
+function saveToDatabase($data, $conn)
+{
+	$timeStart  = time();
+
 	// create the query to insert only if it is not repeated in the last month
+/*
 	$sql = "
 	INSERT INTO _tienda_post (
 		contact_name,
@@ -249,9 +261,46 @@ function saveToDatabase($data, $conn) {
 			levenshtein('{$data['title']}', ad_title) < 10
 		) = 0
 	LIMIT 1";
+*/
+	$sql = "
+	INSERT INTO _tienda_post (
+		contact_name,
+		contact_email_1,
+		contact_phone,
+		contact_cellphone,
+		location_province,
+		ad_title,
+		ad_body,
+		category,
+		number_of_pictures,
+		price,
+		currency,
+		date_time_posted,
+		source,
+		source_url
+	) VALUES (
+		'{$data['owner']}',
+		'{$data['email']}',
+		'{$data['phone']}',
+		'{$data['cell']}',
+		'{$data['province']}',
+		'{$data['title']}',
+		'{$data['body']}',
+		'{$data['category']}',
+		'{$data['images']}',
+		'{$data['price']}',
+		'{$data['currency']}',
+		'{$data['date']}',
+		'revolico',
+		'{$data['url']}'
+	)";
 
 	// save into the database, log on error
 	if ( ! mysqli_query($conn, $sql)) saveCrawlerLog(mysqli_error($conn));
+
+	$timeEnd = time();
+	$timeDiff = $timeEnd - $timeStart;
+	echo "\tDB TIME: $timeDiff\n";
 }
 
 
@@ -264,13 +313,15 @@ function saveToDatabase($data, $conn) {
 
 
 
-function saveCrawlerLog($message){
+function saveCrawlerLog($message)
+{
 	$errorPath = dirname(__DIR__) . "/logs/crawler.log";
 	file_put_contents($errorPath, $message."\n", FILE_APPEND);
 }
 
 
-function dateSpanishToMySQL($spanishDate){
+function dateSpanishToMySQL($spanishDate)
+{
 	$months = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
 
 	// separate each piece of the date
@@ -290,7 +341,8 @@ function dateSpanishToMySQL($spanishDate){
 }
 
 
-function getEmailFromText($text){
+function getEmailFromText($text)
+{
 	$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 	preg_match($pattern, $text, $matches);
 
@@ -299,7 +351,8 @@ function getEmailFromText($text){
 }
 
 
-function getCellFromText($text){
+function getCellFromText($text)
+{
 	$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
 	$pattern = "/5(2|3)\d{6}/"; // every 8 digits numbers starting by 52 or 53
 	preg_match($pattern, $cleanText, $matches);
@@ -309,7 +362,8 @@ function getCellFromText($text){
 }
 
 
-function getPhoneFromText($text){
+function getPhoneFromText($text)
+{
 	$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
 	$pattern = "/(48|33|47|32|7|31|47|24|45|23|42|22|43|21|41|46)\d{6,7}/";
 	preg_match($pattern, $cleanText, $matches);
@@ -319,7 +373,8 @@ function getPhoneFromText($text){
 }
 
 
-function getProvinceFromPhone($phone){
+function getProvinceFromPhone($phone)
+{
 	if(strpos($phone, "7")==0) return 'LA_HABANA';
 	if(strpos($phone, "21")==0) return 'GUANTANAMO';
 	if(strpos($phone, "22")==0) return 'SANTIAGO_DE_CUBA';
