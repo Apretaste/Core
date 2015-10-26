@@ -1,4 +1,4 @@
-<?php  
+<?php
 
 // include composer
 use GuzzleHttp\Stream\Utils;
@@ -49,6 +49,8 @@ foreach ($revolicoMainUrls as $url)
 
 		// save the data into the database
 		saveToDatabase($data, $conn);
+
+		echo "MEMORY: " . convert(memory_get_usage(true)) . "\n";
 	}
 }
 
@@ -334,4 +336,11 @@ function getProvinceFromPhone($phone){
 	if(strpos($phone, "47")==0) return 'ARTEMISA';
 	if(strpos($phone, "47")==0) return 'MAYABEQUE';
 	if(strpos($phone, "48")==0) return 'PINAR_DEL_RIO';
+}
+
+
+function convert($size)
+{
+	$unit=array('b','kb','mb','gb','tb','pb');
+	return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
 }
