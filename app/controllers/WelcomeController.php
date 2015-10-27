@@ -46,11 +46,16 @@ class WelcomeController extends Controller
 	{
 		$amount = $_GET['amount'];
 		$email = $_GET['email'];
+
+		// get the path to the www folder
 		$wwwroot = $this->di->get('path')['root'];
+
+		// get the key from the config
+		$mailerLiteKey = $this->di->get('config')['mailerlite']['key'];
 
 		// adding the new Donor to the list
 		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72");
+		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
 		$subscriber = array('email' => $email);
 		$result = $ML_Subscribers->setId("2225307")->add($subscriber); // adding to Donors list
 
