@@ -1,7 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-  
+
 class ManageController extends Controller
 {
 	/**
