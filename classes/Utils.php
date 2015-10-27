@@ -9,7 +9,11 @@ class Utils {
 	 */
 	public function getValidEmailAddress()
 	{
-		return "apretaste@apretaste.biz"; // TODO take a valid apretaste email
+		// get the active email with less usage
+		$sql = "SELECT email FROM jumper WHERE active=1 ORDER BY sent_count ASC LIMIT 1";
+		$connection = new Connection();
+		$result = $connection->deepQuery($sql);
+		return $result[0]->email;
 	}
 
 	/**
