@@ -37,16 +37,6 @@ class WelcomeController extends Controller
 			die("Sorry, your card was declined. Please go back and try again.");
 		}
 
-		// Send to the ThankYou page
-		$dollarsAmount = $amount/100;
-		return $this->response->redirect("welcome/thankyou&email=$email&amount=$dollarsAmount");
-	}
-
-	public function thankyouAction()
-	{
-		$amount = $_GET['amount'];
-		$email = $_GET['email'];
-
 		// get the path to the www folder
 		$wwwroot = $this->di->get('path')['root'];
 
@@ -62,12 +52,23 @@ class WelcomeController extends Controller
 		// send email with the donor's info
 		$today = date('l jS \of F Y h:i:s A');
 		$message = "Date: $today\r\nDonor: $email\r\nAmount: $amount";
-		$result = mail("salvi.pascual@gmail.com", "Apretaste received a new donation", $message);
+		$email = new Email();
+		$email->sendEmail("salvi.pascual@gmail.com", "Apretaste: New donation", $message);
+
+		// Send to the ThankYou page
+		$dollarsAmount = $amount/100;
+		return $this->response->redirect("welcome/thankyou&email=$email&amount=$dollarsAmount");
+	}
+
+	public function thankyouAction()
+	{
+		$amount = $_GET['amount'];
+		$email = $_GET['email'];
 
 		// open the view
 		$this->view->amount = $amount;
 		$this->view->email = $email;
-		$this->view->wwwroot = $wwwroot;
+		$this->view->wwwroot = $this->di->get('path')['root'];
 		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->pick("index/thankyou");
 	}
