@@ -52,8 +52,8 @@ class WelcomeController extends Controller
 		// send email with the donor's info
 		$today = date('l jS \of F Y h:i:s A');
 		$message = "Date: $today\r\nDonor: $email\r\nAmount: $amount";
-		$email = new Email();
-		$email->sendEmail("salvi.pascual@gmail.com", "Apretaste: New donation", $message);
+		$emailObj = new Email();
+		$emailObj->sendEmail("salvi.pascual@gmail.com", "Apretaste: New donation", $message);
 
 		// Send to the ThankYou page
 		$dollarsAmount = $amount/100;
