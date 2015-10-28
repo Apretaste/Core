@@ -27,6 +27,8 @@ $revolicoMainUrls= array(
 	'http://www.revolico.com/vivienda/'
 );
 
+// starting time and message
+$timeCrawlerStart  = time();
 echo "\n\nREVOLICO CRAWLER STARTED\n";
 
 // for each main url
@@ -54,11 +56,20 @@ foreach ($revolicoMainUrls as $url)
 	}
 }
 
-echo "\n\nREVOLICO CRAWLER ENDED\n\n";
-
 // close the connection
 mysqli_close($conn);
 
+// ending message, log and time
+$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
+$totalPosts = count($pages);
+$totalMem = convert(memory_get_usage(true));
+$message = "CRAWLER ENDED - EXECUTION TIME: {$totalTime}min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
+saveCrawlerLog($message);
+echo "\n\n$message\n\n";
+
+// save last run time
+$tmpRunPath = dirname(__DIR__) . "/temp/crawler.revolico.last.run";
+file_put_contents($tmpRunPath, date("Y-m-d H:i:s"));
 
 
 /* * * * * * * * * * * * * * * * * * * * * * 
@@ -69,19 +80,22 @@ mysqli_close($conn);
 
 function getRevolicoPagesFromMainURL($url, $client)
 {
-	// get the latest page count
 	$crawler = $client->request('GET', $url);
+
+	// get the latest page count
 	$lastPage = $crawler->filter('[title="Final"]')->attr('href');
 	$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10); 
 
-	// get the number of pages to parse
-	$pagesCount = $pagesTotal < 51 ? $pagesTotal : 51; // only get the first 50 pages
-
 	// get all valid links
 	$links = array();
-	for ($n=1; $n<$pagesCount; $n++)
+	for ($n=1; $n<$pagesTotal; $n++)
 	{
 		echo "PAGE $n\n";
+
+		// only crawl for today
+		$site = file_get_contents($url . "pagina-$n.html");
+		$exist = stripos($site, getTodaysDateSpanishString());
+		if( ! $exist) return $links;
 
 		// move to the next page
 		$crawler = $client->request('GET', $url . "pagina-$n.html");
@@ -187,7 +201,7 @@ function crawlRevolicoURL($url, $client)
 		if ( ! $insert)
 		{
 			// save error log
-			saveCrawlerLog(date("Y-m-d H:i:s") . " Could not save image $path");
+			saveCrawlerLog(" Could not save image $path");
 		}
 	}
 
@@ -315,8 +329,9 @@ function saveToDatabase($data, $conn)
 
 function saveCrawlerLog($message)
 {
+	$timestamp = date("Y-m-d H:i:s");
 	$errorPath = dirname(__DIR__) . "/logs/crawler.log";
-	file_put_contents($errorPath, $message."\n", FILE_APPEND);
+	file_put_contents($errorPath, "$timestamp - REVOLICO - $message\n", FILE_APPEND);
 }
 
 
@@ -338,6 +353,14 @@ function dateSpanishToMySQL($spanishDate)
 
 	// format and return date
 	return date("Y-m-d H:i:s", strtotime ($date));
+}
+
+
+function getTodaysDateSpanishString()
+{
+	$months = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+	$today = explode(" ", date("j n Y"));
+	return $today[0] . " de " . $months[$today[1]-1] . " del " . $today[2]; 
 }
 
 

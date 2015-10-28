@@ -18,6 +18,16 @@
 				<a href="manage/ads">Ads</a><br/>
 			</div>
 		</div>
+
+		<div class="panel panel-success">
+			<div class="panel-heading">Developer</div>
+			<div class="panel-body">
+				<a href="manage/deploy">Deploy</a><br/>
+				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
+				<a href="https://rpm.newrelic.com" target="_blank">New Relic <small><i class="fa fa-external-link"></i></small></a><br/>
+				<a href="https://mandrillapp.com" target="_blank">Mandrill <small><i class="fa fa-external-link"></i></small></a><br/>
+			</div>
+		</div>
 	</div>
 
 	<div class="col-xs-4">
@@ -32,14 +42,10 @@
 	</div>
 
 	<div class="col-xs-4">
-		<div class="panel panel-success">
-			<div class="panel-heading">Developer</div>
-			<div class="panel-body">
-				<a href="manage/deploy">Deploy</a><br/>
-				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://rpm.newrelic.com" target="_blank">New Relic <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://mandrillapp.com" target="_blank">Mandrill <small><i class="fa fa-external-link"></i></small></a><br/>
-			</div>
+		<div class="alert alert-<?php echo $revolicoCrawlerHoursBehind > 24 ? "danger" : "success"; ?>" role="alert">
+			<p><b>Revolico crawler</b></p>
+			<p>Last run: <?php echo $revolicoCrawlerLastRun; ?></p>
+			<p>Time behind: <?php echo $revolicoCrawlerHoursBehind; ?> hours</p> 
 		</div>
 	</div>
 </div>
