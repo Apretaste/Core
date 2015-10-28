@@ -50,13 +50,13 @@ class WelcomeController extends Controller
 		$result = $ML_Subscribers->setId("2225307")->add($subscriber); // adding to Donors list
 
 		// send email with the donor's info
+		$dollarsAmount = $amount/100;
 		$today = date('l jS \of F Y h:i:s A');
-		$message = "Date: $today\r\nDonor: $email\r\nAmount: $amount";
+		$message = "Date: $today<br/>Donor: $email<br/>Amount: $dollarsAmount";
 		$emailObj = new Email();
 		$emailObj->sendEmail("salvi.pascual@gmail.com", "Apretaste: New donation", $message);
 
 		// Send to the ThankYou page
-		$dollarsAmount = $amount/100;
 		return $this->response->redirect("welcome/thankyou&email=$email&amount=$dollarsAmount");
 	}
 
