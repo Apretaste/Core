@@ -18,7 +18,7 @@ class ManageController extends Controller
 		if(file_exists($revolicoCrawlerFile))
 		{
 			$lastRun = file_get_contents($revolicoCrawlerFile);
-			$revolicoCrawlerLastRun = date("Y-m-d H:i:s", strtotime($lastRun));
+			$revolicoCrawlerLastRun = date("D F j, h:i A", strtotime($lastRun));
 			$revolicoCrawlerHoursBehind = number_format((time() - strtotime($lastRun)) / 60 / 60, 2);
 		}
 		
