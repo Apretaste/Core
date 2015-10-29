@@ -31,6 +31,9 @@ $revolicoMainUrls= array(
 $timeCrawlerStart  = time();
 echo "\n\nREVOLICO CRAWLER STARTED\n";
 
+// variable to store the total number of posts
+$totalPosts = 0;
+
 // for each main url
 foreach ($revolicoMainUrls as $url)
 {
@@ -38,6 +41,9 @@ foreach ($revolicoMainUrls as $url)
 
 	// get the list of pages that have not been inserted yet
 	$pages = getRevolicoPagesFromMainURL($url, $client);
+
+	// calculate the total number of posts
+	$totalPosts += count($pages);
 
 	echo "PROCESSING URLs $url\n";
 
@@ -61,9 +67,8 @@ mysqli_close($conn);
 
 // ending message, log and time
 $totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
-$totalPosts = count($pages);
 $totalMem = convert(memory_get_usage(true));
-$message = "CRAWLER ENDED - EXECUTION TIME: {$totalTime}min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
+$message = "CRAWLER ENDED - EXECUTION TIME: $totalTime min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
 saveCrawlerLog($message);
 echo "\n\n$message\n\n";
 
@@ -310,7 +315,7 @@ function saveToDatabase($data, $conn)
 	)";
 
 	// save into the database, log on error
-	if ( ! mysqli_query($conn, $sql)) saveCrawlerLog(mysqli_error($conn));
+	if ( ! mysqli_query($conn, $sql)) saveCrawlerLog(mysqli_error($conn) . "\nQUERY: $sql\n");
 
 	$timeEnd = time();
 	$timeDiff = $timeEnd - $timeStart;
