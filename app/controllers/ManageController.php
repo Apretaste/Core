@@ -373,21 +373,21 @@ class ManageController extends Controller
 		// Numbers of profiles per province
 		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount,
 		CASE province
-			WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
+			WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
 			WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
 			WHEN 'ARTEMISA' THEN 'CU-X01'
 			WHEN 'MAYABEQUE' THEN 'CU-X02'
 			WHEN 'MATANZAS' THEN 'Matanzas'
 			WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 			WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-			WHEN 'SANTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
-			WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ã�vila'
-			WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
+			WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+			WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+			WHEN 'CAMAGUEY' THEN 'Camagüey'
 			WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-			WHEN 'HOLGUIN' THEN 'HolguÃ­n'
+			WHEN 'HOLGUIN' THEN 'Holguín'
 			WHEN 'GRANMA' THEN 'Granma'
 			WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-			WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
+			WHEN 'GUANTANAMO' THEN 'Guantánamo'
 			WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
 		END AS ProvinceName
 		FROM person
