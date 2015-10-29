@@ -37,8 +37,26 @@ class WelcomeController extends Controller
 			die("Sorry, your card was declined. Please go back and try again.");
 		}
 
-		// Send to the ThankYou page
+		// get the path to the www folder
+		$wwwroot = $this->di->get('path')['root'];
+
+		// get the key from the config
+		$mailerLiteKey = $this->di->get('config')['mailerlite']['key'];
+
+		// adding the new Donor to the list
+		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
+		$subscriber = array('email' => $email);
+		$result = $ML_Subscribers->setId("2225307")->add($subscriber); // adding to Donors list
+
+		// send email with the donor's info
 		$dollarsAmount = $amount/100;
+		$today = date('l jS \of F Y h:i:s A');
+		$message = "Date: $today<br/>Donor: $email<br/>Amount: $dollarsAmount";
+		$emailObj = new Email();
+		$emailObj->sendEmail("salvi.pascual@gmail.com", "Apretaste: New donation", $message);
+
+		// Send to the ThankYou page
 		return $this->response->redirect("welcome/thankyou&email=$email&amount=$dollarsAmount");
 	}
 
@@ -46,23 +64,11 @@ class WelcomeController extends Controller
 	{
 		$amount = $_GET['amount'];
 		$email = $_GET['email'];
-		$wwwroot = $this->di->get('path')['root'];
-
-		// adding the new Donor to the list
-		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72");
-		$subscriber = array('email' => $email);
-		$result = $ML_Subscribers->setId("2225307")->add($subscriber); // adding to Donors list
-
-		// send email with the donor's info
-		$today = date('l jS \of F Y h:i:s A');
-		$message = "Date: $today\r\nDonor: $email\r\nAmount: $amount";
-		$result = mail("salvi.pascual@gmail.com", "Apretaste received a new donation", $message);
 
 		// open the view
 		$this->view->amount = $amount;
 		$this->view->email = $email;
-		$this->view->wwwroot = $wwwroot;
+		$this->view->wwwroot = $this->di->get('path')['root'];
 		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->pick("index/thankyou");
 	}

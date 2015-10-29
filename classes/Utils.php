@@ -9,7 +9,11 @@ class Utils {
 	 */
 	public function getValidEmailAddress()
 	{
-		return "apretaste@apretaste.biz"; // TODO take a valid apretaste email
+		// get the active email with less usage
+		$sql = "SELECT email FROM jumper WHERE active=1 ORDER BY sent_count ASC LIMIT 1";
+		$connection = new Connection();
+		$result = $connection->deepQuery($sql);
+		return $result[0]->email;
 	}
 
 	/**
@@ -192,9 +196,12 @@ class Utils {
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
+		// get the key from the config
+		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
 		// adding the new subscriber to the list
 		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72"); // TODO add this to the config file
+		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
 		$subscriber = array('email' => $email, 'resubscribe' => 1);
 		$ML_Subscribers->setId("1266487")->add($subscriber);
 	}
@@ -211,9 +218,12 @@ class Utils {
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
+		// get the key from the config
+		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
 		// adding the new subscriber to the list
 		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers("MGgEXScwKfXV1VJSVz34R23h1mUSFY72"); // TODO add this to the config file		
+		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}
 

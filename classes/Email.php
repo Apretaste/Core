@@ -30,7 +30,7 @@ class Email {
 		}
 
 		// crate the list of attachments
-		// @TODO
+		// TODO add list of attachments
 
 		// create the array send 	
 		$message = array(
@@ -42,10 +42,14 @@ class Email {
 			'images' => $messageImages
 		);
 
+		// get the key from the config
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$mandrillKey = $di->get('config')['mandrill']['key'];
+
 		// send the email via Mandrill
 		try 
 		{
-			$mandrill = new Mandrill('SPiwa91zBAXLXaAKM_z0Lw'); // TODO put API_Key in the configuration
+			$mandrill = new Mandrill($mandrillKey);
 			$result = $mandrill->messages->send($message, false);
 		} 
 		catch(Mandrill_Error $e)

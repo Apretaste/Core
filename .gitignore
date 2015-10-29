@@ -3,6 +3,7 @@ services/*
 logs/*
 nbproject/*
 vendor/*
+cert/*
 .settings/*
 .buildpath
 .project
@@ -16,4 +17,3 @@ public/raffle/*
 public/tienda/*
 migration/*
 services/*
-

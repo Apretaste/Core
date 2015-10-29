@@ -13,15 +13,4 @@ class Service {
 	public function __construct() {
 		$this->utils = new Utils($this->serviceName);
 	}
-
-	/**
-	 * Query the database of the service and returs an array of objects
-	 * 
-	 * @author salvipascual
-	 * @param String $sql, valid sql query
-	 * @return Array, list of rows or NULL if it is not a select
-	 */
-	public function query($sql) {
-		// @TODO implement this function
-	}
 }

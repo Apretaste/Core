@@ -1,7 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-  
+
 class ManageController extends Controller
 {
 	/**
@@ -9,7 +9,22 @@ class ManageController extends Controller
 	 * */
 	public function indexAction()
 	{
+		$wwwroot = $this->di->get('path')['root'];
+
+		// get the last time the crawlers ran
+		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
+		$revolicoCrawlerLastRun = "-";
+		$revolicoCrawlerHoursBehind = 999;
+		if(file_exists($revolicoCrawlerFile))
+		{
+			$lastRun = file_get_contents($revolicoCrawlerFile);
+			$revolicoCrawlerLastRun = date("Y-m-d H:i:s", strtotime($lastRun));
+			$revolicoCrawlerHoursBehind = number_format((time() - strtotime($lastRun)) / 60 / 60, 2);
+		}
+		
 		$this->view->title = "Home";
+		$this->view->revolicoCrawlerLastRun = $revolicoCrawlerLastRun;
+		$this->view->revolicoCrawlerHoursBehind = $revolicoCrawlerHoursBehind;
 	}
 
 

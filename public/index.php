@@ -32,9 +32,10 @@ try
 
 	// Creating the global path to the root folder
 	$di->set('path', function () {
+		$protocol = empty($_SERVER['HTTPS']) ? "http" : "https";
 		return array(
 			"root" => dirname(__DIR__), 
-			"http" => "http://{$_SERVER['HTTP_HOST']}" // TODO take the https into account
+			"http" => "$protocol://{$_SERVER['HTTP_HOST']}"
 		);
 	});
 

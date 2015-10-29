@@ -102,8 +102,7 @@ class Response {
 	 * */
 	private function getAdsToShow()
 	{
-		// get the array of ads from the database if not cached
-		// TODO cache ads array
+		// get the array of ads from the database
 		$connection = new Connection();
 		$ads = $connection->deepQuery("SELECT * FROM ads WHERE active = '1' AND expiration_date > CURRENT_TIMESTAMP");
 
