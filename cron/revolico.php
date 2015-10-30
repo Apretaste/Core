@@ -40,7 +40,7 @@ foreach ($revolicoMainUrls as $url)
 	echo "CRAWLING $url\n";
 
 	// get the list of pages that have not been inserted yet
-	$pages = getRevolicoPagesFromMainURL($url, $client);
+	$pages = getRevolicoPagesFromMainURL($url);
 
 	// calculate the total number of posts
 	$totalPosts += count($pages);
@@ -53,10 +53,10 @@ foreach ($revolicoMainUrls as $url)
 		echo "SAVING PAGE $i/".count($pages)."\n";
 
 		// get the page's data and images
-		$data = crawlRevolicoURL($pages[$i], $client);
+		$data = crawlRevolicoURL($pages[$i]);
 
 		// save the data into the database
-		saveToDatabase($data, $conn);
+		saveToDatabase($data);
 
 		echo "\tMEMORY USED: " . convert(memory_get_usage(true)) . "\n";
 	}
@@ -74,7 +74,7 @@ echo "\n\n$message\n\n";
 
 // save last run time
 $tmpRunPath = dirname(__DIR__) . "/temp/crawler.revolico.last.run";
-file_put_contents($tmpRunPath, date("Y-m-d H:i:s"));
+file_put_contents($tmpRunPath, date("Y-m-d H:i:s")."|$totalTime|$totalPosts|$totalMem");
 
 
 /* * * * * * * * * * * * * * * * * * * * * * 
@@ -83,8 +83,10 @@ file_put_contents($tmpRunPath, date("Y-m-d H:i:s"));
  * * * * * * * * * * * * * * * * * * * * * */
 
 
-function getRevolicoPagesFromMainURL($url, $client)
+function getRevolicoPagesFromMainURL($url)
 {
+	global $client;
+
 	$crawler = $client->request('GET', $url);
 
 	// get the latest page count
@@ -118,8 +120,10 @@ function getRevolicoPagesFromMainURL($url, $client)
 }
 
 
-function crawlRevolicoURL($url, $client)
+function crawlRevolicoURL($url)
 {
+	global $client;
+
 	$timeStart  = time();
 
 	// create crawler
@@ -127,11 +131,9 @@ function crawlRevolicoURL($url, $client)
 
 	// get title
 	$title = trim($crawler->filter('.headingText')->text());
-	$title = str_replace("'", "\'", $title);
 
 	// get body
 	$body = trim($crawler->filter('.showAdText')->text());
-	$body = str_replace("'", "\'", $body);
 
 	// declare a whole bunch of empty variables
 	$price = ""; $currency = ""; $date = ""; $email = ""; $owner = ""; $phone = ""; $cell = ""; $province="";
@@ -233,8 +235,10 @@ function crawlRevolicoURL($url, $client)
 }
 
 
-function saveToDatabase($data, $conn)
+function saveToDatabase($data)
 {
+	global $conn;
+
 	$timeStart  = time();
 
 	// create the query to insert only if it is not repeated in the last month
@@ -281,6 +285,11 @@ function saveToDatabase($data, $conn)
 		) = 0
 	LIMIT 1";
 */
+
+	// clean the body and title of characters that may break the query
+	$title = $conn->real_escape_string($data['title']);
+	$body = $conn->real_escape_string($data['body']);
+
 	$sql = "
 	INSERT INTO _tienda_post (
 		contact_name,
@@ -303,8 +312,8 @@ function saveToDatabase($data, $conn)
 		'{$data['phone']}',
 		'{$data['cell']}',
 		'{$data['province']}',
-		'{$data['title']}',
-		'{$data['body']}',
+		'$title',
+		'$body',
 		'{$data['category']}',
 		'{$data['images']}',
 		'{$data['price']}',

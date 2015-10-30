@@ -13,18 +13,21 @@ class ManageController extends Controller
 
 		// get the last time the crawlers ran
 		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
-		$revolicoCrawlerLastRun = "-";
-		$revolicoCrawlerHoursBehind = 999;
+		$revolicoCrawler = array();
 		if(file_exists($revolicoCrawlerFile))
 		{
-			$lastRun = file_get_contents($revolicoCrawlerFile);
-			$revolicoCrawlerLastRun = date("D F j, h:i A", strtotime($lastRun));
-			$revolicoCrawlerHoursBehind = number_format((time() - strtotime($lastRun)) / 60 / 60, 2);
+			$details = file_get_contents($revolicoCrawlerFile);
+			$details = explode("|", $details);
+
+			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
+			$revolicoCrawler["TimeBehind"] = number_format((time() - strtotime($details[0])) / 60 / 60, 2); 
+			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
+			$revolicoCrawler["PostsDownloaded"] = $details[2];
+			$revolicoCrawler["RuningMemory"] = $details[3];
 		}
-		
+
 		$this->view->title = "Home";
-		$this->view->revolicoCrawlerLastRun = $revolicoCrawlerLastRun;
-		$this->view->revolicoCrawlerHoursBehind = $revolicoCrawlerHoursBehind;
+		$this->view->revolicoCrawler = $revolicoCrawler;
 	}
 
 
