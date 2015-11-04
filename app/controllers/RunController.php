@@ -244,8 +244,8 @@ class RunController extends Controller
 			// if the person exist in Apretate
 			if ($person)
 			{
-				// if the person is inactive
-				if( ! $person->active)
+				// if the person is inactive and he/she is not trying to opt-out
+				if( ! $person->active && $serviceName != "excluyeme")
 				{
 					// make the person active again 
 					$sql = "UPDATE person SET active=1 WHERE email='$email'";
