@@ -255,7 +255,7 @@ class RunController extends Controller
 					$utils->subscribeToEmailList($email);
 				}
 			}
-			else // if the person accessed for the first time, insert him/her 
+			else // if the person accessed for the first time, insert him/her
 			{
 				// save the new Person
 				$sql = "INSERT INTO person (email) VALUES ('$email')";

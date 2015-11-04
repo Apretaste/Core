@@ -200,7 +200,7 @@ class Utils {
 		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
 
 		// adding the new subscriber to the list
-		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
 		$subscriber = array('email' => $email, 'resubscribe' => 1);
 		$ML_Subscribers->setId("1266487")->add($subscriber);
@@ -222,7 +222,7 @@ class Utils {
 		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
 
 		// adding the new subscriber to the list
-		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}

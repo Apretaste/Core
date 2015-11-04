@@ -44,7 +44,7 @@ class WelcomeController extends Controller
 		$mailerLiteKey = $this->di->get('config')['mailerlite']['key'];
 
 		// adding the new Donor to the list
-		include "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
 		$subscriber = array('email' => $email);
 		$result = $ML_Subscribers->setId("2225307")->add($subscriber); // adding to Donors list
