@@ -49,7 +49,7 @@ class RunController extends Controller
 		// get values from the json
 		$event = json_decode($mandrill_events);
 		$fromEmail = $event[0]->msg->from_email;
-		$fromName = $event[0]->msg->from_name;
+		$fromName = isset($event[0]->msg->from_name) ? $event[0]->msg->from_name : "";
 		$toEmail = $event[0]->msg->email;
 		$subject = $event[0]->msg->headers->Subject;
 		$body = $event[0]->msg->text;
