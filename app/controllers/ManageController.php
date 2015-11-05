@@ -391,7 +391,7 @@ class ManageController extends Controller
 			WHEN 'GRANMA' THEN 'Granma'
 			WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
 			WHEN 'GUANTANAMO' THEN 'Guantánamo'
-			WHEN 'ISLA_DA_LA_JUVENTUD' THEN 'Isla de la Juventud'
+			WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
 		END AS ProvinceName
 		FROM person
 		WHERE province IS NOT NULL
@@ -399,7 +399,12 @@ class ManageController extends Controller
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
 		foreach($prefilesPerPravinceList as $profilesList)
-			$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>$profilesList->EmailCount];
+		{
+			if($profilesList->EmailCount != 0)
+				$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>$profilesList->EmailCount];
+			else
+				$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>0];
+		}
 		// numbers of profiles per province
 	
 		// send variables to the view
