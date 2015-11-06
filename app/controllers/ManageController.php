@@ -374,36 +374,72 @@ class ManageController extends Controller
 		//End Profile completion
 	
 		// Numbers of profiles per province
-		$queryPrefilesPerPravince = "SELECT COUNT(email) as EmailCount,
-		CASE province
-			WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
-			WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
-			WHEN 'ARTEMISA' THEN 'CU-X01'
-			WHEN 'MAYABEQUE' THEN 'CU-X02'
-			WHEN 'MATANZAS' THEN 'Matanzas'
-			WHEN 'VILLA_CLARA' THEN 'Villa Clara'
-			WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-			WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
-			WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-			WHEN 'CAMAGUEY' THEN 'Camagüey'
-			WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-			WHEN 'HOLGUIN' THEN 'Holguín'
-			WHEN 'GRANMA' THEN 'Granma'
-			WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-			WHEN 'GUANTANAMO' THEN 'Guantánamo'
-			WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
-		END AS ProvinceName
-		FROM person
-		WHERE province IS NOT NULL
-		GROUP by province";
+		$queryPrefilesPerPravince = "SELECT c.ProvCount,
+										CASE c.mnth
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+											WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
+											WHEN 'ARTEMISA' THEN 'CU-X01'
+											WHEN 'MAYABEQUE' THEN 'CU-X02'
+											WHEN 'MATANZAS' THEN 'Matanzas'
+											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
+											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+											WHEN 'CAMAGUEY' THEN 'Camagüey'
+											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
+											WHEN 'HOLGUIN' THEN 'Holguín'
+											WHEN 'GRANMA' THEN 'Granma'
+											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
+											WHEN 'GUANTANAMO' THEN 'Guantánamo'
+											WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
+										END as NewProv
+									FROM (SELECT count(b.province) as ProvCount, a.mnth
+											FROM(
+												SELECT 'PINAR_DEL_RIO' mnth
+												UNION ALL
+												SELECT 'LA_HABANA' mnth
+												UNION ALL
+												SELECT 'ARTEMISA' mnth
+									    		UNION ALL
+												SELECT 'MAYABEQUE' mnth
+									    		UNION ALL
+												SELECT 'MATANZAS' mnth
+									    		UNION ALL
+												SELECT 'VILLA_CLARA' mnth
+									    		UNION ALL
+												SELECT 'CIENFUEGOS' mnth
+									    		UNION ALL
+												SELECT 'SANTI_SPIRITUS' mnth
+									    		UNION ALL
+												SELECT 'CIEGO_DE_AVILA' mnth
+									    		UNION ALL									
+												SELECT 'CAMAGUEY' mnth
+									    		UNION ALL
+												SELECT 'LAS_TUNAS' mnth
+									    		UNION ALL
+												SELECT 'HOLGUIN' mnth
+									    		UNION ALL
+												SELECT 'GRANMA' mnth
+									    		UNION ALL
+												SELECT 'SANTIAGO_DE_CUBA' mnth
+									    		UNION ALL
+												SELECT 'GUANTANAMO' mnth
+									    		UNION ALL
+												SELECT 'ISLA_DE_LA_JUVENTUD' mnth
+											) a
+											LEFT JOIN person b
+												ON BINARY a.mnth = BINARY b.province AND
+									               b.province IS not NULL AND 
+									               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+										GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
 		foreach($prefilesPerPravinceList as $profilesList)
 		{
-			if($profilesList->EmailCount != 0)
-				$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>$profilesList->EmailCount];
+			if($profilesList->ProvCount != 0)
+				$profilesPerProvince[] = ["region"=>$profilesList->NewProv, "profiles"=>$profilesList->ProvCount];
 			else
-				$profilesPerProvince[] = ["region"=>$profilesList->ProvinceName, "profiles"=>0];
+				$profilesPerProvince[] = ["region"=>$profilesList->NewProv, "profiles"=>0];
 		}
 		// numbers of profiles per province
 	
