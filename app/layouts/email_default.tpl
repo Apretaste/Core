@@ -123,9 +123,10 @@
 						<hr style="border: 1px solid #A03E3B;" />
 						<p>
 							<small>
-								<div style="margin-bottom:5px;">{$APRETASTE_SERVICE_NAME} fue creado por <b>{$APRETASTE_SERVICE_CREATOR}</b>. <a href="mailto:{apretaste_support_email}?subject=Como puedo implementar un servicio para Apretaste?">¿Sabes programar?</a></div>
-								Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a>. Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}.<br/> 
-								Copyright &copy; 2012 - {'Y'|date} Pragres Corporation
+								<div style="margin-bottom:5px;">{$APRETASTE_SERVICE_NAME} fue creado por <b>{$APRETASTE_SERVICE_CREATOR}</b></div>
+								Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a>.<br/> 
+								Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}.<br/> 
+								Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
 							</small>
 						</p>
 					</td>

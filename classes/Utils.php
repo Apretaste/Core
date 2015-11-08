@@ -174,14 +174,36 @@ class Utils {
 	/**
 	 * Reduce image size and optimize the image quality
 	 * 
+	 * @TODO Find an faster image optimization solution
 	 * @author salvipascual
 	 * @param String $imagePath, path to the image
 	 * */
-	public function optimizeImage($imagePath)
+	public function optimizeImage($imagePath, $width=false, $height=false)
 	{
-		$factory = new \ImageOptimizer\OptimizerFactory();
-		$optimizer = $factory->get();
-		$optimizer->optimize($imagePath);
+		\Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
+
+		// load and optimize image
+		$source = \Tinify\fromFile($imagePath);
+
+		// scale image based on width
+		if($width && ! $height)
+		{
+			$source = $source->resize(array("method" => "scale", "width" => $width));
+		}
+
+		// scale image based on width
+		if( ! $width && $height)
+		{
+			$source = $source->resize(array("method" => "scale", "height" => $height));
+		}
+
+		if($width && $height)
+		{
+			$source = $source->resize(array("method" => "cover", "width" => $width, "height" => $height));
+		}
+
+		// save the optimized file
+		$source->toFile($imagePath);
 	}
 
 	/**
