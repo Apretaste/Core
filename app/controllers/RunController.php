@@ -220,8 +220,9 @@ class RunController extends Controller
 		// only save stadistics for email requests
 		if($format == "email")
 		{
-			// get params for the email and send the response emails
 			$emailSender = new Email();
+
+			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
 				if($rs->render) // ommit default Response()
@@ -268,9 +269,14 @@ class RunController extends Controller
 					$sql = "START TRANSACTION;";
 					foreach ($invitations as $invite)
 					{
+						// create the query
 						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
 						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 						$sql .= "UPDATE invitations SET used='1' WHERE invitation_id = '{$invite->invitation_id}';";
+
+						// email the invitor
+						$body = "<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregamos a su cuenta un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>";
+						$emailSender->sendEmail($invite->email_inviter, "Ha ganado un ticket para nuestra Rifa", $body);
 					}
 					$sql .= "COMMIT;";
 					$connection->deepQuery($sql);
