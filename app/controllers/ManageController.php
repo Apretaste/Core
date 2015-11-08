@@ -461,9 +461,9 @@ class ManageController extends Controller
 			{
 				$this->view->profileNotFound = "Profile not found for user <b>$email</b>";
 			}
-
-			$this->view->title = "Search for a profile";
 		}
+
+		$this->view->title = "Search for a profile";
 	}
 
 
