@@ -328,11 +328,11 @@ class ManageController extends Controller
 	
 		// Users with profile vs users without profile
 		//Users with profiles
-		$queryUsersWithProfile = "SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user IS NOT NULL";
+		$queryUsersWithProfile = "SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user = 1";
 		$usersWithProfile = $connection->deepQuery($queryUsersWithProfile);
 
 		//Users without profiles
-		$queryUsersWithOutProfile = "SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user IS NULL";
+		$queryUsersWithOutProfile = "SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user = 0";
 		$usersWithOutProfile = $connection->deepQuery($queryUsersWithOutProfile);
 		//End Users with profile vs users without profile
 
