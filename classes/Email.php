@@ -115,7 +115,7 @@ class Email
 		// increase the send counter
 		$email = $result[0]->email;
 		$today = date("Y-m-d H:i:s");
-		$result = $connection->deepQuery("UPDATE jumper SET sent_count=sent_count+1, last_usage='$today' WHERE email='$email'");
+		$connection->deepQuery("UPDATE jumper SET sent_count=sent_count+1, last_usage='$today' WHERE email='$email'");
 
 		return $email;
 	}

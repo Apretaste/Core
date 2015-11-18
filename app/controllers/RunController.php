@@ -55,7 +55,7 @@ class RunController extends Controller
 		$body = $event[0]->msg->text;
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
-
+		
 		// create a new connection to the database
 		$connection = new Connection();
 

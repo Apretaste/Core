@@ -2,16 +2,15 @@
 
 class Utils {
 	/**
-	 * Returns a valid Apretaste email
+	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
 	 * @return String, email address
 	 */
 	public function getValidEmailAddress()
 	{
-		// get the active email with less usage
-		$sql = "SELECT email FROM jumper WHERE active=1 ORDER BY sent_count ASC LIMIT 1";
 		$connection = new Connection();
+		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='SendOnly' ORDER BY sent_count ASC LIMIT 1";
 		$result = $connection->deepQuery($sql);
 		return $result[0]->email;
 	}
@@ -92,10 +91,12 @@ class Utils {
 		$wwwroot = $di->get('path')['root'];
 		$image = "$wwwroot/public/profile/$email.png";
 
-		if(file_exists($image)) {
+		if(file_exists($image))
+		{
 			$wwwpath = $di->get('path')['http'];
 			$image = "$wwwpath/profile/$email.png";
-		} else $image = NULL;
+		}
+		else $image = NULL;
 
 		// get the interests as an array
 		$person->interests = $exploded = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
