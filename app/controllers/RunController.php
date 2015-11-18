@@ -59,27 +59,12 @@ class RunController extends Controller
 		// create a new connection to the database
 		$connection = new Connection();
 
-		// block hard bounces
-		if(
-			stripos($fromEmail,"mailer-daemon@")!==false ||
-			$fromEmail == "administrator@communicationservice.nl"
-		)
+		// do not email if there is an error
+		$email = new Email();
+		$status = $email->deliveryStatus($fromEmail);
+		if($status != 'ok')
 		{
-			$connection->deepQuery("INSERT INTO delivery_error(incoming_email,apretaste_email,reason) VALUES ('$fromEmail','$toEmail','hard-bounce')");
-			return;
-		}
-
-		// block no reply emails
-		if(
-			stripos($fromEmail,"not-reply")!==false ||
-			stripos($fromEmail,"notreply")!==false ||
-			stripos($fromEmail,"no-reply")!==false ||
-			stripos($fromEmail,"noreply")!==false ||
-			stripos($fromEmail,"no-responder")!==false ||
-			stripos($fromEmail,"noresponder")!==false
-		)
-		{
-			$connection->deepQuery("INSERT INTO delivery_error('incoming_email', 'apretaste_email', 'reason') VALUES ('$fromEmail','$toEmail','no-reply')");
+			$connection->deepQuery("INSERT INTO delivery_error(incoming_email,apretaste_email,reason) VALUES ('$fromEmail','$toEmail','$status')");
 			return;
 		}
 
