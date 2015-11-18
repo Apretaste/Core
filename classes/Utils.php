@@ -149,8 +149,8 @@ class Utils {
 
 		// get the image of the raffle
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwpath = $di->get('path')['http'];
-		$raffleImage = "$wwwpath/raffle/" . md5($raffle->raffle_id) . ".png";
+		$wwwroot = $di->get('path')['root'];
+		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".png";
 
 		// add elements to the response
 		$raffle->tickets = $openedTickets;
