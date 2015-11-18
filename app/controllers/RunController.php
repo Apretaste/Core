@@ -52,7 +52,7 @@ class RunController extends Controller
 		$fromName = isset($event[0]->msg->from_name) ? $event[0]->msg->from_name : "";
 		$toEmail = $event[0]->msg->email;
 		$subject = $event[0]->msg->headers->Subject;
-		$body = $event[0]->msg->text;
+		$body = isset($event[0]->msg->text) ? $event[0]->msg->text : "";
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 		

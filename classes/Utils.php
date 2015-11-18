@@ -1,6 +1,7 @@
 <?php
 
-class Utils {
+class Utils
+{
 	/**
 	 * Returns a valid Apretaste email to send an email
 	 *
