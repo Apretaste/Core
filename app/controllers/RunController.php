@@ -56,6 +56,32 @@ class RunController extends Controller
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 
+		// block hard bounces
+		if(
+			stripos($fromEmail,"mailer-daemon@")!==false ||
+			$fromEmail == "administrator@communicationservice.nl"
+		)
+		{
+			$connection = new Connection();
+			$connection->deepQuery("INSERT INTO delivery_error(incoming_email,apretaste_email,reason) VALUES ('$fromEmail','$toEmail','hard-bounce')");
+			return;
+		}
+
+		// block no reply emails
+		if(
+			stripos($fromEmail,"not-reply")!==false ||
+			stripos($fromEmail,"notreply")!==false ||
+			stripos($fromEmail,"no-reply")!==false ||
+			stripos($fromEmail,"noreply")!==false ||
+			stripos($fromEmail,"no-responder")!==false ||
+			stripos($fromEmail,"noresponder")!==false
+		)
+		{
+			$connection = new Connection();
+			$connection->deepQuery("INSERT INTO delivery_error('incoming_email', 'apretaste_email', 'reason') VALUES ('$fromEmail','$toEmail','no-reply')");
+			return;
+		}
+
 		// if there are attachments, download them all and create the files in the temp folder 
 		if(count($filesAttached)>0)
 		{

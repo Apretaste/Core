@@ -1,6 +1,7 @@
 <?php 
 
-class Email {
+class Email
+{
 	/**
 	 * Sends an email using Mandrill
 	 * @author salvipascual
@@ -15,6 +16,8 @@ class Email {
 	{
 		// select the from email using the jumper
 		$from = $this->nextEmail($to);
+
+		$from = "salvi.pascual@gmail.com";
 
 		// create the list of images
 		$messageImages = array();
@@ -51,23 +54,11 @@ class Email {
 		{
 			$mandrill = new Mandrill($mandrillKey);
 			$result = $mandrill->messages->send($message, false);
-		} 
+		}
 		catch(Mandrill_Error $e)
 		{
 			echo 'An error sending your email occurred: ' . get_class($e) . ' - ' . $e->getMessage();
 			throw $e;
-		}
-
-		// log rejected emails
-		$status = $result[0]["status"];
-		if(in_array($status, array("rejected", "invalid")))
-		{
-			$email = $result[0]["email"];
-			$reason = $result[0]["reject_reason"];
-			$mandrillId = $result[0]["_id"];
-
-			$connection = new Connection();
-			$connection->deepQuery("INSERT INTO delivery_error(user_email,response_email,reason, mandrill_id ) VALUES ('$email','$from',$reason','$mandrillId')");
 		}
 	}
 
