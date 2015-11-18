@@ -56,13 +56,15 @@ class RunController extends Controller
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 
+		// create a new connection to the database
+		$connection = new Connection();
+
 		// block hard bounces
 		if(
 			stripos($fromEmail,"mailer-daemon@")!==false ||
 			$fromEmail == "administrator@communicationservice.nl"
 		)
 		{
-			$connection = new Connection();
 			$connection->deepQuery("INSERT INTO delivery_error(incoming_email,apretaste_email,reason) VALUES ('$fromEmail','$toEmail','hard-bounce')");
 			return;
 		}
@@ -77,7 +79,6 @@ class RunController extends Controller
 			stripos($fromEmail,"noresponder")!==false
 		)
 		{
-			$connection = new Connection();
 			$connection->deepQuery("INSERT INTO delivery_error('incoming_email', 'apretaste_email', 'reason') VALUES ('$fromEmail','$toEmail','no-reply')");
 			return;
 		}
@@ -120,6 +121,10 @@ class RunController extends Controller
 				$attachments[] = $object;
 			}
 		}
+
+		// update the counter of emails received from that mailbox
+		$today = date("Y-m-d H:i:s");
+		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
 
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
