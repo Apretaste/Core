@@ -111,7 +111,15 @@ class Email
 	 * */
 	public function deliveryStatus($to)
 	{
-		// check for hard bounces
+		// block people following the example email
+		if($to == "su@amigo.cu") return 'hard-bounce';
+
+		// check for valid domain
+		$mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
+		$result = $mgClient->get("address/validate", array('address' => $to));
+		if( ! $result->http_response_body->is_valid) return 'hard-bounce';
+
+		// block intents to email the deamons
 		if(stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false) return 'hard-bounce';
 
 		// block no reply emails
@@ -123,7 +131,7 @@ class Email
 			stripos($to,"noresponder")!==false
 		) return 'no-reply';
 
-		// check for loops
+		// block emails from apretaste to apretaste
 		$connection = new Connection();
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
 		foreach($mailboxes as $m) if($to == $m->email) return 'loop';
