@@ -16,8 +16,12 @@ class Email
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
-		$response = $this->deliveryStatus($to);
-		if($response != 'ok') return;
+		$status = $this->deliveryStatus($to);
+		if($status != 'ok')
+		{
+			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$to','out','$status')");
+			return;
+		}
 
 		// select the from email using the jumper
 		$from = $this->nextEmail($to);

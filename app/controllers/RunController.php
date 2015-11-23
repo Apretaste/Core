@@ -55,7 +55,7 @@ class RunController extends Controller
 		$body = isset($event[0]->msg->text) ? $event[0]->msg->text : "";
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
-		
+
 		// create a new connection to the database
 		$connection = new Connection();
 
@@ -64,7 +64,7 @@ class RunController extends Controller
 		$status = $email->deliveryStatus($fromEmail);
 		if($status != 'ok')
 		{
-			$connection->deepQuery("INSERT INTO delivery_error(incoming_email,apretaste_email,reason) VALUES ('$fromEmail','$toEmail','$status')");
+			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$to','in','$status')");
 			return;
 		}
 
