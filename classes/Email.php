@@ -19,6 +19,7 @@ class Email
 		$status = $this->deliveryStatus($to);
 		if($status != 'ok')
 		{
+			$connection = new Connection();
 			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$to','out','$status')");
 			return;
 		}
