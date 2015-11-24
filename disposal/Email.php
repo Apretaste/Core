@@ -54,6 +54,56 @@ class Email
 		$result = $mgClient->sendMessage($domain, $message, $images);
 	}
 
+/*
+	SEND VIA MANDRILL
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	{
+		// select the from email using the jumper
+		$from = $this->nextEmail($to);
+
+		// create the list of images
+		$messageImages = array();
+		if( ! empty($images))
+		{
+			foreach ($images as $image)
+			{
+				$type = image_type_to_mime_type(exif_imagetype($image));
+				$name = basename($image);
+				$content = base64_encode(file_get_contents($image));
+				$messageImages[] = array ('type' => $type, 'name' => $name, 'content' => $content); 
+			}
+		}
+
+		// crate the list of attachments
+		// TODO add list of attachments
+
+		// create the array send 	
+		$message = array(
+			'html' => $body,
+			'subject' => $subject,
+			'from_email' => $from,
+			'from_name' => 'Apretaste',
+			'to' => array(array('email'=>$to,'name'=>'','type'=>'to')),
+			'images' => $messageImages
+		);
+
+		// get the key from the config
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$mandrillKey = $di->get('config')['mandrill']['key'];
+
+		// send the email via Mandrill
+		try 
+		{
+			$mandrill = new Mandrill($mandrillKey);
+			$result = $mandrill->messages->send($message, false);
+		}
+		catch(Mandrill_Error $e)
+		{
+			echo 'An error sending your email occurred: ' . get_class($e) . ' - ' . $e->getMessage();
+			throw $e;
+		}
+	}
+*/
 
 	/**
 	 * Checks if an email can be delivered to certain mailbox
@@ -90,17 +140,6 @@ class Email
 		$connection = new Connection();
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
 		foreach($mailboxes as $m) if($to == $m->email) return 'loop';
-
-		// check new emails deeper (only if they are not in our db)
-		$res = $connection->deepQuery("SELECT email FROM person WHERE email='$to'");
-		if(empty($res))
-		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$key = $di->get('config')['emailvalidator']['key'];
-			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
-			if($result && $result->status > 300 && $result->status < 399) return "soft-bounce";
-			if($result && $result->status > 400 && $result->status < 499) return "hard-bounce";
-		}
 
 		// return ok
 		return 'ok';

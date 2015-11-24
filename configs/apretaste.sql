@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Nov 17, 2015 at 11:36 PM
+-- Generation Time: Nov 22, 2015 at 11:56 PM
 -- Server version: 5.6.25-0ubuntu0.15.04.1
 -- PHP Version: 5.6.4-4ubuntu6.3
 
@@ -91,11 +91,11 @@ CREATE TABLE IF NOT EXISTS `ads` (
 
 CREATE TABLE IF NOT EXISTS `delivery_error` (
 `id` int(11) NOT NULL,
-  `incoming_email` varchar(50) NOT NULL COMMENT 'The email address of the recipient',
-  `apretaste_email` varchar(50) NOT NULL COMMENT 'Email that Apretaste selected to respond',
-  `reason` enum('hard-bounce','soft-bounce','spam','no-reply','unknown') NOT NULL COMMENT 'The reason for the rejection',
+  `email` varchar(50) NOT NULL,
+  `direction` enum('in','out') NOT NULL COMMENT 'in=received, out=sent',
+  `reason` enum('hard-bounce','soft-bounce','spam','no-reply','loop','unknown') NOT NULL COMMENT 'The reason for the rejection',
   `error_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS `invitations` (
   `email_invited` varchar(50) NOT NULL,
   `used` tinyint(1) NOT NULL,
   `used_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=891 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -222,7 +222,7 @@ CREATE TABLE IF NOT EXISTS `ticket` (
   `raffle_id` int(11) DEFAULT NULL COMMENT 'NULL when the ticket belong to the current Raffle or ID of the Raffle where it was used',
   `email` varchar(50) NOT NULL,
   `paid` tinyint(1) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=158 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS `transfer` (
   `confirmation_hash` varchar(32) NOT NULL,
   `transfered` tinyint(1) NOT NULL DEFAULT '0',
   `inventory_code` varchar(20) DEFAULT NULL COMMENT 'Code from the inventory table, if it was a purchase'
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -251,14 +251,14 @@ CREATE TABLE IF NOT EXISTS `utilization` (
 `usage_id` int(11) NOT NULL,
   `service` varchar(50) NOT NULL,
   `subservice` varchar(50) DEFAULT NULL,
-  `query` varchar(100) DEFAULT NULL,
+  `query` varchar(1000) DEFAULT NULL,
   `requestor` varchar(50) NOT NULL,
   `request_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `response_time` time NOT NULL DEFAULT '00:00:00',
   `domain` varchar(30) NOT NULL,
   `ad_top` int(11) DEFAULT NULL,
   `ad_botton` int(11) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1321 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4877 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS `_tienda_post` (
   `featured` tinyint(1) NOT NULL DEFAULT '0',
   `source` varchar(20) NOT NULL,
   `source_url` varchar(250) DEFAULT NULL
-) ENGINE=MyISAM AUTO_INCREMENT=603460 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=612159 DEFAULT CHARSET=latin1;
 
 --
 -- Indexes for dumped tables
@@ -449,12 +449,12 @@ MODIFY `ads_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=6;
 -- AUTO_INCREMENT for table `delivery_error`
 --
 ALTER TABLE `delivery_error`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
 --
 -- AUTO_INCREMENT for table `invitations`
 --
 ALTER TABLE `invitations`
-MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=28;
+MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=891;
 --
 -- AUTO_INCREMENT for table `raffle`
 --
@@ -464,22 +464,22 @@ MODIFY `raffle_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
 -- AUTO_INCREMENT for table `ticket`
 --
 ALTER TABLE `ticket`
-MODIFY `ticket_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=32;
+MODIFY `ticket_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=158;
 --
 -- AUTO_INCREMENT for table `transfer`
 --
 ALTER TABLE `transfer`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=59;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=70;
 --
 -- AUTO_INCREMENT for table `utilization`
 --
 ALTER TABLE `utilization`
-MODIFY `usage_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1321;
+MODIFY `usage_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4877;
 --
 -- AUTO_INCREMENT for table `_tienda_post`
 --
 ALTER TABLE `_tienda_post`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=603460;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=612159;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
