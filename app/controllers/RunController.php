@@ -51,7 +51,7 @@ class RunController extends Controller
 		$fromEmail = $event[0]->msg->from_email;
 		$fromName = isset($event[0]->msg->from_name) ? $event[0]->msg->from_name : "";
 		$toEmail = $event[0]->msg->email;
-		$subject = $event[0]->msg->headers->Subject;
+		$subject = isset($event[0]->msg->headers->Subject) ? $event[0]->msg->headers->Subject : "";
 		$body = isset($event[0]->msg->text) ? $event[0]->msg->text : "";
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
@@ -64,7 +64,7 @@ class RunController extends Controller
 		$status = $email->deliveryStatus($fromEmail);
 		if($status != 'ok')
 		{
-			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$to','in','$status')");
+			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$fromEmail','in','$status')");
 			return;
 		}
 
