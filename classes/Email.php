@@ -98,6 +98,7 @@ class Email
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$key = $di->get('config')['emailvalidator']['key'];
 			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
+			if($result && $result->status == 114) return 'unknown'; // usually national email
 			if($result && $result->status > 300 && $result->status < 399) return 'soft-bounce';
 			if($result && $result->status > 400 && $result->status < 499) return 'hard-bounce';
 		}
