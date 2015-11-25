@@ -6,7 +6,7 @@ class TestController extends Controller
 {
 	public function indexAction()
 	{
-		$to = "geovannyashley@nauta.cu";
+		$to = "joseagm@edu.vcl.sld.cu";
 
 		// do not get deep check for existing emails
 		$connection = new Connection();
@@ -21,6 +21,7 @@ class TestController extends Controller
 			if($result && $result->status > 300 && $result->status < 399) echo "soft-bounce";
 			if($result && $result->status > 400 && $result->status < 499) echo "hard-bounce";
 
+			echo "<br/><br/><br/>";
 			print_r($result);
 		}
 
