@@ -69,11 +69,6 @@ class Email
 		// block people following the example email
 		if($to == "su@amigo.cu") return 'hard-bounce';
 
-		// check for valid domain
-		$mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
-		$result = $mgClient->get("address/validate", array('address' => $to));
-		if( ! $result->http_response_body->is_valid) return 'hard-bounce';
-
 		// block intents to email the deamons
 		if(stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false) return 'hard-bounce';
 
@@ -88,10 +83,19 @@ class Email
 			stripos($to,"noresponder")!==false
 		) return 'no-reply';
 
-		// block emails from apretaste to apretaste
+		// block any previouly dropped email
 		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
+		if( ! empty($res)) return 'loop';
+
+		// block emails from apretaste to apretaste
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
 		foreach($mailboxes as $m) if($to == $m->email) return 'loop';
+
+		// check for valid domain
+		$mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
+		$result = $mgClient->get("address/validate", array('address' => $to));
+		if( ! $result->http_response_body->is_valid) return 'hard-bounce';
 
 		// check new emails deeper (only if they are not in our db)
 		$res = $connection->deepQuery("SELECT email FROM person WHERE email='$to'");
