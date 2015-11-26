@@ -6,6 +6,9 @@ class WebhookController extends Controller
 {
 	public function droppedAction()
 	{
+		// do not allow empty calls
+		if(empty($_POST)) die("EMPTY CALL");
+
 		// get the params from post
 		$email = $_POST['recipient'];
 		$domain = $_POST['domain'];
