@@ -17,5 +17,8 @@ class WebhookController extends Controller
 		$connection = new Connection();
 		$sql = "INSERT INTO delivery_dropped(email,sender,reason,code,description) VALUES ('$email','$domain','$reason','$code','$desc')";
 		$connection->deepQuery($sql);
+
+		// echo completion message
+		echo "FINISHED";
 	}
 }
