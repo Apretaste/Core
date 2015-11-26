@@ -6,6 +6,19 @@ class WebhookController extends Controller
 {
 	public function droppedAction()
 	{
-		echo "Hello World!";
+		// get the params from post
+		$email = $_POST['recipient'];
+		$domain = $_POST['domain'];
+		$reason = $_POST['reason'];
+		$code = $_POST['code'];
+		$desc = $_POST['description'];
+
+		echo "$email<br/>$domain<br/>$reason<br/>$code<br/>$desc";
+		exit;
+
+		// save into the database
+		$connection = new Connection();
+		$sql = "INSERT INTO delivery_dropped(email,domain,reason,code,description) VALUES ('$email','$domain','$reason','$code','$desc')";
+		$connection->deepQuery($sql);
 	}
 }
