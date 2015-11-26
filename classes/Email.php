@@ -80,6 +80,8 @@ class Email
 		// block no reply emails
 		if(stripos($to,"not-reply")!==false ||
 			stripos($to,"notreply")!==false ||
+			stripos($to,"No_Reply")!==false ||
+			stripos($to,"Do_Not_Reply")!==false ||
 			stripos($to,"no-reply")!==false ||
 			stripos($to,"noreply")!==false ||
 			stripos($to,"no-responder")!==false ||
