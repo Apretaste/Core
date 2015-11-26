@@ -22,7 +22,7 @@
 					<td class="text-center"><?php echo $email->reason; ?></td>
 					<td class="text-center"><?php echo $email->code; ?></td>
 					<td><?php echo $email->description; ?></td>
-					<td class="text-center"><nobr><?php echo date("m/d H:i", strtotime($email->inserted)); ?></nobr></td>
+					<td class="text-center"><nobr><?php echo date("m/d h:i A", strtotime($email->inserted)); ?></nobr></td>
 				</tr>
 			<?php } ?>
 			</tbody>
