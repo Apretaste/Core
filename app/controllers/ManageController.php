@@ -750,4 +750,25 @@ class ManageController extends Controller
 			$this->view->deployingMesssage = "Service deployed successfully. Your new deploy key is $deployKey. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on";
 		}
 	}
+	
+	/**
+	 * Show the dropped emails for the last 7 days
+	 * */
+	public function droppedAction()
+	{
+		// get last 7 days of dropped emails
+		$connection = new Connection();
+		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
+		$dropped = $connection->deepQuery($sql);
+
+		// get last 7 days of emails sent
+		$connection = new Connection();
+		$sql = "SELECT count(usage_id) AS total FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+		$sent = $connection->deepQuery($sql)[0]->total;
+
+		$this->view->title = "Dropped emails (Last 7 days)";
+		$this->view->droppedEmails = $dropped;
+		$this->view->sentEmails = $sent;
+		$this->view->failurePercentage = (count($dropped)*100)/$sent;
+	}
 }

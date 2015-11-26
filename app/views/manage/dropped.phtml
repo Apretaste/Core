@@ -1,0 +1,31 @@
+<div class="row">
+    <div class="col-xs-12">
+    	<p>Dropped <b><?php echo count($droppedEmails); ?></b> out of <?php echo $sentEmails; ?> emails sent.</p>
+    	<p><span style="font-size: 1.5em;" class="badge alert-danger"><?php echo number_format($failurePercentage, 2); ?>% Failure Ratio</span></p>
+
+        <table class="table">
+			<thead>
+				<tr>
+					<th>Email</th>
+					<th>Sender</th>
+					<th class="text-center">Reason</th>
+					<th class="text-center">Code</th>
+					<th>Description</th>
+					<th class="text-center">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($droppedEmails as $email) { ?>
+				<tr>
+					<td><?php echo $email->email; ?></td>
+					<td><?php echo $email->sender; ?></td>
+					<td class="text-center"><?php echo $email->reason; ?></td>
+					<td class="text-center"><?php echo $email->code; ?></td>
+					<td><?php echo $email->description; ?></td>
+					<td class="text-center"><?php echo date("m/d H:i", strtotime($email->inserted)); ?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+        </table>
+    </div>
+</div>
