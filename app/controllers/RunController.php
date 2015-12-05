@@ -151,7 +151,8 @@ class RunController extends Controller
 		if(isset($subjectPieces[1])) // some services are requested only with name
 		{
 			$serviceClassMethods = get_class_methods($serviceName);
-			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods))
+			$possibleSubservice = "_" . trim(str_replace("/", $subjectPieces[1])); // clean to avoid breaking the regexp
+			if(preg_grep("/^$possibleSubservice$/i", $serviceClassMethods))
 			{
 				$subServiceName = strtolower($subjectPieces[1]);
 				unset($subjectPieces[1]);

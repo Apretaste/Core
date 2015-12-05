@@ -20,9 +20,11 @@ class Deploy
 
 		// remove the current project if it exist
 		$utils = new Utils();
-		if ($utils->serviceExist($service['serviceName'])) {
+		if ($utils->serviceExist($service['serviceName']))
+		{
 			// check if the deploy key is valid
-			if ( ! $this->checkDeployValidity($service['serviceName'], $deployKey)) {
+			if ( ! $this->checkDeployValidity($service['serviceName'], $deployKey))
+			{
 				throw new Exception ("Deploy key is invalid");
 			}
 
@@ -63,7 +65,8 @@ class Deploy
 		$wwwroot = $di->get('path')['root'];
 
 		$zip = new ZipArchive ();
-		if ($zip->open($pathToZip) === TRUE) {
+		if ($zip->open($pathToZip) === TRUE)
+		{
 			// unzip service to the temp folder
 			$pathToService = "$wwwroot/temp/" . md5($pathToZip);
 			$zip->extractTo($pathToService);
@@ -73,7 +76,9 @@ class Deploy
 			chmod($pathToService, 0777);
 
 			return $pathToService;
-		} else {
+		}
+		else
+		{
 			throw new Exception ("Cannot read zip file");
 		}
 	}
@@ -111,13 +116,15 @@ class Deploy
 		$res = $connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
 
 		// clean service-specific tables
-		foreach ($service['database'] as $table) {
+		foreach ($service['database'] as $table)
+		{
 			$res = $connection->deepQuery("DROP TABLE IF EXISTS __{$service['serviceName']}_{$table['name']};");
 		}
 
 		// remove the service folder
 		$dir = "$wwwroot/services/{$service['serviceName']}";
-		if (file_exists($dir)) {
+		if (file_exists($dir))
+		{
 			@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
 			@system("rm -rfv " . escapeshellarg($dir)); // linux version
 		}
@@ -151,10 +158,12 @@ class Deploy
 
 		// create the service specific tables
 		$query = "";
-		foreach ($service['database'] as $table) {
+		foreach ($service['database'] as $table)
+		{
 			$tname = "__{$service['serviceName']}_{$table['name']}";
 			$query = "CREATE TABLE $tname (";
-			foreach ($table['columns'] as $column) {
+			foreach ($table['columns'] as $column)
+			{
 				$length = empty($column['length']) ? "" : "({$column['length']})";
 				$query .= "{$column['name']} {$column['type']} $length,";
 			}
@@ -182,13 +191,16 @@ class Deploy
 		$XMLData = array();
 
 		// get the tables if they exist
-		if (isset($xml->database)) {
+		if (isset($xml->database))
+		{
 			$tables = array();
-			foreach ($xml->database->table as $table) {
+			foreach ($xml->database->table as $table)
+			{
 				$newtable = array("name"=>trim((String)$table->attributes()->name), "columns"=>NULL);
 				$columns = array();
 
-				foreach ($table->column as $column) {
+				foreach ($table->column as $column)
+				{
 					$columns[] = array(
 						"name"=>trim((String)$column),
 						"type"=>trim((String)$column->attributes()->type), 
@@ -198,9 +210,10 @@ class Deploy
 				}
 				$tables[] = $newtable;
 			}
-
 			$XMLData['database'] = $tables;
-		}else{
+		}
+		else
+		{
 			$XMLData['database'] = array();
 		}
 
@@ -212,13 +225,15 @@ class Deploy
 		$XMLData['serviceCategory'] = trim((String)$xml->serviceCategory);
 
 		// check if the email is valid
-		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL)) {
+		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL))
+		{
 			throw new Exception ("The email {$XMLData['creatorEmail']} is not valid.");
 		}
 
 		// check if the category is valid
-		$categories = array("negocios","compraventa","juegos","ocio","academico","social","comunicaciones","informativo","adulto","otros");
-		if( ! in_array($XMLData['serviceCategory'], $categories) ){
+		$categories = array('negocios','ocio','academico','social','comunicaciones','informativo','adulto','otros');
+		if( ! in_array($XMLData['serviceCategory'], $categories))
+		{
 			throw new Exception ("Category {$XMLData['serviceCategory']} is not valid. Categories are: " . implode(", ", $categories));
 		}
 
