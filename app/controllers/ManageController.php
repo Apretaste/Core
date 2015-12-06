@@ -569,7 +569,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryServices = "SELECT name, description, creator_email, category, deploy_key, insertion_date FROM service";
+		$queryServices = "SELECT name, description, creator_email, category, insertion_date FROM service";
 		$services = $connection->deepQuery($queryServices);
 
 		$this->view->title = "List of services (" . count($services) . ")";
@@ -723,13 +723,10 @@ class ManageController extends Controller
 				return;
 			}
 
-			// get the deploy key
-			$deployKey = $this->request->getPost("deploykey");
-
 			// deploy the service
 			try
 			{
-				$deployResults = $deploy->deployServiceFromZip($zipPath, $deployKey, $zipName);
+				$deployResults = $deploy->deployServiceFromZip($zipPath, $zipName);
 			}
 			catch (Exception $e)
 			{
@@ -742,15 +739,14 @@ class ManageController extends Controller
 			$today = date("Y-m-d H:i:s");
 			$serviceName = $deployResults["serviceName"];
 			$creatorEmail = $deployResults["creatorEmail"];
-			$deployKey = $deployResults["deployKey"];
 			$email = new Email();
-			$email->sendEmail($creatorEmail, "Your service $serviceName was deployed", "<h1>Service deployed</h1><p>Your service $serviceName was deployed on $today. Your Deploy Key is $deployKey. Please keep your Deploy Key secured as per you will need it to upgrade or remove your service later on.</p><p>Thank you for using Apretaste</p>");
+			$email->sendEmail($creatorEmail, "Your service $serviceName was deployed", "<h1>Service deployed</h1><p>Your service $serviceName was deployed on $today.</p>");
 
 			// redirect to the upload page with success message
-			$this->view->deployingMesssage = "Service deployed successfully. Your new deploy key is $deployKey. Please copy your deploy key now and keep it secret. Without your deploy key you will not be able to update your Service later on";
+			$this->view->deployingMesssage = "Service <b>$serviceName</b> deployed successfully.";
 		}
 	}
-	
+
 	/**
 	 * Show the dropped emails for the last 7 days
 	 * */

@@ -6,10 +6,9 @@ class Deploy
 	 * Extracts and deploys a new service to the service directory
 	 *
 	 * @param String $path, path to the zip file of the service
-	 * @param String $deployKey, hash to avoid unauthorize updating of the service
-	 * @return array, results of the deploy [serviceName, creatorEmail, deployKey]
+	 * @return array, results of the deploy [serviceName, creatorEmail]
 	 */
-	public function deployServiceFromZip($pathToZip, $deployKey, $zipName)
+	public function deployServiceFromZip($pathToZip, $zipName)
 	{
 		// extract file to the temp folder
 		$pathToService = $this->extractServiceZip($pathToZip);
@@ -22,22 +21,15 @@ class Deploy
 		$utils = new Utils();
 		if ($utils->serviceExist($service['serviceName']))
 		{
-			// check if the deploy key is valid
-			if ( ! $this->checkDeployValidity($service['serviceName'], $deployKey))
-			{
-				throw new Exception ("Deploy key is invalid");
-			}
-
 			// clean database and files if the service existed before
 			$this->removeService($service);
 		}
 
 		// create a new deploy key
 		$utils = new Utils();
-		$deployKey = $utils->generateRandomHash();
 
 		// add the new service
-		$this->addService($service, $deployKey, $pathToZip, $pathToService);
+		$this->addService($service, $pathToZip, $pathToService);
 
 		// remove temp service folder
 		@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
@@ -46,8 +38,8 @@ class Deploy
 		// return deploy results
 		return array(
 			"serviceName"=>$service["serviceName"], 
-			"creatorEmail"=>$service["creatorEmail"], 
-			"deployKey"=>$deployKey);
+			"creatorEmail"=>$service["creatorEmail"]
+		);
 	}
 
 	/**
@@ -84,21 +76,6 @@ class Deploy
 	}
 
 	/**
-	 * When a service was already submitted, check the deploy key to prevent
-	 * an unauthorized user from deploy it again.
-	 * Do nothing if the service was not deployed before
-	 *
-	 * @param String $deployKey, hash to avoid unauthorize updating of the service
-	 * @return Boolean, true if the service can be reloaded
-	 */
-	public function checkDeployValidity($serviceName, $deployKey)
-	{
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT name FROM service WHERE name='$serviceName' AND deploy_key='$deployKey'");
-		return count($res) > 0;
-	}
-
-	/**
 	 * Remove a service from the filesystem and database
 	 *
 	 * @author salvipascual
@@ -112,13 +89,14 @@ class Deploy
 
 		// create a new connection
 		$connection = new Connection();
+
 		// remove the service from the services table
-		$res = $connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
+		$connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
 
 		// clean service-specific tables
 		foreach ($service['database'] as $table)
 		{
-			$res = $connection->deepQuery("DROP TABLE IF EXISTS __{$service['serviceName']}_{$table['name']};");
+			$connection->deepQuery("DROP TABLE IF EXISTS __{$service['serviceName']}_{$table['name']};");
 		}
 
 		// remove the service folder
@@ -135,11 +113,10 @@ class Deploy
 	 *
 	 * @author salvipascual
 	 * @param Service
-	 * @param String , the key to deploy the service
 	 * @param String , the path to the location of the zip
 	 * @param String , the path to the location of the files
 	 * */
-	public function addService($service, $deployKey, $pathToZip, $pathToService)
+	public function addService($service, $pathToZip, $pathToService)
 	{
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -149,7 +126,7 @@ class Deploy
 		$connection = new Connection();
 
 		// save the new service in the database
-		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category,deploy_key) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','$deployKey')";
+		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}')";
 		$connection->deepQuery($insertUserQuery);
 
 		// copy files to the service folder and remove temp files
