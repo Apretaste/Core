@@ -10,7 +10,7 @@ use Goutte\Client;
 $client = new Client();
 
 // get connection params from the file
-$configs = parse_ini_file (__DIR__."/../configs/config.ini");
+$configs = parse_ini_file(__DIR__."/../configs/config.ini", true)['database'];
 
 // Create connection
 $conn = mysqli_connect($configs['host'], $configs['user'], $configs['password'], $configs['database']);
