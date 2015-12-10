@@ -97,10 +97,13 @@ class Email
 		$result = $mgClient->get("address/validate", array('address' => $to));
 		if( ! $result->http_response_body->is_valid) return 'hard-bounce';
 
-		// check new emails deeper (only if they are not in our db)
-		$res = $connection->deepQuery("SELECT email FROM person WHERE email='$to'");
-		if(empty($res))
+		// check NEW emails deeper (only for new people)
+		$utils = new Utils();
+		if( ! $utils->personExist($to))
 		{
+			// save all emails tested by the email validador to ensure no errors are happening 
+			$connection->deepQuery("INSERT INTO ___emailvalidator_checked_emails (email) VALUES ('$to')");
+
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$key = $di->get('config')['emailvalidator']['key'];
 			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
