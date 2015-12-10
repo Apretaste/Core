@@ -56,6 +56,10 @@ class RunController extends Controller
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 
+		// clean the subject from dangerous characters 
+		// delete the characters: ? \ / ) ( and multiple spaces  
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\?|\(|\)|\\\|\//', "", $subject)));
+
 		// create a new connection to the database
 		$connection = new Connection();
 
@@ -151,8 +155,7 @@ class RunController extends Controller
 		if(isset($subjectPieces[1])) // some services are requested only with name
 		{
 			$serviceClassMethods = get_class_methods($serviceName);
-			$possibleSubservice = "_" . trim(str_replace("/", "", $subjectPieces[1])); // clean to avoid breaking the regexp
-			if(preg_grep("/^$possibleSubservice$/i", $serviceClassMethods))
+			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods))
 			{
 				$subServiceName = strtolower($subjectPieces[1]);
 				unset($subjectPieces[1]);
