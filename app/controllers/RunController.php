@@ -56,10 +56,6 @@ class RunController extends Controller
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 
-		// clean the subject from dangerous characters 
-		// delete the characters: ? \ / ) ( and multiple spaces  
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\?|\(|\)|\\\|\//', "", $subject)));
-
 		// create a new connection to the database
 		$connection = new Connection();
 
@@ -133,6 +129,10 @@ class RunController extends Controller
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
+
+		// clean the subject from dangerous characters
+		// delete the characters: ? \ / ) ( and multiple spaces
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\?|\(|\)|\\\|\//', "", $subject)));
 
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
