@@ -130,8 +130,9 @@ class RunController extends Controller
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
-		// remove double spaces from the subject
-		$subject = trim(preg_replace('/\s{2,}/', " ", $subject));
+		// remove double spaces and apostrophes from the subject
+		// sorry apostrophes break the SQL code :-( 
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'/', "", $subject)));
 
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
