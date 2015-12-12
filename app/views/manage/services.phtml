@@ -5,6 +5,7 @@
 				<tr>
 					<th>Details</th>
 					<th>Description</th>
+					<th class="text-center">Category</th>
 					<th class="text-center">Inserted</th>
 					<th></th>
 				</tr>
@@ -13,11 +14,13 @@
 			<?php foreach ($services as $service) { ?>
 				<tr>
 					<td>
-						<b><?php echo $service->name; ?></b> 
-						<span class="label label-primary"><?php echo $service->category; ?></span><br/>
-						<?php echo $service->creator_email; ?><br/>
+						<b><?php echo $service->name; ?></b>
+						<?php if( ! $service->listed) { ?><span class="label label-default">hidden</span><?php } ?>
+						<br/>
+						<?php echo $service->creator_email; ?>
 					</td>
 					<td><?php echo $service->description; ?></td>
+					<td class="text-center"><?php echo $service->category; ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($service->insertion_date)); ?></td>
 					<td class="text-center">
 						<a class="btn btn-default" target="_blank" href="/run/display?subject=<?php echo $service->name; ?>">Run</a>

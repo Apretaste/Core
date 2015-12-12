@@ -569,7 +569,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryServices = "SELECT name, description, creator_email, category, insertion_date FROM service";
+		$queryServices = "SELECT name, description, creator_email, category, insertion_date, listed FROM service";
 		$services = $connection->deepQuery($queryServices);
 
 		$this->view->title = "List of services (" . count($services) . ")";
