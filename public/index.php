@@ -18,8 +18,10 @@ setlocale(LC_TIME, "es_ES");
 // include composer
 include_once "../vendor/autoload.php";
 
+/*
 try
 {
+*/
 	//Register autoLoader for Analytics
 	$loaderAnalytics = new Loader();
 	$loaderAnalytics->registerDirs(array(
@@ -67,8 +69,10 @@ try
 	$application = new Application($di);
 
 	echo $application->handle()->getContent();
+/*
 }
 catch(\Exception $e)
 {
 	echo "PhalconException: ", $e->getMessage();	
 }
+*/

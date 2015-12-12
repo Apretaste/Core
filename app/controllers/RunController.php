@@ -130,9 +130,8 @@ class RunController extends Controller
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
-		// clean the subject from dangerous characters
-		// delete the characters: ? \ / ) ( and multiple spaces
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\?|\(|\)|\\\|\//', "", $subject)));
+		// remove double spaces from the subject
+		$subject = trim(preg_replace('/\s{2,}/', " ", $subject));
 
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
@@ -152,7 +151,7 @@ class RunController extends Controller
 
 		// check if a subservice is been invoked
 		$subServiceName = "";
-		if(isset($subjectPieces[1])) // some services are requested only with name
+		if(isset($subjectPieces[1]) && ! preg_match('/\?|\(|\)|\\\|\/|\.|\$|\^|\{|\}|\||\!/', $subjectPieces[1]))
 		{
 			$serviceClassMethods = get_class_methods($serviceName);
 			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods))
