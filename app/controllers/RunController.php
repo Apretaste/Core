@@ -56,23 +56,15 @@ class RunController extends Controller
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
 
-		// create a new connection to the database
-		$connection = new Connection();
-
-		// do not email if there is an error
-		$email = new Email();
-		$status = $email->deliveryStatus($fromEmail);
-		if($status != 'ok')
-		{
-			$connection->deepQuery("INSERT INTO delivery_error(email,direction,reason) VALUES ('$fromEmail','in','$status')");
-			return;
-		}
+		// do not continue procesing the email if the sender is not valid
+		$utils = new Utils();
+		$status = $utils->deliveryStatus($fromEmail, 'in');
+		if($status != 'ok') return;
 
 		// if there are attachments, download them all and create the files in the temp folder 
 		if(count($filesAttached)>0)
 		{
 			// save the attached files and create the response array
-			$utils = new Utils();
 			$wwwroot = $this->di->get('path')['root'];
 			foreach ($filesAttached as $key=>$values)
 			{
@@ -109,6 +101,7 @@ class RunController extends Controller
 
 		// update the counter of emails received from that mailbox
 		$today = date("Y-m-d H:i:s");
+		$connection = new Connection();
 		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
 
 		// save the webhook log

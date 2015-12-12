@@ -1,5 +1,7 @@
 <?php
 
+use Mailgun\Mailgun;
+
 class Utils
 {
 	/**
@@ -15,6 +17,7 @@ class Utils
 		$result = $connection->deepQuery($sql);
 		return $result[0]->email;
 	}
+
 
 	/**
 	 * Format a link to be an Apretaste mailto
@@ -35,6 +38,7 @@ class Utils
 		return $link;
 	}
 
+
 	/**
 	 * Check if the service exists in the database
 	 *
@@ -49,6 +53,7 @@ class Utils
 		return count($res) > 0;
 	}
 
+
 	/**
 	 * Check if the Person exists in the database
 	 * 
@@ -62,6 +67,22 @@ class Utils
 		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
 		return count($res) > 0;
 	}
+
+
+	/**
+	 * Check if the Person was invited and is still pending 
+	 *
+	 * @author salvipascual
+	 * @param String $personEmail, email of the person
+	 * @return Boolean, true if Person invitation is pending
+	 * */
+	public function checkPendingInvitation($email)
+	{
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
+		return count($res) > 0;
+	}
+
 
 	/**
 	 * Get a person's profile
@@ -109,6 +130,7 @@ class Utils
 		return $person;
 	}
 
+
 	/**
 	 * Get the path to a service. 
 	 * 
@@ -127,6 +149,7 @@ class Utils
 		if(file_exists($path)) return $path;
 		else return false;
 	}
+
 
 	/**
 	 * Return the current Raffle or false if no Raffle was found
@@ -160,6 +183,7 @@ class Utils
 		return $raffle;
 	}
 
+
 	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
@@ -172,6 +196,7 @@ class Utils
 		$today = date('full');
 		return md5($rand . $today);
 	}
+
 
 	/**
 	 * Reduce image size and optimize the image quality
@@ -208,6 +233,7 @@ class Utils
 		$source->toFile($imagePath);
 	}
 
+
 	/**
 	 * Add a new subscriber to the email list in Mail Lite
 	 * 
@@ -230,6 +256,7 @@ class Utils
 		$ML_Subscribers->setId("1266487")->add($subscriber);
 	}
 
+
 	/**
 	 * Delete a subscriber from the email list in Mail Lite
 	 * 
@@ -250,6 +277,7 @@ class Utils
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}
+
 
 	/**
 	 * Get the pieces of names from the full name
@@ -311,5 +339,79 @@ class Utils
 		}
 
 		return array($firstName, $middleName, $lastName, $motherName);
+	}
+
+
+	/**
+	 * Checks if an email can be delivered to a certain mailbox
+	 *
+	 * @author salvipascual
+	 * @param String $to, email address of the receiver
+	 * @param Enum $direction, in or out, if we check an email received or sent
+	 * @return String delivability: ok, hard-bounce, soft-bounce, spam, no-reply, loop, unknown
+	 * */
+	public function deliveryStatus($to, $direction="out")
+	{
+		// save the final response. If not ok, will return on the LogErrorAndReturn tag
+		$response = '';
+
+		// create a new connection object
+		$connection = new Connection();
+
+		// block people following the example email
+		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
+		// check if the email is formatted properly
+		if ( ! filter_var($to, FILTER_VALIDATE_EMAIL)) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
+		// block intents to email the deamons
+		if(stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
+		// block no reply emails
+		if(stripos($to,"not-reply")!==false ||
+			stripos($to,"notreply")!==false ||
+			stripos($to,"No_Reply")!==false ||
+			stripos($to,"Do_Not_Reply")!==false ||
+			stripos($to,"no-reply")!==false ||
+			stripos($to,"noreply")!==false ||
+			stripos($to,"no-responder")!==false ||
+			stripos($to,"noresponder")!==false
+		) {$response = 'no-reply'; goto LogErrorAndReturn;}
+
+		// block any previouly dropped email
+		$res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
+		if( ! empty($res)) {$response = 'loop'; goto LogErrorAndReturn;}
+
+		// block emails from apretaste to apretaste
+		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
+		foreach($mailboxes as $m) if($to == $m->email) {$response = 'loop'; goto LogErrorAndReturn;}
+
+		// check for valid domain
+		$mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
+		$result = $mgClient->get("address/validate", array('address' => $to));
+		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
+		// check NEW emails deeper (only for new people)
+		if( ! $this->personExist($to))
+		{
+			// save all emails tested by the email validador to ensure no errors are happening
+			$connection->deepQuery("INSERT INTO ___emailvalidator_checked_emails (email) VALUES ('$to')");
+
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$key = $di->get('config')['emailvalidator']['key'];
+			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
+			if($result && $result->status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
+			if($result && $result->status > 300 && $result->status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
+			if($result && $result->status > 400 && $result->status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		}
+
+		// when no errors were found
+		return 'ok';
+
+		// log errors in the database before returning
+		// and YES, I am using GOTO
+		LogErrorAndReturn:
+		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
+		return $response;
 	}
 }
