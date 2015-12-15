@@ -46,6 +46,7 @@ class ManageController extends Controller
 		{
 			$visitorsWeecly[] = ["day"=>date("D jS", strtotime($visit->inserted)), "emails"=>$visit->users];
 		}
+		$visitorsWeecly = array_reverse($visitorsWeecly);
 		// END weekly visitors
 
 		// Montly visitors
