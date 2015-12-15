@@ -394,15 +394,24 @@ class Utils
 		// check NEW emails deeper (only for new people)
 		if( ! $this->personExist($to))
 		{
-			// save all emails tested by the email validador to ensure no errors are happening
-			$connection->deepQuery("INSERT INTO ___emailvalidator_checked_emails (email) VALUES ('$to')");
-
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$key = $di->get('config')['emailvalidator']['key'];
 			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
-			if($result && $result->status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
-			if($result && $result->status > 300 && $result->status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
-			if($result && $result->status > 400 && $result->status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+			if($result)
+			{
+				// save all emails tested by the email validador to ensure no errors are happening
+				$status = $result->status;
+				$connection->deepQuery("INSERT INTO ___emailvalidator_checked_emails (email,status) VALUES ('$to','$status')");
+
+				// get the result for each status code
+				if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
+				if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
+				if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+			}
+			else
+			{
+				throw new Exception("Error connecting emailvalidator for user $to at ".date());
+			}
 		}
 
 		// when no errors were found

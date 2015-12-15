@@ -48,6 +48,12 @@ class Email
 		// send the email via MailGun
 		$mgClient = new Mailgun($mailgunKey);
 		$result = $mgClient->sendMessage($domain, $message, $images);
+
+		// save a trace that the email was sent
+		$haveImages = empty($images) ? 0 : 1;
+		$haveAttachments = empty($attachments) ? 0 : 1;
+		$connection = new Connection();
+		$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
 	}
 
 
