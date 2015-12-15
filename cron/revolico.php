@@ -229,7 +229,7 @@ function crawlRevolicoURL($url)
 		"title" => $title,
 		"body" => $body,
 		"images" => count($pictures),
-		"category" => "", // TODO get the category
+		"category" => classify("$title $body");
 		"url" => $url
 	);
 }
@@ -435,4 +435,49 @@ function convert($size)
 {
 	$unit=array('b','kb','mb','gb','tb','pb');
 	return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
+}
+
+
+/**
+ * Get a category for the post
+ *
+ * @author kuma
+ * @param String, title and body concatenated
+ * @return String category
+ * */
+function classify($text)
+{
+	$map = array(
+		'computers' => 'laptop,pc,computadora,kit,mouse,teclado,usb,flash,memoria,sd,ram,micro,tarjeta de video,tarjeta de sonido,motherboard,display,impresora',
+		'cars' => 'carro,auto,moto,bicicleta',
+		'electronics' => 'equipo,ventilador,acondicionado,aire,televisor,tv,radio,musica,teatro en casa,bocina',
+		'events' => 'evento,fiesta,concierto',
+		'home' => 'cubiertos,mesa,muebles,silla,escaparate,cocina',
+		'jobs' => 'trabajo,contrato,profesional',
+		'phones' => 'bateria,celular,iphone,blu,android,ios,cell,rooteo,root,jailbreak,samsung galaxy,blackberry,sony erickson',
+		'music_instruments' => 'guitarra,piano,trompeta,bajo,bateria',
+		'places' => 'restaurant,bar,cibercafe,club',
+		'software' => 'software,programa,juego de pc,juegos,instalador,mapa',
+		'real_state' => 'casa,vivienda,permuto,apartamento,apto',
+		'relationship' => 'pareja,amigo,novia,novio,singler',
+		'services' => 'servicio,reparador,reparan,raparacion,taller,a domicilio,mensajero,taxi',
+		'videogames' => 'nintendo,wii,playstation,ps2,xbox',
+		'antiques' => 'colleci,antig,moneda,sello,carta,tarjeta',
+		'books' => 'libro,revista,biblio',
+		'for_sale' => 'venta,vendo,ganga'
+	);
+
+	foreach($map as $class => $kws)
+	{
+		$kws = explode(',',$kws);
+		foreach($kws as $kw)
+		{
+			if (stripos($text,' '.$kw)!==false || stripos($text,' '.$kw)===0)
+			{
+				return $class;
+			}
+		}
+	}
+
+	return 'for_sale';
 }

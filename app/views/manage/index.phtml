@@ -50,7 +50,7 @@
 		<div class="alert alert-<?php echo isset($revolicoCrawler["TimeBehind"]) && $revolicoCrawler["TimeBehind"] < 24 ? "success" : "danger"; ?>" role="alert">
 			<p><b>Revolico crawler</b></p>
 			<p>Last run: <?php if(isset($revolicoCrawler["LastRun"])) echo $revolicoCrawler["LastRun"]; ?></p>
-			<p>Time behind: <?php if(isset($revolicoCrawler["TimeBehind"])) echo $revolicoCrawler["TimeBehind"]; ?> hours</p>
+			<p>Time behind: <?php if(isset($revolicoCrawler["TimeBehind"])) echo number_format($revolicoCrawler["TimeBehind"],2); ?> hours</p>
 			<p>Running time: <?php if(isset($revolicoCrawler["RuningTime"])) echo $revolicoCrawler["RuningTime"]; ?> minutes</p>
 			<p>Posts downloaded: <?php if(isset($revolicoCrawler["PostsDownloaded"])) echo $revolicoCrawler["PostsDownloaded"]; ?></p>
 			<p>Memory used: <?php if(isset($revolicoCrawler["RuningMemory"])) echo $revolicoCrawler["RuningMemory"]; ?></p>

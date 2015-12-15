@@ -20,7 +20,7 @@ class ManageController extends Controller
 			$details = explode("|", $details);
 
 			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
-			$revolicoCrawler["TimeBehind"] = number_format((time() - strtotime($details[0])) / 60 / 60, 2); 
+			$revolicoCrawler["TimeBehind"] = time() - strtotime($details[0]) / 60 / 60; 
 			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
 			$revolicoCrawler["PostsDownloaded"] = $details[2];
 			$revolicoCrawler["RuningMemory"] = $details[3];
@@ -37,32 +37,17 @@ class ManageController extends Controller
 	public function audienceAction()
 	{
 		$connection = new Connection();
-	
-		// Weekly visitors
-		$queryWeecly = "SELECT *
-		FROM (SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 6 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 5 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 4 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 3 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 2 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(DATE_SUB(now(), INTERVAL 1 DAY), '%a') AS Weekday UNION
-		SELECT DATE_FORMAT(now(), '%a') as Weekday) AS Weekdays LEFT JOIN
-			(SELECT DATE_FORMAT(request_time, '%a') as DataWeekday, count(request_time) as TimesRequested
-			FROM  utilization
-			WHERE (request_time >= DATE_SUB(now( ) , INTERVAL 7 DAY))
-		group by date(request_time)) AS DataWeek
-		ON DataWeek.DataWeekday = Weekdays.Weekday";
-	
-		$visitorsWeeclyObj = $connection->deepQuery($queryWeecly);
-		foreach($visitorsWeeclyObj as $weeklyvisits)
+
+		// START weekly visitors
+		$queryWeecly = "SELECT count(*) as users, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7";
+		$visits = $connection->deepQuery($queryWeecly);
+		$visitorsWeecly = array();
+		foreach($visits as $visit)
 		{
-			if($weeklyvisits->TimesRequested != NULL)
-				$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=>$weeklyvisits->TimesRequested];
-			else
-				$visitorsWeecly[] = ["day"=>$weeklyvisits->Weekday, "emails"=> 0];
+			$visitorsWeecly[] = ["day"=>date("D jS", strtotime($visit->inserted)), "emails"=>$visit->users];
 		}
-		//End weekly visitors
-	
+		// END weekly visitors
+
 		// Montly visitors
 		$queryMonthly = "SELECT *
 						FROM
