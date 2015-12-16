@@ -18,10 +18,8 @@ setlocale(LC_TIME, "es_ES");
 // include composer
 include_once "../vendor/autoload.php";
 
-/*
 try
 {
-*/
 	//Register autoLoader for Analytics
 	$loaderAnalytics = new Loader();
 	$loaderAnalytics->registerDirs(array(
@@ -69,10 +67,10 @@ try
 	$application = new Application($di);
 
 	echo $application->handle()->getContent();
-/*
 }
-catch(\Exception $e)
+catch(\Phalcon\Mvc\Dispatcher\Exception $e)
 {
-	echo "PhalconException: ", $e->getMessage();	
+	header('HTTP/1.0 404 Not Found');
+	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
+//	echo "PhalconException: ", $e->getMessage();
 }
-*/
