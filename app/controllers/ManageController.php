@@ -41,8 +41,8 @@ class ManageController extends Controller
 		// START weekly visitors
 		$query = 
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) LIMIT 7) A
-			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) LIMIT 7) B
+			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
+			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($query);
 		$visitorsWeecly = array();
@@ -52,14 +52,15 @@ class ManageController extends Controller
 			if( ! $visit->sent) $visit->sent = 0;
 			$visitorsWeecly[] = ["date"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
 		}
+		$visitorsWeecly = array_reverse($visitorsWeecly);
 		// END weekly visitors
 
 
 		// START monthly visitors
 		$query =
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(*) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) A
-			LEFT JOIN (SELECT count(*) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') LIMIT 30) B
+			FROM (SELECT count(*) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			LEFT JOIN (SELECT count(*) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($query);
 		$visitorsMonthly = array();
@@ -69,15 +70,16 @@ class ManageController extends Controller
 			if( ! $visit->sent) $visit->sent = 0;
 			$visitorsMonthly[] = ["date"=>date("M Y", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
 		}
+		$visitorsMonthly = array_reverse($visitorsMonthly);
 		// End monthly Visitors
 
 
 		// START monthly unique visitors
 		$query =
 			"SELECT A.all_visitors, B.unique_visitors, C.new_visitors, A.inserted
-			FROM (SELECT COUNT(*) as all_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) A
-			JOIN (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) B
-			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') LIMIT 30) C
+			FROM (SELECT COUNT(*) as all_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			JOIN (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
+			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) C
 			ON A.inserted = B.inserted AND A.inserted = C.inserted";
 		$visits = $connection->deepQuery($query);
 		$newUsers = array();
@@ -85,6 +87,7 @@ class ManageController extends Controller
 		{
 			$newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "all_visitors"=>$visit->all_visitors, "unique_visitors"=>$visit->unique_visitors, "new_visitors"=>$visit->new_visitors];
 		}
+		$newUsers = array_reverse($newUsers);
 		// END monthly unique visitors
 
 
@@ -170,6 +173,7 @@ class ManageController extends Controller
 		FROM person
 		WHERE last_update_date IS NOT NULL
 		GROUP BY last_update
+		ORDER BY last_update DESC
 		LIMIT 30";
 		$visits = $connection->deepQuery($query);
 		$updatedProfilesMonthly = array();
@@ -177,6 +181,7 @@ class ManageController extends Controller
 		{
 			$updatedProfilesMonthly[] = ["date"=>date("M Y", strtotime($visit->last_update)), "profiles"=>$visit->num_profiles];
 		}
+		$updatedProfilesMonthly = array_reverse($updatedProfilesMonthly);
 		// END updated profiles
 
 
@@ -255,65 +260,64 @@ class ManageController extends Controller
 		//End Profile completion
 	
 		// Numbers of profiles per province
-		$queryPrefilesPerPravince = 
-		"SELECT c.ProvCount,
-			CASE c.mnth
-				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
-				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
-				WHEN 'ARTEMISA' THEN 'CU-X01'
-				WHEN 'MAYABEQUE' THEN 'CU-X02'
-				WHEN 'MATANZAS' THEN 'Matanzas'
-				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
-				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
-				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-				WHEN 'CAMAGUEY' THEN 'Camagüey'
-				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-				WHEN 'HOLGUIN' THEN 'Holguín'
-				WHEN 'GRANMA' THEN 'Granma'
-				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-				WHEN 'GUANTANAMO' THEN 'Guantánamo'
-				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
-			END as NewProv
-		FROM (SELECT count(b.province) as ProvCount, a.mnth
-				FROM(
-					SELECT 'PINAR_DEL_RIO' mnth
-					UNION ALL
-					SELECT 'LA_HABANA' mnth
-					UNION ALL
-					SELECT 'ARTEMISA' mnth
-		    		UNION ALL
-					SELECT 'MAYABEQUE' mnth
-		    		UNION ALL
-					SELECT 'MATANZAS' mnth
-		    		UNION ALL
-					SELECT 'VILLA_CLARA' mnth
-		    		UNION ALL
-					SELECT 'CIENFUEGOS' mnth
-		    		UNION ALL
-					SELECT 'SANTI_SPIRITUS' mnth
-		    		UNION ALL
-					SELECT 'CIEGO_DE_AVILA' mnth
-		    		UNION ALL									
-					SELECT 'CAMAGUEY' mnth
-		    		UNION ALL
-					SELECT 'LAS_TUNAS' mnth
-		    		UNION ALL
-					SELECT 'HOLGUIN' mnth
-		    		UNION ALL
-					SELECT 'GRANMA' mnth
-		    		UNION ALL
-					SELECT 'SANTIAGO_DE_CUBA' mnth
-		    		UNION ALL
-					SELECT 'GUANTANAMO' mnth
-		    		UNION ALL
-					SELECT 'ISLA_DE_LA_JUVENTUD' mnth
-				) a
-				LEFT JOIN person b
-					ON BINARY a.mnth = BINARY b.province AND
-		               b.province IS not NULL AND 
-		               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
-			GROUP  BY b.province) as c";
+		$queryPrefilesPerPravince = "SELECT c.ProvCount,
+										CASE c.mnth
+											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+											WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
+											WHEN 'ARTEMISA' THEN 'CU-X01'
+											WHEN 'MAYABEQUE' THEN 'CU-X02'
+											WHEN 'MATANZAS' THEN 'Matanzas'
+											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
+											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
+											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+											WHEN 'CAMAGUEY' THEN 'Camagüey'
+											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
+											WHEN 'HOLGUIN' THEN 'Holguín'
+											WHEN 'GRANMA' THEN 'Granma'
+											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
+											WHEN 'GUANTANAMO' THEN 'Guantánamo'
+											WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
+										END as NewProv
+									FROM (SELECT count(b.province) as ProvCount, a.mnth
+											FROM(
+												SELECT 'PINAR_DEL_RIO' mnth
+												UNION ALL
+												SELECT 'LA_HABANA' mnth
+												UNION ALL
+												SELECT 'ARTEMISA' mnth
+									    		UNION ALL
+												SELECT 'MAYABEQUE' mnth
+									    		UNION ALL
+												SELECT 'MATANZAS' mnth
+									    		UNION ALL
+												SELECT 'VILLA_CLARA' mnth
+									    		UNION ALL
+												SELECT 'CIENFUEGOS' mnth
+									    		UNION ALL
+												SELECT 'SANTI_SPIRITUS' mnth
+									    		UNION ALL
+												SELECT 'CIEGO_DE_AVILA' mnth
+									    		UNION ALL									
+												SELECT 'CAMAGUEY' mnth
+									    		UNION ALL
+												SELECT 'LAS_TUNAS' mnth
+									    		UNION ALL
+												SELECT 'HOLGUIN' mnth
+									    		UNION ALL
+												SELECT 'GRANMA' mnth
+									    		UNION ALL
+												SELECT 'SANTIAGO_DE_CUBA' mnth
+									    		UNION ALL
+												SELECT 'GUANTANAMO' mnth
+									    		UNION ALL
+												SELECT 'ISLA_DE_LA_JUVENTUD' mnth
+											) a
+											LEFT JOIN person b
+												ON BINARY a.mnth = BINARY b.province AND
+									               b.province IS not NULL AND 
+									               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+										GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
 		foreach($prefilesPerPravinceList as $profilesList)
