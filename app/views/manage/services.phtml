@@ -6,14 +6,14 @@
 					<th>Details</th>
 					<th>Description</th>
 					<th class="text-center">Category</th>
-					<th class="text-center" style="text-decoration: underline;" title="Last 4 months">Usage</th>
-					<th class="text-center" style="text-decoration: underline;" title="Average of the last 4 months, in milliseconds">Latency</th>
+					<th class="text-center" style="text-decoration: underline;" title="Last 30 days">Usage</th>
+					<th class="text-center" style="text-decoration: underline;" title="Average of the last 30 days, in milliseconds">Latency</th>
 					<th class="text-center">Inserted</th>
 					<th></th>
 				</tr>
 			</thead>
 			<tbody>
-			<?php 
+			<?php
 				foreach ($services as $service) {
 					// set the color for the latency alert
 					$latencyWarning = "";
