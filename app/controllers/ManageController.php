@@ -39,176 +39,88 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		// START weekly visitors
-		$queryWeecly = 
+		$query = 
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
-			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
+			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) LIMIT 7) A
+			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) LIMIT 7) B
 			ON A.inserted = B.inserted";
-		$visits = $connection->deepQuery($queryWeecly);
-
+		$visits = $connection->deepQuery($query);
 		$visitorsWeecly = array();
 		foreach($visits as $visit)
 		{
 			if( ! $visit->received) $visit->received = 0;
 			if( ! $visit->sent) $visit->sent = 0;
-			$visitorsWeecly[] = ["day"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
+			$visitorsWeecly[] = ["date"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
 		}
-		$visitorsWeecly = array_reverse($visitorsWeecly);
 		// END weekly visitors
 
-		// Montly visitors
-		$queryMonthly = "SELECT *
-						FROM
-						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-						           DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-						    FROM (
-						       SELECT 11 AS seq UNION ALL
-						       SELECT 10 UNION ALL
-						       SELECT  9 UNION ALL
-						       SELECT  8 UNION ALL
-						       SELECT  7 UNION ALL
-						       SELECT  6 UNION ALL
-						       SELECT  5 UNION ALL
-						       SELECT  4 UNION ALL
-						       SELECT  3 UNION ALL
-						       SELECT  2 UNION ALL
-						       SELECT  1 UNION ALL
-						       SELECT  0
-						    ) seq
-						    JOIN (
-						       SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-						    ) month) AS MonthData
-						    
-						LEFT JOIN
-							(SELECT DATE_FORMAT(request_time,'%b-%Y') as dataName, count(request_time) as TimesRequested
-							FROM utilization
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<12
-							group by EXTRACT(MONTH FROM date(request_time))
-							ORDER BY request_time) AS dataMonth
-						ON dataMonth.dataName = MonthData.Month
-						WHERE TRUE = TRUE
-						ORDER BY MonthData.toOrder";
-		$visitorsMonthlyObj = $connection->deepQuery($queryMonthly);
-		//print_r($visitorsMonthlyObj);
-		//exit;
 
-		foreach($visitorsMonthlyObj as $visits)
+		// START monthly visitors
+		$query =
+			"SELECT A.received, B.sent, A.inserted
+			FROM (SELECT count(*) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) A
+			LEFT JOIN (SELECT count(*) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') LIMIT 30) B
+			ON A.inserted = B.inserted";
+		$visits = $connection->deepQuery($query);
+		$visitorsMonthly = array();
+		foreach($visits as $visit)
 		{
-			if($visits->TimesRequested != NULL)
-				$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=>$visits->TimesRequested];
-			else
-				$visitorsMonthly[] = ["month"=>$visits->Month, "emails"=> 0];
+			if( ! $visit->received) $visit->received = 0;
+			if( ! $visit->sent) $visit->sent = 0;
+			$visitorsMonthly[] = ["date"=>date("M Y", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
 		}
-		//End Monthly Visitors
-	
-		// New users per month
-		$queryNewUsers = "SELECT *
-						FROM
-						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-						           DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-						    FROM (
-						       SELECT 11 AS seq UNION ALL
-						       SELECT 10 UNION ALL
-						       SELECT  9 UNION ALL
-						       SELECT  8 UNION ALL
-						       SELECT  7 UNION ALL
-						       SELECT  6 UNION ALL
-						       SELECT  5 UNION ALL
-						       SELECT  4 UNION ALL
-						       SELECT  3 UNION ALL
-						       SELECT  2 UNION ALL
-						       SELECT  1 UNION ALL
-						       SELECT  0
-						    ) seq
-						    JOIN (
-						       SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-						    ) month) AS MonthData
-						LEFT JOIN
-							(SELECT DATE_FORMAT(insertion_date,'%b-%Y') as dataName, count(insertion_date) as TimeInserted
-							FROM person
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(insertion_date, '%Y%m'))<12
-							group by EXTRACT(MONTH FROM date(insertion_date))
-							ORDER BY insertion_date) AS dataMonth
-						ON dataMonth.dataName = MonthData.Month
-						WHERE TRUE = TRUE
-						ORDER BY MonthData.toOrder";
-		$newUsersMonthly = $connection->deepQuery($queryNewUsers);
-	
-		foreach($newUsersMonthly as $newUsersList)
+		// End monthly Visitors
+
+
+		// START monthly unique visitors
+		$query =
+			"SELECT A.all_visitors, B.unique_visitors, C.new_visitors, A.inserted
+			FROM (SELECT COUNT(*) as all_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) A
+			JOIN (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') LIMIT 30) B
+			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') LIMIT 30) C
+			ON A.inserted = B.inserted AND A.inserted = C.inserted";
+		$visits = $connection->deepQuery($query);
+		$newUsers = array();
+		foreach($visits as $visit)
 		{
-			if($newUsersList->TimeInserted != NULL)
-				$newUsers[] = ["month"=>$newUsersList->Month, "emails"=>$newUsersList->TimeInserted];
-			else
-				$newUsers[] = ["month"=>$newUsersList->Month, "emails"=> 0];
+			$newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "all_visitors"=>$visit->all_visitors, "unique_visitors"=>$visit->unique_visitors, "new_visitors"=>$visit->new_visitors];
 		}
-		//End new users per month
-	
-		//Current number of Users
+		// END monthly unique visitors
+
+
+		// START current number of Users
 		$queryCurrentNoUsers = "SELECT COUNT(email) as CountUsers FROM person";
 		$currentNoUsers = $connection->deepQuery($queryCurrentNoUsers);
-		//End Current number of Users
+		// END Current number of Users
 
-		// Get services usage monthly
-		$queryMonthlyServiceUsage = "SELECT *
-						FROM
-						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-						           DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-						    FROM (
-						       SELECT 11 AS seq UNION ALL
-						       SELECT 10 UNION ALL
-						       SELECT  9 UNION ALL
-						       SELECT  8 UNION ALL
-						       SELECT  7 UNION ALL
-						       SELECT  6 UNION ALL
-						       SELECT  5 UNION ALL
-						       SELECT  4 UNION ALL
-						       SELECT  3 UNION ALL
-						       SELECT  2 UNION ALL
-						       SELECT  1 UNION ALL
-						       SELECT  0
-						    ) seq
-						    JOIN (
-						       SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-						    ) month) AS MonthData
-						LEFT JOIN
-							(SELECT DATE_FORMAT(request_time,'%b-%Y') as DataName, COUNT(service) as ServicesCount
-							FROM utilization
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<12
-							group by EXTRACT(MONTH FROM date(request_time))
-							ORDER BY request_time) AS dataMonth
-						ON dataMonth.dataName = MonthData.Month
-						WHERE TRUE = TRUE
-						ORDER BY MonthData.toOrder";
-		$MonthlyServiceUseage = $connection->deepQuery($queryMonthlyServiceUsage);
-	
-		foreach($MonthlyServiceUseage as $serviceList)
+
+		// START monthly services usage
+		$query = "SELECT service, COUNT(service) as times_used FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service DESC";
+		$visits = $connection->deepQuery($query);
+		$servicesUsageMonthly = array();
+		foreach($visits as $visit)
 		{
-			if($serviceList->ServicesCount != NULL)
-				$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=>$serviceList->ServicesCount];
-			else
-				$servicesUsageMonthly[] = ["service"=>$serviceList->Month, "usage"=> 0];
+			$servicesUsageMonthly[] = ["service"=>$visit->service, "usage"=>$visit->times_used];
 		}
+		// END monthly services usage
 
-		// Active domains last 4 Month
-		$queryAciteDomain = "SELECT domain as Domains, count(domain) as DomainCount
-							FROM utilization
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<4
-							GROUP BY domain";
-		$ActiveDomains = $connection->deepQuery($queryAciteDomain);
 
-		foreach($ActiveDomains as $domainList)
+		// START active domains last 4 months
+		$query = 
+			"SELECT domain, count(domain) as times_used
+			FROM utilization
+			WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m')) < 4
+			GROUP BY domain
+			ORDER BY times_used DESC";
+		$visits = $connection->deepQuery($query);
+		$activeDomainsMonthly = array();
+		foreach($visits as $visit)
 		{
-			if($domainList->DomainCount != NULL)
-			{
-				$activeDomainsMonthly[] = ["domain"=>$domainList->Domains, "usage"=>$domainList->DomainCount];
-			}
-			else 
-			{
-				$activeDomainsMonthly[] = ["domain"=>$domainList->Domains, "usage"=>0];
-			}
+			$activeDomainsMonthly[] = ["domain"=>$visit->domain, "usage"=>$visit->times_used];
 		}
-		//End Active domains monthly
-	
+		// END active domains last 4 months
+
+
 		// Bounce rate
 		$queryBounceRate = "SELECT *
 						FROM
@@ -245,58 +157,34 @@ class ManageController extends Controller
 		foreach($dataBounceRate as $monthBounceList)
 		{
 			if($monthBounceList->RequestCount != NULL)
-			$bounceRateMontly[] = ["month"=>$monthBounceList->Month, "emails"=>$monthBounceList->RequestCount];
+			$bounceRateMonthly[] = ["month"=>$monthBounceList->Month, "emails"=>$monthBounceList->RequestCount];
 			else
-			$bounceRateMontly[] = ["month"=>$monthBounceList->Month, "emails"=> 0];
+			$bounceRateMonthly[] = ["month"=>$monthBounceList->Month, "emails"=> 0];
 		}
 		//End Bounce rate
 
-		//Updated profiles
-		$queryUpdatedProfiles = "SELECT *
-						FROM
-						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-						           DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-						    FROM (
-						       SELECT 11 AS seq UNION ALL
-						       SELECT 10 UNION ALL
-						       SELECT  9 UNION ALL
-						       SELECT  8 UNION ALL
-						       SELECT  7 UNION ALL
-						       SELECT  6 UNION ALL
-						       SELECT  5 UNION ALL
-						       SELECT  4 UNION ALL
-						       SELECT  3 UNION ALL
-						       SELECT  2 UNION ALL
-						       SELECT  1 UNION ALL
-						       SELECT  0
-						    ) seq
-						    JOIN (
-						       SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-						    ) month) AS MonthData
-						LEFT JOIN
-							(SELECT CONCAT(SUBSTRING(DATE_FORMAT(last_update_date, '%b'),1,3),DATE_FORMAT(last_update_date,'-%Y')) as dateName,
-							Count(email) AS UpdatedCount
-							FROM person
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(last_update_date, '%Y%m'))<12
-							GROUP BY YEAR(last_update_date), MONTH(last_update_date)) AS dataMonth
-						ON dataMonth.dateName = MonthData.Month
-						WHERE TRUE = TRUE
-						ORDER BY MonthData.toOrder";
-		$updatedProfiles = $connection->deepQuery($queryUpdatedProfiles);
-		
-		foreach($updatedProfiles as $updatedProfile)
-		{
-			if($updatedProfile->UpdatedCount != NULL)
-				$updatedProfilesMontly[] = ["month"=>$updatedProfile->Month, "emails"=>$updatedProfile->UpdatedCount];
-			else
-				$updatedProfilesMontly[] = ["month"=>$updatedProfile->Month, "emails"=> 0];
-		}
-		//End Updated profiles
 
-		//Current number of running ads
+		// START updated profiles
+		$query =
+		"SELECT count(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
+		FROM person
+		WHERE last_update_date IS NOT NULL
+		GROUP BY last_update
+		LIMIT 30";
+		$visits = $connection->deepQuery($query);
+		$updatedProfilesMonthly = array();
+		foreach($visits as $visit)
+		{
+			$updatedProfilesMonthly[] = ["date"=>date("M Y", strtotime($visit->last_update)), "profiles"=>$visit->num_profiles];
+		}
+		// END updated profiles
+
+
+		// START current number of running ads
 		$queryRunningAds = "SELECT COUNT(active) AS CountAds FROM ads WHERE active=1";
 		$runningAds = $connection->deepQuery($queryRunningAds);
-		//End Current number of running ads
+		// END current number of running ads
+
 
 		// send variables to the view
 		$this->view->title = "Audience";
@@ -306,8 +194,8 @@ class ManageController extends Controller
 		$this->view->currentNumberOfActiveUsers = $currentNoUsers[0]->CountUsers;
 		$this->view->servicesUsageMonthly = $servicesUsageMonthly;
 		$this->view->activeDomainsMonthly = $activeDomainsMonthly;
-		$this->view->bounceRateMontly = $bounceRateMontly;
-		$this->view->updatedProfilesMontly = $updatedProfilesMontly;
+		$this->view->bounceRateMonthly = $bounceRateMonthly;
+		$this->view->updatedProfilesMonthly = $updatedProfilesMonthly;
 		$this->view->currentNumberOfRunningaAds = $runningAds[0]->CountAds;
 	}
 
@@ -367,64 +255,65 @@ class ManageController extends Controller
 		//End Profile completion
 	
 		// Numbers of profiles per province
-		$queryPrefilesPerPravince = "SELECT c.ProvCount,
-										CASE c.mnth
-											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
-											WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
-											WHEN 'ARTEMISA' THEN 'CU-X01'
-											WHEN 'MAYABEQUE' THEN 'CU-X02'
-											WHEN 'MATANZAS' THEN 'Matanzas'
-											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
-											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
-											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-											WHEN 'CAMAGUEY' THEN 'Camagüey'
-											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-											WHEN 'HOLGUIN' THEN 'Holguín'
-											WHEN 'GRANMA' THEN 'Granma'
-											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-											WHEN 'GUANTANAMO' THEN 'Guantánamo'
-											WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
-										END as NewProv
-									FROM (SELECT count(b.province) as ProvCount, a.mnth
-											FROM(
-												SELECT 'PINAR_DEL_RIO' mnth
-												UNION ALL
-												SELECT 'LA_HABANA' mnth
-												UNION ALL
-												SELECT 'ARTEMISA' mnth
-									    		UNION ALL
-												SELECT 'MAYABEQUE' mnth
-									    		UNION ALL
-												SELECT 'MATANZAS' mnth
-									    		UNION ALL
-												SELECT 'VILLA_CLARA' mnth
-									    		UNION ALL
-												SELECT 'CIENFUEGOS' mnth
-									    		UNION ALL
-												SELECT 'SANTI_SPIRITUS' mnth
-									    		UNION ALL
-												SELECT 'CIEGO_DE_AVILA' mnth
-									    		UNION ALL									
-												SELECT 'CAMAGUEY' mnth
-									    		UNION ALL
-												SELECT 'LAS_TUNAS' mnth
-									    		UNION ALL
-												SELECT 'HOLGUIN' mnth
-									    		UNION ALL
-												SELECT 'GRANMA' mnth
-									    		UNION ALL
-												SELECT 'SANTIAGO_DE_CUBA' mnth
-									    		UNION ALL
-												SELECT 'GUANTANAMO' mnth
-									    		UNION ALL
-												SELECT 'ISLA_DE_LA_JUVENTUD' mnth
-											) a
-											LEFT JOIN person b
-												ON BINARY a.mnth = BINARY b.province AND
-									               b.province IS not NULL AND 
-									               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
-										GROUP  BY b.province) as c";
+		$queryPrefilesPerPravince = 
+		"SELECT c.ProvCount,
+			CASE c.mnth
+				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
+				WHEN 'ARTEMISA' THEN 'CU-X01'
+				WHEN 'MAYABEQUE' THEN 'CU-X02'
+				WHEN 'MATANZAS' THEN 'Matanzas'
+				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
+				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
+				WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+				WHEN 'CAMAGUEY' THEN 'Camagüey'
+				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
+				WHEN 'HOLGUIN' THEN 'Holguín'
+				WHEN 'GRANMA' THEN 'Granma'
+				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
+				WHEN 'GUANTANAMO' THEN 'Guantánamo'
+				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
+			END as NewProv
+		FROM (SELECT count(b.province) as ProvCount, a.mnth
+				FROM(
+					SELECT 'PINAR_DEL_RIO' mnth
+					UNION ALL
+					SELECT 'LA_HABANA' mnth
+					UNION ALL
+					SELECT 'ARTEMISA' mnth
+		    		UNION ALL
+					SELECT 'MAYABEQUE' mnth
+		    		UNION ALL
+					SELECT 'MATANZAS' mnth
+		    		UNION ALL
+					SELECT 'VILLA_CLARA' mnth
+		    		UNION ALL
+					SELECT 'CIENFUEGOS' mnth
+		    		UNION ALL
+					SELECT 'SANTI_SPIRITUS' mnth
+		    		UNION ALL
+					SELECT 'CIEGO_DE_AVILA' mnth
+		    		UNION ALL									
+					SELECT 'CAMAGUEY' mnth
+		    		UNION ALL
+					SELECT 'LAS_TUNAS' mnth
+		    		UNION ALL
+					SELECT 'HOLGUIN' mnth
+		    		UNION ALL
+					SELECT 'GRANMA' mnth
+		    		UNION ALL
+					SELECT 'SANTIAGO_DE_CUBA' mnth
+		    		UNION ALL
+					SELECT 'GUANTANAMO' mnth
+		    		UNION ALL
+					SELECT 'ISLA_DE_LA_JUVENTUD' mnth
+				) a
+				LEFT JOIN person b
+					ON BINARY a.mnth = BINARY b.province AND
+		               b.province IS not NULL AND 
+		               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
 		foreach($prefilesPerPravinceList as $profilesList)
