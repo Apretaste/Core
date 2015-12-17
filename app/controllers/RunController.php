@@ -125,7 +125,7 @@ class RunController extends Controller
 
 		// remove double spaces and apostrophes from the subject
 		// sorry apostrophes break the SQL code :-( 
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'/', "", $subject)));
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
@@ -240,11 +240,17 @@ class RunController extends Controller
 			{
 				if($rs->render) // ommit default Response()
 				{
+					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
 					$images = array_merge($rs->images, $rs->getAds());
 					$attachments = $rs->attachments;
 					$body = $render->renderHTML($userService, $rs);
+
+					// remove dangerous characters that may break the SQL code
+					$subject = trim(preg_replace('/\'|`/', "", $subject));
+
+					// send the response email 
 					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
