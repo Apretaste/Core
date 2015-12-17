@@ -39,9 +39,9 @@
 	google.setOnLoadCallback(weeclyIncomingEmails);
 	function weeclyIncomingEmails() {
 		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Emails'],
+			['Day of the week', 'Received', 'Sent'],
 			<?php foreach ($visitorsWeecly as $data) { ?>
-				['<?php echo $data['day']; ?>',<?php echo $data['emails']; ?>],
+				['<?php echo $data['day']; ?>',<?php echo $data['received']; ?>,<?php echo $data['sent']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};

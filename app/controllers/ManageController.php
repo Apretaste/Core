@@ -39,12 +39,19 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		// START weekly visitors
-		$queryWeecly = "SELECT count(*) as users, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7";
+		$queryWeecly = 
+			"SELECT A.received, B.sent, A.inserted
+			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
+			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
+			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($queryWeecly);
+
 		$visitorsWeecly = array();
 		foreach($visits as $visit)
 		{
-			$visitorsWeecly[] = ["day"=>date("D jS", strtotime($visit->inserted)), "emails"=>$visit->users];
+			if( ! $visit->received) $visit->received = 0;
+			if( ! $visit->sent) $visit->sent = 0;
+			$visitorsWeecly[] = ["day"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
 		}
 		$visitorsWeecly = array_reverse($visitorsWeecly);
 		// END weekly visitors
