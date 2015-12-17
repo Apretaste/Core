@@ -6,6 +6,8 @@
 					<th>Details</th>
 					<th>Description</th>
 					<th class="text-center">Category</th>
+					<th class="text-center" style="text-decoration: underline;" title="Last 4 months">Usage</th>
+					<th class="text-center" style="text-decoration: underline;" title="Average of the last 4 months, in milliseconds">Latency</th>
 					<th class="text-center">Inserted</th>
 					<th></th>
 				</tr>
@@ -21,6 +23,8 @@
 					</td>
 					<td><?php echo $service->description; ?></td>
 					<td class="text-center"><?php echo $service->category; ?></td>
+					<td class="text-center"><?php echo $service->times_used; ?></td>
+					<td class="text-center"><?php echo number_format($service->avg_latency, 2); ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($service->insertion_date)); ?></td>
 					<td class="text-center">
 						<a class="btn btn-default" target="_blank" href="/run/display?subject=<?php echo $service->name; ?>">Run</a>

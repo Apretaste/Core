@@ -124,39 +124,39 @@ class ManageController extends Controller
 		// END active domains last 4 months
 
 
-		// Bounce rate
-		$queryBounceRate = "SELECT *
-						FROM
-						        (SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-						           DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-						    FROM (
-						       SELECT 11 AS seq UNION ALL
-						       SELECT 10 UNION ALL
-						       SELECT  9 UNION ALL
-						       SELECT  8 UNION ALL
-						       SELECT  7 UNION ALL
-						       SELECT  6 UNION ALL
-						       SELECT  5 UNION ALL
-						       SELECT  4 UNION ALL
-						       SELECT  3 UNION ALL
-						       SELECT  2 UNION ALL
-						       SELECT  1 UNION ALL
-						       SELECT  0
-						    ) seq
-						    JOIN (
-						       SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-						    ) month) AS MonthData
-						LEFT JOIN
-							(SELECT CONCAT(SUBSTRING(DATE_FORMAT(request_time, '%b'),1,3),DATE_FORMAT(request_time,'-%Y')) as dateName,
-							Count(Distinct requestor) AS RequestCount
-							FROM utilization
-							WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<12
-							GROUP BY YEAR(request_time), MONTH(request_time)) AS dataMonth
-							ON dataMonth.dateName = MonthData.Month
-						WHERE TRUE = TRUE
-						ORDER BY MonthData.toOrder";
+		// START bounce rate
+		$queryBounceRate = "
+		SELECT *
+		FROM 
+			(SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
+			DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
+			FROM (
+			   SELECT 11 AS seq UNION ALL
+			   SELECT 10 UNION ALL
+			   SELECT  9 UNION ALL
+			   SELECT  8 UNION ALL
+			   SELECT  7 UNION ALL
+			   SELECT  6 UNION ALL
+			   SELECT  5 UNION ALL
+			   SELECT  4 UNION ALL
+			   SELECT  3 UNION ALL
+			   SELECT  2 UNION ALL
+			   SELECT  1 UNION ALL
+			   SELECT  0
+			) seq
+			JOIN (
+			   SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
+			) month) AS MonthData
+		LEFT JOIN
+			(SELECT CONCAT(SUBSTRING(DATE_FORMAT(request_time, '%b'),1,3),DATE_FORMAT(request_time,'-%Y')) as dateName,
+			Count(Distinct requestor) AS RequestCount
+			FROM utilization
+			WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<12
+			GROUP BY YEAR(request_time), MONTH(request_time)) AS dataMonth
+			ON dataMonth.dateName = MonthData.Month
+		WHERE TRUE = TRUE
+		ORDER BY MonthData.toOrder";
 		$dataBounceRate = $connection->deepQuery($queryBounceRate);
-
 		foreach($dataBounceRate as $monthBounceList)
 		{
 			if($monthBounceList->RequestCount != NULL)
@@ -164,7 +164,7 @@ class ManageController extends Controller
 			else
 			$bounceRateMonthly[] = ["month"=>$monthBounceList->Month, "emails"=> 0];
 		}
-		//End Bounce rate
+		//End bounce rate
 
 
 		// START updated profiles
@@ -260,64 +260,65 @@ class ManageController extends Controller
 		//End Profile completion
 	
 		// Numbers of profiles per province
-		$queryPrefilesPerPravince = "SELECT c.ProvCount,
-										CASE c.mnth
-											WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
-											WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
-											WHEN 'ARTEMISA' THEN 'CU-X01'
-											WHEN 'MAYABEQUE' THEN 'CU-X02'
-											WHEN 'MATANZAS' THEN 'Matanzas'
-											WHEN 'VILLA_CLARA' THEN 'Villa Clara'
-											WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-											WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
-											WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-											WHEN 'CAMAGUEY' THEN 'Camagüey'
-											WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-											WHEN 'HOLGUIN' THEN 'Holguín'
-											WHEN 'GRANMA' THEN 'Granma'
-											WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-											WHEN 'GUANTANAMO' THEN 'Guantánamo'
-											WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
-										END as NewProv
-									FROM (SELECT count(b.province) as ProvCount, a.mnth
-											FROM(
-												SELECT 'PINAR_DEL_RIO' mnth
-												UNION ALL
-												SELECT 'LA_HABANA' mnth
-												UNION ALL
-												SELECT 'ARTEMISA' mnth
-									    		UNION ALL
-												SELECT 'MAYABEQUE' mnth
-									    		UNION ALL
-												SELECT 'MATANZAS' mnth
-									    		UNION ALL
-												SELECT 'VILLA_CLARA' mnth
-									    		UNION ALL
-												SELECT 'CIENFUEGOS' mnth
-									    		UNION ALL
-												SELECT 'SANTI_SPIRITUS' mnth
-									    		UNION ALL
-												SELECT 'CIEGO_DE_AVILA' mnth
-									    		UNION ALL									
-												SELECT 'CAMAGUEY' mnth
-									    		UNION ALL
-												SELECT 'LAS_TUNAS' mnth
-									    		UNION ALL
-												SELECT 'HOLGUIN' mnth
-									    		UNION ALL
-												SELECT 'GRANMA' mnth
-									    		UNION ALL
-												SELECT 'SANTIAGO_DE_CUBA' mnth
-									    		UNION ALL
-												SELECT 'GUANTANAMO' mnth
-									    		UNION ALL
-												SELECT 'ISLA_DE_LA_JUVENTUD' mnth
-											) a
-											LEFT JOIN person b
-												ON BINARY a.mnth = BINARY b.province AND
-									               b.province IS not NULL AND 
-									               b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
-										GROUP  BY b.province) as c";
+		$queryPrefilesPerPravince = 
+		"SELECT c.ProvCount,
+			CASE c.mnth
+				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
+				WHEN 'ARTEMISA' THEN 'CU-X01'
+				WHEN 'MAYABEQUE' THEN 'CU-X02'
+				WHEN 'MATANZAS' THEN 'Matanzas'
+				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
+				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
+				WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
+				WHEN 'CAMAGUEY' THEN 'Camagüey'
+				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
+				WHEN 'HOLGUIN' THEN 'Holguín'
+				WHEN 'GRANMA' THEN 'Granma'
+				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
+				WHEN 'GUANTANAMO' THEN 'Guantánamo'
+				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
+			END as NewProv
+		FROM (SELECT count(b.province) as ProvCount, a.mnth
+				FROM(
+					SELECT 'PINAR_DEL_RIO' mnth
+					UNION ALL
+					SELECT 'LA_HABANA' mnth
+					UNION ALL
+					SELECT 'ARTEMISA' mnth
+					UNION ALL
+					SELECT 'MAYABEQUE' mnth
+					UNION ALL
+					SELECT 'MATANZAS' mnth
+					UNION ALL
+					SELECT 'VILLA_CLARA' mnth
+					UNION ALL
+					SELECT 'CIENFUEGOS' mnth
+					UNION ALL
+					SELECT 'SANTI_SPIRITUS' mnth
+					UNION ALL
+					SELECT 'CIEGO_DE_AVILA' mnth
+					UNION ALL									
+					SELECT 'CAMAGUEY' mnth
+					UNION ALL
+					SELECT 'LAS_TUNAS' mnth
+					UNION ALL
+					SELECT 'HOLGUIN' mnth
+					UNION ALL
+					SELECT 'GRANMA' mnth
+					UNION ALL
+					SELECT 'SANTIAGO_DE_CUBA' mnth
+					UNION ALL
+					SELECT 'GUANTANAMO' mnth
+					UNION ALL
+					SELECT 'ISLA_DE_LA_JUVENTUD' mnth
+				) a
+				LEFT JOIN person b
+					ON BINARY a.mnth = BINARY b.province AND
+					   b.province IS not NULL AND 
+					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
 		foreach($prefilesPerPravinceList as $profilesList)
@@ -455,10 +456,15 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryServices = "SELECT name, description, creator_email, category, insertion_date, listed FROM service";
+		$queryServices = 
+			"SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, B.times_used, B.avg_latency
+			FROM service A
+			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 4 MONTH) GROUP BY service) B
+			ON A.name = B.service
+			ORDER BY B.times_used DESC";
 		$services = $connection->deepQuery($queryServices);
 
-		$this->view->title = "List of services (" . count($services) . ")";
+		$this->view->title = "List of services (".count($services).")";
 		$this->view->services = $services;
 	}
 
