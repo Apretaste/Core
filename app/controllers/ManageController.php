@@ -459,7 +459,7 @@ class ManageController extends Controller
 		$queryServices = 
 			"SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, B.times_used, B.avg_latency
 			FROM service A
-			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 4 MONTH) GROUP BY service) B
+			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service) B
 			ON A.name = B.service
 			ORDER BY B.times_used DESC";
 		$services = $connection->deepQuery($queryServices);
