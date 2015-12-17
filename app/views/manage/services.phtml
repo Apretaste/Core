@@ -13,7 +13,13 @@
 				</tr>
 			</thead>
 			<tbody>
-			<?php foreach ($services as $service) { ?>
+			<?php 
+				foreach ($services as $service) {
+					// set the color for the latency alert
+					$latencyWarning = "";
+					if($service->avg_latency > 5) $latencyWarning = "warning";
+					if($service->avg_latency > 10) $latencyWarning = "danger";
+				?>
 				<tr>
 					<td>
 						<b><?php echo $service->name; ?></b>
@@ -24,7 +30,7 @@
 					<td><?php echo $service->description; ?></td>
 					<td class="text-center"><?php echo $service->category; ?></td>
 					<td class="text-center"><?php echo $service->times_used; ?></td>
-					<td class="text-center"><?php echo number_format($service->avg_latency, 2); ?></td>
+					<td class="text-center <?php echo $latencyWarning; ?>"><?php echo number_format($service->avg_latency, 2); ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($service->insertion_date)); ?></td>
 					<td class="text-center">
 						<a class="btn btn-default" target="_blank" href="/run/display?subject=<?php echo $service->name; ?>">Run</a>
