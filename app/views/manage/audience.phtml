@@ -1,6 +1,6 @@
 <div class="row">
 	<div class="col-xs-12">
-		<h2>Weekly incoming emails</h2>
+		<h2>Weekly emails</h2>
 		<div id="weeclyIncomingEmails" style="width:900px; height:300px;"></div>
 	
 		<h2>Monthly incoming emails</h2>
@@ -44,9 +44,8 @@
 				['<?php echo $data['day']; ?>',<?php echo $data['received']; ?>,<?php echo $data['sent']; ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('weeclyIncomingEmails'));
-		chart.draw(data, options);
+		chart.draw(data, {});
 	}
 
 	// Monthly incoming emails
