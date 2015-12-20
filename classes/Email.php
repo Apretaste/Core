@@ -24,11 +24,10 @@ class Email
 		$from = $this->nextEmail($to);
 		$domain = explode("@", $from)[1];
 
-		// create the list of images
-		if( ! empty($images)) $images = array('inline' => $images);
-
-		// crate the list of attachments
-		// TODO add list of attachments
+		// create the list of images and attachments
+		$embedded = array();
+		if( ! empty($images)) $embedded['inline'] = $images;
+		if( ! empty($attachments)) $embedded['attachment'] = $attachments;
 
 		// create the array send
 		$message = array(
@@ -47,7 +46,7 @@ class Email
 
 		// send the email via MailGun
 		$mgClient = new Mailgun($mailgunKey);
-		$result = $mgClient->sendMessage($domain, $message, $images);
+		$result = $mgClient->sendMessage($domain, $message, $embedded);
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
