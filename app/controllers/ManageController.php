@@ -125,44 +125,19 @@ class ManageController extends Controller
 
 
 		// START bounce rate
-		$queryBounceRate = "
-		SELECT *
-		FROM 
-			(SELECT DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%b-%Y') AS Month,
-			DATE_FORMAT(month.start - INTERVAL seq.seq MONTH,'%Y-%m') AS toOrder
-			FROM (
-			   SELECT 11 AS seq UNION ALL
-			   SELECT 10 UNION ALL
-			   SELECT  9 UNION ALL
-			   SELECT  8 UNION ALL
-			   SELECT  7 UNION ALL
-			   SELECT  6 UNION ALL
-			   SELECT  5 UNION ALL
-			   SELECT  4 UNION ALL
-			   SELECT  3 UNION ALL
-			   SELECT  2 UNION ALL
-			   SELECT  1 UNION ALL
-			   SELECT  0
-			) seq
-			JOIN (
-			   SELECT CURRENT_DATE() - INTERVAL DAYOFMONTH(CURRENT_DATE()) - 1 DAY AS start
-			) month) AS MonthData
-		LEFT JOIN
-			(SELECT CONCAT(SUBSTRING(DATE_FORMAT(request_time, '%b'),1,3),DATE_FORMAT(request_time,'-%Y')) as dateName,
-			Count(Distinct requestor) AS RequestCount
-			FROM utilization
-			WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m'))<12
-			GROUP BY YEAR(request_time), MONTH(request_time)) AS dataMonth
-			ON dataMonth.dateName = MonthData.Month
-		WHERE TRUE = TRUE
-		ORDER BY MonthData.toOrder";
-		$dataBounceRate = $connection->deepQuery($queryBounceRate);
-		foreach($dataBounceRate as $monthBounceList)
+		$query = "SELECT B.* FROM (";
+		for($i=0; $i<12; $i++)
 		{
-			if($monthBounceList->RequestCount != NULL)
-			$bounceRateMonthly[] = ["month"=>$monthBounceList->Month, "emails"=>$monthBounceList->RequestCount];
-			else
-			$bounceRateMonthly[] = ["month"=>$monthBounceList->Month, "emails"=> 0];
+			$date = date("Y-m", strtotime("-$i months"));
+			$query .= "SELECT COUNT(A.b) as bounced, '$date' as date FROM (SELECT COUNT(requestor) as b FROM utilization WHERE DATE_FORMAT(request_time,'%Y-%m') = '$date' GROUP BY requestor HAVING b = 1) A";
+			if($i!=11) $query .= " UNION ";
+		}
+		$query .= ") B WHERE bounced > 0 ORDER BY date";
+		$visits = $connection->deepQuery($query);
+		$bounceRateMonthly = array();
+		foreach($visits as $visit)
+		{
+			$bounceRateMonthly[] = ["date"=>$visit->date, "bounced"=>$visit->bounced];
 		}
 		//End bounce rate
 

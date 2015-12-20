@@ -108,9 +108,9 @@
 	google.setOnLoadCallback(monthlyBounceRate);
 	function monthlyBounceRate() {
 		var data = google.visualization.arrayToDataTable([
-			['Month', 'Emails'],
+			['Year and Month', 'Bounce Rate'],
 			<?php foreach ($bounceRateMonthly as $data) { ?>
-				['<?php echo $data['month']; ?>',<?php echo $data['emails']; ?>],
+				['<?php echo $data['date']; ?>',<?php echo $data['bounced']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none', orientation: 'horizontal'};
