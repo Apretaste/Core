@@ -3,7 +3,8 @@
         <table id="raffleListTable" class="table">
 			<thead>
 				<tr>
-					<th>Item Description</th>
+					<th>Raffle description</th>
+					<th>Tickets</th>
 					<th class="text-center">Start Day</th>
 					<th class="text-center">End Day</th>
 				</tr>
@@ -21,6 +22,7 @@
 						</p>
 						<?php } ?>
 					</td>
+					<td class="text-center"><?php echo $raffleListView['tickets']; ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['startDay'])); ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['finishDay'])); ?></td>
 				</tr>

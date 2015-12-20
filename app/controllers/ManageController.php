@@ -372,13 +372,26 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryraffleList = "SELECT item_desc, start_date, end_date, winner_1, winner_2, winner_3 FROM raffle ORDER BY end_date DESC";
-		$raffleListData = $connection->deepQuery($queryraffleList);
-
+		// List of raffles
+		$query = 
+			"SELECT A.item_desc, A.start_date, A.end_date, A.winner_1, A.winner_2, A.winner_3, count(B.raffle_id) as tickets
+			FROM raffle A 
+			LEFT JOIN ticket B
+			ON A.raffle_id = B.raffle_id
+			GROUP BY B.raffle_id
+			ORDER BY end_date DESC";
+		$visits = $connection->deepQuery($query);
 		$raffleListCollection = array();
-		foreach($raffleListData as $raffleListItem)
-			$raffleListCollection[] = ["itemDesc"=>$raffleListItem->item_desc, "startDay"=>$raffleListItem->start_date, "finishDay"=>$raffleListItem->end_date, "winner1"=>$raffleListItem->winner_1, "winner2"=>$raffleListItem->winner_2, "winner3"=>$raffleListItem->winner_3];
+		foreach($visits as $visit)
+		{
+			$raffleListCollection[] = ["itemDesc"=>$visit->item_desc, "startDay"=>$visit->start_date, "finishDay"=>$visit->end_date, "winner1"=>$visit->winner_1, "winner2"=>$visit->winner_2, "winner3"=>$visit->winner_3, "tickets"=>$visit->tickets];
+		}
 
+		// get the current number of tickets
+		$raffleCurrentTickets = $connection->deepQuery("SELECT count(ticket_id) as tickets FROM ticket WHERE raffle_id IS NULL");
+		if($raffleListCollection[0]['tickets'] == 0) $raffleListCollection[0]['tickets'] = $raffleCurrentTickets[0]->tickets;
+
+		// send values to the template
 		$this->view->title = "List of raffles";
 		$this->view->raffleListData = $raffleListCollection;
 	}
