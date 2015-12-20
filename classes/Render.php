@@ -86,6 +86,7 @@ class Render
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
 			AND name <> 'excluyeme'
+			AND listed = 1
 			ORDER BY insertion_date
 			LIMIT 5";
 		$connection = new Connection();
