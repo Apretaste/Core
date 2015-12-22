@@ -14,7 +14,7 @@ class WebhookController extends Controller
 		$domain = $_POST['domain'];
 		$reason = $_POST['reason'];
 		$code = $_POST['code'];
-		$desc = $_POST['description'];
+		$desc = str_replace("'", "", $_POST['description']);
 
 		// save into the database
 		$connection = new Connection();
