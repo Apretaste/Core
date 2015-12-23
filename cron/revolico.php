@@ -229,7 +229,7 @@ function crawlRevolicoURL($url)
 		"title" => $title,
 		"body" => $body,
 		"images" => count($pictures),
-		"category" => classify("$title $body");
+		"category" => classify("$title $body"),
 		"url" => $url
 	);
 }
