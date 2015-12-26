@@ -20,7 +20,7 @@ class ManageController extends Controller
 			$details = explode("|", $details);
 
 			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
-			$revolicoCrawler["TimeBehind"] = time() - strtotime($details[0]) / 60 / 60; 
+			$revolicoCrawler["TimeBehind"] = (time() - strtotime($details[0])) / 60 / 60; 
 			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
 			$revolicoCrawler["PostsDownloaded"] = $details[2];
 			$revolicoCrawler["RuningMemory"] = $details[3];
