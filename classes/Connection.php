@@ -1,14 +1,15 @@
 <?php
 
-class Connection {
+class Connection
+{
 	/**
 	 * Query the database and returs an array of objects
+	 * Please use escape() for all texts before creating the $sql
 	 *
 	 * @author salvipascual
 	 * @param String $sql, valid sql query
 	 * @return Array, list of rows or NULL if it is not a select
 	 */
-	//@NOTE SQL injection attack to Core Database
 	public function deepQuery($sql)
 	{
 		// get the database connection
@@ -35,5 +36,18 @@ class Connection {
 			// execute statement in the database
 			return $di->get('db')->execute($sql);
 		}
+	}
+
+	/**
+	 * Escape dangerous strings before passing it to mysql
+	 * 
+	 * @author salvipascual
+	 * @param String $str, text to scape
+	 * @return String, scaped text ready to be sent to mysql
+	 * */
+	public function escape($str)
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		return $di->get('db')->escapeString($str);
 	}
 }

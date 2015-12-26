@@ -315,7 +315,8 @@ class RunController extends Controller
 			$domain = $emailPieces[1];
 
 			// save the logs on the utilization table
-			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$query','$email','$execStartTime','$executionTime','$domain','','')";
+			$safeQuery = $connection->escape($query);
+			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain','','')";
 			$connection->deepQuery($sql);
 
 			// return positive answer to prove the email was quequed
