@@ -47,7 +47,11 @@ class Connection
 	 * */
 	public function escape($str)
 	{
+		// get the scaped string
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		return $di->get('db')->escapeString($str);
+		$safeStr = $di->get('db')->escapeString($str);
+
+		// remove the ' at the beginning and end of the string
+		return substr(substr($safeStr, 0, -1), 1);
 	}
 }
