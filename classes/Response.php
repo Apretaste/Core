@@ -1,6 +1,7 @@
 <?php
 
-class Response {
+class Response
+{
 	public $email;
 	public $subject;
 	public $template;

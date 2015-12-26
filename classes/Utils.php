@@ -121,7 +121,7 @@ class Utils
 		else $image = NULL;
 
 		// get the interests as an array
-		$person->interests = $exploded = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
+		$person->interests = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
 
 		// add elements to the response
 		$person->full_name = $fullName;
@@ -391,27 +391,38 @@ class Utils
 		$result = $mgClient->get("address/validate", array('address' => $to));
 		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 
-		// check NEW emails deeper (only for new people)
-		if( ! $this->personExist($to))
+		// check deeper for new people. Only check deeper the outgoing emails
+		if( ! $this->personExist($to) && $direction=="out")
 		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$key = $di->get('config')['emailvalidator']['key'];
-			$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
-			if($result)
-			{
-				// save all emails tested by the email validador to ensure no errors are happening
-				$status = $result->status;
-				$connection->deepQuery("INSERT INTO ___emailvalidator_checked_emails (email,status) VALUES ('$to','$status')");
+			// use the cache if the email was checked before
+			$res = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
 
-				// get the result for each status code
-				if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
-				if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
-				if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
-			}
-			else
+			// if the email hasen't been tested before, check
+			if(empty($res))
 			{
-				throw new Exception("Error connecting emailvalidator for user $to at ".date());
+				$di = \Phalcon\DI\FactoryDefault::getDefault();
+				$key = $di->get('config')['emailvalidator']['key'];
+				$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
+				if($result)
+				{
+					// save all emails tested by the email validador to ensure no errors are happening
+					$status = $result->status;
+					$connection->deepQuery("INSERT INTO delivery_checked (email,status) VALUES ('$to','$status')");
+				}
+				else
+				{
+					throw new Exception("Error connecting emailvalidator for user $to at ".date());
+				}
 			}
+			else // for emails previously tested, use the cache
+			{
+				$status = $res[0]->status;
+			}
+
+			// get the result for each status code
+			if($status == 114) { $response = 'unknown'; goto LogErrorAndReturn; } // usually national email
+			if($status > 300 && $status < 399) { $response = 'soft-bounce'; goto LogErrorAndReturn; }
+			if($status > 400 && $status < 499) { $response = 'hard-bounce'; goto LogErrorAndReturn; }
 		}
 
 		// when no errors were found
@@ -422,5 +433,34 @@ class Utils
 		LogErrorAndReturn:
 		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
 		return $response;
+	}
+
+
+	/**
+	 * Get the completion percentage of a profile
+	 * 
+	 * @author kuma
+	 * @param String, email of the person
+	 * @return Number, percentage of completion
+	 * */
+	public function getProfileCompletion($email)
+	{
+		$db = new Connection();
+		$p = $this->getPerson($email);
+		$percent = 0;
+
+		if (isset($p->email))
+		{
+			$vars = get_object_vars($p);
+			$total = count($vars);
+			$part = 0;
+			foreach($vars as $var=>$value)
+			{
+				if ( ! empty($value)) $part++;
+			}
+			$percent = (int) $part / $total * 100;
+		}
+
+		return $percent;
 	}
 }
