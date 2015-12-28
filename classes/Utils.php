@@ -361,11 +361,25 @@ class Utils
 		// block people following the example email
 		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 
-		// check if the email is formatted properly
-		if ( ! filter_var($to, FILTER_VALIDATE_EMAIL)) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		// block email from/to our customer support 
+		if($to == "soporte@apretaste.com" ||
+			$to == "comentarios@apretaste.com" ||
+			$to == "contacto@apretaste.com" ||
+			$to == "soporte@apretastes.com" ||
+			$to == "comentarios@apretastes.com" ||
+			$to == "contacto@apretastes.com" ||
+			$to == "support@apretaste.zendesk.com" || 
+			$to == "support@apretaste.com" ||
+			$to == "apretastesoporte@gmail.com"
+		) {$response = 'loop'; goto LogErrorAndReturn;}
 
 		// block intents to email the deamons
-		if(stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		if(stripos($to,"mailer-daemon@")!==false || 
+			stripos($to,"communicationservice.nl")!==false
+		) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
+		// check if the email is formatted properly
+		if ( ! filter_var($to, FILTER_VALIDATE_EMAIL)) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 
 		// block no reply emails
 		if(stripos($to,"not-reply")!==false ||
@@ -420,9 +434,9 @@ class Utils
 			}
 
 			// get the result for each status code
-			if($status == 114) { $response = 'unknown'; goto LogErrorAndReturn; } // usually national email
-			if($status > 300 && $status < 399) { $response = 'soft-bounce'; goto LogErrorAndReturn; }
-			if($status > 400 && $status < 499) { $response = 'hard-bounce'; goto LogErrorAndReturn; }
+			if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
+			if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
+			if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 		}
 
 		// when no errors were found
