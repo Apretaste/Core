@@ -452,29 +452,103 @@ class Utils
 
 	/**
 	 * Get the completion percentage of a profile
-	 * 
-	 * @author kuma
+	 *
+	 * @author kuma, updated by salvipascual
 	 * @param String, email of the person
 	 * @return Number, percentage of completion
 	 * */
 	public function getProfileCompletion($email)
 	{
-		$db = new Connection();
-		$p = $this->getPerson($email);
+		$profile = $this->getPerson($email);
 		$percent = 0;
 
-		if (isset($p->email))
+		if($profile)
 		{
-			$vars = get_object_vars($p);
-			$total = count($vars);
-			$part = 0;
-			foreach($vars as $var=>$value)
+			$keys = get_object_vars($profile);
+			$parts = 0;
+			$total = count($keys);
+
+			foreach($keys as $key=>$value)
 			{
-				if ( ! empty($value)) $part++;
+				// do not count non-required values
+				if(
+					$key == "middle_name" ||
+					$key == "mother_name" ||
+					$key == "about_me" ||
+					$key == "updated_by_user" ||
+					$key == "raffle_tickets" ||
+					$key == "last_update_date" ||
+					$key == "credit"
+				) {$total--; continue;}
+
+				// add non-empty values to the formula 
+				if( ! empty($value)) $parts++;
 			}
-			$percent = (int) $part / $total * 100;
+
+			// calculate percentage
+			$percent = (int) $parts / $total * 100;
 		}
 
 		return $percent;
+	}
+
+
+	/**
+	 * To create the text that will be shown when the
+	 * user click on the Edit Profile button
+	 * */
+	public function createProfileEditableText($email)
+	{
+		// get the profile
+		$profile = $this->getPerson($email);
+	
+		// format data for the user
+		$birthday = date("d/m/Y", strtotime($profile->date_of_birth));
+		$interests = implode(",", $profile->interests);
+		$province = str_replace("_", " ", $profile->province);
+	
+		// create and return the profile text
+		return urlencode(preg_replace('/\t/', '',
+			"# Su nombre, por ejemplo: NOMBRE = Juan Perez Gutierres
+			NOMBRE = {$profile->full_name}
+			
+			# Su Fecha de nacimiento, por ejemplo: CUMPLEANO = 23/08/1995
+			CUMPLEANOS = $birthday
+				
+			# Su Profesion resumida en una sola palabra, por ejemplo: Arquitecto
+			PROFESION = {$profile->occupation}
+		
+			# Provincia donde vives
+			PROVINCIA = $province
+				
+			# Ciudad donde vives
+			CIUDAD = {$profile->city}
+				
+			# Escoja entre: M o F, por ejemplo: SEXO = M
+			SEXO = {$profile->gender}
+				
+			# Escoja entre: primario, secundario, tecnico, universitario, postgraduado, doctorado u otro
+			NIVEL ESCOLAR = {$profile->highest_school_level}
+				
+			# Escoja entre: soltero,saliendo,comprometido o casado
+			ESTADO CIVIL = {$profile->marital_status}
+				
+			# Escoja entre: trigueno, castano, rubio, negro, rojo, blanco u otro
+			PELO = {$profile->hair}
+				
+			# Escoja entre: negro, blanco, mestizo u otro
+			PIEL = {$profile->skin}
+				
+			# Escoja entre: negro, carmelita, verde, azul, avellana u otro
+			OJOS = {$profile->eyes}
+				
+			# Escoja entre delgado, medio, extra o atletico
+			CUERPO = {$profile->body_type}
+				
+			# Liste sus intereses separados por coma, ejemplo: INTERESES = carros, playa, musica
+			INTERESES = $interests
+				
+				
+			# Y no olvide adjuntar su foto!"));
 	}
 }
