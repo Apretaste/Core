@@ -310,4 +310,54 @@ class Utils {
 
 		return array($firstName, $middleName, $lastName, $motherName);
 	}
+    
+    public function getProfileCompletion($email){
+       
+        $db = new Connection();
+        
+        $p = $this->getPerson($email);
+        
+        $percent = 0;
+        
+        if (isset($p->email)){
+            
+            $vars = get_object_vars($p);
+            $total = count($vars);
+            $part = 0;
+            foreach($vars as $var=>$value){
+                if (!empty($value))
+                    $part++;
+            }
+        
+            $percent = (int) $part / $total * 100;
+        }
+        
+        return $percent;
+    }
+    
+	public function getProvinceDistance($province1, $province2, $percent = false){
+		
+		$db = new Connection();
+		
+		if ($percent){
+			$find = $db->deepQuery("SELECT * FROM province_distance 
+									WHERE (province1 = '$province1' AND province2 = '$province2')
+									   OR (province2 = '$province1' AND province1 = '$province2');");
+			if (isset($find[0]))
+				return $find[0]->distance;
+			
+			return null;
+		} else {
+			$find = $db->deepQuery("SELECT MAX(distance) as distance FROM province_distance;");
+			
+			if (isset($find[0])){
+				$max = $find[0]->distance;
+				$distance = $this->getProvinceDistance($provicne1, $province2);
+				if (!is_null($distance)){
+					return number_format($distance / $max, 0) * 1;
+				}
+			}
+		}
+		return null;
+	}
 }
