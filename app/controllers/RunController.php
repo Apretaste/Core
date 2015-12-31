@@ -51,16 +51,20 @@ class RunController extends Controller
 		$fromEmail = $event[0]->msg->from_email;
 		$fromName = isset($event[0]->msg->from_name) ? $event[0]->msg->from_name : "";
 		$toEmail = $event[0]->msg->email;
-		$subject = $event[0]->msg->headers->Subject;
-		$body = $event[0]->msg->text;
+		$subject = isset($event[0]->msg->headers->Subject) ? $event[0]->msg->headers->Subject : "";
+		$body = isset($event[0]->msg->text) ? $event[0]->msg->text : "";
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
 		$attachments = array();
+
+		// do not continue procesing the email if the sender is not valid
+		$utils = new Utils();
+		$status = $utils->deliveryStatus($fromEmail, 'in');
+		if($status != 'ok') return;
 
 		// if there are attachments, download them all and create the files in the temp folder 
 		if(count($filesAttached)>0)
 		{
 			// save the attached files and create the response array
-			$utils = new Utils();
 			$wwwroot = $this->di->get('path')['root'];
 			foreach ($filesAttached as $key=>$values)
 			{
@@ -95,6 +99,11 @@ class RunController extends Controller
 			}
 		}
 
+		// update the counter of emails received from that mailbox
+		$today = date("Y-m-d H:i:s");
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
+
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
@@ -114,6 +123,10 @@ class RunController extends Controller
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
+		// remove double spaces and apostrophes from the subject
+		// sorry apostrophes break the SQL code :-( 
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+
 		// get the name of the service based on the subject line
 		$subjectPieces = explode(" ", $subject);
 		$serviceName = strtolower($subjectPieces[0]);
@@ -132,7 +145,7 @@ class RunController extends Controller
 
 		// check if a subservice is been invoked
 		$subServiceName = "";
-		if(isset($subjectPieces[1])) // some services are requested only with name
+		if(isset($subjectPieces[1]) && ! preg_match('/\?|\(|\)|\\\|\/|\.|\$|\^|\{|\}|\||\!/', $subjectPieces[1]))
 		{
 			$serviceClassMethods = get_class_methods($serviceName);
 			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods))
@@ -227,11 +240,17 @@ class RunController extends Controller
 			{
 				if($rs->render) // ommit default Response()
 				{
+					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
 					$images = array_merge($rs->images, $rs->getAds());
 					$attachments = $rs->attachments;
 					$body = $render->renderHTML($userService, $rs);
+
+					// remove dangerous characters that may break the SQL code
+					$subject = trim(preg_replace('/\'|`/', "", $subject));
+
+					// send the response email 
 					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
@@ -296,7 +315,8 @@ class RunController extends Controller
 			$domain = $emailPieces[1];
 
 			// save the logs on the utilization table
-			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$query','$email','$execStartTime','$executionTime','$domain','','')";
+			$safeQuery = $connection->escape($query);
+			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain','','')";
 			$connection->deepQuery($sql);
 
 			// return positive answer to prove the email was quequed

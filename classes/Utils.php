@@ -1,363 +1,595 @@
 <?php
 
+use Mailgun\Mailgun;
+
 class Utils {
-	/**
-	 * Returns a valid Apretaste email
-	 *
-	 * @author salvipascual
-	 * @return String, email address
-	 */
-	public function getValidEmailAddress()
-	{
-		// get the active email with less usage
-		$sql = "SELECT email FROM jumper WHERE active=1 ORDER BY sent_count ASC LIMIT 1";
-		$connection = new Connection();
-		$result = $connection->deepQuery($sql);
-		return $result[0]->email;
-	}
-
-	/**
-	 * Format a link to be an Apretaste mailto
-	 *
-	 * @author salvipascual
-	 * @param String , name of the service
-	 * @param String , name of the subservice, if needed
-	 * @param String , pharse to search, if needed
-	 * @param String , body of the email, if necessary
-	 * @return String, link to add to the href section
-	 */
-	public function getLinkToService($service, $subservice=false, $parameter=false, $body=false)
-	{
-		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
-		if ($subservice) $link .= " $subservice";
-		if ($parameter) $link .= " $parameter";
-		if ($body) $link .= "&body=$body";
-		return $link;
-	}
-
-	/**
-	 * Check if the service exists in the database
-	 *
-	 * @author salvipascual
-	 * @param String, name of the service
-	 * @return Boolean, true if service exist
-	 * */
-	public function serviceExist($serviceName)
-	{
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT name FROM service WHERE LOWER(name)=LOWER('$serviceName')");
-		return count($res) > 0;
-	}
-
-	/**
-	 * Check if the Person exists in the database
-	 * 
-	 * @author salvipascual
-	 * @param String $personEmail, email of the person
-	 * @return Boolean, true if Person exist
-	 * */
-	public function personExist($personEmail)
-	{
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
-		return count($res) > 0;
-	}
-
-	/**
-	 * Get a person's profile
-	 *
-	 * @author salvipascual
-	 * @return Array or false
-	 * */
-	public function getPerson($email)
-	{
-		// get the person
-		$connection = new Connection();
-		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
-
-		// return false if there is no person with that email
-		if (count($person)==0) return false;
-		else $person = $person[0];
-
-		// get number of tickets for the raffle adquired by the user
-		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
-		$tickets = $tickets[0]->tickets;
-
-		// get the person's full name
-		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
-		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
-
-		// get the image of the person
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$image = "$wwwroot/public/profile/$email.png";
-
-		if(file_exists($image)) {
-			$wwwpath = $di->get('path')['http'];
-			$image = "$wwwpath/profile/$email.png";
-		} else $image = NULL;
-
-		// get the interests as an array
-		$person->interests = $exploded = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
-
-		// add elements to the response
-		$person->full_name = $fullName;
-		$person->picture = $image;
-		$person->raffle_tickets = $tickets;
-		return $person;
-	}
-
-	/**
-	 * Get the path to a service. 
-	 * 
-	 * @author salvipascual
-	 * @param String $serviceName, name of the service to access
-	 * @return String, path to the service, or false if the service do not exist
-	 * */
-	public function getPathToService($serviceName)
-	{
-		// get the path to service 
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$path = "$wwwroot/services/$serviceName";
-
-		// check if the path exist and return it
-		if(file_exists($path)) return $path;
-		else return false;
-	}
-
-	/**
-	 * Return the current Raffle or false if no Raffle was found
-	 * 
-	 * @author salvipascual
-	 * @return Array or false
-	 * */
-	public function getCurrentRaffle()
-	{
-		// get the raffle
-		$connection = new Connection();
-		$raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
-
-		// return false if there is no open raffle
-		if (count($raffle)==0) return false;
-		else $raffle = $raffle[0];
-
-		// get number of tickets opened
-		$openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
-		$openedTickets = $openedTickets[0]->opened_tickets;
-
-		// get the image of the raffle
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwpath = $di->get('path')['http'];
-		$raffleImage = "$wwwpath/raffle/" . md5($raffle->raffle_id) . ".png";
-
-		// add elements to the response
-		$raffle->tickets = $openedTickets;
-		$raffle->image = $raffleImage;
-
-		return $raffle;
-	}
-
-	/**
-	 * Generate a new random hash. Mostly to be used for temporals
-	 *
-	 * @author salvipascual
-	 * @return String
-	 */
-	public function generateRandomHash()
-	{
-		$rand = rand(0, 1000000);
-		$today = date('full');
-		return md5($rand . $today);
-	}
-
-	/**
-	 * Reduce image size and optimize the image quality
-	 * 
-	 * @TODO Find an faster image optimization solution
-	 * @author salvipascual
-	 * @param String $imagePath, path to the image
-	 * */
-	public function optimizeImage($imagePath, $width=false, $height=false)
-	{
-		\Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
-
-		// load and optimize image
-		$source = \Tinify\fromFile($imagePath);
-
-		// scale image based on width
-		if($width && ! $height)
-		{
-			$source = $source->resize(array("method" => "scale", "width" => $width));
-		}
-
-		// scale image based on width
-		if( ! $width && $height)
-		{
-			$source = $source->resize(array("method" => "scale", "height" => $height));
-		}
-
-		if($width && $height)
-		{
-			$source = $source->resize(array("method" => "cover", "width" => $width, "height" => $height));
-		}
-
-		// save the optimized file
-		$source->toFile($imagePath);
-	}
-
-	/**
-	 * Add a new subscriber to the email list in Mail Lite
-	 * 
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function subscribeToEmailList($email)
-	{
-		// get the path to the www folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
-		$subscriber = array('email' => $email, 'resubscribe' => 1);
-		$ML_Subscribers->setId("1266487")->add($subscriber);
-	}
-
-	/**
-	 * Delete a subscriber from the email list in Mail Lite
-	 * 
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function unsubscribeFromEmailList($email)
-	{
-		// get the path to the www folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
-		$ML_Subscribers->setId("1266487")->remove($email);
-	}
-
-	/**
-	 * Get the pieces of names from the full name
-	 *
-	 * @author hcarras
-	 * @param String $name, full name
-	 * @return Array [$firstName, $middleName, $lastName, $motherName]
-	 * */
-	public function fullNameToNamePieces($name)
-	{
-		$namePieces = explode(" ", $name);
-		$newNamePieces = array();
-		$tmp = "";
-
-		foreach ($namePieces as $piece)
-		{
-			$tmp .= "$piece ";
-		
-			if(in_array(strtoupper($piece), array("DE","LA","Y","DEL")))
-			{
-				continue;
-			}
-			else
-			{
-				$newNamePieces[] = $tmp;
-				$tmp = "";
-			}
-		}
-
-		$firstName = "";
-		$middleName = "";
-		$lastName = "";
-		$motherName = "";
-
-		if(count($newNamePieces)>=4)
-		{
-			$firstName = $newNamePieces[0];
-			$middleName = $newNamePieces[1];
-			$lastName = $newNamePieces[2];
-			$motherName = $newNamePieces[3];
-		}
-
-		if(count($newNamePieces)==3)
-		{
-			$firstName = $newNamePieces[0];
-			$lastName = $newNamePieces[1];
-			$motherName = $newNamePieces[2];
-		}
-
-		if(count($newNamePieces)==2)
-		{
-			$firstName = $newNamePieces[0];
-			$lastName = $newNamePieces[1];
-		}
-
-		if(count($newNamePieces)==1)
-		{
-			$firstName = $newNamePieces[0];
-		}
-
-		return array($firstName, $middleName, $lastName, $motherName);
-	}
-    
-    public function getProfileCompletion($email){
-       
-        $db = new Connection();
-        
-        $p = $this->getPerson($email);
-        
-        $percent = 0;
-        
-        if (isset($p->email)){
-            
-            $vars = get_object_vars($p);
-            $total = count($vars);
-            $part = 0;
-            foreach($vars as $var=>$value){
-                if (!empty($value))
-                    $part++;
-            }
-        
-            $percent = (int) $part / $total * 100;
-        }
-        
-        return $percent;
+    /**
+     * Returns a valid Apretaste email
+     *
+     * @author salvipascual
+     * @return String, email address
+     */
+    public function getValidEmailAddress() {
+        // get the active email with less usage
+        $sql = "SELECT email FROM jumper WHERE active=1 ORDER BY sent_count ASC LIMIT 1";
+        $connection = new Connection();
+        $result = $connection->deepQuery($sql);
+        return $result[0]->email;
     }
-    
-	public function getProvinceDistance($province1, $province2, $percent = false){
-		
-		$db = new Connection();
-		
-		if ($percent){
-			$find = $db->deepQuery("SELECT * FROM province_distance 
+
+    /**
+     * Format a link to be an Apretaste mailto
+     *
+     * @author salvipascual
+     * @param String , name of the service
+     * @param String , name of the subservice, if needed
+     * @param String , pharse to search, if needed
+     * @param String , body of the email, if necessary
+     * @return String, link to add to the href section
+     */
+    public function getLinkToService($service, $subservice = false, $parameter = false, $body = false) {
+        $link = "mailto:" . $this->getValidEmailAddress() . "?subject=" . strtoupper($service);
+        if ($subservice)
+            $link .= " $subservice";
+        if ($parameter)
+            $link .= " $parameter";
+        if ($body)
+            $link .= "&body=$body";
+        return $link;
+    }
+
+    /**
+     * Check if the service exists in the database
+     *
+     * @author salvipascual
+     * @param String, name of the service
+     * @return Boolean, true if service exist
+     * */
+    public function serviceExist($serviceName) {
+        $connection = new Connection();
+        $res = $connection->deepQuery("SELECT name FROM service WHERE LOWER(name)=LOWER('$serviceName')");
+        return count($res) > 0;
+    }
+
+    /**
+     * Check if the Person exists in the database
+     * 
+     * @author salvipascual
+     * @param String $personEmail, email of the person
+     * @return Boolean, true if Person exist
+     * */
+    public function personExist($personEmail) {
+        $connection = new Connection();
+        $res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
+        return count($res) > 0;
+    }
+
+    /**
+     * Check if the Person was invited and is still pending 
+     *
+     * @author salvipascual
+     * @param String $personEmail, email of the person
+     * @return Boolean, true if Person invitation is pending
+     * */
+    public function checkPendingInvitation($email) {
+        $connection = new Connection();
+        $res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
+        return count($res) > 0;
+    }
+
+    /**
+     * Get a person's profile
+     *
+     * @author salvipascual
+     * @return Array or false
+     * */
+    public function getPerson($email) {
+        // get the person
+        $connection = new Connection();
+        $person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
+
+        // return false if there is no person with that email
+        if (count($person) == 0)
+            return false;
+        else
+            $person = $person[0];
+
+        // get number of tickets for the raffle adquired by the user
+        $tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+        $tickets = $tickets[0]->tickets;
+
+        // get the person's full name
+        $fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
+        $fullName = trim(preg_replace("/\s+/", " ", $fullName));
+
+        // get the image of the person
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        $wwwroot = $di->get('path')['root'];
+        $image = "$wwwroot/public/profile/$email.png";
+
+        if (file_exists($image)) {
+            $wwwpath = $di->get('path')['http'];
+            $image = "$wwwpath/profile/$email.png";
+        } else
+            $image = null;
+
+        // get the interests as an array
+        $person->interests = preg_split('@,@', $person->interests, null, PREG_SPLIT_NO_EMPTY);
+
+        // add elements to the response
+        $person->full_name = $fullName;
+        $person->picture = $image;
+        $person->raffle_tickets = $tickets;
+        return $person;
+    }
+
+    /**
+     * Get the path to a service. 
+     * 
+     * @author salvipascual
+     * @param String $serviceName, name of the service to access
+     * @return String, path to the service, or false if the service do not exist
+     * */
+    public function getPathToService($serviceName) {
+        // get the path to service
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        $wwwroot = $di->get('path')['root'];
+        $path = "$wwwroot/services/$serviceName";
+
+        // check if the path exist and return it
+        if (file_exists($path))
+            return $path;
+        else
+            return false;
+    }
+
+
+    /**
+     * Return the current Raffle or false if no Raffle was found
+     * 
+     * @author salvipascual
+     * @return Array or false
+     * */
+    public function getCurrentRaffle() {
+        // get the raffle
+        $connection = new Connection();
+        $raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+
+        // return false if there is no open raffle
+        if (count($raffle) == 0)
+            return false;
+        else
+            $raffle = $raffle[0];
+
+        // get number of tickets opened
+        $openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+        $openedTickets = $openedTickets[0]->opened_tickets;
+
+        // get the image of the raffle
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        $wwwroot = $di->get('path')['root'];
+        $raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".png";
+
+        // add elements to the response
+        $raffle->tickets = $openedTickets;
+        $raffle->image = $raffleImage;
+
+        return $raffle;
+    }
+
+    /**
+     * Generate a new random hash. Mostly to be used for temporals
+     *
+     * @author salvipascual
+     * @return String
+     */
+    public function generateRandomHash() {
+        $rand = rand(0, 1000000);
+        $today = date('full');
+        return md5($rand . $today);
+    }
+
+    /**
+     * Reduce image size and optimize the image quality
+     * 
+     * @TODO Find an faster image optimization solution
+     * @author salvipascual
+     * @param String $imagePath, path to the image
+     * */
+    public function optimizeImage($imagePath, $width = false, $height = false) {
+        \Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
+
+        // load and optimize image
+        $source = \Tinify\fromFile($imagePath);
+
+        // scale image based on width
+        if ($width && !$height) {
+            $source = $source->resize(array("method" => "scale", "width" => $width));
+        }
+
+        // scale image based on width
+        === === = }
+
+
+    /**
+     * Reduce image size and optimize the image quality
+     * 
+     * @TODO Find an faster image optimization solution
+     * @author salvipascual
+     * @param String $imagePath, path to the image
+     * */
+    public function optimizeImage($imagePath, $width = false, $height = false) {
+        \Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
+
+        // load and optimize image
+        $source = \Tinify\fromFile($imagePath);
+
+        // scale image based on width
+
+        if (!$width && $height) {
+            $source = $source->resize(array("method" => "scale", "height" => $height));
+        }
+
+        if ($width && $height) {
+            $source = $source->resize(array(
+                "method" => "cover",
+                "width" => $width,
+                "height" => $height));
+        }
+
+        // save the optimized file
+        $source->toFile($imagePath);
+    }
+
+
+    /**
+     * Add a new subscriber to the email list in Mail Lite
+     * 
+     * @author salvipascual
+     * @param String email
+     * */
+    public function subscribeToEmailList($email) {
+        // get the path to the www folder
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        $wwwroot = $di->get('path')['root'];
+
+        // get the key from the config
+        $mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
+        // adding the new subscriber to the list
+        include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+        $ML_Subscribers = new ML_Subscribers($mailerLiteKey);
+        $subscriber = array('email' => $email, 'resubscribe' => 1);
+        $ML_Subscribers->setId("1266487")->add($subscriber);
+    }
+
+
+    /**
+     * Delete a subscriber from the email list in Mail Lite
+     * 
+     * @author salvipascual
+     * @param String email
+     * */
+    public function unsubscribeFromEmailList($email) {
+        // get the path to the www folder
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        $wwwroot = $di->get('path')['root'];
+
+        // get the key from the config
+        $mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
+        // adding the new subscriber to the list
+        include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
+        $ML_Subscribers = new ML_Subscribers($mailerLiteKey);
+        $ML_Subscribers->setId("1266487")->remove($email);
+    }
+
+    /**
+     * Get the pieces of names from the full name
+     *
+     * @author hcarras
+     * @param String $name, full name
+     * @return Array [$firstName, $middleName, $lastName, $motherName]
+     * */
+    public function fullNameToNamePieces($name) {
+        $namePieces = explode(" ", $name);
+        $newNamePieces = array();
+        $tmp = "";
+
+        foreach ($namePieces as $piece) {
+            $tmp .= "$piece ";
+
+            if (in_array(strtoupper($piece), array(
+                "DE",
+                "LA",
+                "Y",
+                "DEL"))) {
+                continue;
+            } else {
+                $newNamePieces[] = $tmp;
+                $tmp = "";
+            }
+        }
+
+        $firstName = "";
+        $middleName = "";
+        $lastName = "";
+        $motherName = "";
+
+        if (count($newNamePieces) >= 4) {
+            $firstName = $newNamePieces[0];
+            $middleName = $newNamePieces[1];
+            $lastName = $newNamePieces[2];
+            $motherName = $newNamePieces[3];
+        }
+
+        if (count($newNamePieces) == 3) {
+            $firstName = $newNamePieces[0];
+            $lastName = $newNamePieces[1];
+            $motherName = $newNamePieces[2];
+        }
+
+        if (count($newNamePieces) == 2) {
+            $firstName = $newNamePieces[0];
+            $lastName = $newNamePieces[1];
+        }
+
+        if (count($newNamePieces) == 1) {
+            $firstName = $newNamePieces[0];
+        }
+
+        return array(
+            $firstName,
+            $middleName,
+            $lastName,
+            $motherName);
+    }
+    public function getProvinceDistance($province1, $province2, $percent = false) {
+
+        $db = new Connection();
+
+        if ($percent) {
+            $find = $db->deepQuery("SELECT * FROM province_distance 
 									WHERE (province1 = '$province1' AND province2 = '$province2')
 									   OR (province2 = '$province1' AND province1 = '$province2');");
-			if (isset($find[0]))
-				return $find[0]->distance;
+            if (isset($find[0]))
+                return $find[0]->distance;
+
+            return null;
+        } else {
+            $find = $db->deepQuery("SELECT MAX(distance) as distance FROM province_distance;");
+
+            if (isset($find[0])) {
+                $max = $find[0]->distance;
+                $distance = $this->getProvinceDistance($provicne1, $province2);
+                if (!is_null($distance)) {
+                    return number_format($distance / $max, 0) * 1;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Checks if an email can be delivered to a certain mailbox
+     *
+     * @author salvipascual
+     * @param String $to, email address of the receiver
+     * @param Enum $direction, in or out, if we check an email received or sent
+     * @return String delivability: ok, hard-bounce, soft-bounce, spam, no-reply, loop, unknown
+     * */
+    public function deliveryStatus($to, $direction = "out") {
+        // save the final response. If not ok, will return on the LogErrorAndReturn tag
+        $response = '';
+
+        // create a new connection object
+        $connection = new Connection();
+
+        // block people following the example email
+        if ($to == "su@amigo.cu") {
+            $response = 'hard-bounce';
+            goto LogErrorAndReturn;
+        }
+
+        // block email from/to our customer support
+        if ($to == "soporte@apretaste.com" || $to == "comentarios@apretaste.com" || $to == "contacto@apretaste.com" || $to == "soporte@apretastes.com" || $to ==
+            "comentarios@apretastes.com" || $to == "contacto@apretastes.com" || $to == "support@apretaste.zendesk.com" || $to == "support@apretaste.com" || $to ==
+            "apretastesoporte@gmail.com") {
+            $response = 'loop';
+            goto LogErrorAndReturn;
+        }
+
+        // block intents to email the deamons
+        if (stripos($to, "mailer-daemon@") !== false || stripos($to, "communicationservice.nl") !== false) {
+            $response = 'hard-bounce';
+            goto LogErrorAndReturn;
+        }
+
+        // check if the email is formatted properly
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            $response = 'hard-bounce';
+            goto LogErrorAndReturn;
+        }
+
+        // block no reply emails
+        if (stripos($to, "not-reply") !== false || stripos($to, "notreply") !== false || stripos($to, "No_Reply") !== false || stripos($to, "Do_Not_Reply") !== false ||
+            stripos($to, "no-reply") !== false || stripos($to, "noreply") !== false || stripos($to, "no-responder") !== false || stripos($to, "noresponder") !== false) {
+            $response = 'no-reply';
+            goto LogErrorAndReturn;
+        }
+
+        // block any previouly dropped email
+        $res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
+        if (!empty($res)) {
+            $response = 'loop';
+            goto LogErrorAndReturn;
+        }
+
+        // block emails from apretaste to apretaste
+        $mailboxes = $connection->deepQuery("SELECT email FROM jumper");
+        foreach ($mailboxes as $m)
+            if ($to == $m->email) {
+                $response = 'loop';
+                goto LogErrorAndReturn;
+            }
+
+        // check for valid domain
+        $mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
+        $result = $mgClient->get("address/validate", array('address' => $to));
+        if (!$result->http_response_body->is_valid) {
+            $response = 'hard-bounce';
+            goto LogErrorAndReturn;
+        }
+
+        // check deeper for new people. Only check deeper the outgoing emails
+        if (!$this->personExist($to) && $direction == "out") {
+            // use the cache if the email was checked before
+            $res = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
+
+            // if the email hasen't been tested before, check
+            if (empty($res)) {
+                $di = \Phalcon\DI\FactoryDefault::getDefault();
+                $key = $di->get('config')['emailvalidator']['key'];
+                $result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
+                if ($result) {
+                    // save all emails tested by the email validador to ensure no errors are happening
+                    $status = $result->status;
+                    $connection->deepQuery("INSERT INTO delivery_checked (email,status) VALUES ('$to','$status')");
+                } else {
+                    throw new Exception("Error connecting emailvalidator for user $to at " . date());
+                }
+            } else // for emails previously tested, use the cache
+            {
+                $status = $res[0]->status;
+            }
+
+            // get the result for each status code
+            if ($status == 114) {
+                $response = 'unknown';
+                goto LogErrorAndReturn;
+            } // usually national email
+            if ($status > 300 && $status < 399) {
+                $response = 'soft-bounce';
+                goto LogErrorAndReturn;
+            }
+            if ($status > 400 && $status < 499) {
+                $response = 'hard-bounce';
+                goto LogErrorAndReturn;
+            }
+        }
+
+        // when no errors were found
+        return 'ok';
+
+        // log errors in the database before returning
+        // and YES, I am using GOTO
+        LogErrorAndReturn : $connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
+        return $response;
+    }
+
+
+    /**
+     * Get the completion percentage of a profile
+     *
+     * @author kuma, updated by salvipascual
+     * @param String, email of the person
+     * @return Number, percentage of completion
+     * */
+    public function getProfileCompletion($email) {
+        $profile = $this->getPerson($email);
+        $percent = 0;
+
+        if ($profile) {
+            $keys = get_object_vars($profile);
+            $parts = 0;
+            $total = count($keys);
+
+            foreach ($keys as $key => $value) {
+                // do not count non-required values
+                if ($key == "middle_name" || $key == "mother_name" || $key == "about_me" || $key == "updated_by_user" || $key == "raffle_tickets" || $key == "last_update_date" ||
+                    $key == "credit") {
+                    $total--;
+                    continue;
+                }
+
+                // add non-empty values to the formula
+                if (!empty($value))
+                    $parts++;
+            }
+
+            // calculate percentage
+            $percent = (int)$parts / $total * 100;
+        }
+
+        return $percent;
+    }
+
+
+    /**
+     * To create the text that will be shown when the
+     * user click on the Edit Profile button
+     * */
+    public function createProfileEditableText($email) {
+        // get the profile
+        $profile = $this->getPerson($email);
+
+        // format profile information
+        $name = isset($profile->full_name) ? $profile->full_name : "";
+        $birthday = isset($profile->date_of_birth) ? date("d/m/Y", strtotime($profile->date_of_birth)) : "";
+        $occupation = isset($profile->occupation) ? $profile->occupation : "";
+        $province = isset($profile->province) ? str_replace("_", " ", $profile->province) : "";
+        $city = isset($profile->city) ? $profile->city : "";
+        $gender = isset($profile->gender) ? $profile->gender : "";
+        $highestSchoolLevel = isset($profile->highest_school_level) ? $profile->highest_school_level : "";
+        $maritalStatus = isset($profile->marital_status) ? $profile->marital_status : "";
+        $hair = isset($profile->hair) ? $profile->hair : "";
+        $skin = isset($profile->skin) ? $profile->skin : "";
+        $eyes = isset($profile->eyes) ? $profile->eyes : "";
+        $bodyType = isset($profile->body_type) ? $profile->body_type : "";
+        $interests = isset($profile->interests) ? implode(",", $profile->interests) : "";
+
+        // create and return the profile text
+        return urlencode(preg_replace('/\t/', '', "# Su nombre, por ejemplo: NOMBRE = Juan Perez Gutierres
+			NOMBRE = $name
 			
-			return null;
-		} else {
-			$find = $db->deepQuery("SELECT MAX(distance) as distance FROM province_distance;");
+			# Su Fecha de nacimiento, por ejemplo: CUMPLEANO = 23/08/1995
+			CUMPLEANOS = $birthday
 			
-			if (isset($find[0])){
-				$max = $find[0]->distance;
-				$distance = $this->getProvinceDistance($provicne1, $province2);
-				if (!is_null($distance)){
-					return number_format($distance / $max, 0) * 1;
-				}
-			}
-		}
-		return null;
-	}
+			# Su Profesion resumida en una sola palabra, por ejemplo: Arquitecto
+			PROFESION = $occupation
+			
+			# Provincia donde vives
+			PROVINCIA = $province
+			
+			# Ciudad donde vives
+			CIUDAD = $city
+			
+			# Escoja entre: M o F, por ejemplo: SEXO = M
+			SEXO = $gender
+			
+			# Escoja entre: primario, secundario, tecnico, universitario, postgraduado, doctorado u otro
+			NIVEL ESCOLAR = $highestSchoolLevel
+			
+			# Escoja entre: soltero,saliendo,comprometido o casado
+			ESTADO CIVIL = $maritalStatus
+			
+			# Escoja entre: trigueno, castano, rubio, negro, rojo, blanco u otro
+			PELO = $hair
+			
+			# Escoja entre: negro, blanco, mestizo u otro
+			PIEL = $skin
+			
+			# Escoja entre: negro, carmelita, verde, azul, avellana u otro
+			OJOS = $eyes
+			
+			# Escoja entre delgado, medio, extra o atletico
+			CUERPO = $bodyType
+			
+			# Liste sus intereses separados por coma, ejemplo: INTERESES = carros, playa, musica
+			INTERESES = $interests
+			
+			
+			# Y no olvide adjuntar su foto!"));
+    }
 }

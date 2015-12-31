@@ -15,6 +15,6 @@ function smarty_function_img($params, $template)
 	$width =  isset($params["width"]) ? "width='{$params["width"]}'" : "";
 	$height =  isset($params["height"]) ? "height='{$params["height"]}'" : "";
 
-	// create and return button
+	// create and return image
 	return "<img src='cid:$href' alt='$alt' $width $height />";
 }

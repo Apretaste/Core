@@ -1,22 +1,25 @@
 <div class="row">
 	<div class="col-xs-12">
-		<h2>Weecly incoming emails</h2>
-		<div id="weeclyIncomingEmails" style="width:900px; height:300px;"></div>
+		<h2>Weekly emails</h2>
+		<div id="weeclyEmails" style="width:900px; height:300px;"></div>
 	
-		<h2>Monthly incoming emails</h2>
-		<div id="monthlyIncomingEmails" style="width:900px; height:300px;"></div>
+		<h2>Monthly emails</h2>
+		<div id="monthlyEmails" style="width:900px; height:300px;"></div>
 
-		<h2>Monthly new users</h2>
+		<h2>Monthly traffic</h2>
 		<div id="monthlyNewUsers" style="width:900px; height:300px;"></div>
 
-		<h2>Current number of users</h2>
+		<h2>Active users this month</h2>
 		<p><?php echo $currentNumberOfActiveUsers; ?></p>
 
-		<h2>Monthly services usage</h2>
-		<div id="chart_pie_services" style="width: 300px; height: 300px;"></div>
+		<h2>Number of emails</h2>
+		<p><?php echo $currentNumberOfActiveUsers + 21551; ?></p>
 
-		<h2>Active domains last four months</h2>
-		<div id="chart_pie_domains" style="width: 300px; height: 300px;"></div>
+		<h2>Services usage (last 30 days)</h2>
+		<div id="monthlyServicesUsage" style="width: 300px; height: 300px;"></div>
+
+		<h2>Active domains (last 4 months)</h2>
+		<div id="lastFourMonthActiveDomains" style="width: 300px; height: 300px;"></div>
 
 		<h2>Monthly bounce rate</h2>
 		<p class="small">Emails received only once a month</p>
@@ -32,46 +35,43 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
-	// Weecly incoming emails
-	google.setOnLoadCallback(weeclyIncomingEmails);
-	function weeclyIncomingEmails() {
+	// Weecly visitors
+	google.setOnLoadCallback(weeclyEmails);
+	function weeclyEmails() {
 		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Emails'],
+			['Day of the week', 'Received', 'Sent'],
 			<?php foreach ($visitorsWeecly as $data) { ?>
-				['<?php echo $data['day']; ?>',<?php echo $data['emails']; ?>],
+				['<?php echo $data['date']; ?>',<?php echo $data['received']; ?>,<?php echo $data['sent']; ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('weeclyIncomingEmails'));
-		chart.draw(data, options);
+		var chart = new google.visualization.AreaChart(document.getElementById('weeclyEmails'));
+		chart.draw(data, {});
 	}
 
-	// Monthly incoming emails
-	google.setOnLoadCallback(monthlyIncomingEmails);
-	function monthlyIncomingEmails() {
+	// Monthly visitors
+	google.setOnLoadCallback(monthlyEmails);
+	function monthlyEmails() {
 		var data = google.visualization.arrayToDataTable([
-			['Month', 'Emails'],
+			['Month and Year', 'Received', 'Sent'],
 			<?php foreach ($visitorsMonthly as $data) { ?>
-				['<?php echo $data['month']; ?>',<?php echo $data['emails']; ?>],
+				['<?php echo $data['date']; ?>',<?php echo $data['received']; ?>,<?php echo $data['sent']; ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('monthlyIncomingEmails'));
-		chart.draw(data, options);
+		var chart = new google.visualization.AreaChart(document.getElementById('monthlyEmails'));
+		chart.draw(data, {});
 	}
 
-	// Monthly new users
+	// Monthly new visitors
 	google.setOnLoadCallback(monthlyNewUsers);
 	function monthlyNewUsers() {
 		var data = google.visualization.arrayToDataTable([
-			['Month', 'Emails'],
+			['Month and Year', 'All', 'Unique', 'New'],
 			<?php foreach ($newUsers as $data) { ?>
-				['<?php echo $data['month']; ?>',<?php echo $data['emails']; ?>],
+				['<?php echo $data['date']; ?>',<?php echo $data['all_visitors']; ?>,<?php echo $data['unique_visitors']; ?>,<?php echo $data['new_visitors']; ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
-		chart.draw(data, options);
+		chart.draw(data, {});
 	}
 
 	// Monthly services usage
@@ -85,7 +85,7 @@
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
-		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_services'));
+		var chart = new google.visualization.PieChart(document.getElementById('monthlyServicesUsage'));
 		chart.draw(data, options);
 	}
 
@@ -100,7 +100,7 @@
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
-		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_domains'));
+		var chart = new google.visualization.PieChart(document.getElementById('lastFourMonthActiveDomains'));
 		chart.draw(data, options);
 	}
 
@@ -108,9 +108,9 @@
 	google.setOnLoadCallback(monthlyBounceRate);
 	function monthlyBounceRate() {
 		var data = google.visualization.arrayToDataTable([
-			['Month', 'Emails'],
-			<?php foreach ($bounceRateMontly as $data) { ?>
-				['<?php echo $data['month']; ?>',<?php echo $data['emails']; ?>],
+			['Year and Month', 'Bounce Rate'],
+			<?php foreach ($bounceRateMonthly as $data) { ?>
+				['<?php echo $data['date']; ?>',<?php echo $data['bounced']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none', orientation: 'horizontal'};
@@ -122,9 +122,9 @@
 	google.setOnLoadCallback(updatedProfiles);
 	function updatedProfiles() {
 		var data = google.visualization.arrayToDataTable([
-			['Month', 'Emails'],
-			<?php foreach ($updatedProfilesMontly as $data) { ?>
-				['<?php echo $data['month']; ?>',<?php echo $data['emails']; ?>],
+			['Year and Month', 'Number of Profiles Updated'],
+			<?php foreach ($updatedProfilesMonthly as $data) { ?>
+				['<?php echo $data['date']; ?>',<?php echo $data['profiles']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none', orientation: 'horizontal'};

@@ -1,75 +1,60 @@
 <?php 
 
-class Email {
+use Mailgun\Mailgun;
+
+class Email
+{
 	/**
-	 * Sends an email using Mandrill
+	 * Sends an email using MailGun
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
 	 * @param String $subject, subject of the email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
-	 * @throw Mandrill_Error
 	 * */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
+		// do not email if there is an error
+		$utils = new Utils();
+		$status = $utils->deliveryStatus($to);
+		if($status != 'ok') return;
+
 		// select the from email using the jumper
 		$from = $this->nextEmail($to);
+		$domain = explode("@", $from)[1];
 
-		// create the list of images
-		$messageImages = array();
-		if( ! empty($images))
-		{
-			foreach ($images as $image)
-			{
-				$type = image_type_to_mime_type(exif_imagetype($image));
-				$name = basename($image);
-				$content = base64_encode(file_get_contents($image));
-				$messageImages[] = array ('type' => $type, 'name' => $name, 'content' => $content); 
-			}
-		}
+		// create the list of images and attachments
+		$embedded = array();
+		if( ! empty($images)) $embedded['inline'] = $images;
+		if( ! empty($attachments)) $embedded['attachment'] = $attachments;
 
-		// crate the list of attachments
-		// TODO add list of attachments
-
-		// create the array send 	
+		// create the array send
 		$message = array(
-			'html' => $body,
-			'subject' => $subject,
-			'from_email' => $from,
-			'from_name' => 'Apretaste',
-			'to' => array(array('email'=>$to,'name'=>'','type'=>'to')),
-			'images' => $messageImages
+			"from" => "Apretaste <$from>",
+			"to" => $to,
+			"subject" => $subject,
+			"html" => $body,
+			"o:tracking" => false,
+			"o:tracking-clicks" => false,
+			"o:tracking-opens" => false
 		);
 
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$mandrillKey = $di->get('config')['mandrill']['key'];
+		$mailgunKey = $di->get('config')['mailgun']['key'];
 
-		// send the email via Mandrill
-		try 
-		{
-			$mandrill = new Mandrill($mandrillKey);
-			$result = $mandrill->messages->send($message, false);
-		} 
-		catch(Mandrill_Error $e)
-		{
-			echo 'An error sending your email occurred: ' . get_class($e) . ' - ' . $e->getMessage();
-			throw $e;
-		}
+		// send the email via MailGun
+		$mgClient = new Mailgun($mailgunKey);
+		$result = $mgClient->sendMessage($domain, $message, $embedded);
 
-		// log rejected emails
-		$status = $result[0]["status"];
-		if(in_array($status, array("rejected", "invalid")))
-		{
-			$email = $result[0]["email"];
-			$reason = $result[0]["reject_reason"];
-			$mandrillId = $result[0]["_id"];
-
-			$connection = new Connection();
-			$connection->deepQuery("INSERT INTO delivery_error(user_email,response_email,reason, mandrill_id ) VALUES ('$email','$from',$reason','$mandrillId')");
-		}
+		// save a trace that the email was sent
+		$haveImages = empty($images) ? 0 : 1;
+		$haveAttachments = empty($attachments) ? 0 : 1;
+		$connection = new Connection();
+		$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
 	}
+
 
 	/**
 	 * Brings the next email to be used by Apretaste using an even distribution
@@ -85,12 +70,12 @@ class Email {
 
 		// get the email with less usage  
 		$connection = new Connection();
-		$result = $connection->deepQuery("SELECT * FROM jumper WHERE active=1 AND blocked_domains NOT LIKE '%$domain%' ORDER BY sent_count ASC LIMIT 1");
+		$result = $connection->deepQuery("SELECT * FROM jumper WHERE (status='SendReceive' OR status='SendOnly') AND blocked_domains NOT LIKE '%$domain%' ORDER BY sent_count ASC LIMIT 1");
 
-		// increase the email counter
+		// increase the send counter
 		$email = $result[0]->email;
-		$counter = $result[0]->sent_count + 1;
-		$result = $connection->deepQuery("UPDATE jumper SET sent_count='$counter' WHERE email='$email'");
+		$today = date("Y-m-d H:i:s");
+		$connection->deepQuery("UPDATE jumper SET sent_count=sent_count+1, last_usage='$today' WHERE email='$email'");
 
 		return $email;
 	}

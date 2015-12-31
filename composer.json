@@ -4,6 +4,8 @@
 		"smarty/smarty": "~3.1",
 		"stripe/stripe-php": "2.*",
 		"fabpot/goutte": "2.*",
-		"tinify/tinify": "*"
+		"tinify/tinify": "*",
+        "mailgun/mailgun-php": "~1.7.2",
+        "abraham/twitteroauth": "^0.6.2"
     }
 }

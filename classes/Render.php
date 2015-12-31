@@ -1,6 +1,7 @@
 <?php 
 
-class Render {
+class Render
+{
 	/**
 	 * Render the template and return the HTML content
 	 *
@@ -10,7 +11,8 @@ class Render {
 	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public function renderHTML($service, $response) {
+	public function renderHTML($service, $response)
+	{
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
@@ -33,7 +35,8 @@ class Render {
 
 		// getting the ads
 		$adTop = $adBottom = "";
-		if( ! empty($response->getAds())){
+		if( ! empty($response->getAds()))
+		{
 			$adTop = basename($response->getAds()[0]);
 			$adBottom = basename($response->getAds()[1]);
 		}
@@ -64,8 +67,9 @@ class Render {
 	 * @param Response $response, response object to render
 	 * @throw Exception
 	 */
-	public function renderJSON($response){
-		return json_encode($response->content);
+	public function renderJSON($response)
+	{
+		return json_encode($response->content, JSON_PRETTY_PRINT);
 	}
 
 	/**
@@ -75,11 +79,14 @@ class Render {
 	 * @param String $serviceName, name of the service
 	 * @return Array
 	 */
-	private function getServicesRelatedArray($serviceName){
+	private function getServicesRelatedArray($serviceName)
+	{
 		// get last 5 services inserted with the same category
 		$query = "SELECT name FROM service 
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
+			AND name <> 'excluyeme'
+			AND listed = 1
 			ORDER BY insertion_date
 			LIMIT 5";
 		$connection = new Connection();

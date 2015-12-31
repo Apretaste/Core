@@ -14,8 +14,9 @@
 				<a href="manage/profile">Profile</a><br/>
 				<a href="manage/profilesearch">Profile Search</a><br/>
 				<a href="manage/raffles">Raffles</a><br/>
-				<a href="manage/services">Services</a><br/>
-				<a href="manage/ads">Ads</a><br/>
+				<a href="manage/services">List of Services</a><br/>
+				<a href="manage/ads">List of Ads</a><br/>
+				<a href="manage/dropped">Dropped emails</a><br/>
 			</div>
 		</div>
 
@@ -25,11 +26,11 @@
 				<a href="manage/deploy">Deploy</a><br/>
 				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://rpm.newrelic.com" target="_blank">New Relic <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://mandrillapp.com" target="_blank">Mandrill <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://app.mailerlite.com" target="_blank">Mailer Lite <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://tinypng.com/session/s/16pGf390rexH/7zsPdb746mcxj4" target="_blank">TinyPNG <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://admin.google.com/pragres.com" target="_blank">Google Admin Console <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://apretaste.zendesk.com" target="_blank">ZenDesk <small><i class="fa fa-external-link"></i></small></a><br/>
+				<a href="https://www.email-validator.net/dashboard/index.html" target="_blank">Email Validator <small><i class="fa fa-external-link"></i></small></a><br/>
 			</div>
 		</div>
 	</div>
@@ -49,7 +50,7 @@
 		<div class="alert alert-<?php echo isset($revolicoCrawler["TimeBehind"]) && $revolicoCrawler["TimeBehind"] < 24 ? "success" : "danger"; ?>" role="alert">
 			<p><b>Revolico crawler</b></p>
 			<p>Last run: <?php if(isset($revolicoCrawler["LastRun"])) echo $revolicoCrawler["LastRun"]; ?></p>
-			<p>Time behind: <?php if(isset($revolicoCrawler["TimeBehind"])) echo $revolicoCrawler["TimeBehind"]; ?> hours</p>
+			<p>Time behind: <?php if(isset($revolicoCrawler["TimeBehind"])) echo number_format($revolicoCrawler["TimeBehind"],2); ?> hours</p>
 			<p>Running time: <?php if(isset($revolicoCrawler["RuningTime"])) echo $revolicoCrawler["RuningTime"]; ?> minutes</p>
 			<p>Posts downloaded: <?php if(isset($revolicoCrawler["PostsDownloaded"])) echo $revolicoCrawler["PostsDownloaded"]; ?></p>
 			<p>Memory used: <?php if(isset($revolicoCrawler["RuningMemory"])) echo $revolicoCrawler["RuningMemory"]; ?></p>
