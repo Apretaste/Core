@@ -146,7 +146,6 @@ class Deploy
 			}
 
 			$query = rtrim($query, ",") . ");";
-			file_put_contents("query.log", $query);
 			$connection->deepQuery($query);
 		}
 	}
