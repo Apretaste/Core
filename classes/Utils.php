@@ -501,54 +501,64 @@ class Utils
 	{
 		// get the profile
 		$profile = $this->getPerson($email);
-	
-		// format data for the user
-		$birthday = date("d/m/Y", strtotime($profile->date_of_birth));
-		$interests = implode(",", $profile->interests);
-		$province = str_replace("_", " ", $profile->province);
-	
+
+		// format profile information
+		$name = isset($profile->full_name) ? $profile->full_name : ""; 
+		$birthday = isset($profile->date_of_birth) ? date("d/m/Y", strtotime($profile->date_of_birth)) : "";
+		$occupation = isset($profile->occupation) ? $profile->occupation : "";
+		$province = isset($profile->province) ? str_replace("_", " ", $profile->province) : "";
+		$city = isset($profile->city) ? $profile->city : "";
+		$gender = isset($profile->gender) ? $profile->gender : "";
+		$highestSchoolLevel = isset($profile->highest_school_level) ? $profile->highest_school_level : "";
+		$maritalStatus = isset($profile->marital_status) ? $profile->marital_status : "";
+		$hair = isset($profile->hair) ? $profile->hair : "";
+		$skin = isset($profile->skin) ? $profile->skin : "";
+		$eyes = isset($profile->eyes) ? $profile->eyes : "";
+		$bodyType = isset($profile->body_type) ? $profile->body_type : "";
+		$interests = isset($profile->interests) ? implode(",", $profile->interests) : "";
+
 		// create and return the profile text
 		return urlencode(preg_replace('/\t/', '',
 			"# Su nombre, por ejemplo: NOMBRE = Juan Perez Gutierres
-			NOMBRE = {$profile->full_name}
+			NOMBRE = $name
 			
 			# Su Fecha de nacimiento, por ejemplo: CUMPLEANO = 23/08/1995
 			CUMPLEANOS = $birthday
-				
+			
 			# Su Profesion resumida en una sola palabra, por ejemplo: Arquitecto
-			PROFESION = {$profile->occupation}
-		
+			PROFESION = $occupation
+			
 			# Provincia donde vives
 			PROVINCIA = $province
-				
+			
 			# Ciudad donde vives
-			CIUDAD = {$profile->city}
-				
+			CIUDAD = $city
+			
 			# Escoja entre: M o F, por ejemplo: SEXO = M
-			SEXO = {$profile->gender}
-				
+			SEXO = $gender
+			
 			# Escoja entre: primario, secundario, tecnico, universitario, postgraduado, doctorado u otro
-			NIVEL ESCOLAR = {$profile->highest_school_level}
-				
+			NIVEL ESCOLAR = $highestSchoolLevel
+			
 			# Escoja entre: soltero,saliendo,comprometido o casado
-			ESTADO CIVIL = {$profile->marital_status}
-				
+			ESTADO CIVIL = $maritalStatus
+			
 			# Escoja entre: trigueno, castano, rubio, negro, rojo, blanco u otro
-			PELO = {$profile->hair}
-				
+			PELO = $hair
+			
 			# Escoja entre: negro, blanco, mestizo u otro
-			PIEL = {$profile->skin}
-				
+			PIEL = $skin
+			
 			# Escoja entre: negro, carmelita, verde, azul, avellana u otro
-			OJOS = {$profile->eyes}
-				
+			OJOS = $eyes
+			
 			# Escoja entre delgado, medio, extra o atletico
-			CUERPO = {$profile->body_type}
-				
+			CUERPO = $bodyType
+			
 			# Liste sus intereses separados por coma, ejemplo: INTERESES = carros, playa, musica
 			INTERESES = $interests
-				
-				
+			
+			
 			# Y no olvide adjuntar su foto!"));
 	}
 }
