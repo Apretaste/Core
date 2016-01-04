@@ -401,7 +401,7 @@ class Utils
 		foreach($mailboxes as $m) if($to == $m->email) {$response = 'loop'; goto LogErrorAndReturn;}
 
 		// check for valid domain
-		$mgClient = new Mailgun("pubkey-5ogiflzbnjrljiky49qxsiozqef5jxp7");
+		$mgClient = new Mailgun("pubkey-f04b8b05d4030df391a8578062aac53e");
 		$result = $mgClient->get("address/validate", array('address' => $to));
 		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 
