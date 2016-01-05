@@ -1,0 +1,19 @@
+<div class="row">
+	<div class="col-xs-12">
+		<form action="/run/display" method="get" target="_blank">
+			<input type="hidden" name="environment" value="sandbox">
+
+			<div class="form-group">
+				<label for="subject">Subject</label>
+				<input type="text" class="form-control" id="subject" name="subject" placeholder="WIKIPEDIA jose marti">
+			</div>
+
+			<div class="form-group">
+				<label for="body">Body</label>
+				<textarea class="form-control" rows="5" id="body" name="body" placeholder="Blank if no text"/></textarea>
+			</div>
+
+			<button type="submit" class="btn btn-primary">Test Service</button>
+		</form>
+	</div>
+</div>
