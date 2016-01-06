@@ -1,5 +1,6 @@
 <?php 
 	$wwwhttp = $this->di->get('path')['http'];
+	$environment = $this->di->get('environment');
 ?>
 
 <!DOCTYPE html>
@@ -30,6 +31,10 @@
 	</head>
 
 	<body>
+		<?php if($environment=="sandbox") { ?>
+			<div style="color:white; background-color:red; font-weight:bold; display:inline-block; padding:5px; position:absolute; top:10px; right:10px; z-index:99">SANDBOX</div>
+		<?php } ?>
+
 		<nav class="navbar navbar-inverse" style="border-radius:0px; -webkit-border-radius:0px; -moz-border-radius:0px;">
 			<div class="container">
 				<div class="navbar-header">

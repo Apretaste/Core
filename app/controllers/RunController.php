@@ -20,6 +20,7 @@ class RunController extends Controller
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$result = $this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
+		if($this->di->get('environment') == "sandbox") $result .= '<div style="color:white; background-color:red; font-weight:bold; display:inline-block; padding:5px; position:absolute; top:10px; right:10px; z-index:99">SANDBOX</div>';
 		echo $result;
 	}
 
@@ -169,20 +170,43 @@ class RunController extends Controller
 		$request->subservice = trim($subServiceName);
 		$request->query = trim($query);
 
-		// get details of the service from the database
-		$connection = new Connection();
-		$sql = "SELECT * FROM service WHERE name = '$serviceName'";
-		$result = $connection->deepQuery($sql);
+		// get the path to the service
+		$servicePath = $utils->getPathToService($serviceName);
+
+		// get details of the service
+		if($this->di->get('environment') == "sandbox")
+		{
+			// get details of the service from the XML file
+			$xml = simplexml_load_file("$servicePath/config.xml");
+			$serviceCreatorEmail = trim((String)$xml->creatorEmail);
+			$serviceDescription = trim((String)$xml->serviceDescription);
+			$serviceCategory = trim((String)$xml->serviceCategory);
+			$serviceUsageText = trim((String)$xml->serviceUsage);
+			$serviceInsertionDate = date("Y/m/d H:m:s");
+		}
+		else
+		{
+			// get details of the service from the database
+			$connection = new Connection();
+			$sql = "SELECT * FROM service WHERE name = '$serviceName'";
+			$result = $connection->deepQuery($sql);
+			
+			$serviceCreatorEmail = $result[0]->creator_email;
+			$serviceDescription = $result[0]->description;
+			$serviceCategory = $result[0]->category;
+			$serviceUsageText = $result[0]->usage_text;
+			$serviceInsertionDate = $result[0]->insertion_date;
+		}
 
 		// create a new service Object of the user type
 		$userService = new $serviceName();
 		$userService->serviceName = $serviceName;
-		$userService->serviceDescription = $result[0]->description;
-		$userService->creatorEmail = $result[0]->creator_email;
-		$userService->serviceCategory = $result[0]->category;
-		$userService->serviceUsage = $result[0]->usage_text;
-		$userService->insertionDate = $result[0]->insertion_date;
-		$userService->pathToService = $utils->getPathToService($serviceName);
+		$userService->serviceDescription = $serviceDescription;
+		$userService->creatorEmail = $serviceCreatorEmail;
+		$userService->serviceCategory = $serviceCategory;
+		$userService->serviceUsage = $serviceUsageText;
+		$userService->insertionDate = $serviceInsertionDate;
+		$userService->pathToService = $servicePath;
 		$userService->utils = $utils;
 
 		// run the service and get a response
@@ -220,6 +244,14 @@ class RunController extends Controller
 				$html .= $render->renderHTML($userService, $responses[$i]);
 				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
 			}
+
+			$usage = nl2br(str_replace('{APRETASTE_EMAIL}', $utils->getValidEmailAddress(), $serviceUsageText));
+			$html .= "<br/><hr><center><p><b>XML DEBUG</b></p><small>";
+			$html .= "<p><b>Owner: </b>$serviceCreatorEmail</p>";
+			$html .= "<p><b>Category: </b>$serviceCategory</p>";
+			$html .= "<p><b>Description: </b>$serviceDescription</p>";
+			$html .= "<p><b>Usage: </b><br/>$usage</p></small></center>";
+
 			return $html;
 		}
 

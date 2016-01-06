@@ -41,7 +41,7 @@ try
 
 	// Making the config global
 	$di->set('config', function () {
-		return new ConfigIni('../configs/config.ini');;
+		return new ConfigIni('../configs/config.ini');
 	});
 
 	// Setup the view component for Analytics
@@ -61,6 +61,12 @@ try
 			"password" => $config['database']['password'],
 			"dbname"   => $config['database']['database']
 		));
+	});
+
+	// get the environment
+	$di->set('environment', function () use ($config) {
+		if(isset($config['global']['environment'])) return $config['global']['environment'];
+		else return "production";
 	});
 
 	// Handle the request

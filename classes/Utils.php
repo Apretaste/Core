@@ -17,6 +17,8 @@ class Utils
 		$result = $connection->deepQuery($sql);
 		return $result[0]->email;
 	}
+
+
 	/**
 	 * Format a link to be an Apretaste mailto
 	 *
@@ -35,6 +37,8 @@ class Utils
 		if ($body) $link .= "&body=$body";
 		return $link;
 	}
+
+
 	/**
 	 * Check if the service exists in the database
 	 *
@@ -48,6 +52,8 @@ class Utils
 		$res = $connection->deepQuery("SELECT name FROM service WHERE LOWER(name)=LOWER('$serviceName')");
 		return count($res) > 0;
 	}
+
+
 	/**
 	 * Check if the Person exists in the database
 	 * 
@@ -61,6 +67,8 @@ class Utils
 		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
 		return count($res) > 0;
 	}
+
+
 	/**
 	 * Check if the Person was invited and is still pending 
 	 *
@@ -74,6 +82,8 @@ class Utils
 		$res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
 		return count($res) > 0;
 	}
+
+
 	/**
 	 * Get a person's profile
 	 *
@@ -85,33 +95,42 @@ class Utils
 		// get the person
 		$connection = new Connection();
 		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
+
 		// return false if there is no person with that email
 		if (count($person)==0) return false;
 		else $person = $person[0];
+
 		// get number of tickets for the raffle adquired by the user
 		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
 		$tickets = $tickets[0]->tickets;
+
 		// get the person's full name
 		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
 		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
+
 		// get the image of the person
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		$image = "$wwwroot/public/profile/$email.png";
+
 		if(file_exists($image))
 		{
 			$wwwpath = $di->get('path')['http'];
 			$image = "$wwwpath/profile/$email.png";
 		}
 		else $image = NULL;
+
 		// get the interests as an array
 		$person->interests = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
+
 		// add elements to the response
 		$person->full_name = $fullName;
 		$person->picture = $image;
 		$person->raffle_tickets = $tickets;
 		return $person;
 	}
+
+
 	/**
 	 * Get the path to a service. 
 	 * 
@@ -125,10 +144,13 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		$path = "$wwwroot/services/$serviceName";
+
 		// check if the path exist and return it
 		if(file_exists($path)) return $path;
 		else return false;
 	}
+
+
 	/**
 	 * Return the current Raffle or false if no Raffle was found
 	 * 
@@ -140,21 +162,28 @@ class Utils
 		// get the raffle
 		$connection = new Connection();
 		$raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+
 		// return false if there is no open raffle
 		if (count($raffle)==0) return false;
 		else $raffle = $raffle[0];
+
 		// get number of tickets opened
 		$openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
+
 		// get the image of the raffle
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".png";
+
 		// add elements to the response
 		$raffle->tickets = $openedTickets;
 		$raffle->image = $raffleImage;
+
 		return $raffle;
 	}
+
+
 	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
@@ -167,6 +196,8 @@ class Utils
 		$today = date('full');
 		return md5($rand . $today);
 	}
+
+
 	/**
 	 * Reduce image size and optimize the image quality
 	 * 
@@ -177,25 +208,32 @@ class Utils
 	public function optimizeImage($imagePath, $width=false, $height=false)
 	{
 		\Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
+
 		// load and optimize image
 		$source = \Tinify\fromFile($imagePath);
+
 		// scale image based on width
 		if($width && ! $height)
 		{
 			$source = $source->resize(array("method" => "scale", "width" => $width));
 		}
+
 		// scale image based on width
 		if( ! $width && $height)
 		{
 			$source = $source->resize(array("method" => "scale", "height" => $height));
 		}
+
 		if($width && $height)
 		{
 			$source = $source->resize(array("method" => "cover", "width" => $width, "height" => $height));
 		}
+
 		// save the optimized file
 		$source->toFile($imagePath);
 	}
+
+
 	/**
 	 * Add a new subscriber to the email list in Mail Lite
 	 * 
@@ -207,14 +245,18 @@ class Utils
 		// get the path to the www folder
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
+
 		// get the key from the config
 		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
 		// adding the new subscriber to the list
 		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
 		$subscriber = array('email' => $email, 'resubscribe' => 1);
 		$ML_Subscribers->setId("1266487")->add($subscriber);
 	}
+
+
 	/**
 	 * Delete a subscriber from the email list in Mail Lite
 	 * 
@@ -226,13 +268,17 @@ class Utils
 		// get the path to the www folder
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
+
 		// get the key from the config
 		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
+
 		// adding the new subscriber to the list
 		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}
+
+
 	/**
 	 * Get the pieces of names from the full name
 	 *
@@ -245,6 +291,7 @@ class Utils
 		$namePieces = explode(" ", $name);
 		$newNamePieces = array();
 		$tmp = "";
+
 		foreach ($namePieces as $piece)
 		{
 			$tmp .= "$piece ";
@@ -259,10 +306,12 @@ class Utils
 				$tmp = "";
 			}
 		}
+
 		$firstName = "";
 		$middleName = "";
 		$lastName = "";
 		$motherName = "";
+
 		if(count($newNamePieces)>=4)
 		{
 			$firstName = $newNamePieces[0];
@@ -270,23 +319,29 @@ class Utils
 			$lastName = $newNamePieces[2];
 			$motherName = $newNamePieces[3];
 		}
+
 		if(count($newNamePieces)==3)
 		{
 			$firstName = $newNamePieces[0];
 			$lastName = $newNamePieces[1];
 			$motherName = $newNamePieces[2];
 		}
+
 		if(count($newNamePieces)==2)
 		{
 			$firstName = $newNamePieces[0];
 			$lastName = $newNamePieces[1];
 		}
+
 		if(count($newNamePieces)==1)
 		{
 			$firstName = $newNamePieces[0];
 		}
+
 		return array($firstName, $middleName, $lastName, $motherName);
 	}
+
+
 	/**
 	 * Checks if an email can be delivered to a certain mailbox
 	 *
@@ -299,10 +354,13 @@ class Utils
 	{
 		// save the final response. If not ok, will return on the LogErrorAndReturn tag
 		$response = '';
+
 		// create a new connection object
 		$connection = new Connection();
+
 		// block people following the example email
 		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
 		// block email from/to our customer support 
 		if($to == "soporte@apretaste.com" ||
 			$to == "comentarios@apretaste.com" ||
@@ -314,12 +372,15 @@ class Utils
 			$to == "support@apretaste.com" ||
 			$to == "apretastesoporte@gmail.com"
 		) {$response = 'loop'; goto LogErrorAndReturn;}
+
 		// block intents to email the deamons
 		if(stripos($to,"mailer-daemon@")!==false || 
 			stripos($to,"communicationservice.nl")!==false
 		) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
 		// check if the email is formatted properly
 		if ( ! filter_var($to, FILTER_VALIDATE_EMAIL)) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
 		// block no reply emails
 		if(stripos($to,"not-reply")!==false ||
 			stripos($to,"notreply")!==false ||
@@ -330,21 +391,26 @@ class Utils
 			stripos($to,"no-responder")!==false ||
 			stripos($to,"noresponder")!==false
 		) {$response = 'no-reply'; goto LogErrorAndReturn;}
+
 		// block any previouly dropped email
 		$res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
 		if( ! empty($res)) {$response = 'loop'; goto LogErrorAndReturn;}
+
 		// block emails from apretaste to apretaste
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
 		foreach($mailboxes as $m) if($to == $m->email) {$response = 'loop'; goto LogErrorAndReturn;}
+
 		// check for valid domain
 		$mgClient = new Mailgun("pubkey-f04b8b05d4030df391a8578062aac53e");
 		$result = $mgClient->get("address/validate", array('address' => $to));
 		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+
 		// check deeper for new people. Only check deeper the outgoing emails
 		if( ! $this->personExist($to) && $direction=="out")
 		{
 			// use the cache if the email was checked before
 			$res = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
+
 			// if the email hasen't been tested before, check
 			if(empty($res))
 			{
@@ -366,19 +432,24 @@ class Utils
 			{
 				$status = $res[0]->status;
 			}
+
 			// get the result for each status code
 			if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
 			if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
 			if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
 		}
+
 		// when no errors were found
 		return 'ok';
+
 		// log errors in the database before returning
 		// and YES, I am using GOTO
 		LogErrorAndReturn:
 		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
 		return $response;
 	}
+
+
 	/**
 	 * Get the completion percentage of a profile
 	 *
@@ -390,11 +461,13 @@ class Utils
 	{
 		$profile = $this->getPerson($email);
 		$percent = 0;
+
 		if($profile)
 		{
 			$keys = get_object_vars($profile);
 			$parts = 0;
 			$total = count($keys);
+
 			foreach($keys as $key=>$value)
 			{
 				// do not count non-required values
@@ -407,14 +480,19 @@ class Utils
 					$key == "last_update_date" ||
 					$key == "credit"
 				) {$total--; continue;}
+
 				// add non-empty values to the formula 
 				if( ! empty($value)) $parts++;
 			}
+
 			// calculate percentage
 			$percent = (int) $parts / $total * 100;
 		}
+
 		return $percent;
 	}
+
+
 	/**
 	 * To create the text that will be shown when the
 	 * user click on the Edit Profile button
@@ -423,6 +501,7 @@ class Utils
 	{
 		// get the profile
 		$profile = $this->getPerson($email);
+
 		// format profile information
 		$name = isset($profile->full_name) ? $profile->full_name : ""; 
 		$birthday = isset($profile->date_of_birth) ? date("d/m/Y", strtotime($profile->date_of_birth)) : "";
@@ -437,6 +516,7 @@ class Utils
 		$eyes = isset($profile->eyes) ? $profile->eyes : "";
 		$bodyType = isset($profile->body_type) ? $profile->body_type : "";
 		$interests = isset($profile->interests) ? implode(",", $profile->interests) : "";
+
 		// create and return the profile text
 		return urlencode(preg_replace('/\t/', '',
 			"# Su nombre, por ejemplo: NOMBRE = Juan Perez Gutierres
