@@ -40,17 +40,17 @@ class Utils
 
 
 	/**
-	 * Check if the service exists in the database
-	 *
+	 * Check if the service exists
+	 * 
 	 * @author salvipascual
 	 * @param String, name of the service
 	 * @return Boolean, true if service exist
 	 * */
 	public function serviceExist($serviceName)
 	{
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT name FROM service WHERE LOWER(name)=LOWER('$serviceName')");
-		return count($res) > 0;
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		return file_exists("$wwwroot/services/$serviceName/config.xml");
 	}
 
 

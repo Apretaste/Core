@@ -306,8 +306,14 @@ class RunController extends Controller
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
+				// create a unique username
+				$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
+				$username = substr($username, 0, 5); // get the first 5 chars
+				$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
+				if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
+
 				// save the new Person
-				$sql = "INSERT INTO person (email) VALUES ('$email')";
+				$sql = "INSERT INTO person (email, username) VALUES ('$email', '$username')";
 				$connection->deepQuery($sql);
 
 			   	// check if the person was invited to use Apretaste

@@ -76,16 +76,15 @@ class ManageController extends Controller
 
 		// START monthly unique visitors
 		$query =
-			"SELECT A.all_visitors, B.unique_visitors, C.new_visitors, A.inserted
-			FROM (SELECT COUNT(*) as all_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
-			JOIN (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
-			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) C
-			ON A.inserted = B.inserted AND A.inserted = C.inserted";
+			"SELECT A.unique_visitors, B.new_visitors, A.inserted
+			FROM (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
+			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($query);
 		$newUsers = array();
 		foreach($visits as $visit)
 		{
-			$newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "all_visitors"=>$visit->all_visitors, "unique_visitors"=>$visit->unique_visitors, "new_visitors"=>$visit->new_visitors];
+			$newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "unique_visitors"=>$visit->unique_visitors, "new_visitors"=>$visit->new_visitors];
 		}
 		$newUsers = array_reverse($newUsers);
 		// END monthly unique visitors

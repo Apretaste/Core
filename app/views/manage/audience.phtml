@@ -1,18 +1,18 @@
 <div class="row">
 	<div class="col-xs-12">
-		<h2>Weekly emails</h2>
+		<h2>Weekly traffic</h2>
 		<div id="weeclyEmails" style="width:900px; height:300px;"></div>
 	
-		<h2>Monthly emails</h2>
+		<h2>Monthly traffic</h2>
 		<div id="monthlyEmails" style="width:900px; height:300px;"></div>
 
-		<h2>Monthly traffic</h2>
+		<h2>Monthly unique v.s. new traffic</h2>
 		<div id="monthlyNewUsers" style="width:900px; height:300px;"></div>
 
 		<h2>Active users this month</h2>
 		<p><?php echo $currentNumberOfActiveUsers; ?></p>
 
-		<h2>Number of emails</h2>
+		<h2>Total number of users</h2>
 		<p><?php echo $currentNumberOfActiveUsers + 21551; ?></p>
 
 		<h2>Services usage (last 30 days)</h2>
@@ -65,13 +65,13 @@
 	google.setOnLoadCallback(monthlyNewUsers);
 	function monthlyNewUsers() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'All', 'Unique', 'New'],
+			['Month and Year', 'Unique', 'New'],
 			<?php foreach ($newUsers as $data) { ?>
-				['<?php echo $data['date']; ?>',<?php echo $data['all_visitors']; ?>,<?php echo $data['unique_visitors']; ?>,<?php echo $data['new_visitors']; ?>],
+				['<?php echo $data['date']; ?>',<?php echo $data['unique_visitors']; ?>,<?php echo $data['new_visitors']; ?>],
 			<?php } ?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
-		chart.draw(data, {});
+		chart.draw(data, {colors:['orange','green']});
 	}
 
 	// Monthly services usage
