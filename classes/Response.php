@@ -141,8 +141,8 @@ class Response
 
 		// return both ads
 		return array(
-			"$wwwroot/public/ads/$topAdFileName.png",
-			"$wwwroot/public/ads/$bottomAdFileName.png"
+			"$wwwroot/public/ads/$topAdFileName.jpg",
+			"$wwwroot/public/ads/$bottomAdFileName.jpg"
 		);
 	}
 }

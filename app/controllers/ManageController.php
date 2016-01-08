@@ -421,8 +421,12 @@ class ManageController extends Controller
 				// get the picture name and path
 				$wwwroot = $this->di->get('path')['root'];
 				$fileName = md5($getRaffleID[0]->raffle_id);
-				$picPath = "$wwwroot/public/raffle/$fileName.png";
+				$picPath = "$wwwroot/public/raffle/$fileName.jpg";
 				move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
+
+				// optimize the image
+				$utils = new Utils();
+				$utils->optimizeImage($picPath, 400);
 
 				$this->view->raffleMessage = "Raffle inserted successfully";
 			}
@@ -498,8 +502,12 @@ class ManageController extends Controller
 				// save the image
 				$fileName = md5($getAdID[0]->ads_id); //Generate the picture name
 				$wwwroot = $this->di->get('path')['root'];
-				$picPath = "$wwwroot/public/ads/$fileName.png";
+				$picPath = "$wwwroot/public/ads/$fileName.jpg";
 				move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
+
+				// optimize the image
+				$utils = new Utils();
+				$utils->optimizeImage($picPath, 728, 90);
 
 				// confirm by email that the ad was inserted
 				$email = new Email();

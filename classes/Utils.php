@@ -109,16 +109,24 @@ class Utils
 		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
 
 		// get the image of the person
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$image = "$wwwroot/public/profile/$email.png";
-
-		if(file_exists($image))
+		$image = NULL;
+		$thumbnail = NULL;
+		if($person->picture)
 		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwroot = $di->get('path')['root'];
 			$wwwpath = $di->get('path')['http'];
-			$image = "$wwwpath/profile/$email.png";
+
+			if(file_exists("$wwwroot/public/profile/$email.jpg")) 
+			{
+				$image = "$wwwpath/profile/$email.jpg";
+			}
+
+			if(file_exists("$wwwroot/public/profile/thumbnail/$email.jpg"))
+			{ 
+				$thumbnail = "$wwwpath/profile/thumbnail/$email.jpg";
+			}
 		}
-		else $image = NULL;
 
 		// get the interests as an array
 		$person->interests = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
@@ -126,6 +134,7 @@ class Utils
 		// add elements to the response
 		$person->full_name = $fullName;
 		$person->picture = $image;
+		$person->thumbnail = $thumbnail;
 		$person->raffle_tickets = $tickets;
 		return $person;
 	}
@@ -174,7 +183,7 @@ class Utils
 		// get the image of the raffle
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".png";
+		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".jpg";
 
 		// add elements to the response
 		$raffle->tickets = $openedTickets;
@@ -205,32 +214,12 @@ class Utils
 	 * @author salvipascual
 	 * @param String $imagePath, path to the image
 	 * */
-	public function optimizeImage($imagePath, $width=false, $height=false)
+	public function optimizeImage($imagePath, $width="", $height="")
 	{
-		\Tinify\setKey("XdzvHGYdXUpiWB_fWI2muKXgV3GZVXjq");
+		if(empty($width) && empty($height)) $resize = "";
+		else $resize = "-resize ".$width."x".$height;
 
-		// load and optimize image
-		$source = \Tinify\fromFile($imagePath);
-
-		// scale image based on width
-		if($width && ! $height)
-		{
-			$source = $source->resize(array("method" => "scale", "width" => $width));
-		}
-
-		// scale image based on width
-		if( ! $width && $height)
-		{
-			$source = $source->resize(array("method" => "scale", "height" => $height));
-		}
-
-		if($width && $height)
-		{
-			$source = $source->resize(array("method" => "cover", "width" => $width, "height" => $height));
-		}
-
-		// save the optimized file
-		$source->toFile($imagePath);
+		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath);
 	}
 
 

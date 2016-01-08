@@ -76,13 +76,16 @@ class RunController extends Controller
 				$extension = $mimeTypePieces[1];
 				$fileNameNoExtension = $utils->generateRandomHash();
 
-				// convert images to png and save it to temporal
+				// convert images to jpg and save it to temporal
 				if($fileType == "image")
 				{
-					// save image as a png file
-					$mimeType = image_type_to_mime_type(IMAGETYPE_PNG);
-					$filePath = "$wwwroot/temp/$fileNameNoExtension.png";
-					imagepng(imagecreatefromstring(base64_decode($content)), $filePath);
+					// save the image as a jpg file
+					$mimeType = image_type_to_mime_type(IMAGETYPE_JPEG);
+					$filePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
+					imagejpeg(imagecreatefromstring(base64_decode($content)), $filePath);
+
+					// optimize the image
+					$utils->optimizeImage($filePath);
 				}
 				else // save any other file to the temporals
 				{
