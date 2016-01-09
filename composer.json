@@ -1,10 +1,9 @@
 {
     "require": {
     	"mandrill/mandrill": "1.0.*",
-		"smarty/smarty": "~3.1",
-		"stripe/stripe-php": "2.*",
-		"fabpot/goutte": "2.*",
-		"tinify/tinify": "*",
+	"smarty/smarty": "~3.1",
+	"stripe/stripe-php": "2.*",
+	"fabpot/goutte": "2.*",
         "mailgun/mailgun-php": "~1.7.2",
         "abraham/twitteroauth": "^0.6.2"
     }
