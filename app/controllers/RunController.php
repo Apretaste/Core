@@ -95,6 +95,9 @@ class RunController extends Controller
 					fclose($ifp);
 				}
 
+				// grant full access to the file
+				chmod($filePath, 0777);
+
 				// create new object
 				$object = new stdClass();
 				$object->path = $filePath;
