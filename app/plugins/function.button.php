@@ -7,67 +7,54 @@
  * @subpackage PluginsFunction
  */
 
-function smarty_function_button($params, $template) {
+function smarty_function_button($params, $template)
+{
 	// get params
 	$href = $params["href"];
 	$caption = $params["caption"];
-	$size = "meddium";
-	if (isset($params["size"]))
-		$size = $params["size"];
+	$color = isset($params["color"]) ? $params["color"] : "green";
+	$size = isset($params["size"]) ? $params["size"] : "medium";
 
 	// get the body if exist
-	if (isset($params["body"]))
-		$body = $params["body"];
-	else
-		$body = "Envie+el+correo+tal+y+como+esta,+ya+esta+preparado+para+usted";
+	if (isset($params["body"])) $body = $params["body"];
+	else $body = "Envie+el+correo+tal+y+como+esta,+ya+esta+preparado+para+usted";
 
 	// select the color scheema
-	$color = isset($params["color"]) ? $params["color"] : "green";
-
-	switch ($color) {
+	switch ($color) 
+	{
 		case "grey":
-			{
-				$stroke = '#CCCCCC';
-				$fill = '#E6E6E6';
-				$text = '#000000';
-				break;
-			}
+			$stroke = '#CCCCCC';
+			$fill = '#E6E6E6';
+			$text = '#000000';
+			break;
 		case "blue":
-			{
-				$stroke = '#2E6DA4';
-				$fill = '#337AB7';
-				$text = '#FFFFFF';
-				break;
-			}
+			$stroke = '#2E6DA4';
+			$fill = '#337AB7';
+			$text = '#FFFFFF';
+			break;
 		case "red":
-			{
-				$stroke = '#D43F3A';
-				$fill = '#D9534F';
-				$text = '#FFFFFF';
-				break;
-			}
+			$stroke = '#D43F3A';
+			$fill = '#D9534F';
+			$text = '#FFFFFF';
+			break;
 		default:
-			{
-				$stroke = '#5dbd00';
-				$fill = '#5EBB47';
-				$text = '#FFFFFF';
-			}
+			$stroke = '#5dbd00';
+			$fill = '#5EBB47';
+			$text = '#FFFFFF';
 	}
 
-	// get a valid apretaste email address
-	$utils = new Utils();
-	$validEmailAddress = $utils->getValidEmailAddress();
-
-	switch ($size) {
+	// get the size of the button
+	switch ($size)
+	{
 		case "small":
 			$width = 80;
             $fontsize = 12;
             $height = 16;
 			break;
-		case "meddium":
+		case "medium":
 			$width = 150;
-			$height = 36;
             $fontsize = 16;
+			$height = 36;
 			break;
 		case "large":
 			$width = 220;
@@ -75,6 +62,10 @@ function smarty_function_button($params, $template) {
 			$height = 48;
 			break;
 	}
+
+	// get a valid apretaste email address
+	$utils = new Utils();
+	$validEmailAddress = $utils->getValidEmailAddress();
 
 	// create and return button
 	return "<!--[if mso]>
