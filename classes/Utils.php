@@ -130,6 +130,12 @@ class Utils
 		// get the interests as an array
 		$person->interests = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
 
+		// remove all whitespaces at the begining and ending
+		foreach ($person as $key=>$value)
+		{
+			if( ! is_array($value)) $person->$key = trim($value); 
+		}
+
 		// add elements to the response
 		$person->full_name = $fullName;
 		$person->picture = $image;

@@ -49,12 +49,12 @@ function smarty_function_button($params, $template)
 		case "small":
 			$width = 80;
             $fontsize = 12;
-            $height = 16;
+            $height = 20;
 			break;
 		case "medium":
 			$width = 150;
             $fontsize = 16;
-			$height = 36;
+			$height = 44;
 			break;
 		case "large":
 			$width = 220;
@@ -74,5 +74,5 @@ function smarty_function_button($params, $template)
 		<center style='color:$text;font-family:Helvetica, Arial,sans-serif;font-size:{$fontsize}px;'>$caption</center>
 		</v:roundrect>
 	<![endif]-->
-	<a href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:44px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;'>$caption</a>";
+	<a href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;'>$caption</a>";
 }
