@@ -115,16 +115,15 @@ class Utils
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
-			$wwwpath = $di->get('path')['http'];
 
 			if(file_exists("$wwwroot/public/profile/$email.jpg")) 
 			{
-				$image = "$wwwpath/profile/$email.jpg";
+				$image = "$wwwroot/public/profile/$email.jpg";
 			}
 
 			if(file_exists("$wwwroot/public/profile/thumbnail/$email.jpg"))
 			{ 
-				$thumbnail = "$wwwpath/profile/thumbnail/$email.jpg";
+				$thumbnail = "$wwwroot/public/profile/thumbnail/$email.jpg";
 			}
 		}
 
