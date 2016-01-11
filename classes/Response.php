@@ -135,14 +135,7 @@ class Response
 		// save the ad counter
 		file_put_contents("$wwwroot/temp/adsCounter.tmp", $adCounter);
 
-		// get the md5 of the id the create the filename
-		$topAdFileName = md5($topAd->ads_id);
-		$bottomAdFileName = md5($bottomAd->ads_id);
-
 		// return both ads
-		return array(
-			"$wwwroot/public/ads/$topAdFileName.jpg",
-			"$wwwroot/public/ads/$bottomAdFileName.jpg"
-		);
+		return array($topAd, $bottomAd);
 	}
 }

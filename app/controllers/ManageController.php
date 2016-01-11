@@ -467,7 +467,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryAdsActive = "SELECT owner, time_inserted, title, impresions, paid_date, expiration_date FROM ads";
+		$queryAdsActive = "SELECT id, owner, time_inserted, title, clicks, impresions, paid_date, expiration_date FROM ads";
 		$ads = $connection->deepQuery($queryAdsActive);
 
 		$this->view->title = "List of ads";
@@ -496,11 +496,11 @@ class ManageController extends Controller
 
 			if($insertAd)
 			{
-				$queryGetAdsID = "SELECT ads_id FROM ads WHERE owner = '$adsOwner' ORDER BY ads_id DESC LIMIT 1";
+				$queryGetAdsID = "SELECT id FROM ads WHERE owner='$adsOwner' ORDER BY id DESC LIMIT 1";
 				$getAdID = $connection->deepQuery($queryGetAdsID);
 
 				// save the image
-				$fileName = md5($getAdID[0]->ads_id); //Generate the picture name
+				$fileName = md5($getAdID[0]->id); //Generate the picture name
 				$wwwroot = $this->di->get('path')['root'];
 				$picPath = "$wwwroot/public/ads/$fileName.jpg";
 				move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
@@ -511,7 +511,7 @@ class ManageController extends Controller
 
 				// confirm by email that the ad was inserted
 				$email = new Email();
-				$email->sendEmail($adsOwner, "Your ad $adsTittle is now running", "<h1>Your ad is running!</h1><p>Your Ads $adsTittle was set to run $today.</p><p>Thanks for advertising using Apretaste.</p>");
+				$email->sendEmail($adsOwner, "Your ad is now running on Apretaste", "<h1>Your ad is running</h1><p>Your ad <b>$adsTittle</b> was set to run $today.</p><p>Thanks for advertising using Apretaste.</p>");
 
 				$this->view->adMesssage = "Your ad was posted successfully";
 			}

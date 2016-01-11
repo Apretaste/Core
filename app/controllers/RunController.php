@@ -188,6 +188,7 @@ class RunController extends Controller
 			$serviceDescription = trim((String)$xml->serviceDescription);
 			$serviceCategory = trim((String)$xml->serviceCategory);
 			$serviceUsageText = trim((String)$xml->serviceUsage);
+			$showAds = isset($xml->showAds) && $xml->showAds==0 ? 0 : 1;
 			$serviceInsertionDate = date("Y/m/d H:m:s");
 		}
 		else
@@ -202,6 +203,7 @@ class RunController extends Controller
 			$serviceCategory = $result[0]->category;
 			$serviceUsageText = $result[0]->usage_text;
 			$serviceInsertionDate = $result[0]->insertion_date;
+			$showAds = $result[0]->ads == 1; // @TODO run when deploying a service
 		}
 
 		// create a new service Object of the user type
@@ -213,6 +215,7 @@ class RunController extends Controller
 		$userService->serviceUsage = $serviceUsageText;
 		$userService->insertionDate = $serviceInsertionDate;
 		$userService->pathToService = $servicePath;
+		$userService->showAds = $showAds;
 		$userService->utils = $utils;
 
 		// run the service and get a response
@@ -278,10 +281,28 @@ class RunController extends Controller
 			{
 				if($rs->render) // ommit default Response()
 				{
+					// check if add should run
+					$ads = $rs->getAds();
+					if($userService->showAds && ! empty($ads))
+					{
+						$topAd = $this->ads[0]->id;
+						$bottomAd = $this->ads[1]->id;
+
+						// get the images for the ads
+						$ads = array(
+							"$wwwroot/public/ads/".md5($topAd).".jpg",
+							"$wwwroot/public/ads/".md5($bottomAd).".jpg"
+						);
+
+						// save impression in the database
+						$sql = "UPDATE ads SET impresions=impresions+1 WHERE id='$topAd'; UPDATE ads SET impresions=impresions+1 WHERE id='$bottomAd';";
+						$connection->deepQuery($sql);
+					}
+
 					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
-					$images = array_merge($rs->images, $rs->getAds());
+					$images = array_merge($rs->images, $ads);
 					$attachments = $rs->attachments;
 					$body = $render->renderHTML($userService, $rs);
 

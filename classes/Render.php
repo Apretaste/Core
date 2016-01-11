@@ -35,10 +35,11 @@ class Render
 
 		// getting the ads
 		$adTop = $adBottom = "";
-		if( ! empty($response->getAds()))
+		$ads = $response->getAds();
+		if($service->showAds && ! empty($ads))
 		{
-			$adTop = basename($response->getAds()[0]);
-			$adBottom = basename($response->getAds()[1]);
+			$adTop = "$wwwroot/public/ads/".md5($ads[0]->id).".jpg";
+			$adBottom = "$wwwroot/public/ads/".md5($ads[1]->id).".jpg";
 		}
 
 		// list the system variables
@@ -48,7 +49,8 @@ class Render
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_TOP_AD" => $adTop,
-			"APRETASTE_BOTTOM_AD" => $adBottom
+			"APRETASTE_BOTTOM_AD" => $adBottom,
+			"WWWROOT" => $wwwroot
 		);
 
 		// merge all variable sets and assign them to Smarty
