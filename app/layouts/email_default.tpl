@@ -77,6 +77,7 @@
 				<!--top ad-->
 				{if $APRETASTE_ADS|count gt 0}
 				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
+					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
 					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[0]->title}</small></td>
 					<td bgcolor="#c3daee" align="right" valign="middle">
 						{button href="PUBLICIDAD {$APRETASTE_ADS[0]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
@@ -96,6 +97,7 @@
 				<!--bottom ad-->
 				{if $APRETASTE_ADS|count gt 1}
 				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
+					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
 					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[1]->title}</small></td>
 					<td bgcolor="#c3daee" align="right" valign="middle">
 						{button href="PUBLICIDAD {$APRETASTE_ADS[1]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
