@@ -281,28 +281,17 @@ class RunController extends Controller
 			{
 				if($rs->render) // ommit default Response()
 				{
-					// check if add should run
+					// save impressions in the database
 					$ads = $rs->getAds();
 					if($userService->showAds && ! empty($ads))
 					{
-						$topAd = $this->ads[0]->id;
-						$bottomAd = $this->ads[1]->id;
-
-						// get the images for the ads
-						$ads = array(
-							"$wwwroot/public/ads/".md5($topAd).".jpg",
-							"$wwwroot/public/ads/".md5($bottomAd).".jpg"
-						);
-
-						// save impression in the database
-						$sql = "UPDATE ads SET impresions=impresions+1 WHERE id='$topAd'; UPDATE ads SET impresions=impresions+1 WHERE id='$bottomAd';";
-						$connection->deepQuery($sql);
+						$connection->deepQuery("UPDATE ads SET impresions=impresions+1 WHERE id='{$this->ads[0]->id}'; UPDATE ads SET impresions=impresions+1 WHERE id='{$this->ads[1]->id}';");
 					}
 
 					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
-					$images = array_merge($rs->images, $ads);
+					$images = $rs->images;
 					$attachments = $rs->attachments;
 					$body = $render->renderHTML($userService, $rs);
 

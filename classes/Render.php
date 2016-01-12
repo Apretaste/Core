@@ -31,16 +31,10 @@ class Render
 		// disabling cache and debugging
 		$smarty->force_compile = true;
 		$smarty->debugging = false;
-		$smarty->caching = false;		
+		$smarty->caching = false;
 
 		// getting the ads
-		$adTop = $adBottom = "";
-		$ads = $response->getAds();
-		if($service->showAds && ! empty($ads))
-		{
-			$adTop = "$wwwroot/public/ads/".md5($ads[0]->id).".jpg";
-			$adBottom = "$wwwroot/public/ads/".md5($ads[1]->id).".jpg";
-		}
+		$ads = $service->showAds ? $response->getAds() : array();
 
 		// list the system variables
 		$systemVariables = array(
@@ -48,8 +42,7 @@ class Render
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
-			"APRETASTE_TOP_AD" => $adTop,
-			"APRETASTE_BOTTOM_AD" => $adBottom,
+			"APRETASTE_ADS" => $ads,
 			"WWWROOT" => $wwwroot
 		);
 
@@ -83,6 +76,10 @@ class Render
 	 */
 	private function getServicesRelatedArray($serviceName)
 	{
+		// harcoded return for the sandbox
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		if($di->get('environment') == "sandbox") return array('ayuda','nota','tienda','traducir','publicidad');
+
 		// get last 5 services inserted with the same category
 		$query = "SELECT name FROM service 
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')

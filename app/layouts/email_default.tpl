@@ -75,12 +75,13 @@
 				</tr>
 
 				<!--top ad-->
-				{if $APRETASTE_TOP_AD}
-				<tr>
-					<td align="center">
-						{img src="{$APRETASTE_TOP_AD}" alt="Top Ad" width="100%"}
+				{if $APRETASTE_ADS|count gt 0}
+				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
+					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[0]->title}</small></td>
+					<td bgcolor="#c3daee" align="right" valign="middle">
+						{button href="PUBLICIDAD {$APRETASTE_ADS[0]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
 					</td>
-				</tr>
+				</tr></table></td></tr>
 				{/if}
 
 				<!--main section to load the user template-->
@@ -93,19 +94,20 @@
 				</tr>
 
 				<!--bottom ad-->
-				{if $APRETASTE_BOTTOM_AD}
-				<tr>
-					<td align="center">
-						{img src="{$APRETASTE_BOTTOM_AD}" alt="Bottom Ad" width="100%"}
+				{if $APRETASTE_ADS|count gt 1}
+				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
+					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[1]->title}</small></td>
+					<td bgcolor="#c3daee" align="right" valign="middle">
+						{button href="PUBLICIDAD {$APRETASTE_ADS[1]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
 					</td>
-				</tr>
+				</tr></table></td></tr>
 				{/if}
 
 				<!--services related-->
-				{if  $APRETASTE_SERVICE_RELATED|@count gt 0} 
-				<tr>
+				{if $APRETASTE_SERVICE_RELATED|@count gt 0} 
+				<tr bgcolor="#e6e6e6">
 					<td align="left" style="padding: 0px 5px;">
-						{space10}
+						{space5}
 						<small>
 							Servicios similares:
 							{foreach $APRETASTE_SERVICE_RELATED as $APRETASTE_SERVICE}
@@ -113,24 +115,21 @@
 								{if not $APRETASTE_SERVICE@last}{separator}{/if}
 							{/foreach}
 						</small>
+						{space5}
 					</td>
 				</tr>
 				{/if}
 
 				<!--footer-->
 				<tr>
-					<td align="center">
-						<hr style="border: 1px solid #A03E3B;" />
-						<p>
-							<small>
-{* 
-								<div style="margin-bottom:5px;">{$APRETASTE_SERVICE_NAME} fue creado por <b>{$APRETASTE_SERVICE_CREATOR}</b></div>
-*}
-								Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a><br/> 
-								Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/> 
-								Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
-							</small>
-						</p>
+					<td align="center" bgcolor="#F2F2F2">
+						{space5}
+						<small>
+							Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a><br/> 
+							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/> 
+							Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
+						</small>
+						{space5}
 					</td>
 				</tr>
 			</table>
