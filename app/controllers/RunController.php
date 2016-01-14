@@ -287,7 +287,10 @@ class RunController extends Controller
 					$ads = $rs->getAds();
 					if($userService->showAds && ! empty($ads))
 					{
-						$connection->deepQuery("UPDATE ads SET impresions=impresions+1 WHERE id='{$this->ads[0]->id}'; UPDATE ads SET impresions=impresions+1 WHERE id='{$this->ads[1]->id}';");
+						$sql = "";
+						if( ! empty($ads[0])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[0]->id}';";
+						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
+						$connection->deepQuery($sql);
 					}
 
 					// prepare the email variable
