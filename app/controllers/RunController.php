@@ -176,6 +176,9 @@ class RunController extends Controller
 		$request->subservice = trim($subServiceName);
 		$request->query = trim($query);
 
+		// connect to the database
+		$connection = new Connection();
+
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
 
@@ -194,7 +197,6 @@ class RunController extends Controller
 		else
 		{
 			// get details of the service from the database
-			$connection = new Connection();
 			$sql = "SELECT * FROM service WHERE name = '$serviceName'";
 			$result = $connection->deepQuery($sql);
 			
