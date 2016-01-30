@@ -63,16 +63,26 @@ function smarty_function_button($params, $template)
 			break;
 	}
 
-	// get a valid apretaste email address
-	$utils = new Utils();
-	$validEmailAddress = $utils->getValidEmailAddress();
+	// create direct link for the sandbox
+	$di = \Phalcon\DI\FactoryDefault::getDefault();
+	if($di->get('environment') == "sandbox")
+	{
+		$wwwhttp = $di->get('path')['http'];
+		$linkto = "$wwwhttp/run/display?subject=$href&amp;body=$body";
+	}
+	else
+	{
+		$utils = new Utils();
+		$validEmailAddress = $utils->getValidEmailAddress();
+		$linkto = "mailto:$validEmailAddress?subject=$href&amp;body=$body";
+	}
 
 	// create and return button
 	return "<!--[if mso]>
-		<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='height:{$height}px;v-text-anchor:middle;width:{$width}px;' arcsize='5%' strokecolor='$stroke' fillcolor='$fill'>
+		<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' href='$linkto' style='height:{$height}px;v-text-anchor:middle;width:{$width}px;' arcsize='5%' strokecolor='$stroke' fillcolor='$fill'>
 		<w:anchorlock/>
 		<center style='color:$text;font-family:Helvetica, Arial,sans-serif;font-size:{$fontsize}px;'>$caption</center>
 		</v:roundrect>
 	<![endif]-->
-	<a href='mailto:$validEmailAddress?subject=$href&amp;body=$body' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;'>$caption</a>";
+	<a href='$linkto' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;'>$caption</a>";
 }
