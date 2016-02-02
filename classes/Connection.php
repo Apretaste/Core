@@ -16,7 +16,7 @@ class Connection
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 
 		// only fetch for selects
-		if(stripos($sql, "select") === 0)
+		if(stripos(trim($sql), "select") === 0)
 		{
 			// query the database
 			$result = $di->get('db')->query($sql);
