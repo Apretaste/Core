@@ -311,8 +311,8 @@ class RunController extends Controller
 			// get the person, false if the person does not exist 
 			$person = $utils->getPerson($email);
 
-			// if the person exist in Apretate
-			if ($person)
+			// if the person exist in Apretaste
+			if ($person !== false)
 			{
 				// if the person is inactive and he/she is not trying to opt-out
 				if( ! $person->active && $serviceName != "excluyeme")
