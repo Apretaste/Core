@@ -44,9 +44,12 @@ class Email
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$mailgunKey = $di->get('config')['mailgun']['key'];
 
-		// send the email via MailGun
-		$mgClient = new Mailgun($mailgunKey);
-		$result = $mgClient->sendMessage($domain, $message, $embedded);
+		// send the email via MailGun. Never send emails from the sandbox
+		if($di->get('environment') != "sandbox")
+		{
+			$mgClient = new Mailgun($mailgunKey);
+			$result = $mgClient->sendMessage($domain, $message, $embedded);
+		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
