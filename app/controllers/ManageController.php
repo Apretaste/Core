@@ -197,34 +197,24 @@ class ManageController extends Controller
 		//End Users with profile vs users without profile
 
 		// Profile completion
-		$queryProfileData = "SELECT 'Name' AS Caption, COUNT(first_name) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
-		UNION
-		SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
-		UNION
-		SELECT 'Gender' AS Caption, COUNT(gender) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
-		UNION
-		SELECT 'Phone' AS Caption, COUNT(phone) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
-		UNION
-		SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
-		UNION
-		SELECT 'Skin' AS Caption, COUNT(skin) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
-		UNION
-		SELECT 'Body' AS Caption, COUNT(body_type) AS Number
-		FROM person";
+		$queryProfileData = "
+			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
+			UNION
+			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
+			UNION 
+			SELECT 'Gender' AS Caption, COUNT(gender) AS Number FROM person WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
+			UNION
+			SELECT 'Phone' AS Caption, COUNT(phone) AS Number FROM person WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
+			UNION
+			SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number FROM person WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
+			UNION
+			SELECT 'Skin' AS Caption, COUNT(skin) AS Number FROM person WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
+			UNION
+			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person
+			UNION 
+			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1";
 		$profileData = $connection->deepQuery($queryProfileData);
-	
+
 		foreach($profileData as $profilesList)
 		{
 			$percent = ($profilesList->Number * 100)/$usersWithProfile[0]->PersonWithProfiles;
@@ -244,7 +234,7 @@ class ManageController extends Controller
 				WHEN 'MATANZAS' THEN 'Matanzas'
 				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti Spíritus'
 				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
 				WHEN 'CAMAGUEY' THEN 'Camagüey'
 				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
@@ -270,7 +260,7 @@ class ManageController extends Controller
 					UNION ALL
 					SELECT 'CIENFUEGOS' mnth
 					UNION ALL
-					SELECT 'SANTI_SPIRITUS' mnth
+					SELECT 'SANCTI_SPIRITUS' mnth
 					UNION ALL
 					SELECT 'CIEGO_DE_AVILA' mnth
 					UNION ALL									
@@ -291,7 +281,7 @@ class ManageController extends Controller
 				LEFT JOIN person b
 					ON BINARY a.mnth = BINARY b.province AND
 					   b.province IS not NULL AND 
-					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
 			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	

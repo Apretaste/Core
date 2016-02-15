@@ -420,7 +420,7 @@ function getProvinceFromPhone($phone)
 	if(strpos($phone, "31")==0) return 'LAS_TUNAS';
 	if(strpos($phone, "32")==0) return 'CAMAGUEY';
 	if(strpos($phone, "33")==0) return 'CIEGO_DE_AVILA';
-	if(strpos($phone, "41")==0) return 'SANTI_SPIRITUS';
+	if(strpos($phone, "41")==0) return 'SANCTI_SPIRITUS';
 	if(strpos($phone, "42")==0) return 'VILLA_CLARA';
 	if(strpos($phone, "43")==0) return 'CIENFUEGOS';
 	if(strpos($phone, "45")==0) return 'MATANZAS';
