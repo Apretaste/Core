@@ -244,7 +244,7 @@ class ManageController extends Controller
 				WHEN 'MATANZAS' THEN 'Matanzas'
 				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANTI_SPIRITUS' THEN 'Sancti Spíritus'
+				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti Spíritus'
 				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
 				WHEN 'CAMAGUEY' THEN 'Camagüey'
 				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
@@ -270,7 +270,7 @@ class ManageController extends Controller
 					UNION ALL
 					SELECT 'CIENFUEGOS' mnth
 					UNION ALL
-					SELECT 'SANTI_SPIRITUS' mnth
+					SELECT 'SANCTI_SPIRITUS' mnth
 					UNION ALL
 					SELECT 'CIEGO_DE_AVILA' mnth
 					UNION ALL									
@@ -291,7 +291,7 @@ class ManageController extends Controller
 				LEFT JOIN person b
 					ON BINARY a.mnth = BINARY b.province AND
 					   b.province IS not NULL AND 
-					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
 			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
