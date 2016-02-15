@@ -197,34 +197,24 @@ class ManageController extends Controller
 		//End Users with profile vs users without profile
 
 		// Profile completion
-		$queryProfileData = "SELECT 'Name' AS Caption, COUNT(first_name) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
-		UNION
-		SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
-		UNION
-		SELECT 'Gender' AS Caption, COUNT(gender) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
-		UNION
-		SELECT 'Phone' AS Caption, COUNT(phone) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
-		UNION
-		SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
-		UNION
-		SELECT 'Skin' AS Caption, COUNT(skin) AS Number
-		FROM person
-		WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
-		UNION
-		SELECT 'Body' AS Caption, COUNT(body_type) AS Number
-		FROM person";
+		$queryProfileData = "
+			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
+			UNION
+			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
+			UNION 
+			SELECT 'Gender' AS Caption, COUNT(gender) AS Number FROM person WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
+			UNION
+			SELECT 'Phone' AS Caption, COUNT(phone) AS Number FROM person WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
+			UNION
+			SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number FROM person WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
+			UNION
+			SELECT 'Skin' AS Caption, COUNT(skin) AS Number FROM person WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
+			UNION
+			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person
+			UNION 
+			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1";
 		$profileData = $connection->deepQuery($queryProfileData);
-	
+
 		foreach($profileData as $profilesList)
 		{
 			$percent = ($profilesList->Number * 100)/$usersWithProfile[0]->PersonWithProfiles;
