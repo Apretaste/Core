@@ -70,12 +70,24 @@ class Email
 
 		// get the email with less usage  
 		$connection = new Connection();
-		$result = $connection->deepQuery("SELECT * FROM jumper WHERE (status='SendReceive' OR status='SendOnly') AND blocked_domains NOT LIKE '%$domain%' ORDER BY sent_count ASC LIMIT 1");
+		
+		$sql = "
+		SELECT * 
+		FROM jumper 
+		WHERE (status='SendReceive' OR status='SendOnly') 
+		AND blocked_domains NOT LIKE '%$domain%' 
+		ORDER BY last_usage ASC LIMIT 1";
+		
+		$result = $connection->deepQuery($sql);
 
 		// increase the send counter
 		$email = $result[0]->email;
-		$today = date("Y-m-d H:i:s");
-		$connection->deepQuery("UPDATE jumper SET sent_count=sent_count+1, last_usage='$today' WHERE email='$email'");
+		
+		$connection->deepQuery("
+        UPDATE jumper 
+        SET sent_count = sent_count + 1, 
+            last_usage = CURRENT_TIMESTAMP
+        WHERE email = '$email'");
 
 		return $email;
 	}

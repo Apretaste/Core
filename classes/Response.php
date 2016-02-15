@@ -105,7 +105,7 @@ class Response
 	{
 		// get the array of ads from the database
 		$connection = new Connection();
-		$ads = $connection->deepQuery("SELECT * FROM ads WHERE active = '1' AND expiration_date > CURRENT_TIMESTAMP");
+		$ads = $connection->deepQuery("SELECT * FROM ads WHERE active = '1' AND expiration_date > CURRENT_TIMESTAMP AND (SELECT credit FROM person WHERE person.email = ads.owner) > 0.10");
 
 		// if there are not active ads stop processing here
 		if(count($ads)==0) return array();
