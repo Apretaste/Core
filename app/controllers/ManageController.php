@@ -486,18 +486,21 @@ class ManageController extends Controller
 
 			if($insertAd)
 			{
-				$queryGetAdsID = "SELECT id FROM ads WHERE owner='$adsOwner' ORDER BY id DESC LIMIT 1";
-				$getAdID = $connection->deepQuery($queryGetAdsID);
-
-				// save the image
-				$fileName = md5($getAdID[0]->id); //Generate the picture name
-				$wwwroot = $this->di->get('path')['root'];
-				$picPath = "$wwwroot/public/ads/$fileName.jpg";
-				move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
-
-				// optimize the image
-				$utils = new Utils();
-				$utils->optimizeImage($picPath, 728, 90);
+				if($_FILES["picture"]['error'] === 0)
+				{
+					$queryGetAdsID = "SELECT id FROM ads WHERE owner='$adsOwner' ORDER BY id DESC LIMIT 1";
+					$getAdID = $connection->deepQuery($queryGetAdsID);
+	
+					// save the image
+					$fileName = md5($getAdID[0]->id); //Generate the picture name
+					$wwwroot = $this->di->get('path')['root'];
+					$picPath = "$wwwroot/public/ads/$fileName.jpg";
+					move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
+	
+					// optimize the image
+					$utils = new Utils();
+					$utils->optimizeImage($picPath, 728, 90);
+				}
 
 				// confirm by email that the ad was inserted
 				$email = new Email();
