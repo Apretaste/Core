@@ -525,27 +525,11 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryJumper = "SELECT email, last_usage, sent_count, 'Errors' AS ErrorCount, blocked_domains, active FROM jumper";
+		$queryJumper = "SELECT email, last_usage, sent_count, blocked_domains, status FROM jumper ORDER BY last_usage DESC";
 		$jumperData = $connection->deepQuery($queryJumper);
 
 		$this->view->title = "Jumper";
 		$this->view->jumperData = $jumperData;
-	}
-
-
-	/**
-	 * Toggle the status of the jumper
-	 * */
-	public function jumperToggleActiveStatusAction()
-	{
-		$email = $this->request->get("email");
-		if($email)
-		{
-			$connection = new Connection();
-			$query = "UPDATE jumper SET active = !active WHERE email = '$email'";
-			$connection->deepQuery($query);
-		}
-		return $this->response->redirect('manage/jumper');
 	}
 
 

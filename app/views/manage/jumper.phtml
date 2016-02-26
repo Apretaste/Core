@@ -6,20 +6,18 @@
 					<th>Email</th>
 					<th class="text-center">Last Usage</th>
 					<th class="text-center">Emails Sent</th>
-					<th class="text-center">Errors</th>
-					<th class="text-center">Block Domains</th>
-					<th class="text-center"></th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Blocked Domains</th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ($jumperData as $jumper) { ?>
-				<tr <?php if($jumper->active == 0) echo 'class="danger"'; ?>>
+				<tr <?php if($jumper->status == "Inactive") echo 'class="danger"'; ?>>
 					<td><?php echo $jumper->email; ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($jumper->last_usage)); ?></td>
 					<td class="text-center"><?php echo $jumper->sent_count; ?></td>
-					<td class="text-center"><?php echo $jumper->ErrorCount; ?></td>
-					<td class="text-center"><?php echo $jumper->blocked_domains; ?></td>
-					<td class="text-center"><a class="btn btn-xs btn-default" onclick="return confirm('Toggle status?');" href="/manage/jumperToggleActiveStatus?email=<?php echo $jumper->email; ?>">Toggle status</a></td>
+					<td class="text-center"><?php echo $jumper->status; ?></td>
+					<td><?php echo $jumper->blocked_domains; ?></td>
 				</tr>
 			<?php } ?>
 			</tbody>
