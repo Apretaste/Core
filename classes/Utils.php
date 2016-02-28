@@ -486,4 +486,16 @@ class Utils
 		}
 		return $percent;
 	}
+	
+	/**
+	 * Return path to temporal folder
+	 * 
+	 * @return string
+	 */
+	public function getTempDir(){
+	    $di = \Phalcon\DI\FactoryDefault::getDefault();
+	    $wwwroot = $di->get('path')['root'];
+	    return "$wwwroot/temp/";
+	     
+	}
 }
