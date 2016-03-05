@@ -34,7 +34,10 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$result = $this->renderResponse("api@apretaste.com", $subject, "API", $body, array(), "json");
+		$email = $this->request->get("email");
+		if(empty($email)) $email = "api@apretaste.com";
+
+		$result = $this->renderResponse($email, $subject, "API", $body, array(), "json");
 		echo $result;
 	}
 
