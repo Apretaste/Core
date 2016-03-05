@@ -68,7 +68,7 @@ class Utils
 		return count($res) > 0;
 	}
 
-
+	
 	/**
 	 * Check if the Person was invited and is still pending 
 	 *
@@ -142,6 +142,24 @@ class Utils
 		$person->thumbnail = $thumbnail;
 		$person->raffle_tickets = $tickets;
 		return $person;
+	}
+
+
+	/**
+	 * Create a unique username using the email
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String, username
+	 * */
+	public function usernameFromEmail($email)
+	{
+		$connection = new Connection();
+		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
+		$username = substr($username, 0, 5); // get the first 5 chars
+		$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
+		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
+		return $username;
 	}
 
 
