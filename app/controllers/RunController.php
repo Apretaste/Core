@@ -35,7 +35,32 @@ class RunController extends Controller
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$email = $this->request->get("email");
+		$attachments = $this->request->get("attachments");
 		if(empty($email)) $email = "api@apretaste.com";
+
+		// create attachment as an object
+		$attach = array();
+		if ( ! empty($attachments))
+		{
+			// save image into the filesystem
+			$wwwroot = $this->di->get('path')['root'];
+			$utils = new Utils();
+			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
+			$content = file_get_contents($attachments);
+			imagejpeg(imagecreatefromstring($content), $filePath);
+
+			// optimize the image
+			$utils->optimizeImage($filePath);
+
+			// grant full access to the file
+			chmod($filePath, 0777);
+
+			// create new object
+			$object = new stdClass();
+			$object->path = $filePath;
+			$object->type = image_type_to_mime_type(IMAGETYPE_JPEG);
+			$attach = array($object);
+		}
 
 		// some services cannot be used via the API
 		if (stripos($subject, 'excluyeme') !== false)
@@ -43,7 +68,7 @@ class RunController extends Controller
 			die("You cannot call this service from the API");
 		}
 
-		$result = $this->renderResponse($email, $subject, "API", $body, array(), "json");
+		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
 		echo $result;
 	}
 
