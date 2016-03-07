@@ -34,7 +34,41 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$result = $this->renderResponse("api@apretaste.com", $subject, "API", $body, array(), "json");
+		$email = $this->request->get("email");
+		$attachments = $this->request->get("attachments");
+		if(empty($email)) $email = "api@apretaste.com";
+
+		// create attachment as an object
+		$attach = array();
+		if ( ! empty($attachments))
+		{
+			// save image into the filesystem
+			$wwwroot = $this->di->get('path')['root'];
+			$utils = new Utils();
+			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
+			$content = file_get_contents($attachments);
+			imagejpeg(imagecreatefromstring($content), $filePath);
+
+			// optimize the image
+			$utils->optimizeImage($filePath);
+
+			// grant full access to the file
+			chmod($filePath, 0777);
+
+			// create new object
+			$object = new stdClass();
+			$object->path = $filePath;
+			$object->type = image_type_to_mime_type(IMAGETYPE_JPEG);
+			$attach = array($object);
+		}
+
+		// some services cannot be used via the API
+		if (stripos($subject, 'excluyeme') !== false)
+		{
+			die("You cannot call this service from the API");
+		}
+
+		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
 		echo $result;
 	}
 
@@ -328,10 +362,7 @@ class RunController extends Controller
 			else // if the person accessed for the first time, insert him/her
 			{
 				// create a unique username
-				$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
-				$username = substr($username, 0, 5); // get the first 5 chars
-				$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
-				if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
+				$username = $utils->usernameFromEmail($email);
 
 				// save the new Person
 				$sql = "INSERT INTO person (email, username) VALUES ('$email', '$username')";
