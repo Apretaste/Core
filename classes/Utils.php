@@ -13,7 +13,7 @@ class Utils
 	public function getValidEmailAddress()
 	{
 		$connection = new Connection();
-		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='SendOnly' ORDER BY sent_count ASC LIMIT 1";
+		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='SendOnly' ORDER BY last_usage ASC LIMIT 1";
 		$result = $connection->deepQuery($sql);
 		return $result[0]->email;
 	}
