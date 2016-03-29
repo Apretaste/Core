@@ -5,6 +5,7 @@
  * 
  * @version 1.0
  */
+
 use Phalcon\Loader;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\Application;
@@ -16,72 +17,64 @@ use Phalcon\Config\Adapter\Ini as ConfigIni;
 setlocale(LC_TIME, "es_ES");
 
 // include composer
-include_once "../vendor/autoload.php";
+include_once __DIR__."/../vendor/autoload.php";
+include_once __DIR__."/../classes/Service.php";
+include_once __DIR__."/../classes/Utils.php";
+include_once __DIR__."/../classes/Render.php";
+include_once __DIR__."/../classes/Response.php";
+include_once __DIR__."/../classes/Connection.php";
 
-include_once "../classes/Service.php";
-include_once "../classes/Utils.php";
-include_once "../classes/Render.php";
-include_once "../classes/Response.php";
-include_once "../classes/Connection.php";
-
-echo "[INFO] RmemberMe cron job started at " . date("Y-m-d h:i:s") . "\n ";
+echo "[INFO] RememberMe cron job started at " . date("Y-m-d h:i:s") . "\n ";
 
 // Register autoLoader for Analytics
-
 $loaderAnalytics = new Loader();
 $loaderAnalytics->registerDirs(array(
-        '../classes/',
-        '../app/controllers/'
+	__DIR__."/../classes/",
+	__DIR__."/../app/controllers/"
 ))->register();
 
 // Create Run DI
 $di = new FactoryDefault();
 
 // Creating the global path to the root folder
-$di->set('path', function  ()
-{
-    return array(
-            "root" => dirname(__DIR__),
-            "http" => "http://localhost"
-    );
+$di->set('path', function () {
+	return array(
+		"root" => dirname(__DIR__),
+		"http" => "http://localhost"
+	);
 });
 
 // Making the config global
-$di->set('config', function  ()
-{
-    return new ConfigIni('../configs/config.ini');
+$di->set('config', function (){
+	return new ConfigIni('../configs/config.ini');
 });
 
 // Setup the view component for Analytics
-$di->set('view', function  ()
-{
-    $view = new View();
-    $view->setLayoutsDir('../layouts/');
-    $view->setViewsDir('../app/views/');
-    return $view;
+$di->set('view', function (){
+	$view = new View();
+	$view->setLayoutsDir('../layouts/');
+	$view->setViewsDir('../app/views/');
+	return $view;
 });
 
 // Setup the database service
 $config = $di->get('config');
-$di->set('db', 
-        function  () use( $config)
-        {
-            return new \Phalcon\Db\Adapter\Pdo\Mysql(
-                    array(
-                            "host" => $config['database']['host'],
-                            "username" => $config['database']['user'],
-                            "password" => $config['database']['password'],
-                            "dbname" => $config['database']['database']
-                    ));
-        });
-
+$di->set('db', function () use($config){
+	return new \Phalcon\Db\Adapter\Pdo\Mysql(
+		array(
+			"host" => $config['database']['host'],
+			"username" => $config['database']['user'],
+			"password" => $config['database']['password'],
+			"dbname" => $config['database']['database']
+		));
+	});
+print_r($config); exit;
 // get the environment
-$di->set('environment', function  () use( $config)
-{
-    if (isset($config['global']['environment']))
-        return $config['global']['environment'];
-    else
-        return "production";
+$di->set('environment', function() use ($config) {
+	if (isset($config['global']['environment']))
+		return $config['global']['environment'];
+	else
+		return "production";
 });
 
 // get connection params from the file
@@ -111,13 +104,13 @@ $email = new Email();
 $c = 1;
 
 if ($result !== false) while ($row = $result->fetch_assoc()) {
-    echo "[INFO] Send email to user {$row['email']}\n";
-    $response->createFromTemplate('remember_me_3060.tpl', array());
-    $response->internal = true;
-    $html = $render->renderHTML($service, $response);
-    $email->sendEmail($row['email'], 'Hace tiempo no usas Apretaste!', $html);
-    $conn->query("UPDATE person SET active = 2 WHERE email = '{$row['email']}';");
-    $conn->query("INSERT INTO utilization (service,requestor,request_time) VALUES ('rememberme', '{$row['email']}', CURRENT_TIMESTAMP);");
+	echo "[INFO] Send email to user {$row['email']}\n";
+	$response->createFromTemplate('remember_me_3060.tpl', array());
+	$response->internal = true;
+	$html = $render->renderHTML($service, $response);
+	$email->sendEmail($row['email'], 'Hace tiempo no usas Apretaste!', $html);
+	$conn->query("UPDATE person SET active = 2 WHERE email = '{$row['email']}';");
+	$conn->query("INSERT INTO utilization (service,requestor,request_time) VALUES ('rememberme', '{$row['email']}', CURRENT_TIMESTAMP);");
 }
 
 echo "[INFO] Searching between 60 and 90, udpate active = 3 ...\n";
@@ -126,13 +119,13 @@ $result = $conn->query("SELECT * FROM ($sql_persons) AS subq WHERE (last_usage_d
 
 $c = 1;
 if ($result !== false) while ($row = $result->fetch_assoc()) {
-    echo "[INFO] Send email to user {$row['email']}\n";
-    $response->createFromTemplate('remember_me_6090.tpl', array());
-    $response->internal = true;
-    $html = $render->renderHTML($service, $response);
-    $email->sendEmail($row['email'], 'Hace tiempo no usas Apretaste!', $html);
-    $conn->query("INSERT INTO utilization (service,requestor,request_time) VALUES ('rememberme', '{$row['email']}', CURRENT_TIMESTAMP);");
-    $conn->query("UPDATE person SET active = 3 WHERE email = '{$row['email']}';");
+	echo "[INFO] Send email to user {$row['email']}\n";
+	$response->createFromTemplate('remember_me_6090.tpl', array());
+	$response->internal = true;
+	$html = $render->renderHTML($service, $response);
+	$email->sendEmail($row['email'], 'Hace tiempo no usas Apretaste!', $html);
+	$conn->query("INSERT INTO utilization (service,requestor,request_time) VALUES ('rememberme', '{$row['email']}', CURRENT_TIMESTAMP);");
+	$conn->query("UPDATE person SET active = 3 WHERE email = '{$row['email']}';");
 }
 
 echo "[INFO] Searching more than 90, udpate active = 0 \n";
@@ -141,11 +134,11 @@ $result = $conn->query("SELECT * FROM ($sql_persons) AS subq WHERE (last_usage_d
 
 $c = 1;
 if ($result !== false) while ($row = $result->fetch_assoc()) {
-    echo "[INFO] Desactivate the user {$row['email']}\n";
-    
-    $conn->query("UPDATE person SET active = 0 WHERE email = '{$row['email']}';");
-    
-    echo "[INFO] Unsubscribe the user {$row['email']}\n";
-    
-    $service->utils->unsubscribeFromEmailList($row['email']);
+	echo "[INFO] Desactivate the user {$row['email']}\n";
+	
+	$conn->query("UPDATE person SET active = 0 WHERE email = '{$row['email']}';");
+	
+	echo "[INFO] Unsubscribe the user {$row['email']}\n";
+	
+	$service->utils->unsubscribeFromEmailList($row['email']);
 }
