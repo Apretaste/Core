@@ -358,6 +358,10 @@ class RunController extends Controller
 					//  add to the email list in Mail Lite
 					$utils->subscribeToEmailList($email);
 				}
+
+				// update last access time to current
+				$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'";
+				$connection->deepQuery($sql);
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
@@ -365,7 +369,7 @@ class RunController extends Controller
 				$username = $utils->usernameFromEmail($email);
 
 				// save the new Person
-				$sql = "INSERT INTO person (email, username) VALUES ('$email', '$username')";
+				$sql = "INSERT INTO person (email, username, last_access) VALUES ('$email', '$username', CURRENT_TIMESTAMP)";
 				$connection->deepQuery($sql);
 
 			   	// check if the person was invited to use Apretaste
