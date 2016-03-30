@@ -254,8 +254,11 @@ class Utils
 	 * */
 	public function subscribeToEmailList($email)
 	{
-		// get the path to the www folder
+		// never subscribe from the sandbox 
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		if($di->get('environment') != "production") return;
+
+		// get the path to the www folder
 		$wwwroot = $di->get('path')['root'];
 
 		// get the key from the config
@@ -277,8 +280,11 @@ class Utils
 	 * */
 	public function unsubscribeFromEmailList($email)
 	{
-		// get the path to the www folder
+		// never unsubscribe from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		if($di->get('environment') != "production") return;
+
+		// get the path to the www folder
 		$wwwroot = $di->get('path')['root'];
 
 		// get the key from the config
