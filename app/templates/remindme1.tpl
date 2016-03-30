@@ -22,7 +22,10 @@
 	</table>
 {/if}
 
+{space5}
+
+<p>Le acabo de agregar <b>$1 de cr&eacute;dito</b> en su cuenta de Apretaste, para que compre tickets y participe en {link href="RIFA" caption="nuestra rifa mensual"}. Espero que nuestro gesto le sirva como incentivo para volver a nuestra querida familia.</p> 
+
 {space10}
 
-<p>Si Apretaste no le es &uacute;til ahora mismo, puede excluirse y no le llegar&aacute; m&aacute;s nuestra correspondencia.</p>
-<center>{button href="EXCLUYEME" caption="EXCLUYEME"}</center>
+<p>Si Apretaste no le es &uacute;til ahora mismo, puede {link href="EXCLUYEME" caption="excluirse"} y no recibir&aacute; m&aacute;s nuestra correspondencia.</p>

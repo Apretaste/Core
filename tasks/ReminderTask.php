@@ -46,11 +46,11 @@ class ReminderTask extends \Phalcon\Cli\Task
 			$response->internal = true;
 			$html = $render->renderHTML($service, $response);
 
-			// send email to the $person->email
+			// move reminder to the next state and add $1 to his/her account
 			$email->sendEmail($person->email, "Se le extranna por Apretaste", $html, $images);
 
 			// move reminder to the next state
-			$connetion->deepQuery("UPDATE person SET reminder=1 WHERE email='{$person->email}'");
+			$connetion->deepQuery("UPDATE person SET reminder=1, credit=credit+1 WHERE email='{$person->email}'");
 
 			// display notifications
 			echo $key ."/". count($firstReminderPeople) . ": {$person->email} \n";
@@ -79,8 +79,8 @@ class ReminderTask extends \Phalcon\Cli\Task
 			// send email to the $person->email
 			$email->sendEmail($person->email, "Hace rato no le veo", $html);
 
-			// move reminder to the next state
-			$connetion->deepQuery("UPDATE person SET reminder=2 WHERE email='{$person->email}'");
+			// move reminder to the next state and add $1 to his/her account
+			$connetion->deepQuery("UPDATE person SET reminder=2, credit=credit+1 WHERE email='{$person->email}'");
 
 			// display notifications
 			echo $key ."/". count($secondReminderPeople) . ": {$person->email} \n";
