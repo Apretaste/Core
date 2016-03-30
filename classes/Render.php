@@ -27,6 +27,7 @@ class Render
 		$smarty->setTemplateDir("$wwwroot/app/layouts/");
 		$smarty->setCompileDir("$wwwroot/temp/templates_c/");
 		$smarty->setCacheDir("$wwwroot/temp/cache/");
+		$smarty->setConfigDir("$wwwroot/configs/");
 
 		// disabling cache and debugging
 		$smarty->force_compile = true;
