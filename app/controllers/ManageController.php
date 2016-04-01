@@ -631,4 +631,35 @@ class ManageController extends Controller
 		$this->view->sentEmails = $sent;
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
 	}
+
+	/**
+	 * Show the error log
+	 * */
+	public function errorsAction()
+	{
+		// get the error logs file
+		$wwwroot = $this->di->get('path')['root'];
+		$logfile = "$wwwroot/logs/error.log";
+
+		// tail the log file
+		$numlines = "50";
+		$cmd = "tail -$numlines '$logfile'";
+		$errors = explode('<br />', nl2br(shell_exec($cmd)));
+
+		// format output to look better
+		$output = array();
+		foreach ($errors as $err)
+		{
+			if(strlen($err) < 5) continue;
+			$line = htmlentities($err);
+			$line = "<b>".substr_replace($line,"]</b>",strpos($line, "]"),1);
+			$output[] = $line;
+		}
+
+		// reverse to show latest first
+		$output = array_reverse($output);
+
+		$this->view->title = "Lastest $numlines errors";
+		$this->view->output = $output;
+	}
 }

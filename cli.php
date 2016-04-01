@@ -31,7 +31,7 @@ $loader->register();
 // Creating the global path to the root folder
 $di->set('path', function () {
 	return array(
-		"root" => dirname(APPLICATION_PATH),
+		"root" => APPLICATION_PATH,
 		"http" => "https://apretaste.com"
 	);
 });

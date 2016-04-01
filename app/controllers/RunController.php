@@ -62,6 +62,11 @@ class RunController extends Controller
 			$attach = array($object);
 		}
 
+		// update last access time to current
+		$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP, reminder=0 WHERE email='$email'";
+		$connection = new Connection();
+		$connection->deepQuery($sql);
+
 		// some services cannot be used via the API
 		if (stripos($subject, 'excluyeme') !== false)
 		{
@@ -360,7 +365,7 @@ class RunController extends Controller
 				}
 
 				// update last access time to current
-				$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'";
+				$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP, reminder=0 WHERE email='$email'";
 				$connection->deepQuery($sql);
 			}
 			else // if the person accessed for the first time, insert him/her
