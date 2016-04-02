@@ -15,7 +15,7 @@
 	<table border="0" width="100%">
 		{foreach from=$services item=service}
 		<tr>
-			<td><b>{button href="{$service->name}" caption="{$service->name}"}</b></td>
+			<td><b>{button color="grey" href="{$service->name}" caption="{$service->name}"}</b></td>
 			<td>&nbsp;</td>
 			<td>{$service->description}</td>
 		</tr>
