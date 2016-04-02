@@ -25,8 +25,15 @@ class ReminderTask extends \Phalcon\Cli\Task
 
 		// FIRST REMINDER
 
+
 		// get the list of people missed for the last 30 days
-		$sql = "SELECT email, last_access FROM person WHERE active=1 AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 30 AND reminder=0 LIMIT 100";
+		$sql = "
+			SELECT email, last_access 
+			FROM person 
+			WHERE active=1 
+			AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 30 
+			AND email not in (SELECT email FROM reminder)
+			LIMIT 100";
 		$firstReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
@@ -49,8 +56,12 @@ class ReminderTask extends \Phalcon\Cli\Task
 			// move reminder to the next state and add $1 to his/her account
 			$email->sendEmail($person->email, "Se le extranna por Apretaste", $html, $images);
 
-			// move reminder to the next state
-			$connetion->deepQuery("UPDATE person SET reminder=1, credit=credit+1 WHERE email='{$person->email}'");
+			// move reminder to the next state and add +1 credits
+			$connetion->deepQuery("
+				START TRANSACTION;
+				UPDATE person SET credit=credit+1 WHERE email='{$person->email}';
+				INSERT INTO reminder(email) VALUES ('{$person->email}');
+				COMMIT;");
 
 			// display notifications
 			echo $key ."/". count($firstReminderPeople) . ": {$person->email} \n";
@@ -59,28 +70,33 @@ class ReminderTask extends \Phalcon\Cli\Task
 
 		// SECOND REMINDER
 
+
 		// get the list of people missed for the last 30 days
-		$sql = "SELECT email, last_access FROM person WHERE active=1 AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 60 AND reminder=1 LIMIT 100";
+		$sql = "
+			SELECT email
+			FROM reminder
+			WHERE status=1
+			AND DATEDIFF(CURRENT_DATE, last_remind) > 30";
 		$secondReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
 		echo "\n\nSECOND REMINDER (" . count($secondReminderPeople) . ")\n";
 		foreach ($secondReminderPeople as $key=>$person)
 		{
-			// get services that changed since last time
-			$sql = "SELECT * FROM service WHERE insertion_date BETWEEN '{$person->last_access}' AND CURRENT_TIMESTAMP AND listed=1";
-			$services = $connetion->deepQuery($sql);
-
 			// create html response
-			$response->createFromTemplate('remindme2.tpl', array("services"=>$services));
+			$response->createFromTemplate('remindme2.tpl', array());
 			$response->internal = true;
 			$html = $render->renderHTML($service, $response);
 
 			// send email to the $person->email
 			$email->sendEmail($person->email, "Hace rato no le veo", $html);
 
-			// move reminder to the next state and add $1 to his/her account
-			$connetion->deepQuery("UPDATE person SET reminder=2, credit=credit+1 WHERE email='{$person->email}'");
+			// move reminder to the next state and add +1 credits
+			$connetion->deepQuery("
+				START TRANSACTION;
+				UPDATE person SET credit=credit+1 WHERE email='{$person->email}';
+				UPDATE reminder SET status=2, last_remind=CURRENT_TIMESTAMP WHERE email='{$person->email}';
+				COMMIT;");
 
 			// display notifications
 			echo $key ."/". count($secondReminderPeople) . ": {$person->email} \n";
@@ -89,8 +105,13 @@ class ReminderTask extends \Phalcon\Cli\Task
 
 		// THIRD REMINDER
 
+
 		// get the list of people missed for the last 30 days
-		$sql = "SELECT email FROM person WHERE active=1 AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 90 AND reminder=2";
+		$sql = "
+			SELECT email
+			FROM reminder
+			WHERE status=2
+			AND DATEDIFF(CURRENT_DATE, last_remind) > 30";
 		$thirdReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
@@ -100,8 +121,12 @@ class ReminderTask extends \Phalcon\Cli\Task
 			// unsubscribe person
 			$utils->unsubscribeFromEmailList($person->email);
 
-			// move reminder to the next state
-			$connetion->deepQuery("UPDATE person SET active=0, reminder=3 WHERE email='{$person->email}'");
+			// move reminder to the next state and unsubscribe
+			$connetion->deepQuery("
+				START TRANSACTION;
+				UPDATE person SET active=0 WHERE email='{$person->email}';
+				UPDATE reminder SET status=3, last_remind=CURRENT_TIMESTAMP WHERE email='{$person->email}';
+				COMMIT;");
 
 			// display notifications
 			echo $key ."/". count($thirdReminderPeople) . ": {$person->email} \n";
