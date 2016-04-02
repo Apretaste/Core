@@ -21,6 +21,7 @@ class ReminderTask extends \Phalcon\Cli\Task
 		$response = new Response();
 		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
+		$timeStart  = time();
 
 
 		// FIRST REMINDER
@@ -37,8 +38,8 @@ class ReminderTask extends \Phalcon\Cli\Task
 		$firstReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
-		echo "\nFIRST REMINDER (" . count($firstReminderPeople) . ")\n";
-		foreach ($firstReminderPeople as $key=>$person)
+		$log = "\nFIRST REMINDER (".count($firstReminderPeople).")\n";
+		foreach ($firstReminderPeople as $person)
 		{
 			// get services that changed since last time
 			$sql = "SELECT * FROM service WHERE insertion_date BETWEEN '{$person->last_access}' AND CURRENT_TIMESTAMP AND listed=1";
@@ -64,7 +65,7 @@ class ReminderTask extends \Phalcon\Cli\Task
 				COMMIT;");
 
 			// display notifications
-			echo $key ."/". count($firstReminderPeople) . ": {$person->email} \n";
+			$log .= "\t{$person->email}\n";
 		}
 
 
@@ -80,8 +81,8 @@ class ReminderTask extends \Phalcon\Cli\Task
 		$secondReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
-		echo "\n\nSECOND REMINDER (" . count($secondReminderPeople) . ")\n";
-		foreach ($secondReminderPeople as $key=>$person)
+		$log .= "SECOND REMINDER (".count($secondReminderPeople).")\n";
+		foreach ($secondReminderPeople as $person)
 		{
 			// create html response
 			$response->createFromTemplate('remindme2.tpl', array());
@@ -99,7 +100,7 @@ class ReminderTask extends \Phalcon\Cli\Task
 				COMMIT;");
 
 			// display notifications
-			echo $key ."/". count($secondReminderPeople) . ": {$person->email} \n";
+			$log .= "\t{$person->email}\n";
 		}
 
 
@@ -115,8 +116,8 @@ class ReminderTask extends \Phalcon\Cli\Task
 		$thirdReminderPeople = $connetion->deepQuery($sql);
 
 		// send the first reminder
-		echo "\n\nUNSUSCRIBING (" . count($thirdReminderPeople) . ")\n";
-		foreach ($thirdReminderPeople as $key=>$person)
+		$log .= "UNSUSCRIBING (".count($thirdReminderPeople).")\n";
+		foreach ($thirdReminderPeople as $person)
 		{
 			// unsubscribe person
 			$utils->unsubscribeFromEmailList($person->email);
@@ -129,10 +130,17 @@ class ReminderTask extends \Phalcon\Cli\Task
 				COMMIT;");
 
 			// display notifications
-			echo $key ."/". count($thirdReminderPeople) . ": {$person->email} \n";
+			$log .= "\t{$person->email}\n";
 		}
 
 		// finish message
-		echo "\n\nDONE\n";
+		$timeEnd = time();
+		$timeDiff = $timeEnd - $timeStart;
+		$log .= "DONE at ".$timeDiff." seconds\n\n";
+
+		// save the reminder log
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/reminder.log");
+		$logger->log($log);
+		$logger->close();
 	}
 }
