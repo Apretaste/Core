@@ -68,6 +68,7 @@
 			<li><a href="#mission">Mission</a></li>
 			<li><a href="#services">Services</a></li>
 			<li><a href="#testimonials">Testimonials</a></li>
+			<li><a href="#team">Our Team</a></li>
 			<li><a href="#donate">Donate</a></li>
 			<li><a href="#contact">Contact Us</a></li>
 		</ul>
@@ -208,12 +209,42 @@
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
 								<i class="fa fa-circle fa-stack-2x"></i>
+								<i class="fa fa-users fa-stack-1x text-success"></i>
+							</span>
+								<h4><strong>Social Network</strong></h4>
+								<p>Allow people to share content</p>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="service-item">
+								<span class="fa-stack fa-4x">
+								<i class="fa fa-circle fa-stack-2x"></i>
 								<i class="fa fa-shopping-cart fa-stack-1x text-success"></i>
 							</span>
 								<h4><strong>Store</strong></h4>
 								<p>Connect buyers and sellers</p>
 							</div>
 						</div>
+						<div class="col-md-3 col-sm-6 col-xs-6">
+							<div class="service-item">
+								<span class="fa-stack fa-4x">
+								<i class="fa fa-circle fa-stack-2x"></i>
+								<i class="fa fa-heart fa-stack-1x text-success"></i>
+							</span>
+								<h4><strong>Online Dating</strong></h4>
+								<p>Help finding your other half</p>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-6 col-xs-6">
+							<div class="service-item">
+								<span class="fa-stack fa-4x">
+								<i class="fa fa-circle fa-stack-2x"></i>
+								<i class="fa fa-globe fa-stack-1x text-success"></i>
+							</span>
+								<h4><strong>Web Browsing</strong></h4>
+								<p>Browse the web openly</p>
+							</div>
+						</div>						
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
@@ -230,7 +261,7 @@
 								<i class="fa fa-circle fa-stack-2x"></i>
 								<i class="fa fa-book fa-stack-1x text-success"></i>
 							</span>
-								<h4><strong>Encyclopedia</strong></h4>
+								<h4><strong>Wikipedia</strong></h4>
 								<p>Access Wikipedia from your email</p>
 							</div>
 						</div>
@@ -248,40 +279,10 @@
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
 								<i class="fa fa-circle fa-stack-2x"></i>
-								<i class="fa fa-gamepad fa-stack-1x text-success"></i>
-							</span>
-								<h4><strong>Entertaiment</strong></h4>
-								<p>Puzzles, word games and jokes</p>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="service-item">
-								<span class="fa-stack fa-4x">
-								<i class="fa fa-circle fa-stack-2x"></i>
 								<i class="fa fa-language fa-stack-1x text-success"></i>
 							</span>
 								<h4><strong>Translation</strong></h4>
 								<p>Translate words and paragraphs from/to almost any language</p>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="service-item">
-								<span class="fa-stack fa-4x">
-								<i class="fa fa-circle fa-stack-2x"></i>
-								<i class="fa fa-comments fa-stack-1x text-success"></i>
-							</span>
-								<h4><strong>SMS</strong></h4>
-								<p>Send SMSs to Cuba and abroad for up to 90% less than the official price</p>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="service-item">
-								<span class="fa-stack fa-4x">
-								<i class="fa fa-circle fa-stack-2x"></i>
-								<i class="fa fa-ticket fa-stack-1x text-success"></i>
-							</span>
-								<h4><strong>Raffle</strong></h4>
-								<p>Raffle three prizes every month</p>
 							</div>
 						</div>
 					</div>
@@ -293,12 +294,10 @@
 			<div class="row">
 				<div class="col-lg-12 text-center">
 					<p class="lead">We will include more useful services within the next year</p>
-					<span class="label label-primary custom-label">SOCIAL NETWORK</span>
 					<span class="label label-primary custom-label">NEWSPAPER</span>
 					<span class="label label-primary custom-label">APPS MARKET</span>
 					<span class="label label-primary custom-label">WEB PUBLISHING</span>
 					<span class="label label-primary custom-label">PHONE GUIDE</span>
-					<span class="label label-primary custom-label">WEBSITE DOWNLOAD</span>
 					<span class="label label-primary custom-label">SPORTS NEWS</span>
 					<span class="label label-primary custom-label">REDDIT</span>
 					<span class="label label-primary custom-label">SOCIAL NEWS</span>
@@ -317,13 +316,13 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<h1 class="lead high-note black">Along the last two years we have been<br class="hidden-xs"/> working hard to connect more Cubans</h1>
-					<img id="users-graph" src="<?php echo $wwwhttp; ?>/images/apretaste-users-2014.png" alt="Apretaste users for 2014"/>
+					<h1 class="lead high-note black">Along the last years we have been<br class="hidden-xs"/> working hard to connect more Cubans</h1>
+					<div id="visitors" style="width:100%;"></div>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<h3 class="black lead">With more than 70K Visitors/Month, we believe we are on the right track</h3>
+					<h3 class="black lead">With more than <?php echo number_format($visitorsPerMonth/1000) . "K"; ?> Visitors/Month, we believe we are on the right track</h3>
 					<br/>
 				</div>
 			</div>
@@ -339,24 +338,24 @@
 					<hr class="small">
 					<div class="row">
 							<div class="col-md-4 col-sm-6 text-left hidden-xs">
-							    <div class="bubble">Muchas gracias, que bueno que todavia hay personas que se preocupan por nosotros.</div>
-							    <p class="bubble-name">Danays</p>
+								<div class="bubble">Muchas gracias, que bueno que todavia hay personas que se preocupan por nosotros.</div>
+								<p class="bubble-name">Danays</p>
 							</div>
 						<div class="col-md-4 col-sm-6 text-left">
-						    <div class="bubble">Apretaste es una gran oportunidad para quienes no disponemos de una coneccion activa, sino tan solo el correo y el telefono.</div>
-						    <p class="bubble-name">Miguel</p>
+							<div class="bubble">Apretaste es una gran oportunidad para quienes no disponemos de una coneccion activa, sino tan solo el correo y el telefono.</div>
+							<p class="bubble-name">Miguel</p>
 						</div>
 						<div class="col-md-4 col-sm-6 text-left">
-						    <div class="bubble">Me gusta Apretaste por su sinceridad y buena forma para optener información de conocimiento sobre consultas a enciclopedia compras y ventas + buenas relaciones entre usuarios.</div>
-						    <p class="bubble-name">Eusebio</p>
+							<div class="bubble">Me gusta Apretaste por su sinceridad y buena forma para optener información de conocimiento sobre consultas a enciclopedia compras y ventas + buenas relaciones entre usuarios.</div>
+							<p class="bubble-name">Eusebio</p>
 						</div>
 						<div class="col-md-4 col-sm-6 text-left">
-						    <div class="bubble">Gracias por existir y darnos esta oportunidad a los cubanos de a pie, espero que su trabajo se mantenga y que en Cuba no los bloqueen, sería una gran pérdida.</div>
-						    <p class="bubble-name">Carlos</p>
+							<div class="bubble">Gracias por existir y darnos esta oportunidad a los cubanos de a pie, espero que su trabajo se mantenga y que en Cuba no los bloqueen, sería una gran pérdida.</div>
+							<p class="bubble-name">Carlos</p>
 						</div>
 						<div class="col-md-4 hidden-sm hidden-xs text-left">
-						    <div class="bubble">La posibilidad de usar los servicios de Apretaste me ha dejado frio. Ahora puedo acceder con facilidad a servicios q nosotros no podiamos, nuevamente gracias y que dios los bendiga.</div>
-						    <p class="bubble-name">Eladio</p>
+							<div class="bubble">La posibilidad de usar los servicios de Apretaste me ha dejado frio. Ahora puedo acceder con facilidad a servicios q nosotros no podiamos, nuevamente gracias y que dios los bendiga.</div>
+							<p class="bubble-name">Eladio</p>
 						</div>
 					</div>
 
@@ -364,88 +363,193 @@
 
 					<div class="row">
 						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We won a prize on the First Hackathon for Cuba, organized by Roots of Hope and Knights Foundation">
-								<a href="http://raicesblog.blogspot.com/2014/02/roots-of-hope-hosts-first-ever.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hackathonforcuba.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We were invited to talk on 1800 Online, a very popular Latin Radio Station about technology">
-								<a href="http://martinoticias.org/archive/one_thousand_800_online/14/97/129.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/1800online.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We had the pleasure of work as a panelist at Hispanicize 2014, one of the most notable events about technology for Latinos on the Unites States">
-								<a href="http://hispz14.sched.org/event/d586fcd1fadff0e5b84fc2995eccfd20#.VCh10vnxqTU" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hispanicize.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="Yoani Sanchez, Cuban nobel prize nominated, wrote about Apretaste on the newspaper she founded">
-								<a href="http://www.14ymedio.com/blogs/generacion_y/Apretaste_7_1537716214.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/14ymedio.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We were invited to speak on the radio station El Revoltillo, belonging to Radio Marti">
-								<a href="http://www.martinoticias.com/media/video/26576.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/radiomarti.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="The Australian TV Channel 60 Minutos displayed Apretaste on a very controversial documentary about Cuba">
-								<a href="http://www.jump-in.com.au/show/60minutes/stories/2014/september/a-cuban-revolution/" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/60minutes.png">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.miamiherald.com/news/business/technology/article65196697.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/miamiherald.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We had a publication on the very followed online newspaper Marti Noticias">
-								<a href="http://www.martinoticias.com/content/apretaste-servicio-clasificados-por-email/31982.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/martinoticias.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We had the pleasure to speak at the online radio station PFunk">
-								<a href="https://soundcloud.com/pfunk-media/9414-pfunkcast-grow-yo-and-apretastes" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/pfunk.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="The technology and society magazine Motherboard mentioned us">
-								<a href="http://motherboard.vice.com/read/this-workaround-lets-26-million-cubans-surf-the-web" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/motherboard.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We were at the Sun-Sentinel's website and hardcopy. At the cover page of the business section, and above the fold">
-								<a href="http://www.sun-sentinel.com/business/small-business/fl-cuba-internet-company-20151130-story.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/sunsentinel.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="We were aired at Telemundo Channel 51. A great interview conducted by Harold Santana">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.telemundo51.com/noticias/cuba/Concurso-Hey-Cuba-Hackaton_TLMD---Miami-368985671.html" target="_blank">
 									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/telemundo.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-6 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top" title="What a pleasure been at Diario de Cuba; one of the most informative newspapers related to the island">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.sun-sentinel.com/business/small-business/fl-cuba-internet-company-20151130-story.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/sunsentinel.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.miaminewtimes.com/news/miami-company-helps-cubans-access-the-internet-through-their-email-8351534" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/newtimesmiami.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.jump-in.com.au/show/60minutes/stories/2014/september/a-cuban-revolution/" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/60minutes.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.elmundo.es/economia/2016/02/15/56c192b0268e3ef5758b45bd.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/elmundo.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.elnuevoherald.com/noticias/mundo/america-latina/cuba-es/article64126537.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/nuevoherald.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-6 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://motherboard.vice.com/read/this-workaround-lets-26-million-cubans-surf-the-web" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/motherboard.png">
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="row" id="morepressbtn" style="margin: 20px;">
+						<div class="col-xs-12 text-center" style="margin-bottom: 20px;">
+							<button class="btn btn-dark btn-lg" onclick="$('#morepress').slideDown(); $('#morepressbtn').remove();">Even More Press</button>
+						</div>
+					</div>
+
+					<div class="row" id="morepress" style="display:none;">
+						<div class="col-md-3 col-sm-6 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.martinoticias.com/content/apretaste-servicio-clasificados-por-email/31982.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/martinoticias.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.bizjournals.com/southflorida/news/2016/03/10/miami-hackathon-aims-to-improve-cuba-s-web-access.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/southflobizjournal.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.diariolasamericas.com/4842_locales/3628715_organizan-encuentro-programadores-miami-internet-cuba.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/diariolasamericas.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.14ymedio.com/blogs/generacion_y/Apretaste_7_1537716214.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/14ymedio.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-6 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.diariodecuba.com/cuba/1449255436_18591.html" target="_blank">
 									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/diariodecuba.png">
 								</a>
 							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="https://www.cubanet.org/noticias/cubano-organiza-hackathon-en-miami-por-mejorar-acceso-a-internet-en-la-isla/" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cubanet.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.14ymedio.com/blogs/generacion_y/Apretaste_7_1537716214.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/generaciony.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="https://www.cibercuba.com/noticias/14ymedio/2016-02-15-una-hackathon-en-miami-para-facilitar-acceso-internet-cubanos" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cibercuba.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://raicesblog.blogspot.com/2014/02/roots-of-hope-hosts-first-ever.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hackathonforcuba.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://martinoticias.org/archive/one_thousand_800_online/14/97/129.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/1800online.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://hispz14.sched.org/event/d586fcd1fadff0e5b84fc2995eccfd20#.VCh10vnxqTU" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hispanicize.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="https://cubanosporelmundo.com/blog/2016/02/15/hackathon-mejorara-el-acceso-internet-cuba/" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cubanosporelmundo.png">
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	
+	<!-- Team -->
+	<section id="team" class="testimonials">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-10 col-lg-offset-1 text-center">
+					<h2>Meet our team</h2>
+					<hr class="small">
+					<div class="row">
+						<div class="img-team col-md-3 col-sm-4 col-xs-6">
+							<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/salvi.jpg"/>
+							<h4>Salvi Pascual</h4>
+							<p>Executive Director<br/><a href="mailto:salvi@apretaste.com">salvi@apretaste.com</a></p>
+						</div>
+						<div class="img-team col-md-3 col-sm-4 col-xs-6">
+							<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/ibis.jpeg"/>
+							<h4>Ibis Arrastia</h4>
+							<p>Program Manager<br/><a href="mailto:ibis@apretaste.com">ibis@apretaste.com</a></p>
+						</div>
+						<div class="img-team col-md-3 col-sm-4 col-xs-6">
+							<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/daniella.jpg"/>
+							<h4>Daniella Bonilla</h4>
+							<p>Development Manager<br/><a href="mailto:daniella@apretaste.com">daniella@apretaste.com</a></p>
+						</div>
+						<div class="img-team col-md-3 col-sm-4 col-xs-6">
+							<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/dk.jpg"/>
+							<h4>Dark Knight</h4>
+							<p>Code Developer<br/><a href="mailto:hcarras90@hotmail.com">hcarras90@hotmail.com</a></p>
+						</div>
+					</div>
+
+					<div class="row" style="margin: 20px; padding-bottom: 30px;">
+						<div class="col-xs-12 text-center">
+							<a class="btn btn-dark btn-lg" href="#">More About Us</a>
 						</div>
 					</div>
 				</div>
@@ -538,8 +642,25 @@
 	<!-- Stripe -->
 	<script src="https://checkout.stripe.com/checkout.js"></script>
 
+	<!-- google graph -->
+	<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+
 	<!-- Custom Theme JavaScript -->
-	<script>
+	<script type='text/javascript'>
+	// Visitors
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(function () {
+		var data = google.visualization.arrayToDataTable([
+			['Day of the week', 'Email'],
+			<?php foreach ($visitors as $data) { ?>
+				['<?php echo $data['date']; ?>',<?php echo $data['emails']; ?>],
+			<?php } ?>
+		]);
+		var options = {backgroundColor: '#C1C1C1', legend: 'none'};
+		var chart = new google.visualization.AreaChart(document.getElementById('visitors'));
+		chart.draw(data, options);
+	});
+
 	// Closes the sidebar menu
 	$("#menu-close").click(function(e) {
 		e.preventDefault();

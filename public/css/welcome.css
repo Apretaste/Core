@@ -213,6 +213,14 @@ hr.small {
 	opacity: 0.8;
 }
 
+.img-team p{
+	line-height: 18px;
+}
+
+.img-team h4{
+	margin-bottom: 5px;
+}
+
 /* Call to Action */
 
 .call-to-action {
