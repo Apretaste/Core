@@ -148,20 +148,44 @@ class Utils
 	/**
 	 * Create a unique username using the email
 	 *
-	 * @author salvipascual
+	 * @author kuma
+	 * @version 2.0
 	 * @param String $email
 	 * @return String, username
 	 * */
 	public function usernameFromEmail($email)
 	{
 		$connection = new Connection();
-		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
-		$username = substr($username, 0, 5); // get the first 5 chars
-		$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
-		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
-		return $username;
+		$usern = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
+		
+		for ($j = 5; $j <= 10; $j++){
+    		$username = substr($usern, 0, $j); // get the first $j chars
+    		
+    		$res = $connection->deepQuery("SELECT username FROM person WHERE username LIKE '$username%';");
+    		
+    		if ($res === false) return $username;
+    		if (!isset($res[0])) return $username;
+    		
+    		$occupy = array();
+    		
+    		$l = strlen($username);
+    		foreach ($res as $r){
+    		    $s = substr($r->username, $l);
+    		    
+    		    $occupy[intval($s)] = true;
+    		}
+    		
+    		$i =0;
+    		do {
+    		    $i++;
+    		    if (!isset($occupy[$i])) return $username.$i;
+    		    if ($i >= 9999999) break; 		            
+    		} while (true);
+		}
+		
+		return $usename."-".uniqid();
+		
 	}
-
 
 	/**
 	 * Get the path to a service. 
