@@ -221,6 +221,10 @@ hr.small {
 	margin-bottom: 5px;
 }
 
+.showmorepress{
+	display: none;
+}
+
 /* Call to Action */
 
 .call-to-action {
