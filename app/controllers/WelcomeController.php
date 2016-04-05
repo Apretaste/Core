@@ -9,12 +9,14 @@ class WelcomeController extends Controller
 		// START visitors
 		$connection = new Connection();
 		$visits = $connection->deepQuery("
-			SELECT 
+			SELECT
 				count(*) as received, 
 				DATE_FORMAT(request_time,'%Y-%m') as inserted 
 			FROM utilization
 			GROUP BY DATE_FORMAT(request_time,'%Y-%m')
-			ORDER BY inserted DESC LIMIT 6");
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
+			ORDER BY inserted DESC 
+			LIMIT 6");
 		$visitors = array();
 		$visitorsPerMonth = 0;
 		foreach($visits as $visit)
@@ -92,5 +94,19 @@ class WelcomeController extends Controller
 		$this->view->wwwroot = $this->di->get('path')['root'];
 		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->pick("index/thankyou");
+	}
+
+	public function servicesAction()
+	{
+		$this->view->title = "Services";
+		$this->view->setLayout('website');
+		$this->view->pick(['index/services']);
+	}
+
+	public function aboutusAction()
+	{
+		$this->view->title = "Meet our team";
+		$this->view->setLayout('website');
+		$this->view->pick(['index/aboutus']);
 	}
 }

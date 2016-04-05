@@ -9,12 +9,14 @@ class BienvenidoController extends Controller
 		// START visitors
 		$connection = new Connection();
 		$visits = $connection->deepQuery("
-				SELECT
-				count(*) as received,
-				DATE_FORMAT(request_time,'%Y-%m') as inserted
-				FROM utilization
-				GROUP BY DATE_FORMAT(request_time,'%Y-%m')
-				ORDER BY inserted DESC LIMIT 6");
+			SELECT
+				count(*) as received, 
+				DATE_FORMAT(request_time,'%Y-%m') as inserted 
+			FROM utilization
+			GROUP BY DATE_FORMAT(request_time,'%Y-%m')
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
+			ORDER BY inserted DESC 
+			LIMIT 6");
 		$visitors = array();
 		$visitorsPerMonth = 0;
 		foreach($visits as $visit)

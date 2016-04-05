@@ -576,3 +576,7 @@ footer {
 	width: 100%;
 	height: 100%;
 }
+
+.no-margin{
+	margin: 0px;
+}
