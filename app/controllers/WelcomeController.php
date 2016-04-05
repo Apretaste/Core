@@ -16,7 +16,7 @@ class WelcomeController extends Controller
 			GROUP BY DATE_FORMAT(request_time,'%Y-%m')
 			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
 			ORDER BY inserted DESC 
-			LIMIT 6");
+			LIMIT 5");
 		$visitors = array();
 		$visitorsPerMonth = 0;
 		foreach($visits as $visit)
