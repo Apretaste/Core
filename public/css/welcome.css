@@ -150,6 +150,18 @@ hr.small {
 	-o-background-size: cover;
 }
 
+.header2 {
+	display: table;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	background: url(../images/background2.jpg) no-repeat center center scroll;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	background-size: cover;
+	-o-background-size: cover;
+}
+
 /* About */
 
 .about {
@@ -211,6 +223,18 @@ hr.small {
 
 .img-portfolio:hover {
 	opacity: 0.8;
+}
+
+.img-team p{
+	line-height: 18px;
+}
+
+.img-team h4{
+	margin-bottom: 5px;
+}
+
+.showmorepress{
+	display: none;
 }
 
 /* Call to Action */
@@ -551,4 +575,8 @@ footer {
 	left: 0;
 	width: 100%;
 	height: 100%;
+}
+
+.no-margin{
+	margin: 0px;
 }
