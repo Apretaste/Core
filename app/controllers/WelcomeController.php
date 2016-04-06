@@ -105,6 +105,7 @@ class WelcomeController extends Controller
 
 	public function aboutusAction()
 	{
+		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->title = "Meet our team";
 		$this->view->setLayout('website');
 		$this->view->pick(['index/aboutus']);
