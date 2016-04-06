@@ -1,0 +1,47 @@
+<div class="row">
+	<div class="col-xs-12"> 
+		<table id="servicesTable" class="table">
+			<thead>
+				<tr>
+					<th>Customer</th>
+					<th>Survey</th>
+					<th>Deadline</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php
+				foreach ($surveys as $survey) {
+				?>
+				<tr>
+					<td>
+						<b><?php echo $survey->customer; ?></b>
+					</td>
+					<td><?php echo $survey->title; ?></td>
+					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($survey->deadline)); ?></td>
+					
+					<td class="text-center">
+					<?php if ($survey->active.''=='1'):?>
+						<a class="btn btn-default" target="_blank" href="/manage/survey?op=disable&id=<?php echo $survey->id; ?>">Disable</a>
+						<?php else:?>
+						<a class="btn btn-default" target="_blank" href="/manage/survey?op=enable&id=<?php echo $survey->id; ?>">Enable</a>
+						<?php endif;?>
+					</td>
+					
+					<td class="text-center">
+						<a class="btn btn-default" target="_blank" href="/manage/surveyDelete?id=<?php echo $survey->id; ?>">Delete</a>
+					</td>
+				</tr>
+			<?php } ?>
+			<tr>
+				<form action="/manage/surveys" method="post">
+				<td><input class="form-control" name="surveyCustomer"></td>
+				<td><input class="form-control" name="surveyTitle"></td>
+				<td><input class="form-control" name="surveyDeadline"></td>
+				<td class="text-center"><input class="btn btn-default" type="submit" name="surveySubmit" value="Add"></td>
+				</form>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+

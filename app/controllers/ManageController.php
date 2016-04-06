@@ -227,21 +227,21 @@ class ManageController extends Controller
 		$queryPrefilesPerPravince = 
 		"SELECT c.ProvCount,
 			CASE c.mnth
-				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
 				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
 				WHEN 'ARTEMISA' THEN 'CU-X01'
 				WHEN 'MAYABEQUE' THEN 'CU-X02'
 				WHEN 'MATANZAS' THEN 'Matanzas'
 				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti Spíritus'
-				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-				WHEN 'CAMAGUEY' THEN 'Camagüey'
+				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
+				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ã�vila'
+				WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
 				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-				WHEN 'HOLGUIN' THEN 'Holguín'
+				WHEN 'HOLGUIN' THEN 'HolguÃ­n'
 				WHEN 'GRANMA' THEN 'Granma'
 				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-				WHEN 'GUANTANAMO' THEN 'Guantánamo'
+				WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
 				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
 			END as NewProv
 		FROM (SELECT count(b.province) as ProvCount, a.mnth
@@ -662,4 +662,31 @@ class ManageController extends Controller
 		$this->view->title = "Lastest $numlines errors";
 		$this->view->output = $output;
 	}
+	
+	/**
+	 * List of surveys
+	 * */
+	public function surveysAction()
+	{
+	    $connection = new Connection();
+	
+	    if($this->request->isPost())
+	    {
+	        $customer = $this->request->getPost("surveyCustomer");
+	        $title = $this->request->getPost("surveyTitle");
+	        $deadline = $this->request->getPost("surveyDeadline");
+	         
+	        $sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
+	    
+	        $connection->deepQuery($sql);
+	    }
+	    
+	    $querySurveys = "SELECT * FROM _survey ORDER BY customer, title";
+	    
+	    $surveys = $connection->deepQuery($querySurveys);
+
+	    $this->view->title = "List of surveys (".count($surveys).")";
+	    $this->view->surveys = $surveys;
+	}
+	
 }
