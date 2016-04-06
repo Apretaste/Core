@@ -662,31 +662,4 @@ class ManageController extends Controller
 		$this->view->title = "Lastest $numlines errors";
 		$this->view->output = $output;
 	}
-	
-	/**
-	 * List of surveys
-	 * */
-	public function surveysAction()
-	{
-	    $connection = new Connection();
-	
-	    if($this->request->isPost())
-	    {
-	        $customer = $this->request->getPost("surveyCustomer");
-	        $title = $this->request->getPost("surveyTitle");
-	        $deadline = $this->request->getPost("surveyDeadline");
-	         
-	        $sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
-	    
-	        $connection->deepQuery($sql);
-	    }
-	    
-	    $querySurveys = "SELECT * FROM _survey ORDER BY customer, title";
-	    
-	    $surveys = $connection->deepQuery($querySurveys);
-
-	    $this->view->title = "List of surveys (".count($surveys).")";
-	    $this->view->surveys = $surveys;
-	}
-	
 }
