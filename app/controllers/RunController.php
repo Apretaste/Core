@@ -67,7 +67,7 @@ class RunController extends Controller
 		$connection->deepQuery(
 			"START TRANSACTION;
 				UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
-				DELETE FROM reminder WHERE email='$email';
+				UPDATE reminder SET status=0 WHERE email = '$email';
 			COMMIT;");
 
 		// some services cannot be used via the API
@@ -371,7 +371,7 @@ class RunController extends Controller
 				$connection->deepQuery("
 					START TRANSACTION;
 					UPDATE person SET $setActive last_access=CURRENT_TIMESTAMP WHERE email='$email';
-					DELETE FROM reminder WHERE email='$email';
+					UPDATE reminder SET status=0 WHERE email = '$email';
 					COMMIT;");
 			}
 			else // if the person accessed for the first time, insert him/her

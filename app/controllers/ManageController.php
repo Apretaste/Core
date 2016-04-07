@@ -662,4 +662,25 @@ class ManageController extends Controller
 		$this->view->title = "Lastest $numlines errors";
 		$this->view->output = $output;
 	}
+
+	/**
+	 * Remarket
+	 * */
+	public function remarketAction()
+	{
+		$query =
+			"SELECT
+				count(email) as number,
+				DATE_FORMAT(last_remind,'%Y-%m-%d') as date
+			FROM reminder
+			WHERE status = 0
+			GROUP BY date
+			ORDER BY date ASC
+			LIMIT 30";
+		$connection = new Connection();
+		$remarketed = $connection->deepQuery($query);
+
+		$this->view->title = "Remarketed";
+		$this->view->remarketed = $remarketed;
+	}
 }
