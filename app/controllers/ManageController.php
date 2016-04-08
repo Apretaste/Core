@@ -32,7 +32,7 @@ class ManageController extends Controller
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
-		$failurePercentage = ((isset($delivery['failure']) ? $delivery['failure'] : 0) * 100) / $delivered[0]->sent;
+		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
 
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;

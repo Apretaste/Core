@@ -60,12 +60,12 @@
 			<p>Memory used: <?php if(isset($revolicoCrawler["RuningMemory"])) echo $revolicoCrawler["RuningMemory"]; ?></p>
 		</div>
 
-		<div class="alert alert-<?php echo $deliveryFailurePercentage > 1 ? "danger" : "success"; ?>" role="alert">
-			<p><b>Delivery status</b> <small>Last 7 days</small></p>
+		<div class="alert alert-<?php echo $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>" role="alert">
+			<p><b><a href="manage/dropped">Delivery status</a></b> <small>(Last 7 days)</small></p>
 			<table class="fullscreen">
 				<tr>
 					<td width="50%">delivered: <?php echo number_format($delivery['delivered']); ?></td>
-					<td>hardfail: <?php echo isset($delivery['hardfail']) ? $delivery['hardfail'] : 0; ?></td>
+					<td>hardfail: <?php echo isset($delivery['hardfail']) ? $delivery['hardfail'] : 0; ?> (<?php echo $deliveryFailurePercentage; ?>%)</td>
 				</tr>
 				<tr>
 					<td width="50%">hard-bounce: <?php echo isset($delivery['hard-bounce']) ? $delivery['hard-bounce'] : 0; ?></td>
@@ -80,7 +80,7 @@
 					<td>temporal: <?php echo isset($delivery['temporal']) ? $delivery['temporal'] : 0; ?></td>
 				</tr>
 				<tr>
-					<td width="50%">failure: <?php echo isset($delivery['failure']) ? $delivery['failure'] : 0; ?> (<?php echo $deliveryFailurePercentage; ?>%)</td>
+					<td width="50%">failure: <?php echo isset($delivery['failure']) ? $delivery['failure'] : 0; ?></td>
 					<td>unknown: <?php echo isset($delivery['unknown']) ? $delivery['unknown'] : 0; ?></td>
 				</tr>
 			</table>
