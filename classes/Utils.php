@@ -407,10 +407,14 @@ class Utils
 			stripos($to,"noresponder")!==false
 		) {$response = 'no-reply'; goto LogErrorAndReturn;}
 
-		// block any previouly dropped email that had already failed for 5 times 
+		// do not send any email that hardfailed before
 		$connection = new Connection();
+		$hardfail = $connection->deepQuery("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
+		if($hardfail[0]->hardfails > 0) { $response = 'hard-bounce'; goto LogErrorAndReturn; }
+
+		// block any previouly dropped email that had already failed for 5 times 
 		$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND email='$to'");
-		if($fail[0]->fail > 5) {$response = 'failure'; goto LogErrorAndReturn;}
+		if($fail[0]->fail > 3) {$response = 'failure'; goto LogErrorAndReturn;}
 
 		// block emails from apretaste to apretaste
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
