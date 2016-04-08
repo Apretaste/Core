@@ -372,6 +372,9 @@ class Utils
 	{
 		// save the final response. If not ok, will return on the LogErrorAndReturn tag
 		$response = ""; $code = "";
+		
+		// create new connection before sending anything to LogErrorAndReturn
+		$connection = new Connection();
 
 		// block people following the example email
 		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
@@ -408,7 +411,6 @@ class Utils
 		) {$response = 'no-reply'; goto LogErrorAndReturn;}
 
 		// do not send any email that hardfailed before
-		$connection = new Connection();
 		$hardfail = $connection->deepQuery("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
 		if($hardfail[0]->hardfails > 0) { $response = 'hard-bounce'; goto LogErrorAndReturn; }
 
