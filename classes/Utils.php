@@ -442,7 +442,7 @@ class Utils
 			else // for emails previously tested, use the cache
 			{
 				$code = $cache[0]->status;
-				if(in_array($code, array("114","118","313","314","215"))) $code = "200"; // resend if temporal errors
+//				if(in_array($code, array("114","118","313","314","215"))) $code = "200"; // resend if temporal errors
 			}
 
 			// check type of error based on the code
