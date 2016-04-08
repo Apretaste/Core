@@ -679,7 +679,7 @@ class ManageController extends Controller
 		$sent = $connection->deepQuery($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
-		$this->view->emailsDroppedChart = $emailsDroppedChart;
+		$this->view->emailsDroppedChart = array_reverse($emailsDroppedChart);
 		$this->view->droppedEmails = $dropped;
 		$this->view->sentEmails = $sent;
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
