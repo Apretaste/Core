@@ -3,6 +3,8 @@
     	<p>Dropped <b><?php echo count($droppedEmails); ?></b> out of <?php echo $sentEmails; ?> emails sent.</p>
     	<p><span style="font-size: 1.5em;" class="badge alert-danger"><?php echo number_format($failurePercentage, 2); ?>% Failure Ratio</span></p>
 
+		<div id="emailsDroppedChart" style="width:100%; height:400px;"></div>
+    	
         <table class="table">
 			<thead>
 				<tr>
@@ -29,3 +31,27 @@
         </table>
     </div>
 </div>
+
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(function () {
+		var data = google.visualization.arrayToDataTable([
+			['Day','hardbounce','softbounce','spam','noreply','loop','failure','temporal','unknown','hardfail'],
+			<?php foreach ($emailsDroppedChart as $data) { ?>
+				['<?php echo $data['date']; ?>',
+				<?php echo $data['hardbounce']; ?>,
+				<?php echo $data['softbounce']; ?>,
+				<?php echo $data['spam']; ?>,
+				<?php echo $data['noreply']; ?>,
+				<?php echo $data['loop']; ?>,
+				<?php echo $data['failure']; ?>,
+				<?php echo $data['temporal']; ?>,
+				<?php echo $data['unknown']; ?>,
+				<?php echo $data['hardfail']; ?>],
+			<?php } ?>
+		]);
+		var chart = new google.visualization.AreaChart(document.getElementById('emailsDroppedChart'));
+		chart.draw(data, {});
+	});
+</script>

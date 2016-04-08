@@ -366,15 +366,12 @@ class Utils
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
 	 * @param Enum $direction, in or out, if we check an email received or sent
-	 * @return String delivability: ok, hard-bounce, soft-bounce, spam, no-reply, loop, unknown
+	 * @return String deliverability: ok, hard-bounce, soft-bounce, spam, no-reply, loop, failure, temporal, unknown
 	 * */
 	public function deliveryStatus($to, $direction="out")
 	{
 		// save the final response. If not ok, will return on the LogErrorAndReturn tag
-		$response = '';
-
-		// create a new connection object
-		$connection = new Connection();
+		$response = ""; $code = "";
 
 		// block people following the example email
 		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
@@ -410,27 +407,23 @@ class Utils
 			stripos($to,"noresponder")!==false
 		) {$response = 'no-reply'; goto LogErrorAndReturn;}
 
-		// block any previouly dropped email
-		$res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
-		if( ! empty($res)) {$response = 'loop'; goto LogErrorAndReturn;}
+		// block any previouly dropped email that had already failed for 5 times 
+		$connection = new Connection();
+		$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND email='$to'");
+		if($fail[0]->fail > 5) {$response = 'failure'; goto LogErrorAndReturn;}
 
 		// block emails from apretaste to apretaste
 		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
 		foreach($mailboxes as $m) if($to == $m->email) {$response = 'loop'; goto LogErrorAndReturn;}
-/*
-		// check for valid domain
-		$mgClient = new Mailgun("pubkey-f04b8b05d4030df391a8578062aac53e");
-		$result = $mgClient->get("address/validate", array('address' => $to));
-		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
-*/
+
 		// check deeper for new people. Only check deeper the outgoing emails
 		if( ! $this->personExist($to) && $direction=="out")
 		{
 			// use the cache if the email was checked before
-			$res = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
+			$cache = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
 
 			// if the email hasen't been tested before, check
-			if(empty($res))
+			if(empty($cache))
 			{
 				$di = \Phalcon\DI\FactoryDefault::getDefault();
 				$key = $di->get('config')['emailvalidator']['key'];
@@ -438,8 +431,8 @@ class Utils
 				if($result)
 				{
 					// save all emails tested by the email validador to ensure no errors are happening
-					$status = $result->status;
-					$connection->deepQuery("INSERT INTO delivery_checked (email,status) VALUES ('$to','$status')");
+					$code = $result->status;
+					$connection->deepQuery("INSERT INTO delivery_checked (email,status) VALUES ('$to','$code')");
 				}
 				else
 				{
@@ -448,13 +441,18 @@ class Utils
 			}
 			else // for emails previously tested, use the cache
 			{
-				$status = $res[0]->status;
+				$code = $cache[0]->status;
+				if(in_array($code, array("114","118","313","314","215"))) $code = "200"; // resend if temporal errors
 			}
 
-			// get the result for each status code
-			if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
-			if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
-			if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+			// check type of error based on the code
+			if(in_array($code, array("121","200","207","305","308"))) return 'ok';
+			if(in_array($code, array("114","118","313","314","215"))) {$response = 'temporal'; goto LogErrorAndReturn;}
+			if(in_array($code, array("413","406"))) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
+			if(in_array($code, array("302","314","317","401","404","410","414","420"))) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+			if($code == "303") {$response = 'spam'; goto LogErrorAndReturn;}
+			if($code == "409") {$response = 'no-reply'; goto LogErrorAndReturn;}
+			$response = 'unknown'; goto LogErrorAndReturn; // unknown if no code matches
 		}
 
 		// when no errors were found
@@ -463,10 +461,9 @@ class Utils
 		// log errors in the database before returning
 		// and YES, I am using GOTO
 		LogErrorAndReturn:
-		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
+		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$response','$code','$direction')");
 		return $response;
 	}
-
 
 	/**
 	 * Get the completion percentage of a profile

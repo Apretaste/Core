@@ -26,8 +26,18 @@ class ManageController extends Controller
 			$revolicoCrawler["RuningMemory"] = $details[3];
 		}
 
+		// get the delivery status of emails sent
+		$connection = new Connection();
+		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
+		$delivery = array("delivered"=>$delivered[0]->sent);
+		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
+		$failurePercentage = ((isset($delivery['failure']) ? $delivery['failure'] : 0) * 100) / $delivered[0]->sent;
+
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
+		$this->view->delivery = $delivery;
+		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 	}
 
 
@@ -616,17 +626,60 @@ class ManageController extends Controller
 	 * */
 	public function droppedAction()
 	{
-		// get last 7 days of dropped emails
+		// create the sql for the graph
+		$sql = "";
+		foreach (range(0,7) as $day)
+		{
+			$sql .= "
+				SELECT DATE(inserted) as moment,
+					SUM(case when reason = 'hard-bounce' then 1 else 0 end) as hardbounce,
+					SUM(case when reason = 'soft-bounce' then 1 else 0 end) as softbounce,
+					SUM(case when reason = 'spam' then 1 else 0 end) as spam,
+					SUM(case when reason = 'no-reply' then 1 else 0 end) as noreply,
+					SUM(case when reason = 'loop' then 1 else 0 end) as `loop`,
+					SUM(case when reason = 'failure' then 1 else 0 end) as failure,
+					SUM(case when reason = 'temporal' then 1 else 0 end) as temporal,
+					SUM(case when reason = 'unknown' then 1 else 0 end) as unknown,
+					SUM(case when reason = 'hardfail' then 1 else 0 end) as hardfail
+				FROM delivery_dropped
+				WHERE DATE(inserted) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) $sql .= " UNION ";
+		}
+
+		// get the delivery status per code
 		$connection = new Connection();
+		$dropped = $connection->deepQuery($sql);
+
+		// create the array for the view
+		$emailsDroppedChart = array();
+		foreach($dropped as $d)
+		{
+			$emailsDroppedChart[] = [
+				"date" => date("D j", strtotime($d->moment)),
+				"hardbounce" => $d->hardbounce,
+				"softbounce" => $d->softbounce,
+				"spam" => $d->spam,
+				"noreply" => $d->noreply,
+				"loop" => $d->loop,
+				"failure" => $d->failure,
+				"temporal" => $d->temporal,
+				"unknown" => $d->unknown,
+				"hardfail" => $d->hardfail
+			];
+		}
+
+		// get last 7 days of dropped emails
 		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
 		$dropped = $connection->deepQuery($sql);
 
-		// get last 7 days of emails sent
+		// get last 7 days of emails received
 		$connection = new Connection();
-		$sql = "SELECT count(usage_id) AS total FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		$sent = $connection->deepQuery($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
+		$this->view->emailsDroppedChart = $emailsDroppedChart;
 		$this->view->droppedEmails = $dropped;
 		$this->view->sentEmails = $sent;
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
