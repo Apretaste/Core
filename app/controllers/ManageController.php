@@ -9,9 +9,10 @@ class ManageController extends Controller
 	 * */
 	public function indexAction()
 	{
+		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// get the last time the crawlers ran
+		// START revolico widget
 		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
 		$revolicoCrawler = array();
 		if(file_exists($revolicoCrawlerFile))
@@ -25,19 +26,26 @@ class ManageController extends Controller
 			$revolicoCrawler["PostsDownloaded"] = $details[2];
 			$revolicoCrawler["RuningMemory"] = $details[3];
 		}
+		// END revolico widget
 
-		// get the delivery status of emails sent
-		$connection = new Connection();
+		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
 		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
+		// END delivery status widget
+
+		// START remarketing widget
+		$rmStatus = $connection->deepQuery("SELECT * FROM task_status WHERE task = 'remarketing'")[0];
+		$rmStatus->behind = (time() - strtotime($rmStatus->executed)) / 60 / 60;
+		// END remarketing widget
 
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
+		$this->view->remarketingStatus = $rmStatus;
 	}
 
 
@@ -719,21 +727,45 @@ class ManageController extends Controller
 	/**
 	 * Remarket
 	 * */
-	public function remarketAction()
+	public function remarketingAction()
 	{
-		$query =
-			"SELECT
-				count(email) as number,
-				DATE_FORMAT(last_remind,'%Y-%m-%d') as date
-			FROM reminder
-			WHERE status = 0
-			GROUP BY date
-			ORDER BY date ASC
-			LIMIT 30";
-		$connection = new Connection();
-		$remarketed = $connection->deepQuery($query);
+		// create the sql for the graph
+		$sqlSent = $sqlOpened = "";
+		foreach (range(0,7) as $day)
+		{
+			$sqlSent .= "
+				SELECT 
+					DATE(sent) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			$sqlOpened .= "
+				SELECT
+					DATE(opened) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) { $sqlSent .= " UNION "; $sqlOpened .= " UNION "; }
+		}
 
-		$this->view->title = "Remarketed";
-		$this->view->remarketed = $remarketed;
+		// get the delivery status per code
+		$connection = new Connection();
+		$sent = $connection->deepQuery($sqlSent);
+		$opened = $connection->deepQuery($sqlOpened);
+
+		// pass info to the view
+		$this->view->title = "Remarketing";
+		$this->view->sent = array_reverse($sent);
+		$this->view->opened = array_reverse($opened);
 	}
 }

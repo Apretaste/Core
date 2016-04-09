@@ -62,12 +62,12 @@ class RunController extends Controller
 			$attach = array($object);
 		}
 
-		// update last access time to current and erase reminder
+		// update last access time to current and set remarketing
 		$connection = new Connection();
 		$connection->deepQuery(
 			"START TRANSACTION;
 				UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
-				UPDATE reminder SET status=0 WHERE email = '$email';
+				UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
 			COMMIT;");
 
 		// some services cannot be used via the API
@@ -367,11 +367,11 @@ class RunController extends Controller
 					$utils->subscribeToEmailList($email);
 				}
 
-				// update last access time to current and erase reminder
+				// update last access time to current and set remarketing
 				$connection->deepQuery("
 					START TRANSACTION;
-					UPDATE person SET $setActive last_access=CURRENT_TIMESTAMP WHERE email='$email';
-					UPDATE reminder SET status=0 WHERE email = '$email';
+						UPDATE person SET $setActive last_access=CURRENT_TIMESTAMP WHERE email='$email';
+						UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
 					COMMIT;");
 			}
 			else // if the person accessed for the first time, insert him/her
