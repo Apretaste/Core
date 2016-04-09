@@ -87,7 +87,7 @@
 		</div>
 
 		<div class="alert alert-<?php echo $remarketingStatus->behind > 25 ? "danger" : "success"; ?>" role="alert">
-			<p><a href="manage/remarket"><b>Remarketing task</b></a></p>
+			<p><a href="manage/remarketing"><b>Remarketing task</b></a></p>
 			<p>Last run: <?php echo date("D F j, h:i A", strtotime($remarketingStatus->executed)); ?></p>
 			<p>Running time: <?php echo $remarketingStatus->delay; ?> minutes</p>
 			<p>Time behind: <?php echo number_format($remarketingStatus->behind, 2); ?> hours</p>
