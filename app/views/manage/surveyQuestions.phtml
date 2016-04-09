@@ -1,0 +1,76 @@
+<div class="row">
+	<div class="col-xs-12">
+		<a href="/manage/surveys" class="btn btn-default">&lt;&lt; Surveys</a> <br /> <br />
+	<?php if ($message!==false): ?>
+	<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+	<?php endif;?>
+<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title"> # <?php echo $survey->id;?> <?php echo $survey->title; ?></h3>
+			</div>
+			<table id="servicesTable" class="table">
+				<tbody>
+			<?php foreach ($questions as $question): ?>
+				<tr>
+
+						<form action="/manage/surveyQuestions?option=setQuestion&survey=<?php echo $survey->id;?>&id=<?php echo $question->id?>" method="post">
+							<input type="hidden" name="survey" value="<?php echo $survey->id;?>">
+
+							<td><input class="form-control" name="surveyQuestionTitle" value="<?php echo $question->title; ?>"></td>
+
+						<td class="text-center"><input class="btn btn-default" type="submit" name="surveySubmit" value="Set"></td>
+						</form>
+						</td>
+						<td class="text-center"><a class="btn btn-default" href="/manage/surveyQuestions?option=delQuestion&id=<?php echo $question->id; ?>&survey=<?php echo $survey->id; ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></a>
+						</td>
+
+					</tr>
+				<?php foreach($question->answers as $answer):?>
+				<tr>
+						<form action="/manage/surveyQuestions?option=setAnswer&survey=<?php echo $survey->id;?>&id=<?php echo $answer->id; ?>" method="post">
+
+
+							<td>
+								<div class="input-group">
+									<span class="input-group-addon"> <input type="radio" aria-label="..." disabled="true">
+									</span> <input class="form-control" name="surveyAnswerTitle" placeholder="New answer title" value="<?php echo $answer->title; ?>">
+							
+							</td>
+							</div>
+							<td class="text-center"><input class="btn btn-default" type="submit" name="surveySubmit" value="Set"></td>
+						</form>
+						<td class="text-center"><a class="btn btn-default" href="/manage/surveyQuestions?option=delAnswer&id=<?php echo $answer->id; ?>&survey=<?php echo $survey->id; ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></span></a>
+						</td>
+					</tr>
+				<?php endforeach;?>
+				<tr>
+						<form action="/manage/surveyQuestions?option=addAnswer&survey=<?php echo $survey->id;?>" method="post">
+							<input type="hidden" name="question" value="<?php echo $question->id;?>">
+
+
+							<td>
+								<div class="input-group">
+									<span class="input-group-addon"> <input type="radio" aria-label="..." disabled="true">
+									</span> <input class="form-control" name="surveyAnswerTitle" placeholder="New answer">
+							
+							</td>
+							</div>
+							<td class="text-center"><input class="btn btn-default" type="submit" name="surveySubmit" value="+"></td>
+						</form>
+					</tr>
+			<?php endforeach;?>
+			<tr>
+						<form action="/manage/surveyQuestions?option=addQuestion&survey=<?php echo $survey->id;?>" method="post">
+							<input type="hidden" name="survey" value="<?php echo $survey->id;?>">
+							<td><div class="input-group">
+									<span class="input-group-addon" id="basic-addon3">New question:</span> <input class="form-control" name="surveyQuestionTitle"></td>
+							</div>
+							<td class="text-center"><input class="btn btn-default" type="submit" name="surveySubmit" value="+"></td>
+						</form>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
