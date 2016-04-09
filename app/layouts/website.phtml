@@ -1,0 +1,79 @@
+<?php $wwwhttp = $this->di->get('path')['http']; ?>
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title><?php echo $title; ?>| Apretaste</title>
+	
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Devoted activists working to connect thousands of Cubans to the Internet each month via accessible, effective and legal ways">
+		<meta name="author" content="Salvi Pascual">
+	
+		<!-- Twitter Card data -->
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:site" content="@apretaste">
+		<meta name="twitter:title" content="We are connecting Cubans to the Web">
+		<meta name="twitter:description" content="Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways">
+		<meta name="twitter:creator" content="@apretaste">
+		<meta name="twitter:image" content="<?php echo $wwwhttp; ?>/images/background.jpg">
+	
+		<!-- Open Graph data -->
+		<meta name="fb:app_id" content="285099284865702" />
+		<meta name="og:url" content="https://apretaste.com" />
+		<meta name="og:type" content="website" />
+		<meta name="og:locale" content="en_US" />
+		<meta name="og:locale:alternate" content="es_ES" />
+		<meta name="og:site_name" content="Apretaste" />
+		<meta name="og:title" content="We are connecting Cubans to the Web" />
+		<meta name="og:description" content="Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways" />
+		<meta name="og:image" content="<?php echo $wwwhttp; ?>/images/background.jpg" />
+	
+		<link rel="icon" href="<?php echo $wwwhttp; ?>/images/apretaste.icon.png">
+		<link rel="canonical" href="https://apretaste.com/welcome/aboutus">
+	
+		<!-- Bootstrap Core CSS -->
+		<link href="<?php echo $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
+	
+		<!-- Custom CSS -->
+		<link href="<?php echo $wwwhttp; ?>/css/welcome.css" rel="stylesheet">
+
+		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+		<nav class="navbar navbar-inverse" style="border-radius:0px; -webkit-border-radius:0px; -moz-border-radius:0px;">
+			<div class="container">
+				<div class="navbar-header">
+					<span class="navbar-brand"style="text-transform: uppercase;"><?php if(isset($title)) echo $title; ?></span>
+				</div>
+				<div class="navbar-right">
+					<a href="/welcome#donate" class="btn btn-warning navbar-btn">Donate</a>
+					<a href="/welcome" class="btn btn-default navbar-btn">Go Back</a>
+				</div>
+			</div>
+		</nav>
+
+		<div class="container">
+			<?php echo $this->getContent(); ?>
+		</div>
+
+		<nav class="navbar navbar-inverse" style="border-radius:0px; -webkit-border-radius:0px; -moz-border-radius:0px; margin-bottom:0px;">
+			<div class="container">
+				<div class="navbar-header">
+					<span class="navbar-brand"style="text-transform: uppercase;">Apretaste</span>
+				</div>
+				<div class="navbar-right">
+					<a href="/welcome#donate" class="btn btn-warning navbar-btn">Donate</a>
+					<a href="/welcome" class="btn btn-default navbar-btn">Go Back</a>
+				</div>
+			</div>
+		</nav>
+	</body>
+</html>

@@ -9,9 +9,10 @@ class ManageController extends Controller
 	 * */
 	public function indexAction()
 	{
+		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// get the last time the crawlers ran
+		// START revolico widget
 		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
 		$revolicoCrawler = array();
 		if(file_exists($revolicoCrawlerFile))
@@ -25,9 +26,26 @@ class ManageController extends Controller
 			$revolicoCrawler["PostsDownloaded"] = $details[2];
 			$revolicoCrawler["RuningMemory"] = $details[3];
 		}
+		// END revolico widget
+
+		// START delivery status widget
+		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
+		$delivery = array("delivered"=>$delivered[0]->sent);
+		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
+		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
+		// END delivery status widget
+
+		// START remarketing widget
+		$rmStatus = $connection->deepQuery("SELECT * FROM task_status WHERE task = 'remarketing'")[0];
+		$rmStatus->behind = (time() - strtotime($rmStatus->executed)) / 60 / 60;
+		// END remarketing widget
 
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
+		$this->view->delivery = $delivery;
+		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
+		$this->view->remarketingStatus = $rmStatus;
 	}
 
 
@@ -616,17 +634,60 @@ class ManageController extends Controller
 	 * */
 	public function droppedAction()
 	{
-		// get last 7 days of dropped emails
+		// create the sql for the graph
+		$sql = "";
+		foreach (range(0,7) as $day)
+		{
+			$sql .= "
+				SELECT DATE(inserted) as moment,
+					SUM(case when reason = 'hard-bounce' then 1 else 0 end) as hardbounce,
+					SUM(case when reason = 'soft-bounce' then 1 else 0 end) as softbounce,
+					SUM(case when reason = 'spam' then 1 else 0 end) as spam,
+					SUM(case when reason = 'no-reply' then 1 else 0 end) as noreply,
+					SUM(case when reason = 'loop' then 1 else 0 end) as `loop`,
+					SUM(case when reason = 'failure' then 1 else 0 end) as failure,
+					SUM(case when reason = 'temporal' then 1 else 0 end) as temporal,
+					SUM(case when reason = 'unknown' then 1 else 0 end) as unknown,
+					SUM(case when reason = 'hardfail' then 1 else 0 end) as hardfail
+				FROM delivery_dropped
+				WHERE DATE(inserted) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) $sql .= " UNION ";
+		}
+
+		// get the delivery status per code
 		$connection = new Connection();
+		$dropped = $connection->deepQuery($sql);
+
+		// create the array for the view
+		$emailsDroppedChart = array();
+		foreach($dropped as $d)
+		{
+			$emailsDroppedChart[] = [
+				"date" => date("D j", strtotime($d->moment)),
+				"hardbounce" => $d->hardbounce,
+				"softbounce" => $d->softbounce,
+				"spam" => $d->spam,
+				"noreply" => $d->noreply,
+				"loop" => $d->loop,
+				"failure" => $d->failure,
+				"temporal" => $d->temporal,
+				"unknown" => $d->unknown,
+				"hardfail" => $d->hardfail
+			];
+		}
+
+		// get last 7 days of dropped emails
 		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
 		$dropped = $connection->deepQuery($sql);
 
-		// get last 7 days of emails sent
+		// get last 7 days of emails received
 		$connection = new Connection();
-		$sql = "SELECT count(usage_id) AS total FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		$sent = $connection->deepQuery($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
+		$this->view->emailsDroppedChart = array_reverse($emailsDroppedChart);
 		$this->view->droppedEmails = $dropped;
 		$this->view->sentEmails = $sent;
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
@@ -661,5 +722,50 @@ class ManageController extends Controller
 
 		$this->view->title = "Lastest $numlines errors";
 		$this->view->output = $output;
+	}
+
+	/**
+	 * Remarket
+	 * */
+	public function remarketingAction()
+	{
+		// create the sql for the graph
+		$sqlSent = $sqlOpened = "";
+		foreach (range(0,7) as $day)
+		{
+			$sqlSent .= "
+				SELECT 
+					DATE(sent) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			$sqlOpened .= "
+				SELECT
+					DATE(opened) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) { $sqlSent .= " UNION "; $sqlOpened .= " UNION "; }
+		}
+
+		// get the delivery status per code
+		$connection = new Connection();
+		$sent = $connection->deepQuery($sqlSent);
+		$opened = $connection->deepQuery($sqlOpened);
+
+		// pass info to the view
+		$this->view->title = "Remarketing";
+		$this->view->sent = array_reverse($sent);
+		$this->view->opened = array_reverse($opened);
 	}
 }

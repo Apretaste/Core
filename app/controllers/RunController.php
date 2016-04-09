@@ -62,10 +62,13 @@ class RunController extends Controller
 			$attach = array($object);
 		}
 
-		// update last access time to current
-		$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP, reminder=0 WHERE email='$email'";
+		// update last access time to current and set remarketing
 		$connection = new Connection();
-		$connection->deepQuery($sql);
+		$connection->deepQuery(
+			"START TRANSACTION;
+				UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
+				UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
+			COMMIT;");
 
 		// some services cannot be used via the API
 		if (stripos($subject, 'excluyeme') !== false)
@@ -351,22 +354,25 @@ class RunController extends Controller
 			$person = $utils->getPerson($email);
 
 			// if the person exist in Apretaste
+			$setActive = "";
 			if ($person !== false)
 			{
 				// if the person is inactive and he/she is not trying to opt-out
 				if( ! $person->active && $serviceName != "excluyeme")
 				{
 					// make the person active again 
-					$sql = "UPDATE person SET active=1 WHERE email='$email'";
-					$connection->deepQuery($sql);
+					$setActive = "active=1,";
 
 					//  add to the email list in Mail Lite
 					$utils->subscribeToEmailList($email);
 				}
 
-				// update last access time to current
-				$sql = "UPDATE person SET last_access=CURRENT_TIMESTAMP, reminder=0 WHERE email='$email'";
-				$connection->deepQuery($sql);
+				// update last access time to current and set remarketing
+				$connection->deepQuery("
+					START TRANSACTION;
+						UPDATE person SET $setActive last_access=CURRENT_TIMESTAMP WHERE email='$email';
+						UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
+					COMMIT;");
 			}
 			else // if the person accessed for the first time, insert him/her
 			{

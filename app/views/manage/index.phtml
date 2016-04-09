@@ -13,6 +13,7 @@
 				<a href="manage/audience">Audience</a><br/>
 				<a href="manage/profile">Profile</a><br/>
 				<a href="manage/profilesearch">Profile Search</a><br/>
+				<a href="manage/remarketing">Remarketing</a><br/>
 				<a href="manage/raffles">Raffles</a><br/>
 				<a href="manage/services">List of Services</a><br/>
 				<a href="manage/ads">List of Ads</a><br/>
@@ -57,6 +58,39 @@
 			<p>Running time: <?php if(isset($revolicoCrawler["RuningTime"])) echo $revolicoCrawler["RuningTime"]; ?> minutes</p>
 			<p>Posts downloaded: <?php if(isset($revolicoCrawler["PostsDownloaded"])) echo $revolicoCrawler["PostsDownloaded"]; ?></p>
 			<p>Memory used: <?php if(isset($revolicoCrawler["RuningMemory"])) echo $revolicoCrawler["RuningMemory"]; ?></p>
+		</div>
+
+		<div class="alert alert-<?php echo $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>" role="alert">
+			<p><b><a href="manage/dropped">Delivery status</a></b> <small>(Last 7 days)</small></p>
+			<table class="fullscreen">
+				<tr>
+					<td width="50%">delivered: <?php echo number_format($delivery['delivered']); ?></td>
+					<td>hardfail: <?php echo isset($delivery['hardfail']) ? $delivery['hardfail'] : 0; ?> (<?php echo $deliveryFailurePercentage; ?>%)</td>
+				</tr>
+				<tr>
+					<td width="50%">hard-bounce: <?php echo isset($delivery['hard-bounce']) ? $delivery['hard-bounce'] : 0; ?></td>
+					<td>soft-bounce: <?php echo isset($delivery['soft-bounce']) ? $delivery['soft-bounce'] : 0; ?></td>
+				</tr>
+				<tr>
+					<td width="50%">spam: <?php echo isset($delivery['span']) ? $delivery['span'] : 0; ?></td>
+					<td>no-reply: <?php echo isset($delivery['no-reply']) ? $delivery['no-reply'] : 0; ?></td>
+				</tr>
+				<tr>
+					<td width="50%">loop: <?php echo isset($delivery['loop']) ? $delivery['loop'] : 0; ?></td>
+					<td>temporal: <?php echo isset($delivery['temporal']) ? $delivery['temporal'] : 0; ?></td>
+				</tr>
+				<tr>
+					<td width="50%">failure: <?php echo isset($delivery['failure']) ? $delivery['failure'] : 0; ?></td>
+					<td>unknown: <?php echo isset($delivery['unknown']) ? $delivery['unknown'] : 0; ?></td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="alert alert-<?php echo $remarketingStatus->behind > 25 ? "danger" : "success"; ?>" role="alert">
+			<p><a href="manage/remarketing"><b>Remarketing task</b></a></p>
+			<p>Last run: <?php echo date("D F j, h:i A", strtotime($remarketingStatus->executed)); ?></p>
+			<p>Running time: <?php echo $remarketingStatus->delay; ?> minutes</p>
+			<p>Time behind: <?php echo number_format($remarketingStatus->behind, 2); ?> hours</p>
 		</div>
 	</div>
 </div>
