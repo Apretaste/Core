@@ -415,7 +415,7 @@ class Utils
 		if($hardfail[0]->hardfails > 0) { $response = 'hard-bounce'; goto LogErrorAndReturn; }
 
 		// block any previouly dropped email that had already failed for 5 times 
-		$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND email='$to'");
+		$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND email='$to'");
 		if($fail[0]->fail > 3) {$response = 'failure'; goto LogErrorAndReturn;}
 
 		// block emails from apretaste to apretaste
