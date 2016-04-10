@@ -22,6 +22,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 		$response = new Response();
 		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
+		$log = "";
 
 
 		/*
@@ -41,7 +42,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			LIMIT 200");
 
 		// send the first remarketing
-		$log = "\nINVITATIONS (".count($invitedPeople).")\n";
+		$log .= "\nINVITATIONS (".count($invitedPeople).")\n";
 		foreach ($invitedPeople as $person)
 		{
 			// send data to the template
@@ -85,7 +86,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			LIMIT 100");
 
 		// send the remarketing
-		$log = "\nFIRST REMINDER (".count($firstReminderPeople).")\n";
+		$log .= "\nFIRST REMINDER (".count($firstReminderPeople).")\n";
 		foreach ($firstReminderPeople as $person)
 		{
 			// get services that changed since last time
