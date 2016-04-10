@@ -13,6 +13,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 	public function mainAction()
 	{
 		// inicialize supporting classes
+		$timeStart  = time();
 		$connetion = new Connection();
 		$email = new Email();
 		$service = new Service();
@@ -21,25 +22,71 @@ class remarketingTask extends \Phalcon\Cli\Task
 		$response = new Response();
 		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
-		$timeStart  = time();
 
 
-		// FIRST remarketing
+		/*
+		 * INVITATIONS
+		 * */
+
+
+		// people who were invited but never used Apretaste
+		$invitedPeople = $connetion->deepQuery("
+			SELECT invitation_time, email_inviter, email_invited
+			FROM invitations 
+			WHERE used=0 
+			AND DATEDIFF(CURRENT_DATE, invitation_time) > 15 
+			AND email_invited NOT IN (SELECT DISTINCT email from delivery_dropped)
+			AND email_invited NOT IN (SELECT DISTINCT email from remarketing)
+			ORDER BY invitation_time ASC
+			LIMIT 200");
+
+		// send the first remarketing
+		$log = "\nINVITATIONS (".count($invitedPeople).")\n";
+		foreach ($invitedPeople as $person)
+		{
+			// send data to the template
+			$content = array(
+				"date"=>$person->invitation_time,
+				"inviter"=>$person->email_inviter,
+				"invited"=>$person->email_invited,
+				"expires"=>strtotime('next month')
+			);
+
+			// create html response
+			$response->createFromTemplate('pendinginvitation.tpl', $content);
+			$response->internal = true;
+			$html = $render->renderHTML($service, $response);
+
+			// move remarketing to the next state and add $1 to his/her account
+			$subject = "{$person->email_inviter} esta esperando por su invitacion!";
+			$email->sendEmail($person->email_invited, $subject, $html);
+
+			// insert into remarketing table
+			$connetion->deepQuery("INSERT INTO remarketing(email, type) VALUES ('{$person->email_invited}', 'INVITE')");
+
+			// display notifications
+			$log .= "\t{$person->email}\n";
+		}
+
+
+		/*
+		 * FIRST REMINDER
+		 * */
 
 
 		// people missed for the last 30 days and with no remarketing emails unopened
-		$sql = "
+		$firstReminderPeople = $connetion->deepQuery("
 			SELECT email, last_access 
 			FROM person 
 			WHERE active=1 
 			AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 30 
 			AND email not in (SELECT DISTINCT email FROM remarketing WHERE opened IS NULL)
-			LIMIT 100";
-		$firstremarketingPeople = $connetion->deepQuery($sql);
+			ORDER BY insertion_date ASC
+			LIMIT 100");
 
-		// send the first remarketing
-		$log = "\nFIRST REMINDER (".count($firstremarketingPeople).")\n";
-		foreach ($firstremarketingPeople as $person)
+		// send the remarketing
+		$log = "\nFIRST REMINDER (".count($firstReminderPeople).")\n";
+		foreach ($firstReminderPeople as $person)
 		{
 			// get services that changed since last time
 			$sql = "SELECT * FROM service WHERE insertion_date BETWEEN '{$person->last_access}' AND CURRENT_TIMESTAMP AND listed=1";
@@ -69,22 +116,23 @@ class remarketingTask extends \Phalcon\Cli\Task
 		}
 
 
-		// SECOND remarketing
+		/*
+		 * SECOND REMINDER
+		 * */
 
 
 		// people with REMINDER1 unaswered for the last 30 days, and without REMINDER2 created
-		$sql = "
+		$secondReminderPeople = $connetion->deepQuery("
 			SELECT email
 			FROM remarketing A
 			WHERE type='REMINDER1'
 			AND opened IS NULL
 			AND DATEDIFF(CURRENT_DATE, sent) > 30
-			AND (SELECT COUNT(email) FROM remarketing WHERE type='REMINDER2' AND opened IS NULL AND email=A.email)=0";
-		$secondremarketingPeople = $connetion->deepQuery($sql);
+			AND (SELECT COUNT(email) FROM remarketing WHERE type='REMINDER2' AND opened IS NULL AND email=A.email)=0");
 
-		// send the first remarketing
-		$log .= "SECOND REMINDER (".count($secondremarketingPeople).")\n";
-		foreach ($secondremarketingPeople as $person)
+		// send the remarketing
+		$log .= "SECOND REMINDER (".count($secondReminderPeople).")\n";
+		foreach ($secondReminderPeople as $person)
 		{
 			// create html response
 			$response->createFromTemplate('remindme2.tpl', array());
@@ -106,22 +154,23 @@ class remarketingTask extends \Phalcon\Cli\Task
 		}
 
 
-		// Exclude people who did not answer
+		/*
+		 * EXCLUDE
+		 * */
 
 
 		// people with REMINDER2 unaswered, sent 30 days ago and not EXCLUDED 
-		$sql = "
+		$thirdReminderPeople = $connetion->deepQuery("
 			SELECT email
 			FROM remarketing A
 			WHERE type='REMINDER2'
 			AND opened IS NULL
 			AND DATEDIFF(CURRENT_DATE, sent) > 30
-			AND (SELECT COUNT(email) from remarketing WHERE type='EXCLUDED' AND opened IS NULL AND email=A.email)=0";
-		$thirdremarketingPeople = $connetion->deepQuery($sql);
+			AND (SELECT COUNT(email) from remarketing WHERE type='EXCLUDED' AND opened IS NULL AND email=A.email)=0");
 
-		// send the first remarketing
-		$log .= "UNSUSCRIBING (".count($thirdremarketingPeople).")\n";
-		foreach ($thirdremarketingPeople as $person)
+		// unsubcribe people
+		$log .= "UNSUSCRIBING (".count($thirdReminderPeople).")\n";
+		foreach ($thirdReminderPeople as $person)
 		{
 			// unsubscribe person
 			$utils->unsubscribeFromEmailList($person->email);

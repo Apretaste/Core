@@ -388,7 +388,7 @@ class RunController extends Controller
 				$invitations = $connection->deepQuery($sql);
 				if(count($invitations)>0)
 				{
-					// create tickets for all the invitors. When a person 
+					// create tickets for all the people invited. When somebody 
 					// is invited by more than one person, they all get tickets
 					$sql = "START TRANSACTION;";
 					foreach ($invitations as $invite)
@@ -396,7 +396,7 @@ class RunController extends Controller
 						// create the query
 						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
 						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
-						$sql .= "UPDATE invitations SET used='1' WHERE invitation_id = '{$invite->invitation_id}';";
+						$sql .= "UPDATE invitations SET used='1', used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
 
 						// email the invitor
 						$body = "<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>";
