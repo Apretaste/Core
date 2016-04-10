@@ -58,14 +58,14 @@ class remarketingTask extends \Phalcon\Cli\Task
 			$html = $render->renderHTML($service, $response);
 
 			// move remarketing to the next state and add $1 to his/her account
-			$subject = "{$person->email_inviter} esta esperando por su invitacion!";
+			$subject = "Su amigo {$person->email_inviter} esta esperando por usted!";
 			$email->sendEmail($person->email_invited, $subject, $html);
 
 			// insert into remarketing table
 			$connetion->deepQuery("INSERT INTO remarketing(email, type) VALUES ('{$person->email_invited}', 'INVITE')");
 
 			// display notifications
-			$log .= "\t{$person->email}\n";
+			$log .= "\t{$person->email_invited}\n";
 		}
 
 
