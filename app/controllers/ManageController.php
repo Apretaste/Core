@@ -768,4 +768,38 @@ class ManageController extends Controller
 		$this->view->sent = array_reverse($sent);
 		$this->view->opened = array_reverse($opened);
 	}
+	
+	public function userCreditAction(){
+	    $this->view->person = false;
+	    $this->view->title = "User's credit";
+	    $this->view->message = false;
+	    $this->view->message_type = 'success';
+	    
+	    if ($this->request->isPost()){
+	        $email = $this->request->getPost('email');
+	        $credit = $this->request->getCredit('credit');
+	        if (!is_null($email)){
+	            
+	            $utils = new Utils();
+	            $person = $utils->getPerson($email);
+	            
+	            if ($person!==false){
+	                
+	                $confirm = $this->request->getPost('confirm');
+	                if (is_null($confirm)){
+    	                $this->view->person = $person;
+    	                $this->view->credit = $credit;
+    	                $this->view->newcredit = $credit + $person->credit;
+	                } else {
+	                    
+	                    $db = new Connection();
+	                    $sql = "UPDATE person SET credit = credit + $credit WHERE email = '$email';";
+	                    $db->deepQuery($sql);
+	                    $this->view->message = "User's credit updated successfull';
+	                }
+	                
+	            }
+	        }
+	    }
+	}
 }
