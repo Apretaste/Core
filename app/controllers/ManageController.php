@@ -778,7 +778,11 @@ class ManageController extends Controller
 	    if ($this->request->isPost()){
 	        $email = $this->request->getPost('email');
 	        $credit = $this->request->getPost('credit');
-	        if (!is_null($email)){
+	        
+	        if (is_null($credit) || $credit == 0){
+	            $this->view->message = "Please, type the credit";
+	            $this->view->message_type = 'danger';
+	        } elseif (!is_null($email)){
 	            
 	            $utils = new Utils();
 	            $person = $utils->getPerson($email);
@@ -787,9 +791,15 @@ class ManageController extends Controller
 	                
 	                $confirm = $this->request->getPost('confirm');
 	                if (is_null($confirm)){
-    	                $this->view->person = $person;
-    	                $this->view->credit = $credit;
-    	                $this->view->newcredit = $credit + $person->credit;
+	                    if ($person->credit + $credit < 0){
+	                        $this->view->person = false;
+	                        $this->view->message = "It is not possible to decrease <b>".number_format($credit, 2)."</b> from user's credit";
+	                        $this->view->message_type = 'danger';
+	                    } else {
+        	                $this->view->person = $person;
+        	                $this->view->credit = $credit;
+        	                $this->view->newcredit = $credit + $person->credit;
+	                    }
 	                } else {
 	                    $db = new Connection();
 	                    $sql = "UPDATE person SET credit = credit + $credit WHERE email = '$email';";
