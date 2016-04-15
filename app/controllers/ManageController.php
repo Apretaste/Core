@@ -777,7 +777,7 @@ class ManageController extends Controller
 	    
 	    if ($this->request->isPost()){
 	        $email = $this->request->getPost('email');
-	        $credit = $this->request->getCredit('credit');
+	        $credit = $this->request->getPost('credit');
 	        if (!is_null($email)){
 	            
 	            $utils = new Utils();
@@ -791,13 +791,15 @@ class ManageController extends Controller
     	                $this->view->credit = $credit;
     	                $this->view->newcredit = $credit + $person->credit;
 	                } else {
-	                    
 	                    $db = new Connection();
 	                    $sql = "UPDATE person SET credit = credit + $credit WHERE email = '$email';";
 	                    $db->deepQuery($sql);
-	                    $this->view->message = "User's credit updated successfull';
+	                    $this->view->message = "User's credit updated successfull";
 	                }
 	                
+	            } else {
+	                $this->view->message = "User <b>$email</b> not found";
+	                $this->view->message_type = 'danger';
 	            }
 	        }
 	    }
