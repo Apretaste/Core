@@ -6,14 +6,15 @@ class RunController extends Controller
 {
 	public function indexAction()
 	{
-		echo "You cannot execute this resource directly. Access to run/display or run/api";
+		echo "Cannot run directly. Please access to run/display or run/api instead";
 	}
 
 	/**
 	 * Executes an html request the outside. Display the HTML on screen
+	 * 
 	 * @author salvipascual
-	 * @param String $subject, subject line of the email
-	 * @param String $body, body of the email
+	 * @get String $subject, subject line of the email
+	 * @get String $body, body of the email
 	 * */
 	public function displayAction()
 	{
@@ -26,9 +27,10 @@ class RunController extends Controller
 
 	/**
 	 * Executes an API request. Display the JSON on screen
+	 * 
 	 * @author salvipascual
-	 * @param String $subject, subject line of the email
-	 * @param String $body, body of the email
+	 * @get String $subject, subject line of the email
+	 * @get String $body, body of the email
 	 * */
 	public function apiAction()
 	{
@@ -49,10 +51,8 @@ class RunController extends Controller
 			$content = file_get_contents($attachments);
 			imagejpeg(imagecreatefromstring($content), $filePath);
 
-			// optimize the image
+			// optimize the image and grant full permits
 			$utils->optimizeImage($filePath);
-
-			// grant full access to the file
 			chmod($filePath, 0777);
 
 			// create new object
@@ -70,10 +70,11 @@ class RunController extends Controller
 				UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
 			COMMIT;");
 
-		// some services cannot be used via the API
-		if (stripos($subject, 'excluyeme') !== false)
+		// some services cannot be called using the API
+		$service = strtoupper(explode(" ", $subject)[0]);
+		if ($service == 'EXCLUYEME')
 		{
-			die("You cannot call this service from the API");
+			die("You cannot execute service $service from the API");
 		}
 
 		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
@@ -81,23 +82,72 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Handle webhook requests
+	 * Receives email from the Mandrill webhook and send it to be parsed 
+	 * 
 	 * @author salvipascual
+	 * @post json mandrill_events
 	 * */
-	public function webhookAction()
+	public function mandrillAction()
 	{
 		// get the mandrill json structure from the post
 		$mandrill_events = $_POST['mandrill_events'];
+		$event = json_decode($mandrill_events);
 
 		// get values from the json
-		$event = json_decode($mandrill_events);
 		$fromEmail = $event[0]->msg->from_email;
 		$fromName = isset($event[0]->msg->from_name) ? $event[0]->msg->from_name : "";
 		$toEmail = $event[0]->msg->email;
 		$subject = isset($event[0]->msg->headers->Subject) ? $event[0]->msg->headers->Subject : "";
 		$body = isset($event[0]->msg->text) ? $event[0]->msg->text : "";
 		$filesAttached = empty($event[0]->msg->attachments) ? array() : $event[0]->msg->attachments;
+/*
+		$a = new stdClass();
+		$a->type = "text/txt";
+		$a->content = "adbksajdbjksadbksadbksada";
+		$filesAttached = array($a);
+
+		$fromEmail = "salvi@gmail.com";
+		$fromName = "Salvi";
+		$toEmail = "adios@gmail.com";
+		$subject = "pizarra";
+		$body = "";
+*/
+		// save the attached files and create the response array
 		$attachments = array();
+		foreach ($filesAttached as $file)
+		{
+			print_r($file);
+			$object = new stdClass();
+			$object->type = $file->type;
+			$object->content = base64_decode($file->content);
+			$object->path = "";
+			$attachments[] = $object;
+		}
+
+		// execute the webbook
+		$this->runWebhook($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mandrill");
+	}
+
+	/**
+	 * Run all webhook requests
+	 * 
+	 * @author salvipascual
+	 * @param String Email
+	 * @param String
+	 * @param String Email
+	 * @param String
+	 * @param String
+	 * @param Array
+	 * @param Enum mandrill,mailgun
+	 * */
+	private function runWebhook($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	{
+		// save to the webhook last usage, to alert inactive webhooks
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
+
+		// decide if we should accept the request or not
+		// TODO
 
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
@@ -105,58 +155,42 @@ class RunController extends Controller
 		if($status != 'ok') return;
 
 		// if there are attachments, download them all and create the files in the temp folder 
-		if(count($filesAttached)>0)
+		$wwwroot = $this->di->get('path')['root'];
+		foreach ($attachments as $attach)
 		{
-			// save the attached files and create the response array
-			$wwwroot = $this->di->get('path')['root'];
-			foreach ($filesAttached as $key=>$values)
+			$mimeTypePieces = explode("/", $attach->type);
+			$fileType = $mimeTypePieces[0];
+			$fileNameNoExtension = $utils->generateRandomHash();
+
+			// convert images to jpg and save it to temporal
+			if($fileType == "image")
 			{
-				$mimeType = $values->type;
-				$content = $values->content;
-				$mimeTypePieces = explode("/",$mimeType);
-				$fileType = $mimeTypePieces[0];
-				$extension = $mimeTypePieces[1];
-				$fileNameNoExtension = $utils->generateRandomHash();
-
-				// convert images to jpg and save it to temporal
-				if($fileType == "image")
-				{
-					// save the image as a jpg file
-					$mimeType = image_type_to_mime_type(IMAGETYPE_JPEG);
-					$filePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
-					imagejpeg(imagecreatefromstring(base64_decode($content)), $filePath);
-
-					// optimize the image
-					$utils->optimizeImage($filePath);
-				}
-				else // save any other file to the temporals
-				{
-					$filePath = "$wwwroot/temp/$fileNameNoExtension.$extension";
-					$ifp = fopen($filePath, "wb");
-					fwrite($ifp, base64_decode($content));
-					fclose($ifp);
-				}
-
-				// grant full access to the file
-				chmod($filePath, 0777);
-
-				// create new object
-				$object = new stdClass();
-				$object->path = $filePath;
-				$object->type = $mimeType;
-				$attachments[] = $object;
+				$attach->type = image_type_to_mime_type(IMAGETYPE_JPEG);
+				$filePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
+				imagejpeg(imagecreatefromstring($attach->content), $filePath);
+				$utils->optimizeImage($filePath);
 			}
-		}
+			else // save any other file to the temporals
+			{
+				$extension = $mimeTypePieces[1];
+				$filePath = "$wwwroot/temp/$fileNameNoExtension.$extension";
+				$ifp = fopen($filePath, "wb");
+				fwrite($ifp, $attach->content);
+				fclose($ifp);
+			}
 
+			// grant full access to the file
+			chmod($filePath, 0777);
+			$attach->path = $filePath;
+		}
+print_r($attachments); exit;
 		// update the counter of emails received from that mailbox
 		$today = date("Y-m-d H:i:s");
-		$connection = new Connection();
 		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
 
 		// save the webhook log
-		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("From: $fromEmail, Subject: $subject\n$mandrill_events\n\n");
+		$logger->log("Webhook: $webhook, From: $fromEmail, Subject: $subject\n$mandrill_events\n\n");
 		$logger->close();
 
 		// execute the query
@@ -165,7 +199,14 @@ class RunController extends Controller
 
 	/**
 	 * Respond to a request based on the parameters passed
+	 * 
 	 * @author salvipascual
+	 * @param String, email
+	 * @param String
+	 * @param String, email
+	 * @param String
+	 * @param Array of Objects {type,content,path}
+	 * @param Enum: html,json,email
 	 * */
 	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html")
 	{
