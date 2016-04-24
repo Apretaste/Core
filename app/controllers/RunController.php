@@ -175,8 +175,10 @@ class RunController extends Controller
 	 * */
 	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
-		// do not continue procesing the email if the sender is not valid
+		$connection = new Connection();
 		$utils = new Utils();
+
+		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
 
@@ -185,7 +187,6 @@ class RunController extends Controller
 		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
 		// save to the webhook last usage, to alert inactive webhooks
-		$connection = new Connection();
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 
 		// if there are attachments, download them all and create the files in the temp folder 
