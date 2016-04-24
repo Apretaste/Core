@@ -120,11 +120,48 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->runWebhook($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mandrill");
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mandrill");
 	}
 
 	/**
-	 * Run all webhook requests
+	 * Receives email from the MailGun webhook and send it to be parsed 
+	 * 
+	 * @author salvipascual
+	 * @post Multiple Values
+	 * */
+	public function mailgunAction()
+	{
+		// get values from the json
+		$fromEmail = $_POST['sender'];
+		$fromName = trim(explode("<", $_POST['From'])[0]);
+		$toEmail = $_POST['recipient'];
+		$subject = $_POST['subject'];
+		$body = $_POST['body-plain'];
+
+		// save the attached files and create the response array
+		$attachments = array();
+		for ($i=1; $i<$_POST['attachment-count']; $i++)
+		{
+			$object = new stdClass();
+			$object->name = $_FILES["attachment-$i"]["name"];
+			$object->type = $_FILES["attachment-$i"]["type"];
+			$object->content = base64_encode(file_get_contents($_FILES["attachment-$i"]["tmp_name"]));
+			$object->path = "";
+			$attachments[] = $object;
+		}
+
+		// save the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/mailgun.log");
+		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
+		$logger->close();
+
+		// execute the webbook
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
+	}
+
+	/**
+	 * Process the requests coming by email, usually from webhooks
 	 * 
 	 * @author salvipascual
 	 * @param String Email
@@ -134,8 +171,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array
 	 * @param Enum mandrill,mailgun
+	 * @param String
 	 * */
-	private function runWebhook($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
 		// save to the webhook last usage, to alert inactive webhooks
 		$connection = new Connection();
@@ -143,6 +181,7 @@ class RunController extends Controller
 
 		// decide if we should accept the request or not
 		// TODO
+		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
@@ -185,7 +224,7 @@ class RunController extends Controller
 
 		// save the webhook log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("Webhook:$webhook, From:$fromEmail, To:$toEmail, Subject:$subject");
+		$logger->log("Webhook:$webhook, From:$fromEmail, To:$toEmail, Subject:$subject", "Attachments:".count($attachments));
 		$logger->close();
 
 		// execute the query
