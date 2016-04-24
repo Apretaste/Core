@@ -132,9 +132,9 @@ class RunController extends Controller
 	public function mailgunAction()
 	{
 		// get values from the json
-		$fromEmail = $_POST['X-Original-Sender'];
+		$fromEmail = $_POST['X-Original-Sender']; // From
 		$fromName = trim(explode("<", $_POST['From'])[0]);
-		$toEmail = $_POST['recipient'];
+		$toEmail = $_POST['recipient']; // To
 		$subject = $_POST['subject'];
 		$body = $_POST['body-plain'];
 
@@ -176,6 +176,7 @@ class RunController extends Controller
 	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
 		// do not continue procesing the email if the sender is not valid
+		$utils = new Utils();
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
 
@@ -186,7 +187,6 @@ class RunController extends Controller
 		// save to the webhook last usage, to alert inactive webhooks
 		$connection = new Connection();
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
-		$utils = new Utils();
 
 		// if there are attachments, download them all and create the files in the temp folder 
 		$wwwroot = $this->di->get('path')['root'];
