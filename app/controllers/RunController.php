@@ -132,7 +132,7 @@ class RunController extends Controller
 	public function mailgunAction()
 	{
 		// get values from the json
-		$fromEmail = $_POST['sender'];
+		$fromEmail = $_POST['X-Original-Sender'];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
 		$toEmail = $_POST['recipient'];
 		$subject = $_POST['subject'];
@@ -175,18 +175,18 @@ class RunController extends Controller
 	 * */
 	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
-		// save to the webhook last usage, to alert inactive webhooks
-		$connection = new Connection();
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
+		// do not continue procesing the email if the sender is not valid
+		$status = $utils->deliveryStatus($fromEmail, 'in');
+		if($status != 'ok') return;
 
 		// decide if we should accept the request or not
 		// TODO
 		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
-		// do not continue procesing the email if the sender is not valid
+		// save to the webhook last usage, to alert inactive webhooks
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 		$utils = new Utils();
-		$status = $utils->deliveryStatus($fromEmail, 'in');
-		if($status != 'ok') return;
 
 		// if there are attachments, download them all and create the files in the temp folder 
 		$wwwroot = $this->di->get('path')['root'];
