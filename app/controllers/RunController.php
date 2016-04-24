@@ -224,7 +224,7 @@ class RunController extends Controller
 
 		// save the webhook log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("Webhook:$webhook, From:$fromEmail, To:$toEmail, Subject:$subject", "Attachments:".count($attachments));
+		$logger->log("Webhook:$webhook, From:$fromEmail, To:$toEmail, Subject:$subject, Attachments:".count($attachments));
 		$logger->close();
 
 		// execute the query
