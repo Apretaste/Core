@@ -20,6 +20,7 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
+
 		$result = $this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
 		if($this->di->get('environment') == "sandbox") $result .= '<div style="color:white; background-color:red; font-weight:bold; display:inline-block; padding:5px; position:absolute; top:10px; right:10px; z-index:99">SANDBOX</div>';
 		echo $result;
@@ -142,10 +143,11 @@ class RunController extends Controller
 		$toEmail = $toFrom[0][0];
 		$subject = $_POST['subject'];
 		$body = $_POST['body-plain'];
+		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
 
 		// save the attached files and create the response array
 		$attachments = array();
-		for ($i=1; $i<$_POST['attachment-count']; $i++)
+		for ($i=1; $i<$attachmentCount; $i++)
 		{
 			$object = new stdClass();
 			$object->name = $_FILES["attachment-$i"]["name"];
@@ -186,6 +188,10 @@ class RunController extends Controller
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
+
+		// remove double spaces and apostrophes from the subject
+		// sorry apostrophes break the SQL code :-(
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
 		// decide if we should accept the request or not
 		// TODO
@@ -264,10 +270,7 @@ class RunController extends Controller
 
 		// check the service requested actually exists
 		$utils = new Utils();
-		if( ! $utils->serviceExist($serviceName))
-		{
-			$serviceName = "ayuda";
-		}
+		if( ! $utils->serviceExist($serviceName)) $serviceName = "ayuda";
 
 		// include the service code
 		$wwwroot = $this->di->get('path')['root'];
