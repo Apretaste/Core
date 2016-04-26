@@ -23,7 +23,7 @@ function smarty_modifier_replace_url($text, $charlist = null)
 
 	if(preg_match($regexp, $text, $url))
 	{
-		$link = smarty_function_link(array("href"=>"WEB {$url[0]}", "caption"=>"{$url[0]}"), null);
+		$link = smarty_function_link(array("href"=>"NAVEGAR {$url[0]}", "caption"=>"{$url[0]}"), null);
 		return preg_replace($regexp, $link, $text);
 	}
 
