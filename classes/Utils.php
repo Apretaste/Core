@@ -403,7 +403,7 @@ class Utils
 		// block any previouly dropped email that had already failed for 5 times
 		if(empty($msg))
 		{ 
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND email='$to'");
+			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 
