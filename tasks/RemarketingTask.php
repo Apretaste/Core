@@ -102,7 +102,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			AND IFNULL(DATEDIFF(CURRENT_DATE, last_access),99) > 30 
 			AND email not in (SELECT DISTINCT email FROM remarketing WHERE opened IS NULL)
 			ORDER BY insertion_date ASC
-			LIMIT 100");
+			LIMIT 200");
 
 		// send the remarketing
 		$log .= "\nFIRST REMINDER (".count($firstReminderPeople).")\n";
