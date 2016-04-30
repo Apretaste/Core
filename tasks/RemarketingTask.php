@@ -54,7 +54,8 @@ class remarketingTask extends \Phalcon\Cli\Task
 			}
 
 			// create html response
-			$response->createFromTemplate('autoinvitation.tpl', array());
+			$content = array("email" => $person->email);
+			$response->createFromTemplate('autoinvitation.tpl', $content);
 			$response->internal = true;
 			$html = $render->renderHTML($service, $response);
 
