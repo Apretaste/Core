@@ -16,6 +16,9 @@ class WebhookController extends Controller
 		$code = $_POST['code'];
 		$desc = str_replace("'", "", $_POST['description']);
 
+		// do not save Spam as hardfail
+		if (stripos($desc, 'spam') !== false) $reason = "spam";
+
 		// save into the database
 		$connection = new Connection();
 		$sql = "INSERT INTO delivery_dropped(email,sender,reason,code,description) VALUES ('$email','$domain','$reason','$code','$desc')";

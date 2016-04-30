@@ -13,11 +13,17 @@ class Utils
 	public function getValidEmailAddress()
 	{
 		$connection = new Connection();
-		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='SendOnly' ORDER BY last_usage ASC LIMIT 1";
-		$result = $connection->deepQuery($sql);
-		return $result[0]->email;
-	}
 
+		// get the email
+		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='ReceiveOnly' ORDER BY last_usage ASC LIMIT 1";
+		$result = $connection->deepQuery($sql);
+		$email = $result[0]->email;
+
+		// update the last time used
+		$connection->deepQuery("UPDATE jumper SET last_usage=CURRENT_TIMESTAMP WHERE email='$email'");
+
+		return $email;
+	}
 
 	/**
 	 * Format a link to be an Apretaste mailto
@@ -38,7 +44,6 @@ class Utils
 		return $link;
 	}
 
-
 	/**
 	 * Check if the service exists
 	 * 
@@ -52,7 +57,6 @@ class Utils
 		$wwwroot = $di->get('path')['root'];
 		return file_exists("$wwwroot/services/$serviceName/config.xml");
 	}
-
 
 	/**
 	 * Check if the Person exists in the database
@@ -68,7 +72,6 @@ class Utils
 		return count($res) > 0;
 	}
 
-	
 	/**
 	 * Check if the Person was invited and is still pending 
 	 *
@@ -82,7 +85,6 @@ class Utils
 		$res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
 		return count($res) > 0;
 	}
-
 
 	/**
 	 * Get a person's profile
@@ -144,7 +146,6 @@ class Utils
 		return $person;
 	}
 
-
 	/**
 	 * Create a unique username using the email
 	 *
@@ -161,7 +162,6 @@ class Utils
 		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
 		return $username;
 	}
-
 
 	/**
 	 * Get the path to a service. 
@@ -181,7 +181,6 @@ class Utils
 		if(file_exists($path)) return $path;
 		else return false;
 	}
-
 
 	/**
 	 * Return the current Raffle or false if no Raffle was found
@@ -215,7 +214,6 @@ class Utils
 		return $raffle;
 	}
 
-
 	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
@@ -245,7 +243,6 @@ class Utils
 		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath);
 	}
 
-
 	/**
 	 * Add a new subscriber to the email list in Mail Lite
 	 * 
@@ -271,7 +268,6 @@ class Utils
 		$ML_Subscribers->setId("1266487")->add($subscriber);
 	}
 
-
 	/**
 	 * Delete a subscriber from the email list in Mail Lite
 	 * 
@@ -295,7 +291,6 @@ class Utils
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}
-
 
 	/**
 	 * Get the pieces of names from the full name
@@ -408,7 +403,7 @@ class Utils
 		// block any previouly dropped email that had already failed for 5 times
 		if(empty($msg))
 		{ 
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND email='$to'");
+			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 
