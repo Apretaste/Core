@@ -26,6 +26,51 @@ class remarketingTask extends \Phalcon\Cli\Task
 
 
 		/*
+		 * AUTO INVITATIONS
+		 * */
+
+
+		// people in the list to be automatically invited
+		$people = $connection->deepQuery("
+			SELECT * FROM autoinvitations
+			WHERE email NOT IN (SELECT email FROM person)
+			AND email NOT IN (SELECT email FROM delivery_dropped)
+			AND status = 'WAITING'
+			LIMIT 200");
+
+		// send the first remarketing
+		$log .= "\nAUTOMATIC INVITATIONS (".count($people).")\n";
+		foreach ($people as $person)
+		{
+			// re-validate the email
+			$res = $utils->deepValidateEmail($person->email);
+
+			// if response not ok or temporal, check the email as error
+			if($res[0] != "ok" && $res[0] != "temporal")
+			{
+				$connection->deepQuery("UPDATE autoinvitations SET status='ERROR', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
+				$log .= "\t --skiping {$person->email}\n";
+				continue;
+			}
+
+			// create html response
+			$response->createFromTemplate('autoinvitation.tpl', array());
+			$response->internal = true;
+			$html = $render->renderHTML($service, $response);
+
+			// send invitation email
+			$subject = "Dos problemas, y una solucion";
+			$email->sendEmail($person->email, $subject, $html);
+
+			// mark as sent
+			$connection->deepQuery("UPDATE autoinvitations SET status='INVITED', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
+
+			// display notifications
+			$log .= "\t{$person->email}\n";
+		}
+
+
+		/*
 		 * INVITATIONS
 		 * */
 
@@ -55,7 +100,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 				// re-validate the email
 				$res = $utils->deepValidateEmail($person->email_invited);
 
-				// if response not ok or temporal, unsubscribe and do not email
+				// if response not ok or temporal, delete from invitations list
 				if($res[0] != "ok" && $res[0] != "temporal")
 				{
 					$connection->deepQuery("DELETE FROM invitations WHERE email_invited = '{$person->email_invited}'");
@@ -77,7 +122,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			$response->internal = true;
 			$html = $render->renderHTML($service, $response);
 
-			// move remarketing to the next state and add $1 to his/her account
+			// send the invitation email
 			$subject = "Su amigo {$person->email_inviter} esta esperando por usted!";
 			$email->sendEmail($person->email_invited, $subject, $html);
 
