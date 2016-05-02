@@ -63,11 +63,14 @@ class remarketingTask extends \Phalcon\Cli\Task
 			// send invitation email
 			$subject = "Dos problemas, y una solucion";
 			$email->sendEmail($person->email, $subject, $html);
-
+echo "START TRANSACTION;
+				DELETE FROM autoinvitations WHERE email='{$person->email}';
+				INSERT INTO remarketing(email, type) VALUES ('{$person->email}', 'AUTOINVITE');
+				COMMIT;"
 			// mark as sent
 			$connection->deepQuery("
 				START TRANSACTION;
-				UPDATE autoinvitations SET status='INVITED', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}';
+				DELETE FROM autoinvitations WHERE email='{$person->email}';
 				INSERT INTO remarketing(email, type) VALUES ('{$person->email}', 'AUTOINVITE');
 				COMMIT;");
 
@@ -75,7 +78,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			$log .= "\t{$person->email}\n";
 		}
 
-
+echo $log; exit;
 		/*
 		 * INVITATIONS
 		 * */
