@@ -65,10 +65,10 @@ class RunController extends Controller
 
 		// update last access time to current and set remarketing
 		$connection = new Connection();
-		$connection->deepQuery(
-			"START TRANSACTION;
-				UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
-				UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
+		$connection->deepQuery("
+			START TRANSACTION;
+			UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
+			UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
 			COMMIT;");
 
 		// some services cannot be called using the API
@@ -448,25 +448,17 @@ class RunController extends Controller
 			}
 
 			// if the person exist in Apretaste
-			$setActive = "";
 			if ($person !== false)
 			{
 				// if the person is inactive and he/she is not trying to opt-out
 				if( ! $person->active && $serviceName != "excluyeme")
 				{
-					// make the person active again 
-					$setActive = "active=1,";
-
 					//  add to the email list in Mail Lite
 					$utils->subscribeToEmailList($email);
 				}
 
-				// update last access time to current and set remarketing
-				$connection->deepQuery("
-					START TRANSACTION;
-						UPDATE person SET $setActive last_access=CURRENT_TIMESTAMP WHERE email='$email';
-						UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
-					COMMIT;");
+				// update last access time to current
+				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
@@ -503,6 +495,9 @@ class RunController extends Controller
 				//  add to the email list in Mail Lite
 				$utils->subscribeToEmailList($email);
 			}
+
+			// saves the openning date if the person comes from remarketing
+			$connection->deepQuery("UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email'");
 
 			// calculate execution time when the service stopped executing
 			$currentTime = new DateTime();

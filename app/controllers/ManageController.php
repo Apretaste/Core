@@ -740,6 +740,7 @@ class ManageController extends Controller
 					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
 					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'ERROR' then 1 else 0 end) as error
 				FROM remarketing
 				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
@@ -751,6 +752,7 @@ class ManageController extends Controller
 					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
 					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'ERROR' then 1 else 0 end) as error
 				FROM remarketing
 				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
