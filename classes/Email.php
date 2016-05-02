@@ -58,7 +58,6 @@ class Email
 		$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
 	}
 
-
 	/**
 	 * Brings the next email to be used by Apretaste using an even distribution
 	 * 
@@ -73,24 +72,19 @@ class Email
 
 		// get the email with less usage  
 		$connection = new Connection();
-		
-		$sql = "
-		SELECT * 
-		FROM jumper 
-		WHERE (status='SendReceive' OR status='SendOnly') 
-		AND blocked_domains NOT LIKE '%$domain%' 
-		ORDER BY last_usage ASC LIMIT 1";
-		
-		$result = $connection->deepQuery($sql);
+		$result = $connection->deepQuery("
+			SELECT email
+			FROM jumper 
+			WHERE (status='SendReceive' OR status='SendOnly') 
+			AND blocked_domains NOT LIKE '%$domain%' 
+			ORDER BY last_usage ASC LIMIT 1");
 
 		// increase the send counter
 		$email = $result[0]->email;
-		
 		$connection->deepQuery("
-        UPDATE jumper 
-        SET sent_count = sent_count + 1, 
-            last_usage = CURRENT_TIMESTAMP
-        WHERE email = '$email'");
+	        UPDATE jumper 
+	        SET sent_count = sent_count + 1, last_usage = CURRENT_TIMESTAMP
+	        WHERE email = '$email'");
 
 		return $email;
 	}

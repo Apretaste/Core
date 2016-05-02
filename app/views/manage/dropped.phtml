@@ -18,7 +18,7 @@
 			</thead>
 			<tbody>
 			<?php foreach ($droppedEmails as $email) { ?>
-				<tr>
+				<tr <?php if(date("md",strtotime($email->inserted)) == date("md")) echo 'class="warning"'; ?>>
 					<td><?php echo $email->email; ?></td>
 					<td><?php echo $email->sender; ?></td>
 					<td class="text-center"><nobr><?php echo $email->reason; ?></nobr></td>
