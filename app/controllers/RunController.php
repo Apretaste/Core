@@ -307,7 +307,10 @@ class RunController extends Controller
 
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
-
+		
+		// get the person, false if the person does not exist
+		$person = $utils->getPerson($email);
+		
 		// get details of the service
 		if($this->di->get('environment') == "sandbox")
 		{
@@ -404,6 +407,16 @@ class RunController extends Controller
 		{
 			$emailSender = new Email();
 
+			// if the person accessed for the first time, send welcome email
+			if ($person === false)
+			{
+			    $r = new Response();
+			    $r->internal = true;
+			    $r->setResponseSubject("Bienvenido a Apretaste!");
+			    $r->createFromTemplate("welcome.tpl", array());
+			    $responses[] = $r;
+			}
+			
 			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
@@ -433,9 +446,6 @@ class RunController extends Controller
 					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
-
-			// get the person, false if the person does not exist 
-			$person = $utils->getPerson($email);
 
 			// if the person exist in Apretaste
 			$setActive = "";
