@@ -46,8 +46,8 @@ class remarketingTask extends \Phalcon\Cli\Task
 			// re-validate the email
 			$res = $utils->deepValidateEmail($person->email);
 
-			// if response not ok or temporal, check the email as error
-			if($res[0] != "ok" && $res[0] != "temporal")
+			// if response not ok, check the email as error
+			if($res[0] != "ok")
 			{
 				$connection->deepQuery("UPDATE autoinvitations SET error=1, processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
 				$log .= "\t --skiping {$person->email}\n";
