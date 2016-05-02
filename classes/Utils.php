@@ -157,35 +157,21 @@ class Utils
 	public function usernameFromEmail($email)
 	{
 		$connection = new Connection();
-		$usern = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
-		
-		for ($j = 5; $j <= 10; $j++){
-    		$username = substr($usern, 0, $j); // get the first $j chars
-    		
-    		$res = $connection->deepQuery("SELECT username FROM person WHERE username LIKE '$username%';");
-    		
-    		if ($res === false) return $username;
-    		if (!isset($res[0])) return $username;
-    		
-    		$occupy = array();
-    		
-    		$l = strlen($username);
-    		foreach ($res as $r){
-    		    $s = substr($r->username, $l);
-    		    
-    		    $occupy[intval($s)] = true;
-    		}
-    		
-    		$i =0;
-    		do {
-    		    $i++;
-    		    if (!isset($occupy[$i])) return $username.$i;
-    		    if ($i >= 9999999) break; 		            
-    		} while (true);
+		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
+		$username = substr($username, 0, 5); // get the first 5 chars
+		$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
+		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
+
+		// ensure the username is in reality unique
+		$res = $connection->deepQuery("SELECT username FROM person WHERE username='$username'");
+		if( ! empty($res))
+		{
+			$hash = md5(uniqid().$username.$email);
+			$hash = strtolower(preg_replace('/[^A-Za-z]/', '', $hash)); // remove special chars and caps
+			$username = substr($hash, 0, 6); // get the first 6 chars
 		}
-		
-		return $usename."-".uniqid();
-		
+
+		return $username;
 	}
 
 	/**
