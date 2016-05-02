@@ -540,16 +540,17 @@ class Utils
 		}
 		return $percent;
 	}
-	
+
 	/**
-	 * Return path to temporal folder
+	 * Return path to the temporal folder
 	 * 
+	 * @author Kuma
 	 * @return string
 	 */
-	public function getTempDir(){
-	    $di = \Phalcon\DI\FactoryDefault::getDefault();
-	    $wwwroot = $di->get('path')['root'];
-	    return "$wwwroot/temp/";
-	     
+	public function getTempDir()
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		return "$wwwroot/temp/";
 	}
 }
