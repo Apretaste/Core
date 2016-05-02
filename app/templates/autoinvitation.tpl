@@ -3,8 +3,8 @@
 	<h1>PROBLEMA #1</h1>
 	<div>&darr;</div>
 	<div>&darr;</div>
-	<p>Solo el <span style="color:red">5%</span> de los cubanos acceden a Internet <b>:'-(</b></p>
-	<p>Sin embargo, el <span style="color:green">25%</span> tienen acceso al email <b>:-0</b></p>
+	<p>Casi el <span style="color:red">5%</span> de los Cubanos acceden a Internet <b>:'-(</b></p>
+	<p>Sin embargo, el <span style="color:green">25%</span> solo tiene acceso al email <b>:-0</b></p>
 	<div>&darr;</div>
 	<div>&darr;</div>
 	<p>Y eso representar&iacute;a:</p>

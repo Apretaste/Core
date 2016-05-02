@@ -34,8 +34,9 @@ class remarketingTask extends \Phalcon\Cli\Task
 		$people = $connection->deepQuery("
 			SELECT * FROM autoinvitations
 			WHERE email NOT IN (SELECT email FROM person)
-			AND email NOT IN (SELECT email FROM delivery_dropped)
-			AND status = 'WAITING'
+			AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)
+			AND email NOT IN (SELECT DISTINCT email from remarketing)
+			AND error=0
 			LIMIT 200");
 
 		// send the first remarketing
@@ -48,7 +49,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			// if response not ok or temporal, check the email as error
 			if($res[0] != "ok" && $res[0] != "temporal")
 			{
-				$connection->deepQuery("UPDATE autoinvitations SET status='ERROR', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
+				$connection->deepQuery("UPDATE autoinvitations SET error=1, processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
 				$log .= "\t --skiping {$person->email}\n";
 				continue;
 			}
@@ -64,7 +65,11 @@ class remarketingTask extends \Phalcon\Cli\Task
 			$email->sendEmail($person->email, $subject, $html);
 
 			// mark as sent
-			$connection->deepQuery("UPDATE autoinvitations SET status='INVITED', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
+			$connection->deepQuery("
+				START TRANSACTION;
+				UPDATE autoinvitations SET status='INVITED', processed=CURRENT_TIMESTAMP WHERE email='{$person->email}';
+				INSERT INTO remarketing(email, type) VALUES ('{$person->email}', 'AUTOINVITE');
+				COMMIT;");
 
 			// display notifications
 			$log .= "\t{$person->email}\n";

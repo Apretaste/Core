@@ -15,13 +15,14 @@
 	// emails sent
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['day','reminder1','reminder2','excluded','invited','error'],
+			['day','reminder1','reminder2','excluded','invited','autoinvited','error'],
 			<?php foreach ($sent as $data) { ?>
 			['<?php echo date("D j", strtotime($data->moment)); ?>',
 				<?php echo $data->reminder1; ?>,
 				<?php echo $data->reminder2; ?>,
 				<?php echo $data->excluded; ?>,
 				<?php echo $data->invite; ?>,
+				<?php echo $data->autoinvite; ?>,
 				<?php echo $data->error; ?>],
 				<?php } ?>
 			]);
@@ -32,13 +33,14 @@
 	// emails opened
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['day','reminder1','reminder2','excluded','invited','error'],
+			['day','reminder1','reminder2','excluded','invited','autoinvited','error'],
 			<?php foreach ($opened as $data) { ?>
 				['<?php echo date("D j", strtotime($data->moment)); ?>',
 				<?php echo $data->reminder1; ?>,
 				<?php echo $data->reminder2; ?>,
 				<?php echo $data->excluded; ?>,
 				<?php echo $data->invite; ?>,
+				<?php echo $data->autoinvite; ?>,
 				<?php echo $data->error; ?>],
 			<?php } ?>
 		]);
