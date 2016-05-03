@@ -109,7 +109,7 @@ class RunController extends Controller
 		{
 			$object = new stdClass();
 			$object->type = $file->type;
-			$object->content = base64_decode($file->content);
+			$object->content = $file->content; // base64 attachment string
 			$object->path = "";
 			$attachments[] = $object;
 		}
@@ -147,7 +147,7 @@ class RunController extends Controller
 
 		// save the attached files and create the response array
 		$attachments = array();
-		for ($i=1; $i<$attachmentCount; $i++)
+		for ($i=1; $i<=$attachmentCount; $i++)
 		{
 			$object = new stdClass();
 			$object->name = $_FILES["attachment-$i"]["name"];
@@ -213,7 +213,7 @@ class RunController extends Controller
 			{
 				$attach->type = image_type_to_mime_type(IMAGETYPE_JPEG);
 				$filePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
-				imagejpeg(imagecreatefromstring($attach->content), $filePath);
+				imagejpeg(imagecreatefromstring(base64_decode($attach->content)), $filePath);
 				$utils->optimizeImage($filePath);
 			}
 			else // save any other file to the temporals
