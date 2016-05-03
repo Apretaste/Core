@@ -430,20 +430,19 @@ class Utils
 		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
 		{
 			// use the cache if the email was checked before
-			$cache = $connection->deepQuery("SELECT reason, code FROM delivery_checked WHERE email='$to' LIMIT 1");
+			$cache = $connection->deepQuery("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
 
-			// if the email hasen't been tested before
-			if(empty($cache))
+			// if the email hasen't been tested before or gave temporal errors
+			if(empty($cache) || $cache[0]->reason == "temporal")
 			{
 				 $return = $this->deepValidateEmail($to);
 				 $msg = $return[0];
 				 $code = $return[1];
 			}
-			else // for emails previously tested, use the cache
+			else // for emails previously tested that failed, use the cache
 			{
 				$msg = $cache[0]->reason;
 				$code = $cache[0]->code;
-//				if($msg == "temporal") $msg = "ok"; // resend if temporal errors
 			}
 		}
 
@@ -485,7 +484,7 @@ class Utils
 		// return our table status based on the code
 		$reason = 'unknown'; // for non-recognized codes
 		if(in_array($code, array("121","200","207","305","308"))) $reason = 'ok';
-		if(in_array($code, array("114","118","313","314","215"))) $reason = 'temporal';
+		if(in_array($code, array("114","118","119","313","314","215"))) $reason = 'temporal';
 		if(in_array($code, array("413","406"))) $reason = 'soft-bounce';
 		if(in_array($code, array("302","314","317","401","404","410","414","420"))) $reason = 'hard-bounce';
 		if($code == "303") $reason = 'spam';
