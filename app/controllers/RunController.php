@@ -140,7 +140,7 @@ class RunController extends Controller
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
-		$toEmail = isset($toFrom[0][0]) ? $toFrom[0][0] : "";
+		$toEmail = isset($toFrom[0][0]) ? trim($toFrom[0][0], " \t\n\r\0\x0B\"\',") : "";
 		$subject = $_POST['subject'];
 		$body = $_POST['body-plain'];
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
@@ -193,11 +193,10 @@ class RunController extends Controller
 		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
-		// decide if we should accept the request or not
-		// TODO
+		// save the email as received
 		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
-		// save to the webhook last usage, to alert inactive webhooks
+		// save to the webhook last usage, to alert if the web
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 
 		// if there are attachments, download them all and create the files in the temp folder 
