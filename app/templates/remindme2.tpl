@@ -4,22 +4,32 @@
 
 <p>Le acabo de poner <b>$1 de cr&eacute;dito</b> en su cuenta de Apretaste, para que compre tickets y participe en {link href="RIFA" caption="nuestra rifa mensual"}. Espero que nuestro gesto le sirva como incentivo para volver a nuestra querida familia.</p> 
 
-{if count($services) gt 0}
-	{space10}
-	<h2>Servicios que se est&aacute; perdiendo</h2>
-	<p>&Uacute;ltimamente muchas cosas han cambiado. A continuaci&oacute;n una {link href="SERVICIOS" caption="lista de los servicios"} que se han agregado &oacute; mejorado mientras estuvo fuera:</p>
-	
-	<table border="1" width="100%">
-		{foreach from=$services item=service}
-		<tr>
-			<td><b>{link href="{$service->name}" caption="{$service->name}"}</b></td>
-			<td>{$service->description}</td>
-		</tr>
-		{/foreach}
-	</table>
-{/if}
+<p>&iquest;No sabe que hacer? Comience por nuestros servicios m&aacute;s usados:</p>
+
+<table border="0" wisth="100">
+	<tr>
+		<td>{button color="grey" href="PIZARRA" caption="Pizarra"}</td>
+		<td>&nbsp;</td>
+		<td>Participe en nuestra red social, con miles de personas compartiendo contenido diariamente</td>
+	</tr>
+	<tr>
+		<td>{button color="grey" href="CUPIDO" caption="Cupido"}</td>
+		<td>&nbsp;</td>
+		<td>Encuentre el amor de su vida a trav&eacute;s de Apretaste</td>
+	</tr>
+	<tr>
+		<td>{button color="grey" href="NAVEGAR" caption="Navegar"}</td>
+		<td>&nbsp;</td>
+		<td>Navegue la internet y lea p&aacute;ginas web desde su email</td>
+	</tr>
+	<tr>
+		<td>{button color="grey" href="TIENDA televisor lcd" caption="Tienda"}</td>
+		<td>&nbsp;</td>
+		<td>Busque art&iacute;culos a la venta, o publique algo para ser vendido</td>
+	</tr>
+</table>
 
 {space10}
 
-<p>Si Apretaste no le es &uacute;til ahora mismo, puede excluirse y no le molestaremos m&aacute;s. De hecho, <font color="#A94442">si en 30 d&iacute;as no usa Apretaste le excluiremos autom&aacute;ticamente</font>.</p>
+<p>Si Apretaste no le es &uacute;til ahora mismo, puede excluirse y no le molestaremos m&aacute;s. De hecho, <font color="#A94442">si en 30 d&iacute;as no usa Apretaste, le excluiremos autom&aacute;ticamente</font>.</p>
 <center>{button href="EXCLUYEME" caption="EXCLUYEME"}</center>

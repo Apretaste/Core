@@ -9,9 +9,10 @@ class ManageController extends Controller
 	 * */
 	public function indexAction()
 	{
+		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// get the last time the crawlers ran
+		// START revolico widget
 		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
 		$revolicoCrawler = array();
 		if(file_exists($revolicoCrawlerFile))
@@ -25,9 +26,26 @@ class ManageController extends Controller
 			$revolicoCrawler["PostsDownloaded"] = $details[2];
 			$revolicoCrawler["RuningMemory"] = $details[3];
 		}
+		// END revolico widget
+
+		// START delivery status widget
+		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
+		$delivery = array("delivered"=>$delivered[0]->sent);
+		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
+		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
+		// END delivery status widget
+
+		// START remarketing widget
+		$rmStatus = $connection->deepQuery("SELECT * FROM task_status WHERE task = 'remarketing'")[0];
+		$rmStatus->behind = (time() - strtotime($rmStatus->executed)) / 60 / 60;
+		// END remarketing widget
 
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
+		$this->view->delivery = $delivery;
+		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
+		$this->view->remarketingStatus = $rmStatus;
 	}
 
 
@@ -227,21 +245,21 @@ class ManageController extends Controller
 		$queryPrefilesPerPravince = 
 		"SELECT c.ProvCount,
 			CASE c.mnth
-				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
 				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
 				WHEN 'ARTEMISA' THEN 'CU-X01'
 				WHEN 'MAYABEQUE' THEN 'CU-X02'
 				WHEN 'MATANZAS' THEN 'Matanzas'
 				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti Spíritus'
-				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-				WHEN 'CAMAGUEY' THEN 'Camagüey'
+				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
+				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ã�vila'
+				WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
 				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-				WHEN 'HOLGUIN' THEN 'Holguín'
+				WHEN 'HOLGUIN' THEN 'HolguÃ­n'
 				WHEN 'GRANMA' THEN 'Granma'
 				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-				WHEN 'GUANTANAMO' THEN 'Guantánamo'
+				WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
 				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
 			END as NewProv
 		FROM (SELECT count(b.province) as ProvCount, a.mnth
@@ -616,17 +634,60 @@ class ManageController extends Controller
 	 * */
 	public function droppedAction()
 	{
-		// get last 7 days of dropped emails
+		// create the sql for the graph
+		$sql = "";
+		foreach (range(0,7) as $day)
+		{
+			$sql .= "
+				SELECT DATE(inserted) as moment,
+					SUM(case when reason = 'hard-bounce' then 1 else 0 end) as hardbounce,
+					SUM(case when reason = 'soft-bounce' then 1 else 0 end) as softbounce,
+					SUM(case when reason = 'spam' then 1 else 0 end) as spam,
+					SUM(case when reason = 'no-reply' then 1 else 0 end) as noreply,
+					SUM(case when reason = 'loop' then 1 else 0 end) as `loop`,
+					SUM(case when reason = 'failure' then 1 else 0 end) as failure,
+					SUM(case when reason = 'temporal' then 1 else 0 end) as temporal,
+					SUM(case when reason = 'unknown' then 1 else 0 end) as unknown,
+					SUM(case when reason = 'hardfail' then 1 else 0 end) as hardfail
+				FROM delivery_dropped
+				WHERE DATE(inserted) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) $sql .= " UNION ";
+		}
+
+		// get the delivery status per code
 		$connection = new Connection();
+		$dropped = $connection->deepQuery($sql);
+
+		// create the array for the view
+		$emailsDroppedChart = array();
+		foreach($dropped as $d)
+		{
+			$emailsDroppedChart[] = [
+				"date" => date("D j", strtotime($d->moment)),
+				"hardbounce" => $d->hardbounce,
+				"softbounce" => $d->softbounce,
+				"spam" => $d->spam,
+				"noreply" => $d->noreply,
+				"loop" => $d->loop,
+				"failure" => $d->failure,
+				"temporal" => $d->temporal,
+				"unknown" => $d->unknown,
+				"hardfail" => $d->hardfail
+			];
+		}
+
+		// get last 7 days of dropped emails
 		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
 		$dropped = $connection->deepQuery($sql);
 
-		// get last 7 days of emails sent
+		// get last 7 days of emails received
 		$connection = new Connection();
-		$sql = "SELECT count(usage_id) AS total FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		$sent = $connection->deepQuery($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
+		$this->view->emailsDroppedChart = array_reverse($emailsDroppedChart);
 		$this->view->droppedEmails = $dropped;
 		$this->view->sentEmails = $sent;
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
@@ -670,146 +731,259 @@ class ManageController extends Controller
 	 */
 	public function surveysAction()
 	{
-	    $connection = new Connection();
-	    $this->view->message = false;
-	    $this->view->message_type = 'success';
-	    $option = $this->request->get('option');
-	    $sql = false;
-	    
-	    if($this->request->isPost())
-	    {
-	        switch ($option){
-	            case 'addSurvey':
-	                $customer = $this->request->getPost("surveyCustomer");
-	                $title = $this->request->getPost("surveyTitle");
-	                $deadline = $this->request->getPost("surveyDeadline");
-	                $sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
-	                $this->view->message = 'The survey was inserted successfull';
-	                 
-	                break;
-	            case 'setSurvey':
-	                $customer = $this->request->getPost("surveyCustomer");
-	                $title = $this->request->getPost("surveyTitle");
-	                $deadline = $this->request->getPost("surveyDeadline");
-	                $id = $this->request->get('id');
-	                $sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
-	                $this->view->message = 'The survey was updated successfull';
-	                break;
-	        }
-	    }
-	     
-	    switch ($option){
-	        case "delSurvey":
-	            $id = $this->request->get('id');
-	            $sql = "START TRANSACTION;
-	                    DELETE FROM _survey_answer WHERE question = (SELECT id FROM _survey_question WHERE _survey_question.survey = '$id');
-	                    DELETE FROM _survey_question WHERE survey = '$id';
-	                    DELETE FROM _survey WHERE id = '$id';
-	                    COMMIT;";
-	            $this->view->message = 'The survey #'.$delete.' was deleted successfull';
-	            break;
-	        
-	       case "disable":
-	           $id = $this->request->get('id');
-	           $sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
-	           break;
-	       case "enable":
-	           $id = $this->request->get('id');
-	           $sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
-	           break;
-	    }
-	    
-	    if ($sql!==false) $connection->deepQuery($sql);
-	    
-	    $querySurveys = "SELECT * FROM _survey ORDER BY ID";
-	     
-	    $surveys = $connection->deepQuery($querySurveys);
+		$connection = new Connection();
+		$this->view->message = false;
+		$this->view->message_type = 'success';
+		$option = $this->request->get('option');
+		$sql = false;
+		
+		if($this->request->isPost())
+		{
+			switch ($option){
+				case 'addSurvey':
+					$customer = $this->request->getPost("surveyCustomer");
+					$title = $this->request->getPost("surveyTitle");
+					$deadline = $this->request->getPost("surveyDeadline");
+					$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
+					$this->view->message = 'The survey was inserted successfull';
+					 
+					break;
+				case 'setSurvey':
+					$customer = $this->request->getPost("surveyCustomer");
+					$title = $this->request->getPost("surveyTitle");
+					$deadline = $this->request->getPost("surveyDeadline");
+					$id = $this->request->get('id');
+					$sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
+					$this->view->message = 'The survey was updated successfull';
+					break;
+			}
+		}
+		 
+		switch ($option){
+			case "delSurvey":
+				$id = $this->request->get('id');
+				$sql = "START TRANSACTION;
+						DELETE FROM _survey_answer WHERE question = (SELECT id FROM _survey_question WHERE _survey_question.survey = '$id');
+						DELETE FROM _survey_question WHERE survey = '$id';
+						DELETE FROM _survey WHERE id = '$id';
+						COMMIT;";
+				$this->view->message = 'The survey #'.$delete.' was deleted successfull';
+				break;
+			
+		   case "disable":
+			   $id = $this->request->get('id');
+			   $sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
+			   break;
+		   case "enable":
+			   $id = $this->request->get('id');
+			   $sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
+			   break;
+		}
+		
+		if ($sql!==false) $connection->deepQuery($sql);
+		
+		$querySurveys = "SELECT * FROM _survey ORDER BY ID";
+		 
+		$surveys = $connection->deepQuery($querySurveys);
 	
-	    $this->view->title = "List of surveys (".count($surveys).")";
-	    $this->view->surveys = $surveys;
+		$this->view->title = "List of surveys (".count($surveys).")";
+		$this->view->surveys = $surveys;
 	}
-	
+
 	/**
 	 * Manage survey's questions and answers
 	 * 
 	 * @author kuma
 	 */
-	public function surveyQuestionsAction ()
-    {
-        $connection = new Connection();
-        $this->view->message = false;
-        $this->view->message_type = 'success';
-        
-        $option = $this->request->get('option');
-        $sql = false;
-        if ($this->request->isPost()){
-           
-            switch($option){
-                case "addQuestion":
-                    $survey = $this->request->getPost('survey');
-                    $title = $this->request->getPost('surveyQuestionTitle');
-                    $sql ="INSERT INTO _survey_question (survey, title) VALUES ('$survey','$title');";
-                    $this->view->message = "Question <b>$title</b> was inserted successfull";
-                break;
-                case "setQuestion":
-                    $question_id = $this->request->get('id');
-                    $title = $this->request->getPost('surveyQuestionTitle');
-                    $sql ="UPDATE _survey_question SET title = '$title' WHERE id = '$question_id';";
-                    $this->view->message = "Question <b>$title</b> was updated successfull";
-                    break;
-                case "addAnswer":
-                    $question_id = $this->request->get('question');
-                    $title = $this->request->getPost('surveyAnswerTitle');
-                    $sql ="INSERT INTO _survey_answer (question, title) VALUES ('$question_id','$title');";
-                    $this->view->message = "Answer <b>$title</b> was inserted successfull";
-                break;
-                case "setAnswer":
-                    $answer_id = $this->request->get('id');
-                    $title = $this->request->getPost('surveyAnswerTitle');
-                    $sql = "UPDATE _survey_answer SET title = '$title' WHERE id = '$answer_id';";
-                    $this->view->message = "The answer was updated successfull";
-                break;
-            }
-        }
-        
-        switch($option){
-            case "delAnswer":
-                $answer_id = $this->request->get('id');
-                $sql = "DELETE FROM _survey_answer WHERE id ='{$answer_id}'";
-                $this->view->message = "The answer was deleted successfull";
-            break;
-            
-            case "delQuestion":
-               $question_id = $this->request->get('id');
-               $sql = "START TRANSACTION; 
-                       DELETE FROM _survey_question WHERE id = '{$question_id}';
-                       DELETE FROM _survey_answer WHERE question ='{$question_id}';
-                       COMMIT;";
-               $this->view->message = "The question was deleted successfull";
-            break;
-        }
-        
-        if ($sql!=false) $connection->deepQuery($sql);
-        
-        $survey = $this->request->get('survey');
-                    
-        $r = $connection->deepQuery("SELECT * FROM _survey WHERE id = '{$survey};'");
-        if ($r !== false) {
-            $sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
-            $survey = $r[0];
-            $questions = $connection->deepQuery($sql);
-            if ($questions !== false) {
-                
-                foreach ($questions as $k=>$q){
-                    $answers = $connection->deepQuery("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
-                    if ($answers==false) $answers = array();
-                    $questions[$k]->answers=$answers;
-                }
-                
-                $this->view->title = "Survey's questions";
-                $this->view->survey = $survey;
-                $this->view->questions = $questions;
-            }
-        }
-    }
+	public function surveyQuestionsAction()
+	{
+		$connection = new Connection();
+		$this->view->message = false;
+		$this->view->message_type = 'success';
+		
+		$option = $this->request->get('option');
+		$sql = false;
+		if ($this->request->isPost()){
+		   
+			switch($option){
+				case "addQuestion":
+					$survey = $this->request->getPost('survey');
+					$title = $this->request->getPost('surveyQuestionTitle');
+					$sql ="INSERT INTO _survey_question (survey, title) VALUES ('$survey','$title');";
+					$this->view->message = "Question <b>$title</b> was inserted successfull";
+				break;
+				case "setQuestion":
+					$question_id = $this->request->get('id');
+					$title = $this->request->getPost('surveyQuestionTitle');
+					$sql ="UPDATE _survey_question SET title = '$title' WHERE id = '$question_id';";
+					$this->view->message = "Question <b>$title</b> was updated successfull";
+					break;
+				case "addAnswer":
+					$question_id = $this->request->get('question');
+					$title = $this->request->getPost('surveyAnswerTitle');
+					$sql ="INSERT INTO _survey_answer (question, title) VALUES ('$question_id','$title');";
+					$this->view->message = "Answer <b>$title</b> was inserted successfull";
+				break;
+				case "setAnswer":
+					$answer_id = $this->request->get('id');
+					$title = $this->request->getPost('surveyAnswerTitle');
+					$sql = "UPDATE _survey_answer SET title = '$title' WHERE id = '$answer_id';";
+					$this->view->message = "The answer was updated successfull";
+				break;
+			}
+		}
+		
+		switch($option)
+		{
+			case "delAnswer":
+				$answer_id = $this->request->get('id');
+				$sql = "DELETE FROM _survey_answer WHERE id ='{$answer_id}'";
+				$this->view->message = "The answer was deleted successfull";
+			break;
+			
+			case "delQuestion":
+			   $question_id = $this->request->get('id');
+			   $sql = "START TRANSACTION; 
+					   DELETE FROM _survey_question WHERE id = '{$question_id}';
+					   DELETE FROM _survey_answer WHERE question ='{$question_id}';
+					   COMMIT;";
+			   $this->view->message = "The question was deleted successfull";
+			break;
+		}
+		
+		if ($sql!=false) $connection->deepQuery($sql);
+	  
+		$survey = $this->request->get('survey');
+					
+		$r = $connection->deepQuery("SELECT * FROM _survey WHERE id = '{$survey};'");
+		if ($r !== false) {
+			$sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
+			$survey = $r[0];
+			$questions = $connection->deepQuery($sql);
+			if ($questions !== false) {
+				
+				foreach ($questions as $k=>$q){
+					$answers = $connection->deepQuery("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
+					if ($answers==false) $answers = array();
+					$questions[$k]->answers=$answers;
+				}
+				
+				$this->view->title = "Survey's questions";
+				$this->view->survey = $survey;
+				$this->view->questions = $questions;
+			}
+		}
+	}
+
+	/**
+	 * Remarket
+	 * 
+	 * @author salvipascual
+	 * */
+	public function remarketingAction()
+	{
+		// create the sql for the graph
+		$sqlSent = $sqlOpened = "";
+		foreach (range(0,7) as $day)
+		{
+			$sqlSent .= "
+				SELECT 
+					DATE(sent) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			$sqlOpened .= "
+				SELECT
+					DATE(opened) as moment,
+					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
+					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
+					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
+					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
+					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+				FROM remarketing
+				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+				GROUP BY moment";
+			if($day < 7) { $sqlSent .= " UNION "; $sqlOpened .= " UNION "; }
+		}
+
+		// get the delivery status per code
+		$connection = new Connection();
+		$sent = $connection->deepQuery($sqlSent);
+		$opened = $connection->deepQuery($sqlOpened);
+
+		// pass info to the view
+		$this->view->title = "Remarketing";
+		$this->view->sent = array_reverse($sent);
+		$this->view->opened = array_reverse($opened);
+	}
+
+	/**
+	 * add credits
+	 * 
+	 * @author kuma
+	 * */
+	public function addcreditAction()
+	{
+		$this->view->person = false;
+		$this->view->title = "Add credit";
+		$this->view->message = false;
+		$this->view->message_type = 'success';
+	
+		if ($this->request->isPost())
+		{
+			$email = $this->request->getPost('email');
+			$credit = $this->request->getPost('credit');
+			
+			if (is_null($credit) || $credit == 0)
+			{
+				$this->view->message = "Please, type the credit";
+				$this->view->message_type = 'danger';
+			}
+			elseif ( ! is_null($email))
+			{
+				$utils = new Utils();
+				$person = $utils->getPerson($email);
+				
+				if ($person !== false)
+				{
+					$confirm = $this->request->getPost('confirm');
+					if (is_null($confirm))
+					{
+						if ($person->credit + $credit < 0)
+						{
+							$this->view->person = false;
+							$this->view->message = "It is not possible to decrease <b>".number_format($credit, 2)."</b> from user's credit";
+							$this->view->message_type = 'danger';
+						}
+						else
+						{
+							$this->view->person = $person;
+							$this->view->credit = $credit;
+							$this->view->newcredit = $credit + $person->credit;
+						}
+					}
+					else
+					{
+						$db = new Connection();
+						$sql = "UPDATE person SET credit = credit + $credit WHERE email = '$email';";
+						$db->deepQuery($sql);
+						$this->view->message = "User's credit updated successfull";
+					}
+				}
+				else
+				{
+					$this->view->message = "User <b>$email</b> not found";
+					$this->view->message_type = 'danger';
+				}
+			}
+		}
+	}
+
 }

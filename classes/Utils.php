@@ -13,11 +13,17 @@ class Utils
 	public function getValidEmailAddress()
 	{
 		$connection = new Connection();
-		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='SendOnly' ORDER BY last_usage ASC LIMIT 1";
-		$result = $connection->deepQuery($sql);
-		return $result[0]->email;
-	}
 
+		// get the email
+		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='ReceiveOnly' ORDER BY last_usage ASC LIMIT 1";
+		$result = $connection->deepQuery($sql);
+		$email = $result[0]->email;
+
+		// update the last time used
+		$connection->deepQuery("UPDATE jumper SET last_usage=CURRENT_TIMESTAMP WHERE email='$email'");
+
+		return $email;
+	}
 
 	/**
 	 * Format a link to be an Apretaste mailto
@@ -38,7 +44,6 @@ class Utils
 		return $link;
 	}
 
-
 	/**
 	 * Check if the service exists
 	 * 
@@ -52,7 +57,6 @@ class Utils
 		$wwwroot = $di->get('path')['root'];
 		return file_exists("$wwwroot/services/$serviceName/config.xml");
 	}
-
 
 	/**
 	 * Check if the Person exists in the database
@@ -68,7 +72,6 @@ class Utils
 		return count($res) > 0;
 	}
 
-	
 	/**
 	 * Check if the Person was invited and is still pending 
 	 *
@@ -82,7 +85,6 @@ class Utils
 		$res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
 		return count($res) > 0;
 	}
-
 
 	/**
 	 * Get a person's profile
@@ -148,7 +150,7 @@ class Utils
 	 * Create a unique username using the email
 	 *
 	 * @author salvipascual
-	 * @version 2.0
+	 * @version 3.0
 	 * @param String $email
 	 * @return String, username
 	 * */
@@ -191,7 +193,6 @@ class Utils
 		else return false;
 	}
 
-
 	/**
 	 * Return the current Raffle or false if no Raffle was found
 	 * 
@@ -224,7 +225,6 @@ class Utils
 		return $raffle;
 	}
 
-
 	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
@@ -254,7 +254,6 @@ class Utils
 		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath);
 	}
 
-
 	/**
 	 * Add a new subscriber to the email list in Mail Lite
 	 * 
@@ -280,7 +279,6 @@ class Utils
 		$ML_Subscribers->setId("1266487")->add($subscriber);
 	}
 
-
 	/**
 	 * Delete a subscriber from the email list in Mail Lite
 	 * 
@@ -304,7 +302,6 @@ class Utils
 		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);		
 		$ML_Subscribers->setId("1266487")->remove($email);
 	}
-
 
 	/**
 	 * Get the pieces of names from the full name
@@ -368,114 +365,136 @@ class Utils
 		return array($firstName, $middleName, $lastName, $motherName);
 	}
 
-
 	/**
 	 * Checks if an email can be delivered to a certain mailbox
 	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
 	 * @param Enum $direction, in or out, if we check an email received or sent
-	 * @return String delivability: ok, hard-bounce, soft-bounce, spam, no-reply, loop, unknown
+	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 * */
 	public function deliveryStatus($to, $direction="out")
 	{
-		// save the final response. If not ok, will return on the LogErrorAndReturn tag
-		$response = '';
-
-		// create a new connection object
-		$connection = new Connection();
+		// variable to save the final response message
+		$msg = "";
 
 		// block people following the example email
-		if($to == "su@amigo.cu") {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		if(empty($msg) && $to == "su@amigo.cu") $msg = 'hard-bounce';
 
-		// block email from/to our customer support 
-		if($to == "soporte@apretaste.com" ||
-			$to == "comentarios@apretaste.com" ||
-			$to == "contacto@apretaste.com" ||
-			$to == "soporte@apretastes.com" ||
-			$to == "comentarios@apretastes.com" ||
-			$to == "contacto@apretastes.com" ||
-			$to == "support@apretaste.zendesk.com" || 
-			$to == "support@apretaste.com" ||
-			$to == "apretastesoporte@gmail.com"
-		) {$response = 'loop'; goto LogErrorAndReturn;}
+		// block email from/to our customer support
+		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
 		// block intents to email the deamons
-		if(stripos($to,"mailer-daemon@")!==false || 
-			stripos($to,"communicationservice.nl")!==false
-		) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		if(empty($msg) && (stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false )) $msg = 'hard-bounce';
 
 		// check if the email is formatted properly
-		if ( ! filter_var($to, FILTER_VALIDATE_EMAIL)) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+		if (empty($msg) && ! filter_var($to, FILTER_VALIDATE_EMAIL)) $msg = 'hard-bounce';
 
 		// block no reply emails
-		if(stripos($to,"not-reply")!==false ||
+		if(empty($msg) && (  
+			stripos($to,"not-reply")!==false ||
 			stripos($to,"notreply")!==false ||
 			stripos($to,"No_Reply")!==false ||
 			stripos($to,"Do_Not_Reply")!==false ||
 			stripos($to,"no-reply")!==false ||
 			stripos($to,"noreply")!==false ||
 			stripos($to,"no-responder")!==false ||
-			stripos($to,"noresponder")!==false
-		) {$response = 'no-reply'; goto LogErrorAndReturn;}
+			stripos($to,"noresponder")!==false)
+		) $msg = 'no-reply';
 
-		// block any previouly dropped email
-		$res = $connection->deepQuery("SELECT email FROM delivery_dropped WHERE email='$to'");
-		if( ! empty($res)) {$response = 'loop'; goto LogErrorAndReturn;}
+		$connection = new Connection();
 
-		// block emails from apretaste to apretaste
-		$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
-		foreach($mailboxes as $m) if($to == $m->email) {$response = 'loop'; goto LogErrorAndReturn;}
-/*
-		// check for valid domain
-		$mgClient = new Mailgun("pubkey-f04b8b05d4030df391a8578062aac53e");
-		$result = $mgClient->get("address/validate", array('address' => $to));
-		if( ! $result->http_response_body->is_valid) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
-*/
-		// check deeper for new people. Only check deeper the outgoing emails
-		if( ! $this->personExist($to) && $direction=="out")
+		// do not send any email that hardfailed before
+		if(empty($msg))
 		{
-			// use the cache if the email was checked before
-			$res = $connection->deepQuery("SELECT status FROM delivery_checked WHERE email='$to' LIMIT 1");
-
-			// if the email hasen't been tested before, check
-			if(empty($res))
-			{
-				$di = \Phalcon\DI\FactoryDefault::getDefault();
-				$key = $di->get('config')['emailvalidator']['key'];
-				$result = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$to&APIKey=$key"));
-				if($result)
-				{
-					// save all emails tested by the email validador to ensure no errors are happening
-					$status = $result->status;
-					$connection->deepQuery("INSERT INTO delivery_checked (email,status) VALUES ('$to','$status')");
-				}
-				else
-				{
-					throw new Exception("Error connecting emailvalidator for user $to at ".date());
-				}
-			}
-			else // for emails previously tested, use the cache
-			{
-				$status = $res[0]->status;
-			}
-
-			// get the result for each status code
-			if($status == 114) {$response = 'unknown'; goto LogErrorAndReturn;} // usually national email
-			if($status > 300 && $status < 399) {$response = 'soft-bounce'; goto LogErrorAndReturn;}
-			if($status > 400 && $status < 499) {$response = 'hard-bounce'; goto LogErrorAndReturn;}
+			$hardfail = $connection->deepQuery("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
+			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
 		}
 
-		// when no errors were found
-		return 'ok';
+		// block any previouly dropped email that had already failed for 5 times
+		if(empty($msg))
+		{ 
+			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND reason <> 'spam' AND email='$to'");
+			if($fail[0]->fail > 3) $msg = 'failure';
+		}
 
-		// log errors in the database before returning
-		// and YES, I am using GOTO
-		LogErrorAndReturn:
-		$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,description) VALUES ('$to','$response','$direction')");
-		return $response;
+		// block emails from apretaste to apretaste
+		if(empty($msg))
+		{
+			$mailboxes = $connection->deepQuery("SELECT email FROM jumper");
+			foreach($mailboxes as $m) if($to == $m->email) $msg = 'loop';
+		}
+
+		// check deeper for new people. Only check deeper the outgoing emails
+		$code = "";
+		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
+		{
+			// use the cache if the email was checked before
+			$cache = $connection->deepQuery("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
+
+			// if the email hasen't been tested before or gave temporal errors
+			if(empty($cache) || $cache[0]->reason == "temporal")
+			{
+				 $return = $this->deepValidateEmail($to);
+				 $msg = $return[0];
+				 $code = $return[1];
+			}
+			else // for emails previously tested that failed, use the cache
+			{
+				$msg = $cache[0]->reason;
+				$code = $cache[0]->code;
+			}
+		}
+
+		// return if ok
+		if (empty($msg) || $msg == "ok") return "ok";
+		else
+		{
+			$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
+			return $msg;
+		}
 	}
 
+	/**
+	 * Validate an email to ensure we can send it to MailGun.
+	 * We pay every email validated. Please use deliveryStatus() 
+	 * instead, unless you are re-validating an email previously sent.
+	 * 
+	 * @author salvipascual
+	 * @param Email $email
+	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
+	 * */
+	public function deepValidateEmail($email)
+	{
+		// get validation key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$key = $di->get('config')['emailvalidator']['key'];
+
+		$code = "200"; // code for the sandbox
+		if($di->get('environment') != "sandbox") 
+		{
+			// validate using email-validator.net
+			$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
+			if( ! $r) throw new Exception("Error connecting with emailvalidator for user $email at ".date());
+
+			$code = $r->status;
+		}
+
+		// return our table status based on the code
+		$reason = 'unknown'; // for non-recognized codes
+		if(in_array($code, array("121","200","207","305","308"))) $reason = 'ok';
+		if(in_array($code, array("114","118","119","313","314","215"))) $reason = 'temporal';
+		if(in_array($code, array("413","406"))) $reason = 'soft-bounce';
+		if(in_array($code, array("302","314","317","401","404","410","414","420"))) $reason = 'hard-bounce';
+		if($code == "303") $reason = 'spam';
+		if($code == "409") $reason = 'no-reply';
+
+		// save all emails tested so we dot duplicated the check
+		$connection = new Connection();
+		$connection->deepQuery("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
+
+		return array($reason, $code);
+	}
 
 	/**
 	 * Get the completion percentage of a profile
@@ -518,5 +537,18 @@ class Utils
 			$percent = $parts / $total * 100;
 		}
 		return $percent;
+	}
+
+	/**
+	 * Return path to the temporal folder
+	 * 
+	 * @author Kuma
+	 * @return string
+	 */
+	public function getTempDir()
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		return "$wwwroot/temp/";
 	}
 }

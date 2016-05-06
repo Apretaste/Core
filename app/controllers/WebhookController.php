@@ -13,8 +13,11 @@ class WebhookController extends Controller
 		$email = $_POST['recipient'];
 		$domain = $_POST['domain'];
 		$reason = $_POST['reason'];
-		$code = $_POST['code'];
-		$desc = str_replace("'", "", $_POST['description']);
+		$code = isset($_POST['code']) ? $_POST['code'] : "";
+		$desc = isset($_POST['description']) ? str_replace("'", "", $_POST['description']) : "";
+
+		// do not save Spam as hardfail
+		if (stripos($desc, 'spam') !== false) $reason = "spam";
 
 		// save into the database
 		$connection = new Connection();
