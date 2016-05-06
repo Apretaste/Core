@@ -725,7 +725,160 @@ class ManageController extends Controller
 	}
 
 	/**
+	 * List of surveys
+	 * 
+	 * @author kuma
+	 */
+	public function surveysAction()
+	{
+		$connection = new Connection();
+		$this->view->message = false;
+		$this->view->message_type = 'success';
+		$option = $this->request->get('option');
+		$sql = false;
+		
+		if($this->request->isPost())
+		{
+			switch ($option){
+				case 'addSurvey':
+					$customer = $this->request->getPost("surveyCustomer");
+					$title = $this->request->getPost("surveyTitle");
+					$deadline = $this->request->getPost("surveyDeadline");
+					$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
+					$this->view->message = 'The survey was inserted successfull';
+					 
+					break;
+				case 'setSurvey':
+					$customer = $this->request->getPost("surveyCustomer");
+					$title = $this->request->getPost("surveyTitle");
+					$deadline = $this->request->getPost("surveyDeadline");
+					$id = $this->request->get('id');
+					$sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
+					$this->view->message = 'The survey was updated successfull';
+					break;
+			}
+		}
+		 
+		switch ($option){
+			case "delSurvey":
+				$id = $this->request->get('id');
+				$sql = "START TRANSACTION;
+						DELETE FROM _survey_answer WHERE question = (SELECT id FROM _survey_question WHERE _survey_question.survey = '$id');
+						DELETE FROM _survey_question WHERE survey = '$id';
+						DELETE FROM _survey WHERE id = '$id';
+						COMMIT;";
+				$this->view->message = 'The survey #'.$delete.' was deleted successfull';
+				break;
+			
+		   case "disable":
+			   $id = $this->request->get('id');
+			   $sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
+			   break;
+		   case "enable":
+			   $id = $this->request->get('id');
+			   $sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
+			   break;
+		}
+		
+		if ($sql!==false) $connection->deepQuery($sql);
+		
+		$querySurveys = "SELECT * FROM _survey ORDER BY ID";
+		 
+		$surveys = $connection->deepQuery($querySurveys);
+	
+		$this->view->title = "List of surveys (".count($surveys).")";
+		$this->view->surveys = $surveys;
+	}
+
+	/**
+	 * Manage survey's questions and answers
+	 * 
+	 * @author kuma
+	 */
+	public function surveyQuestionsAction()
+	{
+		$connection = new Connection();
+		$this->view->message = false;
+		$this->view->message_type = 'success';
+		
+		$option = $this->request->get('option');
+		$sql = false;
+		if ($this->request->isPost()){
+		   
+			switch($option){
+				case "addQuestion":
+					$survey = $this->request->getPost('survey');
+					$title = $this->request->getPost('surveyQuestionTitle');
+					$sql ="INSERT INTO _survey_question (survey, title) VALUES ('$survey','$title');";
+					$this->view->message = "Question <b>$title</b> was inserted successfull";
+				break;
+				case "setQuestion":
+					$question_id = $this->request->get('id');
+					$title = $this->request->getPost('surveyQuestionTitle');
+					$sql ="UPDATE _survey_question SET title = '$title' WHERE id = '$question_id';";
+					$this->view->message = "Question <b>$title</b> was updated successfull";
+					break;
+				case "addAnswer":
+					$question_id = $this->request->get('question');
+					$title = $this->request->getPost('surveyAnswerTitle');
+					$sql ="INSERT INTO _survey_answer (question, title) VALUES ('$question_id','$title');";
+					$this->view->message = "Answer <b>$title</b> was inserted successfull";
+				break;
+				case "setAnswer":
+					$answer_id = $this->request->get('id');
+					$title = $this->request->getPost('surveyAnswerTitle');
+					$sql = "UPDATE _survey_answer SET title = '$title' WHERE id = '$answer_id';";
+					$this->view->message = "The answer was updated successfull";
+				break;
+			}
+		}
+		
+		switch($option)
+		{
+			case "delAnswer":
+				$answer_id = $this->request->get('id');
+				$sql = "DELETE FROM _survey_answer WHERE id ='{$answer_id}'";
+				$this->view->message = "The answer was deleted successfull";
+			break;
+			
+			case "delQuestion":
+			   $question_id = $this->request->get('id');
+			   $sql = "START TRANSACTION; 
+					   DELETE FROM _survey_question WHERE id = '{$question_id}';
+					   DELETE FROM _survey_answer WHERE question ='{$question_id}';
+					   COMMIT;";
+			   $this->view->message = "The question was deleted successfull";
+			break;
+		}
+		
+		if ($sql!=false) $connection->deepQuery($sql);
+	  
+		$survey = $this->request->get('survey');
+					
+		$r = $connection->deepQuery("SELECT * FROM _survey WHERE id = '{$survey};'");
+		if ($r !== false) {
+			$sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
+			$survey = $r[0];
+			$questions = $connection->deepQuery($sql);
+			if ($questions !== false) {
+				
+				foreach ($questions as $k=>$q){
+					$answers = $connection->deepQuery("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
+					if ($answers==false) $answers = array();
+					$questions[$k]->answers=$answers;
+				}
+				
+				$this->view->title = "Survey's questions";
+				$this->view->survey = $survey;
+				$this->view->questions = $questions;
+			}
+		}
+	}
+
+	/**
 	 * Remarket
+	 * 
+	 * @author salvipascual
 	 * */
 	public function remarketingAction()
 	{
@@ -772,7 +925,9 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * add creadit
+	 * add credits
+	 * 
+	 * @author kuma
 	 * */
 	public function addcreditAction()
 	{

@@ -149,8 +149,8 @@ class Utils
 	/**
 	 * Create a unique username using the email
 	 *
-	 * @author kuma
-	 * @version 2.0
+	 * @author salvipascual
+	 * @version 3.0
 	 * @param String $email
 	 * @return String, username
 	 * */
