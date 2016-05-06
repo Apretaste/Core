@@ -1,0 +1,51 @@
+<?php if ($message!==false): ?>
+	<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+<?php endif;?>
+
+<?php if ($person!==false): ?>
+<div class="row">
+	<div class="col-xs-12">
+    	<h3>Please, confirm</h3>
+    	<div class="panel panel-default">
+        	<table class="table">
+            	<tr><td align="right" width="200">Email:</td><td> <b><?php echo $person->email; ?></b></td></tr>
+            	
+            	<tr><td align="right">Name:</td><td> <b><?php echo $person->full_name; ?></b></td></tr>
+            	<tr><td align="right">Current credit:</td><td> <b>$<?php echo number_format($person->credit,2); ?></b></td></tr>
+            	<tr><td align="right">Credit to add:</td><td> <b>$<?php echo number_format($credit, 2); ?></b></td></tr>
+            	<tr><td align="right">New credit:</td><td> <b>$<?php echo number_format($newcredit,2) ; ?></b></td></tr>
+        	</table>
+        	<div class="panel-body">
+        	<form action="/manage/userCredit" method="POST">
+                  <div class="form-group">
+                  	<input type="hidden" name ="email" value = "<?php echo $person->email;?>">
+                  	<input type="hidden" name ="credit" value = "<?php echo $credit;?>">
+                  	<button type="submit" class="btn btn-default" name="confirm">Confirm</button>
+                    <a class="btn btn-default" href="/manage/userCredit">Cancel</a>
+                  </div>
+            </form>
+        	</div>
+    	</div>
+	</div>
+</div>
+<?php else:?>
+
+<h3>Search user by email and add the credit:</h3> 
+<div class="panel panel-default">
+	<div class="panel-body">
+		<form class="navbar-form navbar-left" role="form" action="/manage/userCredit" method="POST">
+          <div class="form-group">
+                <label for="edtEmail">Email address</label><br/>
+                <input type="email" class="form-control" id="edtEmail" placeholder="Enter email" name="email">
+          </div><br/>
+          <br/>
+          <div class="form-group">
+           	<label for="edtCredit">Credit:</label><br/>
+           	<input type="number" class="form-control" placeholder="Credit" id = "edtCredit" name="credit">
+          </div><br/>
+          <br/>
+          <button type="submit" class="btn btn-default">Add credit</button>
+        </form>
+    </div>
+</div>
+<?php endif;?>
