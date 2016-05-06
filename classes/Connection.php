@@ -15,26 +15,40 @@ class Connection
 		// get the database connection
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 
-		// only fetch for selects
-		if(stripos(trim($sql), "select") === 0)
-		{
-			// query the database
-			$result = $di->get('db')->query($sql);
-			$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
-
-			// convert to array of objects
-			$rows = array();
-			while ($data = $result->fetch())
+		try{
+			// only fetch for selects
+			if(stripos(trim($sql), "select") === 0)
 			{
-				$rows[] = $data;
+				// query the database
+				$result = $di->get('db')->query($sql);
+				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
+	
+				// convert to array of objects
+				$rows = array();
+				while ($data = $result->fetch())
+				{
+					$rows[] = $data;
+				}
+				// return the array of objects
+				return $rows;
 			}
-			// return the array of objects
-			return $rows;
+			else
+			{
+				// execute statement in the database
+				return $di->get('db')->execute($sql);
+			}
 		}
-		else
+		catch (PDOException $e) // log the error and rethrow it
 		{
-			// execute statement in the database
-			return $di->get('db')->execute($sql);
+			$message = $e->getMessage();
+			$query = isset($e->getTrace()[0]['args'][0]) ? $e->getTrace()[0]['args'][0] : "Query not available";
+
+			$wwwroot = $di->get('path')['root'];
+			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/badqueries.log");
+			$logger->log("$message\nQUERY: $query\n");
+			$logger->close();
+
+			throw $e;
 		}
 	}
 

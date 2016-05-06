@@ -109,7 +109,7 @@ class RunController extends Controller
 		{
 			$object = new stdClass();
 			$object->type = $file->type;
-			$object->content = base64_decode($file->content);
+			$object->content = $file->content; // base64 attachment string
 			$object->path = "";
 			$attachments[] = $object;
 		}
@@ -135,19 +135,19 @@ class RunController extends Controller
 		// filter email From and To 
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match_all($pattern, $_POST['From'], $emailFrom);
-		preg_match_all($pattern, $_POST['To'], $toFrom);
+		if(isset($_POST['To'])) preg_match_all($pattern, $_POST['To'], $toFrom);
 
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
-		$toEmail = isset($toFrom[0][0]) ? $toFrom[0][0] : "";
+		$toEmail = isset($toFrom[0][0]) ? trim($toFrom[0][0], " \t\n\r\0\x0B\"\',") : "";
 		$subject = $_POST['subject'];
 		$body = $_POST['body-plain'];
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
 
 		// save the attached files and create the response array
 		$attachments = array();
-		for ($i=1; $i<$attachmentCount; $i++)
+		for ($i=1; $i<=$attachmentCount; $i++)
 		{
 			$object = new stdClass();
 			$object->name = $_FILES["attachment-$i"]["name"];
@@ -193,11 +193,10 @@ class RunController extends Controller
 		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
-		// decide if we should accept the request or not
-		// TODO
+		// save the email as received
 		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
-		// save to the webhook last usage, to alert inactive webhooks
+		// save to the webhook last usage, to alert if the web
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 
 		// if there are attachments, download them all and create the files in the temp folder 
@@ -213,7 +212,7 @@ class RunController extends Controller
 			{
 				$attach->type = image_type_to_mime_type(IMAGETYPE_JPEG);
 				$filePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
-				imagejpeg(imagecreatefromstring($attach->content), $filePath);
+				imagejpeg(imagecreatefromstring(base64_decode($attach->content)), $filePath);
 				$utils->optimizeImage($filePath);
 			}
 			else // save any other file to the temporals
