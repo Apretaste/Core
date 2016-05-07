@@ -36,7 +36,7 @@ class Render
 
 		// getting the ads
 		$ads = $service->showAds ? $response->getAds() : array();
-
+		
 		// list the system variables
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,

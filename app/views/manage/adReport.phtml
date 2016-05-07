@@ -1,0 +1,60 @@
+<div class="row">
+	<div class="col-xs-12">
+		<h2><?php echo $ad->title; ?></h2>
+		<p><small><?php echo date("Y-m-d m:i:s"); ?></small></p>
+		
+		<h2>Weekly impressions/clicks</h2>
+		<div id="weeklyImpressions" style="width:900px; height:300px;"></div>
+		
+		<h2>Monthly impressions/clicks</h2>
+		<div id="monthlyImpressions" style="width:900px; height:300px;"></div>
+		
+		<h2>Usage by age</h2>
+		<div id="usageByAge" style="width: 300px; height: 300px;"></div>
+
+	</div>
+</div>
+
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+	// Weekly impressions
+	google.setOnLoadCallback(weeklyImpressions);
+	function weeklyImpressions() {
+		var data = google.visualization.arrayToDataTable([
+			['Week', 'Impressions', 'Clicks'],
+			<?php foreach ($weekly as $w => $data) { ?>
+				['<?php echo $w; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+			<?php } ?>
+		]);
+		var chart = new google.visualization.AreaChart(document.getElementById('weeklyImpressions'));
+		chart.draw(data, {});
+	}
+
+	// Monthly impressions
+	google.setOnLoadCallback(monthlyImpressions);
+	function monthlyImpressions() {
+		var data = google.visualization.arrayToDataTable([
+			['Month', 'Impressions', 'Clicks'],
+			<?php foreach ($monthly as $m => $data) { ?>
+				['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+			<?php } ?>
+		]);
+		var chart = new google.visualization.AreaChart(document.getElementById('monthlyImpressions'));
+		chart.draw(data, {});
+	}
+	
+	// Usage by age
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(monthlyServicesUsage);
+	function monthlyServicesUsage() {
+		var data = google.visualization.arrayToDataTable([
+			['Caption', 'Number'],
+			<?php // foreach ($servicesUsageMonthly as $data) { ?>
+				['<?php //echo $data['service']; ?>',<?php //echo $data['usage']; ?>],
+			<?php //} ?>
+		]);
+		var options = {legend: 'none'};
+		var chart = new google.visualization.PieChart(document.getElementById('usageByAge'));
+		chart.draw(data, options);
+	}
+</script>

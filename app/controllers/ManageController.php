@@ -816,4 +816,116 @@ class ManageController extends Controller
 	        }
 	    }
 	}
+	
+	public function adReportAction(){
+	    
+	    // getting ad's id
+	    // @TODO: improve this!
+	    $url = $_GET['_url']; 
+	    $id =  explode("/",$url);
+	    $id = intval($id[count($id)-1]);
+	    
+	    $db = new Connection();
+	    
+	    $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+	    $this->view->ad = false;
+	    if ($ad !== false){
+	      
+	       $week = array(); 
+	        
+	       // @TODO fix field name in database: ad_botton to ad_bottom
+	       $sql = "SELECT YEAR(request_time) as y, 
+	               WEEK(request_time) as w,
+	               count(usage_id) as total
+	               FROM utilization 
+	               WHERE (ad_top = $id OR ad_botton = $id)
+	               and service <> 'publicidad'
+	               GROUP BY y,w";
+	       
+	       $r = $db->deepQuery($sql);
+
+	       if (is_array($r))
+    	       foreach($r as $i){
+    	           if (!isset($week[$i->y.'-'.$i->w]))
+	                   $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
+	               $week[$i->y.'-'.$i->w]['impressions'] = $i->total;
+    	       }
+	       
+	       $sql = "SELECT YEAR(request_time) as y,
+	               WEEK(request_time) as w,
+	               count(usage_id) as total
+	               FROM utilization
+	               WHERE service = 'publicidad'
+	               and subservice is null
+	               and query * 1 = $id
+	               GROUP BY y,w";
+	       
+	       $r = $db->deepQuery($sql)
+	       ;
+	       if (is_array($r))
+	           foreach($r as $i){
+	               if (!isset($week[$i->y.'-'.$i->w]))
+	                   $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
+	               $week[$i->y.'-'.$i->w]['clicks'] = $i->total;
+	       }
+
+	       $this->view->weekly = $week;
+	       
+	       $month = array();
+	        
+	       $sql = "SELECT YEAR(request_time) as y,
+	       MONTH(request_time) as m,
+	       count(usage_id) as total
+	       FROM utilization
+	       WHERE (ad_top = $id OR ad_botton = $id)
+	       and service <> 'publicidad'
+	       GROUP BY y,m";
+	       
+	       $r = $db->deepQuery($sql);
+	       
+	       if (is_array($r))
+	           foreach($r as $i){
+	               if (!isset($week[$i->y.'-'.$i->m]))
+	                   $week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
+	                   $week[$i->y.'-'.$i->m]['impressions'] = $i->total;
+	       }
+	       
+	       $sql = "SELECT YEAR(request_time) as y,
+	       MONTH(request_time) as m,
+	       count(usage_id) as total
+	       FROM utilization
+	       WHERE service = 'publicidad'
+	       and subservice is null
+	       and query * 1 = $id
+	       GROUP BY y,m";
+	       
+	       $r = $db->deepQuery($sql)
+	       ;
+	       if (is_array($r))
+	           foreach($r as $i){
+	               if (!isset($week[$i->y.'-'.$i->m]))
+	                   $week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
+	                   $week[$i->y.'-'.$i->m]['clicks'] = $i->total;
+	       }
+	       
+		   // usage by age
+		   
+		   $sql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom =$id";
+		   $sql = "SELECT COUNT(*) as total FROM ($sql) AS subq";
+	       $this->view->weekly = $week;
+	       $this->view->monthly = $month;
+	       $this->view->title = "Ad report";
+	       $this->view->ad = $ad[0];
+	    }
+	}
+	
+	public function adTagering(){
+	    // getting ad's id
+	    // @TODO: improve this!
+	    $url = $_GET['_url'];
+	    $id =  explode("/",$url);
+	    $id = intval($id[count($id)-1]);
+		
+		
+	}
 }
