@@ -16,10 +16,10 @@ class PizarraTask extends \Phalcon\Cli\Task
 	 * sources to pull from twitter 
 	 * */
 	private $sources = array(
-		"salvi@apretaste.com" => "@bbcmundo",
+		"salvi@apretaste.com" => "@PlayOffCuba",
 		"kumahavana@gmail.com" => "@ChisteVeloz",
 		"ibis@apretaste.com" => "@CubanetNoticias",
-		"html@apretaste.com" => "@Noticias_41",
+		"html@apretaste.com" => "@eltoquecom",
 		"salvi.pascual@gmail.com" => "@fifacom_es"
 	);
 
@@ -66,6 +66,9 @@ class PizarraTask extends \Phalcon\Cli\Task
 				break;
 			}
 		}
+
+		// save the status in the database
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='pizarra'");
 	}
 
 	/**
