@@ -43,10 +43,8 @@ class remarketingTask extends \Phalcon\Cli\Task
 		$log .= "\nAUTOMATIC INVITATIONS (".count($people).")\n";
 		foreach ($people as $person)
 		{
-			// re-validate the email
-			$res = $utils->deepValidateEmail($person->email);
-
 			// if response not ok, check the email as error
+			$res = $utils->deepValidateEmail($person->email);
 			if($res[0] != "ok")
 			{
 				$connection->deepQuery("UPDATE autoinvitations SET error=1, processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
@@ -169,8 +167,15 @@ class remarketingTask extends \Phalcon\Cli\Task
 				// re-validate the email
 				$res = $utils->deepValidateEmail($person->email);
 
-				// if response not ok or temporal, unsubscribe and do not email
-				if($res[0] != "ok" && $res[0] != "temporal")
+				// keep it for later if it was temporal
+				if($res[0] == "temporal")
+				{
+					$log .= "\t --skiping {$person->email}\n";
+					continue;
+				}
+
+				// for other than ok, unsubscribe and do not email
+				if($res[0] != "ok")
 				{
 					$utils->unsubscribeFromEmailList($person->email);
 					$connection->deepQuery("UPDATE person SET active=0 WHERE email='{$person->email}'");

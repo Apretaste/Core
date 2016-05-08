@@ -149,8 +149,8 @@ class Utils
 	/**
 	 * Create a unique username using the email
 	 *
-	 * @author kuma
-	 * @version 2.0
+	 * @author salvipascual
+	 * @version 3.0
 	 * @param String $email
 	 * @return String, username
 	 * */
@@ -475,9 +475,8 @@ class Utils
 		{
 			// validate using email-validator.net
 			$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
-
-			// exception if the validator generates any error
 			if( ! $r) throw new Exception("Error connecting with emailvalidator for user $email at ".date());
+
 			$code = $r->status;
 		}
 
