@@ -1,0 +1,158 @@
+<div class="row">
+	<div class="col-xs-12">
+		<a href="/manage/ads">&lt; &lt; Back to ads </a>
+		<h2><?php echo $ad->title; ?></h2>
+		<div class="panel panel-default">
+		<form action="/manage/adTagering/<?php echo $ad->id;?>" method="POST">
+			<table class="table">
+				<tr><th>Tag</th><th>Actual value</th><th>Change to</th></tr>
+				<!-- from age -->
+				<tr><td>From age</td><td><?php echo $ad->from_age;?></td>
+				<td>
+				<select name="from_age">
+					<option value = "ALL" <?php if ($ad->from_age=='ALL') echo 'selected';?>>ALL</option>
+					<?php for ($i=15;$i<=100; $i++):?>
+					<option value = "<?php echo $i; ?>" <?php if ($i==intval($ad->from_age)) echo  'selected';?>><?php echo $i; ?></option>
+					<?php endfor;?>
+				</select>
+				</td>
+				</tr>
+				
+				<!-- to age -->
+				<tr><td>To age</td><td><?php echo $ad->to_age;?></td>
+				<td>
+				<select name="to_age">
+					<option value = "ALL" <?php if ($ad->to_age=='ALL') echo 'selected';?>>ALL</option>
+					<?php for ($i=15;$i<=100; $i++):?>
+					<option value = "<?php echo $i; ?>" <?php if ($i==intval($ad->to_age)) echo  'selected';?>><?php echo $i; ?></option>
+					<?php endfor;?>
+				</select>
+				</td>
+				</tr>
+				
+				<!-- gender -->
+				<tr><td>Gender</td><td><?php echo $ad->gender;?></td>
+    				<td>
+    				<select name="gender">
+    					<option value = "ALL" <?php if ($ad->gender=='ALL') echo 'selected';?>>ALL</option>
+    					<option value = "M" <?php if ($ad->gender=='M') echo 'selected';?>>M</option>
+    					<option value = "F" <?php if ($ad->gender=='F') echo 'selected';?>>F</option>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- eyes -->
+				<?php $eyes = array('ALL', 'NEGRO','CARMELITA','VERDE','AZUL','AVELLANA','OTRO'); ?>
+				<tr><td>Eyes</td><td><?php echo $ad->eyes;?></td>
+    				<td>
+    				<select name="eyes">
+    				<?php foreach($eyes as $eye):?>
+    					<option value = "<?php echo $eye; ?>" <?php if ($ad->eyes == $eye) echo 'selected';?>><?php echo $eye; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- skin -->
+				<?php $skins = array('ALL', 'NEGRO','BLANCO','MESTIZO','OTRO'); ?>
+				<tr><td>Skins</td><td><?php echo $ad->skin;?></td>
+    				<td>
+    				<select name="skin">
+    				<?php foreach($skins as $skin):?>
+    					<option value = "<?php echo $skin; ?>" <?php if ($ad->skin == $skin) echo 'selected';?>><?php echo $skin; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- body type -->
+				<?php $body_types = array('ALL', 'DELGADO','MEDIO','EXTRA','ATLETICO'); ?>
+				<tr><td>Body type</td><td><?php echo $ad->body_type;?></td>
+    				<td>
+    				<select name="body_type">
+    				<?php foreach($body_types as $body_type):?>
+    					<option value = "<?php echo $body_type; ?>" <?php if ($ad->body_type == $body_type) echo 'selected';?>><?php echo $body_type; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- hair -->
+				<?php $hairs = array('ALL', 'TRIGUENO','CASTANO','RUBIO','NEGRO','ROJO','BLANCO','OTRO'); ?>
+				<tr><td>Hair</td><td><?php echo $ad->hair;?></td>
+    				<td>
+    				<select name="hair">
+    				<?php foreach($hairs as $hair):?>
+    					<option value = "<?php echo $hair; ?>" <?php if ($ad->hair == $hair) echo 'selected';?>><?php echo $hair; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- province  -->
+				<?php $provinces = array('ALL', 'PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD'); ?>
+				<tr><td>Province</td><td><?php echo $ad->province;?></td>
+    				<td>
+    				<select name="province">
+    				<?php foreach($provinces as $province):?>
+    					<option value = "<?php echo $province; ?>" <?php if ($ad->province == $province) echo 'selected';?>><?php echo $province; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!--  highest_school_level -->
+				<?php $highest_school_levels = array('ALL', 'PRIMARIO','SECUNDARIO','TECNICO','UNIVERSITARIO','POSTGRADUADO','DOCTORADO','OTRO'); ?>
+				<tr><td>Highest school level</td><td><?php echo $ad->highest_school_level;?></td>
+    				<td>
+    				<select name="highest_school_level">
+    				<?php foreach($highest_school_levels as $highest_school_level):?>
+    					<option value = "<?php echo $highest_school_level; ?>" <?php if ($ad->highest_school_level == $highest_school_level) echo 'selected';?>><?php echo $highest_school_level; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!--  marital_status -->
+				<?php $marital_statuses = array('ALL', 'SOLTERO','SALIENDO','COMPROMETIDO','CASADO'); ?>
+				<tr><td>Marital status</td><td><?php echo $ad->marital_status;?></td>
+    				<td>
+    				<select name="marital_status">
+    				<?php foreach($marital_statuses as $marital_status):?>
+    					<option value = "<?php echo $marital_status; ?>" <?php if ($ad->marital_status == $marital_status) echo 'selected';?>><?php echo $marital_status; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+				</tr>
+				
+				<!-- sexual_orientation -->
+				<?php $sexual_orientations = array('ALL','BI','HETERO','HOMO'); ?>
+				<tr><td>Sexual orientation</td><td><?php echo $ad->sexual_orientation;?></td>
+    				<td>
+    				<select name="sexual_orientation">
+    				<?php foreach($sexual_orientations as $sexual_orientation):?>
+    					<option value = "<?php echo $sexual_orientation; ?>" <?php if ($ad->sexual_orientation == $sexual_orientation) echo 'selected';?>><?php echo $sexual_orientation; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+    			</tr>
+    			
+				<!-- religion -->
+				<?php $religions = array('ALL','ATEISMO','SECULARISMO','AGNOSTICISMO','ISLAM','JUDAISTA','ABAKUA','SANTERO','YORUBA','BUDISMO','CATOLICISMO','OTRA','CRISTIANISMO'); ?>
+				<tr><td>Religion</td><td><?php echo $ad->religion;?></td>
+    				<td>
+    				<select name="religion">
+    				<?php foreach($religions as $religion):?>
+    					<option value = "<?php echo $religion; ?>" <?php if ($ad->religion == $religion) echo 'selected';?>><?php echo $religion; ?></option>
+    				<?php endforeach;?>
+    				</select>
+    				</td>
+    			</tr>				
+			</table>
+			<div class="panel-footer">
+			<input type="submit" class="btn btn-default" value="Update">
+			</div>
+		</form>
+		</div>
+	</div>
+</div>

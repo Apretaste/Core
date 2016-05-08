@@ -1081,7 +1081,9 @@ class ManageController extends Controller
 		   // usage by age
 		   
 		   $sql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom =$id";
-		   $sql = "SELECT COUNT(*) as total FROM ($sql) AS subq";
+		   $sql = "SELECT COUNT(*) as total FROM ($sql) AS subq GROUP BY subq.age;";
+		   
+		   
 	       $this->view->weekly = $week;
 	       $this->view->monthly = $month;
 	       $this->view->title = "Ad report";
@@ -1089,13 +1091,39 @@ class ManageController extends Controller
 	    }
 	}
 	
-	public function adTagering(){
+	public function adTageringAction(){
 	    // getting ad's id
 	    // @TODO: improve this!
 	    $url = $_GET['_url'];
 	    $id =  explode("/",$url);
 	    $id = intval($id[count($id)-1]);
-		
-		
+	    $db = new Connection();
+	    $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+	    $this->view->ad = false;
+	   
+	    if ($ad !== false){
+    	    if ($this->request->isPost()){
+    	        
+    	        $sql = "UPDATE ads SET ";
+    	        $go = false;
+    	        foreach($_POST as $key => $value){
+    	            if (isset($ad[0]->$key)){
+    	                $go  = true;
+    	                $sql .= " $key = '{$value}', ";
+    	            }
+    	        }
+    
+    	        if ($go){
+    	            $sql = substr($sql,0,strlen($sql)-2);
+    	            $sql .= "WHERE id = $id;";
+    	            $db->deepQuery($sql);
+    	        }
+    	        
+    	        $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+    	    }
+    	    
+            $this->view->title ="Ad tagering";
+            $this->view->ad = $ad[0];
+	    }
 	}
 }
