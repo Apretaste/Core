@@ -29,7 +29,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 		 * AUTO INVITATIONS
 		 * */
 
-
+/*
 		// people in the list to be automatically invited
 		$people = $connection->deepQuery("
 			SELECT * FROM autoinvitations
@@ -72,13 +72,13 @@ class remarketingTask extends \Phalcon\Cli\Task
 			// display notifications
 			$log .= "\t{$person->email}\n";
 		}
-
+*/
 
 		/*
 		 * INVITATIONS
 		 * */
 
-
+/*
 		// people who were invited but never used Apretaste
 		$invitedPeople = $connection->deepQuery("
 			SELECT invitation_time, email_inviter, email_invited
@@ -136,7 +136,7 @@ class remarketingTask extends \Phalcon\Cli\Task
 			// display notifications
 			$log .= "\t{$person->email_invited}\n";
 		}
-
+*/
 
 		/*
 		 * FIRST REMINDER
