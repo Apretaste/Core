@@ -38,6 +38,9 @@ foreach ($surveys as $survey) {
 					<td>
 						<a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/surveys?option=delSurvey&id=<?php echo $survey->id; ?>"><span class="glyphicon glyphicon-trash"></span></a>
 					</td>
+					<td>
+						<a class="btn btn-default" href="/manage/surveyReport/<?php echo $survey->id; ?>">Report</a>
+					</td>
 				</tr>
 			<?php } ?>
 			<tr>

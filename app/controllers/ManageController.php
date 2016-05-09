@@ -1160,4 +1160,163 @@ class ManageController extends Controller
             $this->view->ad = $ad[0];
 	    }
 	}
+	
+	public function surveyReportAction(){
+	    // getting ad's id
+	    // @TODO: improve this!
+	    $url = $_GET['_url'];
+	    $id =  explode("/",$url);
+	    $id = intval($id[count($id)-1]);
+	    $db = new Connection();
+	    $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+	    
+	    $by_age = array(
+	            '0-16' => 0,
+	            '17-21' => 0,
+	            '22-35' => 0,
+	            '36-55' => 0,
+	            '56-130' => 0
+	    );
+	    
+	    if ($survey !== false){
+	        
+	        $enums = array(
+	                'person.age' => 'By age',
+	                'person.province' => "By location",
+	                'person.gender' => 'By gender',
+	                'person.highest_school_level' => 'By level of education'
+	        );
+	        
+	        $report = array();
+	        
+	        foreach ($enums as $field => $enum_label){
+        	    $sql = "
+        	        SELECT
+                        _survey.id AS survey_id,
+                        _survey.title AS survey_title,
+                        _survey_question.id AS question_id,
+                        _survey_question.title AS question_title,
+                        _survey_answer.id AS answer_id,
+                        _survey_answer.title AS answer_title,
+                        IFNULL($field,'_UNKNOW') AS pivote,
+                        Count(_survey_answer_choosen.email) AS total
+                    FROM
+                       _survey Inner Join (_survey_question inner join ( _survey_answer inner join (_survey_answer_choosen inner join (select *, YEAR(CURDATE()) - YEAR(person.date_of_birth) as age from person) as person ON _survey_answer_choosen.email = person.email) on _survey_answer_choosen.answer = _survey_answer.id) ON _survey_question.id = _survey_answer.question) 
+                    ON _survey_question.survey = _survey.id
+                    WHERE _survey.id = $id
+                    GROUP BY
+                        _survey.id,
+                        _survey.title,
+                        _survey_question.id,
+                        _survey_question.title,
+                        _survey_answer.id,
+                        _survey_answer.title,
+        	            $field
+        	       ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
+    
+        	    $r = $db->deepQuery($sql);
+        	    
+        	    $pivots = array();
+        	    $totals = array();
+        	    $results = array();
+                if ($r!==false){
+                	foreach($r as $item){
+                	   $q = $item->question_id;
+                	   $a = $item->answer_id;
+                	   if (!isset($results[$q]))  
+                			$results[$q] = array(
+                					"i" => $q, 
+                					"t" => $item->question_title, 
+                					"a" => array()
+                			);		   
+                	  
+                		if (!isset($results[$q]['a'][$a]))
+                			$results[$q]['a'][$a] = array(
+                				"i" => $a,
+                				"t" => $item->answer_title,
+                				"p" => array(),
+                			    "total" => 0
+                			);
+                			
+                		$pivot = $item->pivote;
+                		
+                		if ($field == 'person.age'){
+                		    $pivot = $pivot * 1;
+                		    if ($pivot < 17) $pivot = '0-16';
+                		    if ($pivot > 16 && $pivot < 22) $pivot = '17-21';
+                		    if ($pivot > 21 && $pivot < 36) $pivot = '22-35';
+                		    if ($pivot > 35 && $pivot < 56) $pivot = '36-55';
+                		    if ($pivot > 55) $pivot = '56-130';
+                		}
+                		
+            			$results[$q]['a'][$a]['p'][$pivot] = $item->total;
+            			
+            			if (!isset($totals[$a])) 
+            			    $totals[$a] = 0;
+            			
+            			$totals[$a] += $item->total;
+            			
+            			$pivots[$pivot] = str_replace("_"," ", $pivot);
+                	}
+                	
+                	
+                }
+                
+                // fill details...
+                $sql = "
+                SELECT
+                _survey.id AS survey_id,
+                _survey.title AS survey_title,
+                _survey_question.id AS question_id,
+                _survey_question.title AS question_title,
+                _survey_answer.id AS answer_id,
+                _survey_answer.title AS answer_title
+                FROM
+                _survey Inner Join (_survey_question inner join 
+                                     _survey_answer ON _survey_question.id = _survey_answer.question)
+                ON _survey_question.survey = _survey.id
+                WHERE _survey.id = $id
+                ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
+                
+                $survey_details = $db->deepQuery($sql);
+                
+                foreach($survey_details as $item){
+                    $q = $item->question_id;
+                    $a = $item->answer_id;
+                    if (!isset($results[$q]))
+                        $results[$q] = array(
+                                "i" => $q,
+                                "t" => $item->question_title,
+                                "a" => array()
+                        );
+                         
+                        if (!isset($results[$q]['a'][$a]))
+                            $results[$q]['a'][$a] = array(
+                    				"i" => $a,
+                    				"t" => $item->answer_title,
+                    				"p" => array(),
+                                    "total" => 0
+                            );
+                    if (!isset($totals[$a])) 
+                        $totals[$a] = 0;
+                }
+                
+                asort($pivots);
+                
+        	    $report[$field] = array(
+        	            'label' => $enum_label,
+        	            'results' => $results,
+        	            'pivots' => $pivots,
+        	            'totals' => $totals
+        	    );
+	        }
+	        
+	        $this->view->results = $report;
+	        
+    	    $this->view->survey = $survey[0];
+    	    $this->view->title = 'Survey report';
+	    } else {
+	        $this->survey = false;
+	    }
+	}
 }
