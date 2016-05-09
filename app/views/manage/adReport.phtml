@@ -55,9 +55,13 @@ $pie_charts = array(
 	function monthlyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Month', 'Impressions', 'Clicks'],
-			<?php foreach ($monthly as $m => $data) { ?>
-				['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
-			<?php } ?>
+			<?php if (!empty($monthly)): ?>
+			     <?php foreach ($monthly as $m => $data): ?>
+					['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+			     <?php endforeach; ?>
+			<?php else:?>
+				 []
+			<?php endif;?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyImpressions'));
 		chart.draw(data, {});
@@ -76,7 +80,7 @@ $pie_charts = array(
 			<?php }?>
 		]);
 		var options = {legend: 'none'};
-		var chart = new google.visualization.PieChart(document.getElementById(<?php echo $idx;?>));
+		var chart = new google.visualization.PieChart(document.getElementById('<?php echo $idx;?>'));
 		chart.draw(data, options);
 	}
 	<?php endforeach;?>
