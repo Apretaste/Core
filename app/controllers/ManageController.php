@@ -1043,13 +1043,8 @@ class ManageController extends Controller
 	       
 	       $month = array();
 	        
-	       $sql = "SELECT YEAR(request_time) as y,
-	       MONTH(request_time) as m,
-	       count(usage_id) as total
-	       FROM utilization
-	       WHERE (ad_top = $id OR ad_botton = $id)
-	       and service <> 'publicidad'
-	       GROUP BY y,m";
+	       $sql = "SELECT YEAR(request_time) as y, MONTH(request_time) as m, count(usage_id) as total
+	       FROM utilization WHERE (ad_top = $id OR ad_botton = $id) and service <> 'publicidad' GROUP BY y,m";
 	       
 	       $r = $db->deepQuery($sql);
 	       
@@ -1069,8 +1064,7 @@ class ManageController extends Controller
 	       and query * 1 = $id
 	       GROUP BY y,m";
 	       
-	       $r = $db->deepQuery($sql)
-	       ;
+	       $r = $db->deepQuery($sql);
 	       if (is_array($r))
 	           foreach($r as $i){
 	               if (!isset($week[$i->y.'-'.$i->m]))
@@ -1078,13 +1072,53 @@ class ManageController extends Controller
 	                   $week[$i->y.'-'.$i->m]['clicks'] = $i->total;
 	       }
 	       
+	       // join sql
+	       
+	       $jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_botton = $id";
+	       
 		   // usage by age
+		   $sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
+		   $r = $db->deepQuery($sql);
 		   
-		   $sql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom =$id";
-		   $sql = "SELECT COUNT(*) as total FROM ($sql) AS subq GROUP BY subq.age;";
+		   $usage_by_age = array(
+		           '0-16' => 0,
+		           '17-21' => 0,
+		           '22-35' => 0,
+		           '36-55' => 0,
+		           '56-130' => 0
+		   );
+		   
+		   if ($r != false){
+		       foreach($r as $item){
+		           $a = $item->a;
+		           $t = $item->t;
+		           if ($a < 17) $usage_by_age['0-16'] += $t;
+		           if ($a > 16 && $a < 22) $usage_by_age['17-21'] += $t;
+		           if ($a > 21 && $a < 36) $usage_by_age['22-35'] += $t;
+		           if ($a > 35 && $a < 56) $usage_by_age['36-55'] += $t;
+		           if ($a > 55) $usage_by_age['56-130'] += $t;
+		       }
+		   }
+		   
+		   $this->view->usage_by_age = $usage_by_age;
+		   
+		   // usage by X (enums)
+		   $X = array('gender','skin','province','highest_school_level','marital_status','sexual_orientation','religion');
+		   
+		   foreach($X as $xx){
+		       $usage = array();
+		       $r = $db->deepQuery("SELECT subq.$xx as a, COUNT(*) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
+		      
+		       if ($r != false)
+		           foreach($r as $item)
+		               $usage[$item->a] = $item->t;
+               
+		       $p = "usage_by_$xx";
+		       $this->view->$p = $usage;
+		   }
 		   
 		   
-	       $this->view->weekly = $week;
+		   $this->view->weekly = $week;
 	       $this->view->monthly = $month;
 	       $this->view->title = "Ad report";
 	       $this->view->ad = $ad[0];

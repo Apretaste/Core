@@ -1,3 +1,14 @@
+<?php 
+$pie_charts = array(
+        'age' => 'Usage by age',
+        'gender' => 'Usage by gender',
+        'skin' => 'Usage by skin',
+        'province' => 'Usage by province',
+        'highest_school_level' => 'Usage by highest school level',
+        'marital_status' => 'Usage by marital status',
+        'sexual_orientation' => 'Usage by sexual orientation',
+        'religion' => 'Usage by religion');
+?>
 <div class="row">
 	<div class="col-xs-12">
 		<h2><?php echo $ad->title; ?></h2>
@@ -8,13 +19,22 @@
 		
 		<h2>Monthly impressions/clicks</h2>
 		<div id="monthlyImpressions" style="width:900px; height:300px;"></div>
-		
-		<h2>Usage by age</h2>
-		<div id="usageByAge" style="width: 300px; height: 300px;"></div>
-
 	</div>
 </div>
 
+<!-- Pie charts -->
+<h3>Demographic</h3>
+<div class="row">
+  <?php foreach ($pie_charts as $idx => $label): ?>
+  <div class="col-xs-8 col-md-4">
+  	<div class="thumbnail">
+		<div id="<?php echo $idx;?>" style="width: 300px; height: 300px;"></div>
+		<center><h3><?php echo $label; ?></h3></center>
+	</div>
+  </div>
+  <?php endforeach;?>
+</div>
+		
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
 	// Weekly impressions
@@ -43,18 +63,21 @@
 		chart.draw(data, {});
 	}
 	
-	// Usage by age
+	// Pie charts: usage by X
 	google.load("visualization", "1", {packages:["corechart"]});
-	google.setOnLoadCallback(monthlyServicesUsage);
-	function monthlyServicesUsage() {
+
+	<?php foreach ($pie_charts as $idx => $label): ?>
+	google.setOnLoadCallback(<?php echo 'pie_'.$idx;?>);
+	function <?php echo 'pie_'.$idx; $arr = 'usage_by_'.$idx; ?>() {
 		var data = google.visualization.arrayToDataTable([
 			['Caption', 'Number'],
-			<?php // foreach ($servicesUsageMonthly as $data) { ?>
-				['<?php //echo $data['service']; ?>',<?php //echo $data['usage']; ?>],
-			<?php //} ?>
+			<?php foreach ($$arr as $a=>$t) { ?>
+				['<?php echo $a; ?>',<?php echo $t; ?>],
+			<?php }?>
 		]);
 		var options = {legend: 'none'};
-		var chart = new google.visualization.PieChart(document.getElementById('usageByAge'));
+		var chart = new google.visualization.PieChart(document.getElementById(<?php echo $idx;?>));
 		chart.draw(data, options);
 	}
+	<?php endforeach;?>
 </script>
