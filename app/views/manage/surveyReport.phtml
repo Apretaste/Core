@@ -1,6 +1,9 @@
 <div class="row">
 	<div class="col-xs-12">
 		<h2>#<?php echo $survey->id ?> <?php echo $survey->title; ?></h2>
+		
+		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a>
+		<br/>
     		<?php foreach ($results as $field => $result): ?>
     		
     			<h3><?php echo $result['label']; ?></h3>
