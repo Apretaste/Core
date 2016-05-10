@@ -298,8 +298,8 @@ class ManageController extends Controller
 				) a
 				LEFT JOIN person b
 					ON BINARY a.mnth = BINARY b.province AND
-					   b.province IS not NULL AND 
-					   b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+						b.province IS not NULL AND 
+						b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
 			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
 	
@@ -770,14 +770,14 @@ class ManageController extends Controller
 				$this->view->message = 'The survey #'.$delete.' was deleted successfull';
 				break;
 			
-		   case "disable":
-			   $id = $this->request->get('id');
-			   $sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
-			   break;
-		   case "enable":
-			   $id = $this->request->get('id');
-			   $sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
-			   break;
+			case "disable":
+				$id = $this->request->get('id');
+				$sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
+				break;
+			case "enable":
+				$id = $this->request->get('id');
+				$sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
+				break;
 		}
 		
 		if ($sql!==false) $connection->deepQuery($sql);
@@ -804,7 +804,7 @@ class ManageController extends Controller
 		$option = $this->request->get('option');
 		$sql = false;
 		if ($this->request->isPost()){
-		   
+			
 			switch($option){
 				case "addQuestion":
 					$survey = $this->request->getPost('survey');
@@ -842,12 +842,12 @@ class ManageController extends Controller
 			break;
 			
 			case "delQuestion":
-			   $question_id = $this->request->get('id');
-			   $sql = "START TRANSACTION; 
-					   DELETE FROM _survey_question WHERE id = '{$question_id}';
-					   DELETE FROM _survey_answer WHERE question ='{$question_id}';
-					   COMMIT;";
-			   $this->view->message = "The question was deleted successfull";
+				$question_id = $this->request->get('id');
+				$sql = "START TRANSACTION; 
+						DELETE FROM _survey_question WHERE id = '{$question_id}';
+						DELETE FROM _survey_answer WHERE question ='{$question_id}';
+						COMMIT;";
+				$this->view->message = "The question was deleted successfull";
 			break;
 		}
 		
@@ -985,179 +985,207 @@ class ManageController extends Controller
 			}
 		}
 	}
-	
-	public function adReportAction(){
-	    
-	    // getting ad's id
-	    // @TODO: improve this!
-	    $url = $_GET['_url']; 
-	    $id =  explode("/",$url);
-	    $id = intval($id[count($id)-1]);
-	    
-	    $db = new Connection();
-	    
-	    $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
-	    $this->view->ad = false;
-	    
-	    if ($ad !== false){
-	      
-	       $week = array(); 
-	        
-	       // @TODO fix field name in database: ad_botton to ad_bottom
-	       $sql = "SELECT YEAR(request_time) as y, 
-	               WEEK(request_time) as w,
-	               count(usage_id) as total
-	               FROM utilization 
-	               WHERE (ad_top = $id OR ad_botton = $id)
-	               and service <> 'publicidad'
-	               GROUP BY y,w";
-	       
-	       $r = $db->deepQuery($sql);
 
-	       if (is_array($r))
-    	       foreach($r as $i){
-    	           if (!isset($week[$i->y.'-'.$i->w]))
-	                   $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
-	               $week[$i->y.'-'.$i->w]['impressions'] = $i->total;
-    	       }
-	       
-	       $sql = "SELECT YEAR(request_time) as y,
-	               WEEK(request_time) as w,
-	               count(usage_id) as total
-	               FROM utilization
-	               WHERE service = 'publicidad'
-	               and subservice is null
-	               and query * 1 = $id
-	               GROUP BY y,w";
-	       
-	       $r = $db->deepQuery($sql)
-	       ;
-	       if (is_array($r))
-	           foreach($r as $i){
-	               if (!isset($week[$i->y.'-'.$i->w]))
-	                   $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
-	               $week[$i->y.'-'.$i->w]['clicks'] = $i->total;
-	       }
+	/**
+	 * Reports for the ads
+	 *
+	 * @author kuma
+	 * */
+	public function adReportAction()
+	{
+		// getting ad's id
+		$url = $_GET['_url']; 
+		$id =  explode("/",$url);
+		$id = intval($id[count($id)-1]);
 
-	       $this->view->weekly = $week;
-	       
-	       $month = array();
-	        
-	       $sql = "SELECT YEAR(request_time) as y, MONTH(request_time) as m, count(usage_id) as total
-	       FROM utilization WHERE (ad_top = $id OR ad_botton = $id) and service <> 'publicidad' GROUP BY y,m";
-	       
-	       $r = $db->deepQuery($sql);
-	       
-	       if (is_array($r))
-	           foreach($r as $i){
-	               if (!isset($week[$i->y.'-'.$i->m]))
-	                   $week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
-	                   $week[$i->y.'-'.$i->m]['impressions'] = $i->total;
-	       }
-	       
-	       $sql = "SELECT YEAR(request_time) as y,
-	       MONTH(request_time) as m,
-	       count(usage_id) as total
-	       FROM utilization
-	       WHERE service = 'publicidad'
-	       and subservice is null
-	       and query * 1 = $id
-	       GROUP BY y,m";
-	       
-	       $r = $db->deepQuery($sql);
-	       if (is_array($r))
-	           foreach($r as $i){
-	               if (!isset($week[$i->y.'-'.$i->m]))
-	                   $week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
-	                   $week[$i->y.'-'.$i->m]['clicks'] = $i->total;
-	       }
-	       
-	       // join sql
-	       
-	       $jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_botton = $id";
-	       
-		   // usage by age
-		   $sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
-		   $r = $db->deepQuery($sql);
-		   
-		   $usage_by_age = array(
-		           '0-16' => 0,
-		           '17-21' => 0,
-		           '22-35' => 0,
-		           '36-55' => 0,
-		           '56-130' => 0
-		   );
-		   
-		   if ($r != false){
-		       foreach($r as $item){
-		           $a = $item->a;
-		           $t = $item->t;
-		           if ($a < 17) $usage_by_age['0-16'] += $t;
-		           if ($a > 16 && $a < 22) $usage_by_age['17-21'] += $t;
-		           if ($a > 21 && $a < 36) $usage_by_age['22-35'] += $t;
-		           if ($a > 35 && $a < 56) $usage_by_age['36-55'] += $t;
-		           if ($a > 55) $usage_by_age['56-130'] += $t;
-		       }
-		   }
-		   
-		   $this->view->usage_by_age = $usage_by_age;
-		   
-		   // usage by X (enums)
-		   $X = array('gender','skin','province','highest_school_level','marital_status','sexual_orientation','religion');
-		   
-		   foreach($X as $xx){
-		       $usage = array();
-		       $r = $db->deepQuery("SELECT subq.$xx as a, COUNT(*) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
-		      
-		       if ($r != false)
-		           foreach($r as $item)
-		               $usage[$item->a] = $item->t;
-               
-		       $p = "usage_by_$xx";
-		       $this->view->$p = $usage;
-		   }
-		   
-		   
-		   $this->view->weekly = $week;
-	       $this->view->monthly = $month;
-	       $this->view->title = "Ad report";
-	       $this->view->ad = $ad[0];
-	    }
+		$db = new Connection();
+
+		$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+		$this->view->ad = false;
+		
+		if ($ad !== false)
+		{
+			$week = array(); 
+
+			// @TODO fix field name in database: ad_bottom to ad_bottom
+			$sql = "SELECT YEAR(request_time) as y, 
+					WEEK(request_time) as w,
+					count(usage_id) as total
+					FROM utilization 
+					WHERE (ad_top = $id OR ad_bottom = $id)
+					and service <> 'publicidad'
+					GROUP BY y,w";
+
+			$r = $db->deepQuery($sql);
+
+			if (is_array($r))
+			{
+				foreach($r as $i)
+				{
+					if ( ! isset($week[$i->y.'-'.$i->w])) $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
+					$week[$i->y.'-'.$i->w]['impressions'] = $i->total;
+				}
+			}
+
+			$sql = "
+				SELECT YEAR(request_time) as y,
+				WEEK(request_time) as w,
+				count(usage_id) as total
+				FROM utilization
+				WHERE service = 'publicidad'
+				and subservice is null
+				and query * 1 = $id
+				GROUP BY y,w";
+
+			$r = $db->deepQuery($sql);
+			if (is_array($r))
+			{
+				foreach($r as $i)
+				{
+					if ( ! isset($week[$i->y.'-'.$i->w])) $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
+					$week[$i->y.'-'.$i->w]['clicks'] = $i->total;
+				}
+			}
+
+			$this->view->weekly = $week;
+
+			$month = array();
+
+			$sql = "
+				SELECT YEAR(request_time) as y, MONTH(request_time) as m, count(usage_id) as total
+				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id) and service <> 'publicidad' GROUP BY y,m";
+
+			$r = $db->deepQuery($sql);
+
+			if (is_array($r))
+			{
+				foreach($r as $i)
+				{
+					if ( ! isset($week[$i->y.'-'.$i->m]))
+						$week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
+						$week[$i->y.'-'.$i->m]['impressions'] = $i->total;
+				}
+			}
+			
+			$sql = "
+				SELECT YEAR(request_time) as y,
+				MONTH(request_time) as m,
+				count(usage_id) as total
+				FROM utilization
+				WHERE service = 'publicidad'
+				and subservice is null
+				and query * 1 = $id
+				GROUP BY y,m";
+			
+			$r = $db->deepQuery($sql);
+			if (is_array($r))
+			{
+				foreach($r as $i)
+				{
+					if ( ! isset($week[$i->y.'-'.$i->m]))
+						$week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
+						$week[$i->y.'-'.$i->m]['clicks'] = $i->total;
+
+				}
+			}
+
+			// join sql
+			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom = $id";
+
+			// usage by age
+			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
+			$r = $db->deepQuery($sql);
+			
+			$usage_by_age = array(
+				'0-16' => 0,
+				'17-21' => 0,
+				'22-35' => 0,
+				'36-55' => 0,
+				'56-130' => 0
+			);
+
+			if ($r != false)
+			{
+				foreach($r as $item)
+				{
+					$a = $item->a;
+					$t = $item->t;
+					if ($a < 17) $usage_by_age['0-16'] += $t;
+					if ($a > 16 && $a < 22) $usage_by_age['17-21'] += $t;
+					if ($a > 21 && $a < 36) $usage_by_age['22-35'] += $t;
+					if ($a > 35 && $a < 56) $usage_by_age['36-55'] += $t;
+					if ($a > 55) $usage_by_age['56-130'] += $t;
+				}
+			}
+			
+			$this->view->usage_by_age = $usage_by_age;
+
+			// usage by X (enums)
+			$X = array('gender','skin','province','highest_school_level','marital_status','sexual_orientation','religion');
+
+			foreach($X as $xx)
+			{
+				$usage = array();
+				$r = $db->deepQuery("SELECT subq.$xx as a, COUNT(*) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
+
+				if ($r != false)
+				{
+					foreach($r as $item) $usage[$item->a] = $item->t;
+				}
+
+				$p = "usage_by_$xx";
+				$this->view->$p = $usage;
+			}
+
+			$this->view->weekly = $week;
+			$this->view->monthly = $month;
+			$this->view->title = "Ad report";
+			$this->view->ad = $ad[0];
+		}
 	}
+
+	/**
+	 * Show the ads target
+	 *
+	 * @author kuma
+	 * */
+	public function adTageringAction()
+	{
+		// getting ad's id
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = intval($id[count($id)-1]);
+		$db = new Connection();
+		$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+		$this->view->ad = false;
+
+		if ($ad !== false)
+		{
+			if ($this->request->isPost())
+			{
+				$sql = "UPDATE ads SET ";
+				$go = false;
+				foreach($_POST as $key => $value)
+				{
+					if (isset($ad[0]->$key))
+					{
+						$go  = true;
+						$sql .= " $key = '{$value}', ";
+					}
+				}
 	
-	public function adTageringAction(){
-	    // getting ad's id
-	    // @TODO: improve this!
-	    $url = $_GET['_url'];
-	    $id =  explode("/",$url);
-	    $id = intval($id[count($id)-1]);
-	    $db = new Connection();
-	    $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
-	    $this->view->ad = false;
-	   
-	    if ($ad !== false){
-    	    if ($this->request->isPost()){
-    	        
-    	        $sql = "UPDATE ads SET ";
-    	        $go = false;
-    	        foreach($_POST as $key => $value){
-    	            if (isset($ad[0]->$key)){
-    	                $go  = true;
-    	                $sql .= " $key = '{$value}', ";
-    	            }
-    	        }
-    
-    	        if ($go){
-    	            $sql = substr($sql,0,strlen($sql)-2);
-    	            $sql .= "WHERE id = $id;";
-    	            $db->deepQuery($sql);
-    	        }
-    	        
-    	        $ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
-    	    }
-    	    
-            $this->view->title ="Ad tagering";
-            $this->view->ad = $ad[0];
-	    }
+				if ($go)
+				{
+					$sql = substr($sql,0,strlen($sql)-2);
+					$sql .= "WHERE id = $id;";
+					$db->deepQuery($sql);
+				}
+				
+				$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+			}
+
+			$this->view->title ="Ad targeting";
+			$this->view->ad = $ad[0];
+		}
 	}
 }

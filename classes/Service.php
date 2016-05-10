@@ -8,6 +8,7 @@ class Service {
 	public $serviceUsage;
 	public $insertionDate;
 	public $pathToService;
+	public $showAds;
 	public $utils; // Instance of the Utils class
 
 	public function __construct() {

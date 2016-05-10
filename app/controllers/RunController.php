@@ -307,9 +307,6 @@ class RunController extends Controller
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
 		
-		// get the person, false if the person does not exist
-		$person = $utils->getPerson($email);
-		
 		// get details of the service
 		if($this->di->get('environment') == "sandbox")
 		{
@@ -404,19 +401,66 @@ class RunController extends Controller
 		// only save stadistics for email requests
 		if($format == "email")
 		{
-			$emailSender = new Email();
+			// get the person, false if the person does not exist
+			$person = $utils->getPerson($email);
 
-			// if the person accessed for the first time, send welcome email
-			if ($person === false)
+			// if the person exist in Apretaste
+			if ($person !== false)
 			{
-			    $r = new Response();
-			    $r->internal = true;
-			    $r->setResponseSubject("Bienvenido a Apretaste!");
-			    $r->createFromTemplate("welcome.tpl", array());
-			    $responses[] = $r;
+				// if the person is inactive and he/she is not trying to opt-out, re-subscribe him/her
+				if( ! $person->active && $serviceName != "excluyeme") $utils->subscribeToEmailList($email);
+
+				// update last access time to current and make person active
+				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 			}
-			
+			else // if the person accessed for the first time, insert him/her
+			{
+				// create a unique username
+				$username = $utils->usernameFromEmail($email);
+
+				// save the new person
+				$sql = "INSERT INTO person (email, username, last_access) VALUES ('$email', '$username', CURRENT_TIMESTAMP)";
+				$connection->deepQuery($sql);
+
+			   	// check if the person was invited to use Apretaste
+				$sql = "SELECT * FROM invitations WHERE email_invited='$email' AND used='0'";
+				$invitations = $connection->deepQuery($sql);
+				if(count($invitations)>0)
+				{
+					// create tickets for all the people invited. When somebody 
+					// is invited by more than one person, they all get tickets
+					$sql = "START TRANSACTION;";
+					foreach ($invitations as $invite)
+					{
+						// create the query
+						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
+						$sql .= "UPDATE invitations SET used='1', used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
+
+						// email the invitor
+						$newTicket = new Response();
+						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
+						$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
+						$newTicket->internal = true;
+						$responses[] = $newTicket;
+					}
+					$sql .= "COMMIT;";
+					$connection->deepQuery($sql);
+				}
+
+				// send the welcome email
+				$welcome = new Response();
+				$welcome->setResponseSubject("Bienvenido a Apretaste!");
+				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email));
+				$welcome->internal = true;
+				$responses[] = $welcome;
+
+				//  add to the email list in Mail Lite
+				$utils->subscribeToEmailList($email);
+			}
+
 			// get params for the email and send the response emails
+			$emailSender = new Email();
 			foreach($responses as $rs)
 			{
 				if($rs->render) // ommit default Response()
@@ -441,58 +485,9 @@ class RunController extends Controller
 					// remove dangerous characters that may break the SQL code
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
-					// send the response email 
+					// send the response email
 					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
-			}
-
-			// if the person exist in Apretaste
-			if ($person !== false)
-			{
-				// if the person is inactive and he/she is not trying to opt-out
-				if( ! $person->active && $serviceName != "excluyeme")
-				{
-					//  add to the email list in Mail Lite
-					$utils->subscribeToEmailList($email);
-				}
-
-				// update last access time to current
-				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
-			}
-			else // if the person accessed for the first time, insert him/her
-			{
-				// create a unique username
-				$username = $utils->usernameFromEmail($email);
-
-				// save the new Person
-				$sql = "INSERT INTO person (email, username, last_access) VALUES ('$email', '$username', CURRENT_TIMESTAMP)";
-				$connection->deepQuery($sql);
-
-			   	// check if the person was invited to use Apretaste
-				$sql = "SELECT * FROM invitations WHERE email_invited = '$email' AND used='0'";
-				$invitations = $connection->deepQuery($sql);
-				if(count($invitations)>0)
-				{
-					// create tickets for all the people invited. When somebody 
-					// is invited by more than one person, they all get tickets
-					$sql = "START TRANSACTION;";
-					foreach ($invitations as $invite)
-					{
-						// create the query
-						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
-						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
-						$sql .= "UPDATE invitations SET used='1', used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
-
-						// email the invitor
-						$body = "<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>";
-						$emailSender->sendEmail($invite->email_inviter, "Ha ganado un ticket para nuestra Rifa", $body);
-					}
-					$sql .= "COMMIT;";
-					$connection->deepQuery($sql);
-				}
-
-				//  add to the email list in Mail Lite
-				$utils->subscribeToEmailList($email);
 			}
 
 			// saves the openning date if the person comes from remarketing
@@ -507,9 +502,14 @@ class RunController extends Controller
 			$emailPieces = explode("@", $email);
 			$domain = $emailPieces[1];
 
+			// get the top and bottom Ads
+			$ads = isset($responses[0]->ads) ? $responses[0]->ads : array();
+			$adTop = isset($ads[0]) ? $ads[0]->id : "";
+			$adBottom = isset($ads[1]) ? $ads[1]->id : "";
+
 			// save the logs on the utilization table
 			$safeQuery = $connection->escape($query);
-			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_botton) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain','','')";
+			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain','$adTop','$adBottom')";
 			$connection->deepQuery($sql);
 
 			// return positive answer to prove the email was quequed
