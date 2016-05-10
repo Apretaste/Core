@@ -439,6 +439,7 @@ class RunController extends Controller
 
 						// email the invitor
 						$newTicket = new Response();
+						$newTicket->setResponseEmail($email);
 						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
 						$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
 						$newTicket->internal = true;
@@ -450,6 +451,7 @@ class RunController extends Controller
 
 				// send the welcome email
 				$welcome = new Response();
+				$welcome->setResponseEmail($email);
 				$welcome->setResponseSubject("Bienvenido a Apretaste!");
 				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email));
 				$welcome->internal = true;
