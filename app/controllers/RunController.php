@@ -504,12 +504,12 @@ class RunController extends Controller
 
 			// get the top and bottom Ads
 			$ads = isset($responses[0]->ads) ? $responses[0]->ads : array();
-			$adTop = isset($ads[0]) ? $ads[0]->id : "";
-			$adBottom = isset($ads[1]) ? $ads[1]->id : "";
+			$adTop = isset($ads[0]) ? $ads[0]->id : "NULL";
+			$adBottom = isset($ads[1]) ? $ads[1]->id : "NULL";
 
 			// save the logs on the utilization table
 			$safeQuery = $connection->escape($query);
-			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain','$adTop','$adBottom')";
+			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain',$adTop,$adBottom)";
 			$connection->deepQuery($sql);
 
 			// return positive answer to prove the email was quequed
