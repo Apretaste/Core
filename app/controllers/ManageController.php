@@ -1423,4 +1423,13 @@ class ManageController extends Controller
 	    $this->view->disable();
 	    
 	}
+	
+	public function surveyWhoUnfinishedAction(){
+	    // getting ad's id
+	    // @TODO: improve this!
+	    $url = $_GET['_url'];
+	    $id =  explode("/",$url);
+	    $id = intval($id[count($id)-1]);
+	    $db = new Connection();
+	}	    
 }
