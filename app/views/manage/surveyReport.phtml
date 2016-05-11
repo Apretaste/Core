@@ -1,0 +1,43 @@
+<div class="row">
+	<div class="col-xs-12">
+		<h2>#<?php echo $survey->id ?> <?php echo $survey->title; ?></h2>
+		
+		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a>
+		<br/>
+    		<?php foreach ($results as $field => $result): ?>
+    		
+    			<h3><?php echo $result['label']; ?></h3>
+    			<div class="panel panel-default">
+            		<table class="table">
+            		<tr>
+        				<th width="25%"></th><th>Total</th>
+        				<?php foreach ($result['pivots'] as $pivot => $label): ?>
+        					<th><?php echo $label; ?></th>
+        				<?php endforeach;?>
+        			</tr>
+        			
+            		<?php foreach($result['results'] as $question): ?>
+            			<tr class="success"><td colspan="<?php echo count($result['pivots']) + 2;?>"><b><?php echo $question['t']; ?></b></td></tr>
+            			
+            			<?php foreach($question['a'] as $ans): ?>
+            			<tr class = "odd">
+            				<td><?php echo $ans['t']; ?></td>
+            				<td <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;"<?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
+                			<?php foreach ($result['pivots'] as $pivot => $label): ?>
+                				<td>
+                				<?php if (!isset($ans['p'][$pivot])): ?> 
+                				    <?php echo "--"; ?>
+                				<?php else: ?> 
+                				    <?php echo number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?> %
+                				<?php endif; ?>
+                				</td>
+                			<?php endforeach;?>
+                		</tr>
+            			<?php endforeach;?>
+            			
+            		<?php endforeach;?>
+            		</table>
+				</div>
+			<?php endforeach; ?>
+	</div>
+</div>
