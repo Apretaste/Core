@@ -1256,7 +1256,7 @@ class ManageController extends Controller
 	            _survey_answer.title,
 	            $field
 	            ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
-	    
+	    	    
 	            $r = $db->deepQuery($sql);
 	             
 	            $pivots = array();
@@ -1284,12 +1284,12 @@ class ManageController extends Controller
 	                            $pivot = $item->pivote;
 	    
 	                            if ($field == 'person.age'){
-	                                $pivot = $pivot * 1;
-	                                if ($pivot < 17) $pivot = '0-16';
-	                                if ($pivot > 16 && $pivot < 22) $pivot = '17-21';
-	                                if ($pivot > 21 && $pivot < 36) $pivot = '22-35';
-	                                if ($pivot > 35 && $pivot < 56) $pivot = '36-55';
-	                                if ($pivot > 55) $pivot = '56-130';
+	                                if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL' || $pivot=='_UNKNOW') $pivot='UNKNOW';
+	                                elseif ($pivot*1 < 17) $pivot = '0-16';
+	                                elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
+	                                elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
+	                                elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
+	                                elseif ($pivot*1 > 55) $pivot = '56-130';
 	                            }
 	    
 	                            $results[$q]['a'][$a]['p'][$pivot] = $item->total;
