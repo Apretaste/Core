@@ -39,12 +39,13 @@ $pie_charts = array(
 <script type='text/javascript'>
 	// Weekly impressions
 	google.setOnLoadCallback(weeklyImpressions);
+	<?php $days = array('Mon','Tue','Wed','Thu','Fri','Sat','Sun'); ?>
 	function weeklyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Week', 'Impressions', 'Clicks'],
 			<?php if (count($weekly)>0): ?>
 			<?php foreach ($weekly as $w => $data) { ?>
-				['<?php echo $w; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+				['<?php echo $days[$w]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			<?php } ?>
 			<?php else:?>
 			 []
@@ -56,12 +57,13 @@ $pie_charts = array(
 
 	// Monthly impressions
 	google.setOnLoadCallback(monthlyImpressions);
+	<?php $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'); ?>
 	function monthlyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Month', 'Impressions', 'Clicks'],
 			<?php if (count($monthly)>0): ?>
 			     <?php foreach ($monthly as $m => $data): ?>
-					['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+					['<?php echo $months[$m]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			     <?php endforeach; ?>
 			<?php else:?>
 				 []
