@@ -1012,7 +1012,7 @@ class ManageController extends Controller
 					WEEK(request_time) as w,
 					count(usage_id) as total
 					FROM utilization 
-					WHERE (ad_top = $id OR ad_bottom = $id)
+					WHERE (ad_top = $id OR ad_botton = $id)
 					and service <> 'publicidad'
 					GROUP BY y,w";
 
@@ -1053,7 +1053,7 @@ class ManageController extends Controller
 
 			$sql = "
 				SELECT YEAR(request_time) as y, MONTH(request_time) as m, count(usage_id) as total
-				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id) and service <> 'publicidad' GROUP BY y,m";
+				FROM utilization WHERE (ad_top = $id OR ad_botton = $id) and service <> 'publicidad' GROUP BY y,m";
 
 			$r = $db->deepQuery($sql);
 
@@ -1090,7 +1090,7 @@ class ManageController extends Controller
 			}
 
 			// join sql
-			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom = $id";
+			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_botton = $id";
 
 			// usage by age
 			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";

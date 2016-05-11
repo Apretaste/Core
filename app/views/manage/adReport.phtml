@@ -1,13 +1,13 @@
 <?php 
 $pie_charts = array(
-        'age' => 'Usage by age',
-        'gender' => 'Usage by gender',
-        'skin' => 'Usage by skin',
-        'province' => 'Usage by province',
-        'highest_school_level' => 'Usage by highest school level',
-        'marital_status' => 'Usage by marital status',
-        'sexual_orientation' => 'Usage by sexual orientation',
-        'religion' => 'Usage by religion');
+        'age' => 'Age',
+        'gender' => 'Gender',
+        'skin' => 'Skin',
+        'province' => 'Province',
+        'highest_school_level' => 'Highest school level',
+        'marital_status' => 'Marital status',
+        'sexual_orientation' => 'Sexual orientation',
+        'religion' => 'Religion');
 ?>
 <div class="row">
 	<div class="col-xs-12">
@@ -42,9 +42,13 @@ $pie_charts = array(
 	function weeklyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Week', 'Impressions', 'Clicks'],
+			<?php if (count($weekly)>0): ?>
 			<?php foreach ($weekly as $w => $data) { ?>
 				['<?php echo $w; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			<?php } ?>
+			<?php else:?>
+			 []
+		<?php endif;?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('weeklyImpressions'));
 		chart.draw(data, {});
@@ -55,7 +59,7 @@ $pie_charts = array(
 	function monthlyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Month', 'Impressions', 'Clicks'],
-			<?php if (!empty($monthly)): ?>
+			<?php if (count($monthly)>0): ?>
 			     <?php foreach ($monthly as $m => $data): ?>
 					['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			     <?php endforeach; ?>
