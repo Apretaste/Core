@@ -384,6 +384,9 @@ class Utils
 		// block email from/to our customer support
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
+		// block intents from blacklisted emails @TODO create a table for emails blacklisted
+		if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
+
 		// block intents to email the deamons
 		if(empty($msg) && (stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false )) $msg = 'hard-bounce';
 

@@ -10,7 +10,7 @@
 					<th class="text-center">Inserted</th>
 					<th class="text-center">Paid</th>
 					<th class="text-center">Expires</th>
-					<th></th>
+					<th colspan="3"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -24,15 +24,14 @@
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($ad->paid_date)); ?></td>
 					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($ad->expiration_date)); ?></td>
 					<td class="text-center">
-						<a class="btn btn-default" target="_blank" href="/run/display?subject=PUBLICIDAD <?php echo $ad->id; ?>">Ver</a>
+						<a class="btn btn-default" target="_blank" href="/run/display?subject=PUBLICIDAD <?php echo $ad->id; ?>">View</a>
 					</td>
 					<td class="text-center">
-						<a class="btn btn-default" href="/manage/adTagering/<?php echo $ad->id; ?>">Tagering</a>
+						<a class="btn btn-default" href="/manage/adTagering/<?php echo $ad->id; ?>">Target</a>
 					</td>
 					<td class="text-center">
 						<a class="btn btn-default" href="/manage/adReport/<?php echo $ad->id; ?>">Report</a>
 					</td>
-					
 				</tr>
 			<?php } ?>
 			</tbody>
