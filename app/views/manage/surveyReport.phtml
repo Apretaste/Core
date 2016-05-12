@@ -1,88 +1,76 @@
-<div class="row">
-	<div class="col-xs-2">
-		<ul class="nav nav-pills nav-stacked" data-spy="affix" data-offset-top="100">
-    	<?php foreach ($results as $field => $result): ?>
-    		<li><a href="#<?php echo $field;?>"><?php echo $result['label']; ?></a>
-    			<ul class="nav">
-    				<?php foreach($result['results'] as $question): ?>
-    				<li><a href="#q<?php echo $question['i']; ?>"><?php echo $question['t']; ?></a></li>
-    				<?php endforeach;?>
-    			</ul>
-    		</li>
-    	<?php endforeach;?>
-    	</ul>
-	</div>
-	<div class="col-xs-10">
-		<h2><?php echo $survey->title; ?></h2>
-
-		<?php
-
-$trans = array(
-        'LA HABANA' => 'HAV',
-        'PINAR DEL RIO' => 'PR',
-        'MATANZAS' => 'MAT',
-        'MAYABEQUE' => 'MAY',
-        'ARTEMISA' => 'ART',
-        'VILLA CLARA' => 'VC',
-        'SANCTI SPIRITUS' => 'SS',
-        'CIEGO DE AVILA' => 'CA',
-        'CAMAGUEY' => 'CAM',
-        'LAS TUNAS' => 'LT',
-        'HOLGUIN' => 'HOL',
-        'GRANMA' => 'GRA',
-        'SANTIAGO DE CUBA' => 'SC',
-        'GUANTANAMO' => 'GUA',
-        'ISLA DE LA JUVENTUD' => 'IJ'
-);
+<?php
+	$trans = array(
+		'LA HABANA' => 'HAV',
+		'PINAR DEL RIO' => 'PR',
+		'MATANZAS' => 'MA',
+		'MAYABEQUE' => 'MY',
+		'ARTEMISA' => 'AR',
+		'VILLA CLARA' => 'VC',
+		'SANCTI SPIRITUS' => 'SS',
+		'CIEGO DE AVILA' => 'CA',
+		'CIENFUEGOS' => 'CF',
+		'CAMAGUEY' => 'CAM',
+		'LAS TUNAS' => 'LT',
+		'HOLGUIN' => 'HOL',
+		'GRANMA' => 'GRA',
+		'SANTIAGO DE CUBA' => 'SC',
+		'GUANTANAMO' => 'GUA',
+		'ISLA DE LA JUVENTUD' => 'IJ'
+	);
 ?>
-		
-		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a> <br />
-    		<?php foreach ($results as $field => $result): ?>
-    		
-    			<h3 id="<?php echo $field; ?>"><?php echo $result['label']; ?></h3>
-		<div class="panel panel-default">
-			<table class="table table-fixedheader table-bordered table-striped">
-				<thead>
-					<th width="25%"></th>
-					<th width="50" align="center">Total</th>
-					<th width="50" align="center">Percentage</th>
-        				<?php foreach ($result['pivots'] as $pivot => $label): ?>
-        					<th width="50" align="center"><?php echo isset($trans[$label])?$trans[$label]:$label; ?></th>
-        				<?php endforeach;?>
-        			</thead>
-        			
-            		<?php foreach($result['results'] as $question): ?>
-            			<tr class="success">
-					<td id="q<?php echo $question['i']; ?>" colspan="<?php echo count($result['pivots']) + 3;?>"><b><?php echo $question['t']; ?></b></td>
-				</tr>
-            			
-            			<?php foreach($question['a'] as $ans): ?>
-            			<tr>
-					<td bgcolor="#eeeeee"><?php echo $ans['t']; ?></td>
-					<td bgcolor="#eeeeee" align="right" <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;" <?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
 
-					<td bgcolor="#eeeeee" align="right"><?php echo number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1);?>%</td>
-					
-                			<?php foreach ($result['pivots'] as $pivot => $label): ?>
-                				<td align="right">
-                				<?php if (!isset($ans['p'][$pivot])): ?> 
-                				    <?php echo "--"; ?>
-                				<?php else: ?> 
-                				    <?php echo $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?>%
-                				    
-                				<?php endif; ?>
-                				</td>
-                			<?php endforeach;?>
-                		</tr>
-            			<?php endforeach;?>
-            			
-            		<?php endforeach;?>
-            		</table>
-		</div>
-			<?php endforeach; ?>
-	</div>
-
+<div class="row">
+	<div class="col-xs-10"><h2><?php echo $survey->title; ?></h2></div>
+	<div class="col-xs-2 text-right"><a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a></div>
 </div>
 
-
-
+<div class="row">
+	<div class="col-xs-2">
+		<div class="nav nav-pills nav-stacked" data-spy="affix" data-offset-top="100">
+			<h3>Legend</h3>
+			<?php foreach ($results as $field => $result): ?>
+				<p><a href="#<?php echo $field;?>"><?php echo $result['label']; ?></a></p>
+			<?php endforeach;?>
+		</div>
+	</div>
+	<div class="col-xs-10">
+		<?php foreach ($results as $field => $result): ?>
+			<h3 id="<?php echo $field; ?>"><?php echo strtoupper($result['label']); ?></h3>
+			<div class="panel panel-default">
+				<table class="table table-fixedheader table-bordered table-striped">
+					<thead>
+						<th width="25%"></th>
+						<th width="50" style="text-align:center;">Total</th>
+						<th width="50" style="text-align:center;">%</th>
+							<?php foreach ($result['pivots'] as $pivot => $label): ?>
+								<th width="50" style="text-align:center;"><?php echo isset($trans[$label])?$trans[$label]:$label; ?></th>
+							<?php endforeach;?>
+					</thead>
+					<tbody>
+						<?php foreach($result['results'] as $question): ?>
+							<tr class="success">
+								<td id="q<?php echo $question['i']; ?>" colspan="<?php echo count($result['pivots']) + 3;?>"><b><?php echo $question['t']; ?></b></td>
+							</tr>
+							<?php foreach($question['a'] as $ans): ?>
+								<tr>
+									<td bgcolor="#eeeeee"><?php echo $ans['t']; ?></td>
+									<td bgcolor="#eeeeee" align="right" <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;" <?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
+									<td bgcolor="#eeeeee" align="right"><?php echo number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1);?>%</td>
+									<?php foreach ($result['pivots'] as $pivot => $label): ?>
+										<td align="right">
+											<?php if (!isset($ans['p'][$pivot])): ?> 
+												<?php echo "--"; ?>
+											<?php else: ?> 
+												<?php echo $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?>%
+											<?php endif; ?>
+										</td>
+									<?php endforeach;?>
+								</tr>
+							<?php endforeach;?>
+						<?php endforeach;?>
+					</tbody>
+				</table>
+			</div>
+		<?php endforeach; ?>
+	</div>
+</div>

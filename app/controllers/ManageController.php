@@ -1035,7 +1035,7 @@ class ManageController extends Controller
 				count(usage_id) as total
 				FROM utilization
 				WHERE service = 'publicidad'
-				and subservice is null
+				and (subservice = '' OR subservice is NULL)
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY w";
@@ -1080,7 +1080,7 @@ class ManageController extends Controller
 				count(usage_id) as total
 				FROM utilization
 				WHERE service = 'publicidad'
-				and subservice is null
+				and (subservice = '' OR subservice is NULL)
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY m";
@@ -1100,7 +1100,7 @@ class ManageController extends Controller
 			// join sql
 			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email 
 			WHERE service = 'publicidad'
-				and subservice is null
+				and (subservice = '' OR subservice is NULL)
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)";
 
