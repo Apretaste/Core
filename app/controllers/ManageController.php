@@ -1269,6 +1269,7 @@ class ManageController extends Controller
 	            _survey Inner Join (_survey_question inner join ( _survey_answer inner join (_survey_answer_choosen inner join (select *, YEAR(CURDATE()) - YEAR(person.date_of_birth) as age from person) as person ON _survey_answer_choosen.email = person.email) on _survey_answer_choosen.answer = _survey_answer.id) ON _survey_question.id = _survey_answer.question)
 	            ON _survey_question.survey = _survey.id
 	            WHERE _survey.id = $id
+	            AND trim($field) <> ''
 	            GROUP BY
 	            _survey.id,
 	            _survey.title,
