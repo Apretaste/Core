@@ -1011,7 +1011,7 @@ class ManageController extends Controller
 			$sql = "SELECT WEEKDAY(request_time) as w,
 					count(usage_id) as total
 					FROM utilization 
-					WHERE (ad_top = $id OR ad_botton = $id)
+					WHERE (ad_top = $id OR ad_bottom = $id)
 					and service <> 'publicidad'
 					and YEAR(request_time) = YEAR(CURRENT_DATE)
 					GROUP BY w
@@ -1056,7 +1056,7 @@ class ManageController extends Controller
 			$sql = "
 				SELECT 
 				MONTH(request_time) as m, count(usage_id) as total
-				FROM utilization WHERE (ad_top = $id OR ad_botton = $id) 
+				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id) 
     			and service <> 'publicidad'
     			and YEAR(request_time) = YEAR(CURRENT_DATE)
     			GROUP BY m";
