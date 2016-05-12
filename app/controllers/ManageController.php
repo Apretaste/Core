@@ -1273,8 +1273,9 @@ class ManageController extends Controller
 	            $results = array();
 	            if ($r!==false){
 	                foreach($r as $item){
-	                    $q = $item->question_id;
-	                    $a = $item->answer_id;
+	                    $item->total = intval($item->total);
+	                    $q = intval($item->question_id);
+	                    $a = intval($item->answer_id);
 	                    if (!isset($results[$q]))
 	                        $results[$q] = array(
 	                                "i" => $q,
@@ -1308,9 +1309,8 @@ class ManageController extends Controller
 	                                $totals[$a] = 0;
 	                                 
 	                                $totals[$a] += $item->total;
-	                             
+	                                $results[$q]['a'][$a]['total'] += $item->total;
 	                                $results[$q]['total'] += $item->total;
-	                                
 	                                $pivots[$pivot] = str_replace("_"," ", $pivot);
 	                }
 	            }
@@ -1334,8 +1334,8 @@ class ManageController extends Controller
 	            $survey_details = $db->deepQuery($sql);
 	    
 	            foreach($survey_details as $item){
-	                $q = $item->question_id;
-	                $a = $item->answer_id;
+	                $q = intval($item->question_id);
+	                $a = intval($item->answer_id);
 	                if (!isset($results[$q]))
 	                    $results[$q] = array(
 	                            "i" => $q,
@@ -1369,7 +1369,7 @@ class ManageController extends Controller
 	             
 	            foreach ($report[$field]['results'] as $k => $question){
 	                foreach($question['a'] as $kk => $ans){
-	                    $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']];
+	                    $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']*1];
 	                    foreach($ans['p'] as $kkk => $pivot){
 	                        $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] -= $pivot;
 	                    }
@@ -1417,12 +1417,13 @@ class ManageController extends Controller
         	foreach($result['results'] as $question){
             	$csv[][0] = $question['t'];
             	foreach($question['a'] as $ans) {
-            		$row = array($ans['t'], $result['totals'][$ans['i']], number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1));         
+            		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));         
             	    foreach ($result['pivots'] as $pivot => $label) {
                 		if (!isset($ans['p'][$pivot])) {
                 			$row[] = "--";
                 		} else { 
-                		     $row[] = number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1);
+                		    var_dump($ans['p'][$pivot]);
+                		     $row[] = $ans['p'][$pivot]; //($ans['total'] === 0 ? 0:number_format(($ans['p'][$pivot] / $ans['total']) * 100, 1));
                 		}
             	    }
             	}
@@ -1438,7 +1439,7 @@ class ManageController extends Controller
 	        $csvtext .="\n";
 	    }
 	    
-	    header("Content-type: text/csv");
+	    /*header("Content-type: text/csv");
 	    header("Content-Type: application/force-download");
 	    header("Content-Type: application/octet-stream");
 	    header("Content-Type: application/download");
@@ -1447,9 +1448,10 @@ class ManageController extends Controller
 	    header("Pragma: public");
 	    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 	    header("Accept-Ranges: bytes");
-	    
+	    */
+	  
 	    echo $csvtext;
-
+	    
 	    $this->view->disable();
 	    
 	}
