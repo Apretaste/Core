@@ -1,15 +1,16 @@
 <?php
-$pie_charts = array(
-        'age' => 'Age',
-        'gender' => 'Gender',
-        'skin' => 'Skin',
-        'province' => 'Province',
-        'highest_school_level' => 'Highest school level',
-        'marital_status' => 'Marital status',
-        'sexual_orientation' => 'Sexual orientation',
-        'religion' => 'Religion'
-);
+	$pie_charts = array(
+		'age' => 'Age',
+		'gender' => 'Gender',
+		'skin' => 'Skin',
+		'province' => 'Province',
+		'highest_school_level' => 'Highest school level',
+		'marital_status' => 'Marital status',
+		'sexual_orientation' => 'Sexual orientation',
+		'religion' => 'Religion'
+	);
 ?>
+
 <div class="row">
 	<div class="col-xs-12">
 		<h2><?php echo $ad->title; ?></h2>
@@ -71,9 +72,9 @@ $pie_charts = array(
 		var data = google.visualization.arrayToDataTable([
 			['Month', 'Impressions', 'Clicks'],
 			<?php if (count($monthly)>0): ?>
-			     <?php foreach ($monthly as $m => $data): ?>
+				 <?php foreach ($monthly as $m => $data): ?>
 					['<?php echo $months[$m]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
-			     <?php endforeach; ?>
+				 <?php endforeach; ?>
 			<?php else:?>
 				 []
 			<?php endif;?>
@@ -103,33 +104,33 @@ $pie_charts = array(
 
 	// by province
 	<?php
+		$regions = array(
+			'PINAR_DEL_RIO' => 'Pinar del Río',
+			'LA_HABANA' => 'Ciudad de La Habana',
+			'ARTEMISA' => 'CU-X01',
+			'MAYABEQUE' => 'CU-X02',
+			'MATANZAS' => 'Matanzas',
+			'VILLA_CLARA' => 'Villa Clara',
+			'CIENFUEGOS' => 'Cienfuegos',
+			'SANCTI_SPIRITUS' => 'Sancti Spíritus',
+			'CIEGO_DE_AVILA' => 'Ciego de Ávila',
+			'CAMAGUEY' => 'Camagüey',
+			'LAS_TUNAS' => 'Las Tunas',
+			'HOLGUIN' => 'Holguín',
+			'GRANMA' => 'Granma',
+			'SANTIAGO_DE_CUBA' => 'Santiago de Cuba',
+			'GUANTANAMO' => 'Guantánamo',
+			'ISLA_DE_LA_JUVENTUD' => 'Isla de la Juventud'
+		);
+	?>
 
-$regions = array(
-        'PINAR_DEL_RIO' => 'Pinar del RÃ­o',
-        'LA_HABANA' => 'Ciudad de La Habana',
-        'ARTEMISA' => 'CU-X01',
-        'MAYABEQUE' => 'CU-X02',
-        'MATANZAS' => 'Matanzas',
-        'VILLA_CLARA' => 'Villa Clara',
-        'CIENFUEGOS' => 'Cienfuegos',
-        'SANCTI_SPIRITUS' => 'Sancti SpÃ­ritus',
-        'CIEGO_DE_AVILA' => 'Ciego de Ã�vila',
-        'CAMAGUEY' => 'CamagÃ¼ey',
-        'LAS_TUNAS' => 'Las Tunas',
-        'HOLGUIN' => 'HolguÃ­n',
-        'GRANMA' => 'Granma',
-        'SANTIAGO_DE_CUBA' => 'Santiago de Cuba',
-        'GUANTANAMO' => 'GuantÃ¡namo',
-        'ISLA_DE_LA_JUVENTUD' => 'Isla de la Juventud'
-);
-?>
 	google.load('visualization', '1', {'packages': ['geochart']});
 	google.setOnLoadCallback(drawRegionsMap);
 	function drawRegionsMap() {
 		var data = google.visualization.arrayToDataTable([
 			['Province', 'Clicks'],
 			<?php foreach ($regions as $reg => $label) { ?>
-			    <?php if (isset($usage_by_province[$reg])) $t = $usage_by_province[$reg]; else $t=0;?>
+				<?php if (isset($usage_by_province[$reg])) $t = $usage_by_province[$reg]; else $t=0;?>
 				['<?php echo $label; ?>',<?php echo $t; ?>],
 			<?php } ?>
 		]);
