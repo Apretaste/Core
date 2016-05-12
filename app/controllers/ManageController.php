@@ -1189,6 +1189,9 @@ class ManageController extends Controller
 		}
 	}
 	
+	/**
+	 * Survey reports
+	 */
 	public function surveyReportAction(){
 	    // getting ad's id
 	    // @TODO: improve this!
@@ -1197,7 +1200,7 @@ class ManageController extends Controller
 	    $id = intval($id[count($id)-1]);
 	    
 	    $report = $this->getSurveyResults($id);
-	    
+
 	    if ($report !== false){
 	        $db = new Connection();
 	        $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
@@ -1209,6 +1212,12 @@ class ManageController extends Controller
 	    }
 	}
 	
+	/**
+	 * Calculate and return survey's results
+	 * 
+	 * @author kuma
+	 * @param integer $id
+	 */
 	private function getSurveyResults($id){
 	    $db = new Connection();
 	    $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
@@ -1270,7 +1279,8 @@ class ManageController extends Controller
 	                        $results[$q] = array(
 	                                "i" => $q,
 	                                "t" => $item->question_title,
-	                                "a" => array()
+	                                "a" => array(),
+	                                "total" => 0
 	                        );
 	                         
 	                        if (!isset($results[$q]['a'][$a]))
@@ -1298,7 +1308,9 @@ class ManageController extends Controller
 	                                $totals[$a] = 0;
 	                                 
 	                                $totals[$a] += $item->total;
-	                                 
+	                             
+	                                $results[$q]['total'] += $item->total;
+	                                
 	                                $pivots[$pivot] = str_replace("_"," ", $pivot);
 	                }
 	            }
@@ -1341,7 +1353,9 @@ class ManageController extends Controller
 	                        if (!isset($totals[$a]))
 	                            $totals[$a] = 0;
 	            }
-	    
+	            
+	            $pivots['_UNKNOW'] = 'UNKNOW';	            
+	            
 	            asort($pivots);
 	    
 	            $report[$field] = array(
@@ -1350,6 +1364,17 @@ class ManageController extends Controller
 	                    'pivots' => $pivots,
 	                    'totals' => $totals
 	            );
+	            
+	            // adding unknow labels
+	             
+	            foreach ($report[$field]['results'] as $k => $question){
+	                foreach($question['a'] as $kk => $ans){
+	                    $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']];
+	                    foreach($ans['p'] as $kkk => $pivot){
+	                        $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] -= $pivot;
+	                    }
+	                }
+	            }
 	        }
 	         
 	        return $report;
@@ -1358,6 +1383,11 @@ class ManageController extends Controller
 	    return false;
 	}
 	
+	/**
+	 * Download survey's results as CSV
+	 * 
+	 * @author kuma
+	 */
 	public function surveyResultsCSVAction(){
 	    // getting ad's id
 	    // @TODO: improve this!
@@ -1377,7 +1407,7 @@ class ManageController extends Controller
 	     foreach ($results as $field => $result){
 	        		
     		$csv[][0] = $result['label'];
-            $row = array('','Total');
+            $row = array('','Total','Percentage');
           
             foreach ($result['pivots'] as $pivot => $label)
         		$row[] = $label; 
@@ -1387,7 +1417,7 @@ class ManageController extends Controller
         	foreach($result['results'] as $question){
             	$csv[][0] = $question['t'];
             	foreach($question['a'] as $ans) {
-            		$row = array($ans['t'],$result['totals'][$ans['i']]);         
+            		$row = array($ans['t'], $result['totals'][$ans['i']], number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1));         
             	    foreach ($result['pivots'] as $pivot => $label) {
                 		if (!isset($ans['p'][$pivot])) {
                 			$row[] = "--";

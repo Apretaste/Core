@@ -1,34 +1,75 @@
 <div class="row">
-	<div class="col-xs-12">
-		<h2>#<?php echo $survey->id ?> <?php echo $survey->title; ?></h2>
+	<div class="col-xs-2">
+		<ul class="nav nav-pills nav-stacked" data-spy="affix" data-offset-top="100">
+    	<?php foreach ($results as $field => $result): ?>
+    		<li><a href="#<?php echo $field;?>"><?php echo $result['label']; ?></a>
+    			<ul class="nav">
+    				<?php foreach($result['results'] as $question): ?>
+    				<li><a href="#q<?php echo $question['i']; ?>"><?php echo $question['t']; ?></a></li>
+    				<?php endforeach;?>
+    			</ul>
+    		</li>
+    	<?php endforeach;?>
+    	</ul>
+	</div>
+	<div class="col-xs-10">
+		<h2><?php echo $survey->title; ?></h2>
+
+		<?php
+
+$trans = array(
+        'LA HABANA' => 'HAV',
+        'PINAR DEL RIO' => 'PR',
+        'MATANZAS' => 'MAT',
+        'MAYABEQUE' => 'MAY',
+        'ARTEMISA' => 'ART',
+        'VILLA CLARA' => 'VC',
+        'SANCTI SPIRITUS' => 'SS',
+        'CIEGO DE AVILA' => 'CA',
+        'CAMAGUEY' => 'CAM',
+        'LAS TUNAS' => 'LT',
+        'HOLGUIN' => 'HOL',
+        'GRANMA' => 'GRA',
+        'SANTIAGO DE CUBA' => 'SC',
+        'GUANTANAMO' => 'GUA',
+        'ISLA DE LA JUVENTUD' => 'IJ'
+);
+?>
 		
-		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a>
-		<br/>
+		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a> <br />
     		<?php foreach ($results as $field => $result): ?>
     		
-    			<h3><?php echo $result['label']; ?></h3>
-    			<div class="panel panel-default">
-            		<table class="table">
-            		<tr>
-        				<th width="25%"></th><th>Total</th>
+    			<h3 id="<?php echo $field; ?>"><?php echo $result['label']; ?></h3>
+		<div class="panel panel-default">
+			<table class="table table-fixedheader table-bordered table-striped">
+				<thead>
+					<th width="25%"></th>
+					<th width="50" align="center">Total</th>
+					<th width="50" align="center">Percentage</th>
         				<?php foreach ($result['pivots'] as $pivot => $label): ?>
-        					<th><?php echo $label; ?></th>
+        					<th width="50" align="center"><?php echo isset($trans[$label])?$trans[$label]:$label; ?></th>
         				<?php endforeach;?>
-        			</tr>
+        			</thead>
         			
             		<?php foreach($result['results'] as $question): ?>
-            			<tr class="success"><td colspan="<?php echo count($result['pivots']) + 2;?>"><b><?php echo $question['t']; ?></b></td></tr>
+            			<tr class="success">
+					<td id="q<?php echo $question['i']; ?>" colspan="<?php echo count($result['pivots']) + 3;?>"><b><?php echo $question['t']; ?></b></td>
+				</tr>
             			
             			<?php foreach($question['a'] as $ans): ?>
-            			<tr class = "odd">
-            				<td><?php echo $ans['t']; ?></td>
-            				<td <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;"<?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
+            			<tr>
+					<td bgcolor="#eeeeee"><?php echo $ans['t']; ?></td>
+					<td bgcolor="#eeeeee" align="right" <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;" <?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
+
+					<td bgcolor="#eeeeee" align="right"><?php echo number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1);?>%</td>
+					
                 			<?php foreach ($result['pivots'] as $pivot => $label): ?>
-                				<td>
+                				<td align="right">
                 				<?php if (!isset($ans['p'][$pivot])): ?> 
                 				    <?php echo "--"; ?>
                 				<?php else: ?> 
-                				    <?php echo number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?> %
+                				    <?php echo $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?>%
+                				    
                 				<?php endif; ?>
                 				</td>
                 			<?php endforeach;?>
@@ -37,7 +78,11 @@
             			
             		<?php endforeach;?>
             		</table>
-				</div>
+		</div>
 			<?php endforeach; ?>
 	</div>
+
 </div>
+
+
+
