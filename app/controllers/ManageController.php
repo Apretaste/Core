@@ -1014,7 +1014,7 @@ class ManageController extends Controller
 					FROM utilization 
 					WHERE (ad_top = $id OR ad_bottom = $id)
 					and service <> 'publicidad'
-					and YEAR(request_time) = YEAR(CURRENT_DATE)
+					and DATE(request_time) >= CURRENT_DATE - 6
 					GROUP BY w
 			        ORDER BY w";
 
@@ -1080,7 +1080,7 @@ class ManageController extends Controller
 				count(usage_id) as total
 				FROM utilization
 				WHERE service = 'publicidad'
-				and (subservice = '' OR subservice is NULL)
+				and (trim(subservice) = '' OR subservice is NULL)
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY m";
