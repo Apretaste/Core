@@ -1308,7 +1308,7 @@ class ManageController extends Controller
 	                            $pivot = $item->pivote;
 	    
 	                            if ($field == 'person.age'){
-	                                if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL' || $pivot=='_UNKNOW') $pivot='UNKNOW';
+	                                if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
 	                                elseif ($pivot*1 < 17) $pivot = '0-16';
 	                                elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
 	                                elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
