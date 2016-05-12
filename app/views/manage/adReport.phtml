@@ -1,24 +1,27 @@
-<?php 
+<?php
 $pie_charts = array(
-        'age' => 'Usage by age',
-        'gender' => 'Usage by gender',
-        'skin' => 'Usage by skin',
-        'province' => 'Usage by province',
-        'highest_school_level' => 'Usage by highest school level',
-        'marital_status' => 'Usage by marital status',
-        'sexual_orientation' => 'Usage by sexual orientation',
-        'religion' => 'Usage by religion');
+        'age' => 'Age',
+        'gender' => 'Gender',
+        'skin' => 'Skin',
+        'province' => 'Province',
+        'highest_school_level' => 'Highest school level',
+        'marital_status' => 'Marital status',
+        'sexual_orientation' => 'Sexual orientation',
+        'religion' => 'Religion'
+);
 ?>
 <div class="row">
 	<div class="col-xs-12">
 		<h2><?php echo $ad->title; ?></h2>
-		<p><small><?php echo date("Y-m-d m:i:s"); ?></small></p>
-		
+		<p>
+			<small><?php echo date("Y-m-d m:i:s"); ?></small>
+		</p>
+
 		<h2>Weekly impressions/clicks</h2>
-		<div id="weeklyImpressions" style="width:900px; height:300px;"></div>
-		
+		<div id="weeklyImpressions" style="width: 900px; height: 300px;"></div>
+
 		<h2>Monthly impressions/clicks</h2>
-		<div id="monthlyImpressions" style="width:900px; height:300px;"></div>
+		<div id="monthlyImpressions" style="width: 900px; height: 300px;"></div>
 	</div>
 </div>
 
@@ -26,25 +29,36 @@ $pie_charts = array(
 <h3>Demographic</h3>
 <div class="row">
   <?php foreach ($pie_charts as $idx => $label): ?>
+  	<?php if ($idx == 'province') continue; ?>
   <div class="col-xs-8 col-md-4">
-  	<div class="thumbnail">
-		<div id="<?php echo $idx;?>" style="width: 300px; height: 300px;"></div>
-		<center><h3><?php echo $label; ?></h3></center>
+		<div class="thumbnail">
+			<div id="<?php echo $idx;?>" style="width: 300px; height: 300px;"></div>
+			<center>
+				<h3><?php echo $label; ?></h3>
+			</center>
+		</div>
 	</div>
-  </div>
   <?php endforeach;?>
 </div>
-		
+
+<h2>Clicks per province</h2>
+<div id="chart_map_profiles" style="width: 900px; height: 500px;"></div>
+
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
 	// Weekly impressions
 	google.setOnLoadCallback(weeklyImpressions);
+	<?php $days = array('Mon','Tue','Wed','Thu','Fri','Sat','Sun'); ?>
 	function weeklyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Week', 'Impressions', 'Clicks'],
+			<?php if (count($weekly)>0): ?>
 			<?php foreach ($weekly as $w => $data) { ?>
-				['<?php echo $w; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+				['<?php echo $days[$w]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			<?php } ?>
+			<?php else:?>
+			 []
+		<?php endif;?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('weeklyImpressions'));
 		chart.draw(data, {});
@@ -52,12 +66,13 @@ $pie_charts = array(
 
 	// Monthly impressions
 	google.setOnLoadCallback(monthlyImpressions);
+	<?php $months = array('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'); ?>
 	function monthlyImpressions() {
 		var data = google.visualization.arrayToDataTable([
 			['Month', 'Impressions', 'Clicks'],
-			<?php if (!empty($monthly)): ?>
+			<?php if (count($monthly)>0): ?>
 			     <?php foreach ($monthly as $m => $data): ?>
-					['<?php echo $m; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+					['<?php echo $months[$m]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
 			     <?php endforeach; ?>
 			<?php else:?>
 				 []
@@ -71,6 +86,7 @@ $pie_charts = array(
 	google.load("visualization", "1", {packages:["corechart"]});
 
 	<?php foreach ($pie_charts as $idx => $label): ?>
+	<?php if ($idx == 'province') continue; ?>
 	google.setOnLoadCallback(<?php echo 'pie_'.$idx;?>);
 	function <?php echo 'pie_'.$idx; $arr = 'usage_by_'.$idx; ?>() {
 		var data = google.visualization.arrayToDataTable([
@@ -84,4 +100,46 @@ $pie_charts = array(
 		chart.draw(data, options);
 	}
 	<?php endforeach;?>
+
+	// by province
+	<?php
+
+$regions = array(
+        'PINAR_DEL_RIO' => 'Pinar del RÃ­o',
+        'LA_HABANA' => 'Ciudad de La Habana',
+        'ARTEMISA' => 'CU-X01',
+        'MAYABEQUE' => 'CU-X02',
+        'MATANZAS' => 'Matanzas',
+        'VILLA_CLARA' => 'Villa Clara',
+        'CIENFUEGOS' => 'Cienfuegos',
+        'SANCTI_SPIRITUS' => 'Sancti SpÃ­ritus',
+        'CIEGO_DE_AVILA' => 'Ciego de Ã�vila',
+        'CAMAGUEY' => 'CamagÃ¼ey',
+        'LAS_TUNAS' => 'Las Tunas',
+        'HOLGUIN' => 'HolguÃ­n',
+        'GRANMA' => 'Granma',
+        'SANTIAGO_DE_CUBA' => 'Santiago de Cuba',
+        'GUANTANAMO' => 'GuantÃ¡namo',
+        'ISLA_DE_LA_JUVENTUD' => 'Isla de la Juventud'
+);
+?>
+	google.load('visualization', '1', {'packages': ['geochart']});
+	google.setOnLoadCallback(drawRegionsMap);
+	function drawRegionsMap() {
+		var data = google.visualization.arrayToDataTable([
+			['Province', 'Clicks'],
+			<?php foreach ($regions as $reg => $label) { ?>
+			    <?php if (isset($usage_by_province[$reg])) $t = $usage_by_province[$reg]; else $t=0;?>
+				['<?php echo $label; ?>',<?php echo $t; ?>],
+			<?php } ?>
+		]);
+		var options = {
+			region: 'CU',
+			resolution: 'provinces',
+			displayMode: 'regions'
+		};
+		var chart = new google.visualization.GeoChart(document.getElementById('chart_map_profiles'));
+		chart.draw(data, options);
+	};
 </script>
+
