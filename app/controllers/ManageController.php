@@ -1422,15 +1422,18 @@ class ManageController extends Controller
                 		if (!isset($ans['p'][$pivot])) {
                 			$row[] = "--";
                 		} else { 
-                		    var_dump($ans['p'][$pivot]);
-                		     $row[] = $ans['p'][$pivot]; //($ans['total'] === 0 ? 0:number_format(($ans['p'][$pivot] / $ans['total']) * 100, 1));
+                		    $part = intval($ans['p'][$pivot]);
+                		    $total = intval($ans['total']);
+                		    $percent = $total === 0?0:$part/$total*100;
+                		    $row[] = number_format($percent,1);
                 		}
             	    }
+            	    $csv[] = $row;
             	}
-            	$csv[] = $row;
         	}
 	     }
 	    
+	     
 	    $csvtext = '';
 	    foreach($csv as $i => $row){
 	        foreach ($row as $j => $cell){
@@ -1439,7 +1442,7 @@ class ManageController extends Controller
 	        $csvtext .="\n";
 	    }
 	    
-	    /*header("Content-type: text/csv");
+	    header("Content-type: text/csv");
 	    header("Content-Type: application/force-download");
 	    header("Content-Type: application/octet-stream");
 	    header("Content-Type: application/download");
@@ -1448,8 +1451,7 @@ class ManageController extends Controller
 	    header("Pragma: public");
 	    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 	    header("Accept-Ranges: bytes");
-	    */
-	  
+	    
 	    echo $csvtext;
 	    
 	    $this->view->disable();
