@@ -1008,13 +1008,14 @@ class ManageController extends Controller
 			$week = array(); 
 
 			// @TODO fix field name in database: ad_bottom to ad_bottom
-			$sql = "SELECT YEAR(request_time) as y, 
-					WEEK(request_time) as w,
+			$sql = "SELECT WEEKDAY(request_time) as w,
 					count(usage_id) as total
 					FROM utilization 
-					WHERE (ad_top = $id OR ad_bottom = $id)
+					WHERE (ad_top = $id OR ad_botton = $id)
 					and service <> 'publicidad'
-					GROUP BY y,w";
+					and YEAR(request_time) = YEAR(CURRENT_DATE)
+					GROUP BY w
+			        ORDER BY w";
 
 			$r = $db->deepQuery($sql);
 
@@ -1022,28 +1023,29 @@ class ManageController extends Controller
 			{
 				foreach($r as $i)
 				{
-					if ( ! isset($week[$i->y.'-'.$i->w])) $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
-					$week[$i->y.'-'.$i->w]['impressions'] = $i->total;
+					if ( ! isset($week[$i->w])) $week[$i->w] = array('impressions'=>0,'clicks'=>0);
+					$week[$i->w]['impressions'] = $i->total;
 				}
 			}
 
 			$sql = "
-				SELECT YEAR(request_time) as y,
-				WEEK(request_time) as w,
+				SELECT
+				WEEKDAY(request_time) as w,
 				count(usage_id) as total
 				FROM utilization
 				WHERE service = 'publicidad'
 				and subservice is null
 				and query * 1 = $id
-				GROUP BY y,w";
-
+				and YEAR(request_time) = YEAR(CURRENT_DATE)
+				GROUP BY w";
+			
 			$r = $db->deepQuery($sql);
 			if (is_array($r))
 			{
 				foreach($r as $i)
 				{
-					if ( ! isset($week[$i->y.'-'.$i->w])) $week[$i->y.'-'.$i->w] = array('impressions'=>0,'clicks'=>0);
-					$week[$i->y.'-'.$i->w]['clicks'] = $i->total;
+					if ( ! isset($week[$i->w])) $week[$i->w] = array('impressions'=>0,'clicks'=>0);
+					$week[$i->w]['clicks'] = $i->total;
 				}
 			}
 
@@ -1052,8 +1054,12 @@ class ManageController extends Controller
 			$month = array();
 
 			$sql = "
-				SELECT YEAR(request_time) as y, MONTH(request_time) as m, count(usage_id) as total
-				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id) and service <> 'publicidad' GROUP BY y,m";
+				SELECT 
+				MONTH(request_time) as m, count(usage_id) as total
+				FROM utilization WHERE (ad_top = $id OR ad_botton = $id) 
+    			and service <> 'publicidad'
+    			and YEAR(request_time) = YEAR(CURRENT_DATE)
+    			GROUP BY m";
 
 			$r = $db->deepQuery($sql);
 
@@ -1061,36 +1067,41 @@ class ManageController extends Controller
 			{
 				foreach($r as $i)
 				{
-					if ( ! isset($week[$i->y.'-'.$i->m]))
-						$week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
-						$week[$i->y.'-'.$i->m]['impressions'] = $i->total;
+					if ( ! isset($month[$i->m]))
+						$month[$i->m] = array('impressions'=>0,'clicks'=>0);
+					$month[$i->m]['impressions'] = $i->total;
 				}
 			}
 			
 			$sql = "
-				SELECT YEAR(request_time) as y,
+				SELECT 
 				MONTH(request_time) as m,
 				count(usage_id) as total
 				FROM utilization
 				WHERE service = 'publicidad'
 				and subservice is null
 				and query * 1 = $id
-				GROUP BY y,m";
+				and YEAR(request_time) = YEAR(CURRENT_DATE)
+				GROUP BY m";
 			
 			$r = $db->deepQuery($sql);
 			if (is_array($r))
 			{
 				foreach($r as $i)
 				{
-					if ( ! isset($week[$i->y.'-'.$i->m]))
-						$week[$i->y.'-'.$i->m] = array('impressions'=>0,'clicks'=>0);
-						$week[$i->y.'-'.$i->m]['clicks'] = $i->total;
+					if ( ! isset($month[$i->m]))
+						$month[$i->m] = array('impressions'=>0,'clicks'=>0);
+						$month[$i->m]['clicks'] = $i->total;
 
 				}
 			}
 
 			// join sql
-			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email WHERE ad_top = $id OR ad_bottom = $id";
+			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email 
+			WHERE service = 'publicidad'
+				and subservice is null
+				and query * 1 = $id
+				and YEAR(request_time) = YEAR(CURRENT_DATE)";
 
 			// usage by age
 			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
