@@ -1,6 +1,6 @@
 <?php
 	$trans = array(
-		'LA HABANA' => 'HAV',
+		'LA HABANA' => 'CH',
 		'PINAR DEL RIO' => 'PR',
 		'MATANZAS' => 'MA',
 		'MAYABEQUE' => 'MY',
@@ -9,19 +9,23 @@
 		'SANCTI SPIRITUS' => 'SS',
 		'CIEGO DE AVILA' => 'CA',
 		'CIENFUEGOS' => 'CF',
-		'CAMAGUEY' => 'CAM',
+		'CAMAGUEY' => 'CM',
 		'LAS TUNAS' => 'LT',
-		'HOLGUIN' => 'HOL',
-		'GRANMA' => 'GRA',
+		'HOLGUIN' => 'HL',
+		'GRANMA' => 'GR',
 		'SANTIAGO DE CUBA' => 'SC',
-		'GUANTANAMO' => 'GUA',
+		'GUANTANAMO' => 'GU',
 		'ISLA DE LA JUVENTUD' => 'IJ'
 	);
 ?>
 
 <div class="row">
-	<div class="col-xs-10"><h2><?php echo $survey->title; ?></h2></div>
-	<div class="col-xs-2 text-right"><a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a></div>
+	<div class="col-xs-10">
+		<h2 style="margin: 0px 0px 20px 0px;"><?php echo $survey->title; ?></h2>
+	</div>
+	<div class="col-xs-2 text-right">
+		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a>
+	</div>
 </div>
 
 <div class="row">
@@ -40,10 +44,10 @@
 				<table class="table table-fixedheader table-bordered table-striped">
 					<thead>
 						<th width="25%"></th>
-						<th width="50" style="text-align:center;">Total</th>
-						<th width="50" style="text-align:center;">%</th>
+						<th width="50" class="text-center">Total</th>
+						<th width="50" class="text-center">%</th>
 							<?php foreach ($result['pivots'] as $pivot => $label): ?>
-								<th width="50" style="text-align:center;"><?php echo isset($trans[$label])?$trans[$label]:$label; ?></th>
+								<th width="50" class="text-center" title="<?php echo $label; ?>"><?php echo isset($trans[$label])?$trans[$label]:$label; ?></th>
 							<?php endforeach;?>
 					</thead>
 					<tbody>

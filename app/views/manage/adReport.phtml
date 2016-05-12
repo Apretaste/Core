@@ -54,11 +54,11 @@
 		var data = google.visualization.arrayToDataTable([
 			['Week', 'Impressions', 'Clicks'],
 			<?php if (count($weekly)>0): ?>
-			<?php foreach ($weekly as $w => $data) { ?>
-				['<?php echo $days[$w]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
-			<?php } ?>
+				<?php foreach ($weekly as $w => $data) { ?>
+					['<?php echo $days[$w]; ?>',<?php echo $data['impressions']; ?>,<?php echo $data['clicks']; ?>],
+				<?php } ?>
 			<?php else:?>
-			 []
+				[]
 		<?php endif;?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('weeklyImpressions'));
