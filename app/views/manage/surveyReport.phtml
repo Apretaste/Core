@@ -29,15 +29,13 @@
 </div>
 
 <div class="row">
-	<div class="col-xs-2">
-		<div class="nav nav-pills nav-stacked" data-spy="affix" data-offset-top="100">
-			<h3>Legend</h3>
-			<?php foreach ($results as $field => $result): ?>
-				<p><a href="#<?php echo $field;?>"><?php echo $result['label']; ?></a></p>
-			<?php endforeach;?>
-		</div>
+	<div class="col-xs-12">
+		Legend: 
+		<?php foreach ($results as $field => $result): ?>
+			<a class="btn btn-small" href="#<?php echo $field;?>"><?php echo $result['label']; ?></a>
+		<?php endforeach;?>
 	</div>
-	<div class="col-xs-10">
+	<div class="col-xs-12">
 		<?php foreach ($results as $field => $result): ?>
 			<h3 id="<?php echo $field; ?>"><?php echo strtoupper($result['label']); ?></h3>
 			<div class="panel panel-default">
