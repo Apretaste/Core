@@ -6,7 +6,7 @@
  * @author kuma
  *
  */
-class SurveyRiminderTask extends \Phalcon\Cli\Task
+class SurveyReminderTask extends \Phalcon\Cli\Task
 {
 
     public function mainAction ()
@@ -25,7 +25,7 @@ class SurveyRiminderTask extends \Phalcon\Cli\Task
         
         // get surveys
         $surveys = $connection->deepQuery("SELECT *, DATEDIFF(deadline, CURRENT_DATE) as deaddays 
-                FROM _survey WHERE active = 1 AND DATEDIFF(deadline, CURRENT_DATE) < 3 ;");
+                FROM _survey WHERE active = 1 AND DATEDIFF(deadline, CURRENT_DATE) < 3 AND DATEDIFF(deadline, CURRENT_DATE) > -1;");
         
         $who = array();
         
@@ -48,25 +48,33 @@ class SurveyRiminderTask extends \Phalcon\Cli\Task
         }
         
         // send emails to users
-        foreach ($who as $useremail => $surveys){
-            // create html response
-            $response->createFromTemplate('surveyReminder.tpl', array(
-                    'surveys' => $surveys
-            ));
+        foreach ($who as $useremail => $surveys) {
             
-            $response->internal = true;
-            $html = $render->renderHTML($service, $response);
+            // checking if user was informed previously
             
-            // send email to the $person->email
-            $email->sendEmail($useremail, "Encuestas que te faltan por terminar", $html);
+            $r = $connection->deepQuery("SELECT * FROM remarketing WHERE email = '$useremail' AND type = 'SURVEYREMINDER' AND DATEDIFF(CURRENT_DATE, sent) > 1;");
             
-            // move remarketing to the next state and add +1 credits
-            $connection->deepQuery("INSERT INTO remarketing(email, type) VALUES ('{$person->email}', 'SURVEYREMINDER');");
-
-            // display notifications
-			$log .= "\t{$useremail}\n";
+            if ($r === false) {
+                
+                // create html response
+                $response->createFromTemplate('surveyReminder.tpl', array(
+                        'surveys' => $surveys
+                ));
+                
+                $response->internal = true;
+                $html = $render->renderHTML($service, $response);
+                
+                // send email to the $person->email
+                $email->sendEmail($useremail, "Encuestas que te faltan por terminar", $html);
+                
+                // move remarketing to the next state and add +1 credits
+                $connection->deepQuery("INSERT INTO remarketing(email, type) VALUES ('{$person->email}', 'SURVEYREMINDER');");
+                
+                // display notifications
+                $log .= "\t{$useremail}\n";
+            }
         }
-     
+        
         // get final delay
         $timeEnd = time();
         $timeDiff = $timeEnd - $timeStart;
@@ -82,6 +90,5 @@ class SurveyRiminderTask extends \Phalcon\Cli\Task
         
         // save the status in the database
         $connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='surveyreminder'");
-        
     }
 }
