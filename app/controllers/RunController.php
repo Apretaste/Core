@@ -79,6 +79,9 @@ class RunController extends Controller
 		}
 
 		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
+
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
 		echo $result;
 	}
 

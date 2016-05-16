@@ -109,7 +109,7 @@ class ManageController extends Controller
 
 
 		// START current number of Users
-		$queryCurrentNoUsers = "SELECT COUNT(email) as CountUsers FROM person";
+		$queryCurrentNoUsers = "SELECT COUNT(email) as CountUsers FROM person WHERE active=1";
 		$currentNoUsers = $connection->deepQuery($queryCurrentNoUsers);
 		// END Current number of Users
 
@@ -1402,7 +1402,8 @@ class ManageController extends Controller
 	 * 
 	 * @author kuma
 	 */
-	public function surveyResultsCSVAction(){
+	public function surveyResultsCSVAction()
+	{
 	    // getting ad's id
 	    // @TODO: improve this!
 	    $url = $_GET['_url'];
