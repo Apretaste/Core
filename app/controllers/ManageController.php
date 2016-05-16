@@ -1368,9 +1368,11 @@ class ManageController extends Controller
 	                            $totals[$a] = 0;
 	            }
 	            
-	            $pivots['_UNKNOW'] = 'UNKNOW';	            
+	                    
 	            
 	            asort($pivots);
+	            unset($pivots['_UNKNOW']);
+	            $pivots['_UNKNOW'] = 'UNKNOW';
 	    
 	            $report[$field] = array(
 	                    'label' => $enum_label,
