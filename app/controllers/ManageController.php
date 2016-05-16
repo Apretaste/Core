@@ -1481,6 +1481,21 @@ class ManageController extends Controller
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 		$db = new Connection();
-
+		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		if ($survey!==false){
+		    $survey = $survey[0];
+		
+    		$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*) 
+    		          FROM _survey_question 
+    		          WHERE _survey_question.survey = _survey_answer_choosen.survey) as total, 
+    		        count(question)as choosen from _survey_answer_choosen GROUP BY email, survey) subq
+    		        WHERE subq.total>subq.choosen AND subq.survey = $id;";
+    		
+    		$r = $db->deepQuery($sql);
+    		
+    		$this->view->results = $r;
+    		$this->view->title = "Who unfinished the survey";
+    		$this->view->survey = $survey;
+		}
 	}
 }

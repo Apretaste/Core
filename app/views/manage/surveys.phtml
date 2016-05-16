@@ -41,6 +41,9 @@ foreach ($surveys as $survey) {
 					<td>
 						<a class="btn btn-default" href="/manage/surveyReport/<?php echo $survey->id; ?>">Report</a>
 					</td>
+					<td>
+						<a class="btn btn-default" href="/manage/surveyWhoUnfinished/<?php echo $survey->id; ?>">Status</a>
+					</td>
 				</tr>
 			<?php } ?>
 			<tr>
