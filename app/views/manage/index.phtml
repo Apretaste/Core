@@ -53,18 +53,22 @@
 			<div class="panel-heading"><a href="manage/remarketing">Tasks status</a></div>
 			<div class="panel-body">
 				<table class="table table-condensed fullscreen">
-					<tr>
-						<th>Task</th>
-						<th>Days behind</th>
-						<th>Delay (sec)</th>
-					</tr>
-					<?php foreach ($tasks as $task): ?>
-					<tr class="<?= $task->days > $task->frequency ? "danger" : "success"?>">
-						<td><?= $task->task ?></td>
-						<td class="text-center"><?= $task->days ?></td>
-						<td class="text-center"><?= $task->delay ?></td>
-					</tr>
-					<?php endforeach; ?>
+					<thead>
+						<tr>
+							<th>Task</th>
+							<th>Days behind</th>
+							<th>Delay (sec)</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ($tasks as $task): ?>
+						<tr class="<?= $task->days > $task->frequency ? "danger" : "success"?>">
+							<td><?= $task->task ?></td>
+							<td class="text-center"><?= $task->days ?></td>
+							<td class="text-center"><?= $task->delay ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
 				</table>
 			</div>
 		</div>
