@@ -36,7 +36,7 @@ class SurveyTask extends \Phalcon\Cli\Task
 			JOIN _survey B
 			ON A.survey = B.id
 			WHERE A.total > A.choosen 
-			AND A.days_since > 10
+			AND A.days_since >= 7
 			AND B.active = 1
 			AND DATEDIFF(B.deadline, B.date_created) > 0
 			AND A.email NOT IN (SELECT DISTINCT email FROM remarketing WHERE type='SURVEY')");
