@@ -36,16 +36,15 @@ class ManageController extends Controller
 		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
 		// END delivery status widget
 
-		// START remarketing widget
-		$rmStatus = $connection->deepQuery("SELECT * FROM task_status WHERE task = 'remarketing'")[0];
-		$rmStatus->behind = (time() - strtotime($rmStatus->executed)) / 60 / 60;
-		// END remarketing widget
+		// START tasks status widget
+		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
+		// END tasks status widget
 
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
-		$this->view->remarketingStatus = $rmStatus;
+		$this->view->tasks = $tasks;
 	}
 
 
@@ -895,6 +894,7 @@ class ManageController extends Controller
 					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
+					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
 					SUM(case when type = 'ERROR' then 1 else 0 end) as error
 				FROM remarketing
 				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
@@ -907,6 +907,7 @@ class ManageController extends Controller
 					SUM(case when type = 'EXCLUDED' then 1 else 0 end) as excluded,
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
+					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
 					SUM(case when type = 'ERROR' then 1 else 0 end) as error
 				FROM remarketing
 				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
@@ -1472,7 +1473,7 @@ class ManageController extends Controller
 	    echo $csvtext;
 	    
 	    $this->view->disable();
-	}	    
+	}
 
 	public function surveyWhoUnfinishedAction()
 	{
