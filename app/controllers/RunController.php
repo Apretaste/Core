@@ -167,7 +167,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $toEmail);
 	}
 
 	/**
@@ -183,7 +183,7 @@ class RunController extends Controller
 	 * @param Enum mandrill,mailgun
 	 * @param String
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $source = "")
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -452,6 +452,11 @@ class RunController extends Controller
 					$connection->deepQuery($sql);
 				}
 
+				// save details of first visit
+				
+				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
+				$connection->deepQuery($sql);
+				
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
