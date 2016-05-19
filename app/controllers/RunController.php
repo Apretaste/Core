@@ -255,6 +255,7 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
+	 * @param String $source email
 	 * */
 	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source = "")
 	{
