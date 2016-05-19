@@ -167,7 +167,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $toEmail);
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
 	}
 
 	/**
@@ -183,7 +183,7 @@ class RunController extends Controller
 	 * @param Enum mandrill,mailgun
 	 * @param String
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $source = "")
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -242,7 +242,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email");
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
 	}
 
 	/**
@@ -256,7 +256,7 @@ class RunController extends Controller
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html")
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source = "")
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
