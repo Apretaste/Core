@@ -242,7 +242,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email");
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
 	}
 
 	/**
@@ -255,8 +255,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
+	 * @param String $source email
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html")
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source = "")
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -452,6 +453,11 @@ class RunController extends Controller
 					$connection->deepQuery($sql);
 				}
 
+				// save details of first visit
+				
+				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
+				$connection->deepQuery($sql);
+				
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
