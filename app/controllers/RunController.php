@@ -457,6 +457,32 @@ class RunController extends Controller
 				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 				$connection->deepQuery($sql);
 
+				// hardcoded list of sellers's emails 
+				// @TODO create a table with this information
+				$sellers = array('multichat@apretaste.com' => true, 'chatmail@apretaste.com' => true);
+				
+				if (isset($sellers[$source]))
+				{
+					// add credit and tickets
+					$sql = "UPDATE person SET credit = credit + 5 WHERE email = '$email';";
+					
+					// getting current raffle
+					$raffle_id = $connection->deepQuery("SELECT raffle_id FROM raffle WHERE winner_1 is null or winner_1 = '' limit 1;");
+					
+					if ($raffle_id !== false)
+					{
+						$raffle_id = $raffle_id[0]->raffle_id;
+						
+						// generate 10 tickets for new user
+						$sql = "INSERT INTO ticket(email,paid, raffle_id) VALUES ";
+						
+						for ($i = 0; $i < 10; $i++)
+							$sql .= "('$email', '1', '$raffle_id')".($i < 9 ? "," : ";");
+						
+						$connection->deepQuery($sql);
+					}
+				}
+				
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
