@@ -462,8 +462,8 @@ class RunController extends Controller
 				if ($source == "multichat@apretaste.com" || $source == "chatmail@apretaste.com")
 				{
 					// add credit and tickets
-					$sql = "UPDATE person SET credit = credit + 5 WHERE email = '$email';";
-					$sql = "INSERT INTO ticket(email, paid) VALUES ";
+					$sql = "UPDATE person SET credit = credit + 5 WHERE email = '$email'; ";
+					$sql .= "INSERT INTO ticket(email, paid) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
 					$connection->deepQuery($sql);
 
