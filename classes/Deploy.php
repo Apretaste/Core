@@ -19,11 +19,7 @@ class Deploy
 
 		// remove the current project if it exist
 		$utils = new Utils();
-		if ($utils->serviceExist($service['serviceName']))
-		{
-			// clean database and files if the service existed before
-			$this->removeService($service);
-		}
+		if ($utils->serviceExist($service['serviceName'])) $this->removeService($service);
 
 		// create a new deploy key
 		$utils = new Utils();
@@ -93,12 +89,6 @@ class Deploy
 		// remove the service from the services table
 		$connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
 
-		// clean service-specific tables
-		foreach ($service['database'] as $table)
-		{
-			$connection->deepQuery("DROP TABLE IF EXISTS __{$service['serviceName']}_{$table['name']};");
-		}
-
 		// remove the service folder
 		$dir = "$wwwroot/services/{$service['serviceName']}";
 		if (file_exists($dir))
@@ -126,28 +116,14 @@ class Deploy
 		$connection = new Connection();
 
 		// save the new service in the database
-		$insertUserQuery = "INSERT INTO service (name,description,usage_text,creator_email,category) VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}')";
+		$insertUserQuery = "
+			INSERT INTO service (name,description,usage_text,creator_email,category,listed,ads) 
+			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}','{$service['showAds']}')";
 		$connection->deepQuery($insertUserQuery);
 
 		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
 		unlink($pathToZip);
-
-		// create the service specific tables
-		$query = "";
-		foreach ($service['database'] as $table)
-		{
-			$tname = "__{$service['serviceName']}_{$table['name']}";
-			$query = "CREATE TABLE $tname (";
-			foreach ($table['columns'] as $column)
-			{
-				$length = empty($column['length']) ? "" : "({$column['length']})";
-				$query .= "{$column['name']} {$column['type']} $length,";
-			}
-
-			$query = rtrim($query, ",") . ");";
-			$connection->deepQuery($query);
-		}
 	}
 
 	/**
@@ -167,39 +143,14 @@ class Deploy
 		$xml = simplexml_load_file($pathToXML);
 		$XMLData = array();
 
-		// get the tables if they exist
-		if (isset($xml->database))
-		{
-			$tables = array();
-			foreach ($xml->database->table as $table)
-			{
-				$newtable = array("name"=>trim((String)$table->attributes()->name), "columns"=>NULL);
-				$columns = array();
-
-				foreach ($table->column as $column)
-				{
-					$columns[] = array(
-						"name"=>trim((String)$column),
-						"type"=>trim((String)$column->attributes()->type), 
-						"length"=>trim((String)$column->attributes()->length)
-					);
-					$newtable['columns'] = $columns;
-				}
-				$tables[] = $newtable;
-			}
-			$XMLData['database'] = $tables;
-		}
-		else
-		{
-			$XMLData['database'] = array();
-		}
-
 		// get the main data of the service
 		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
 		$XMLData['creatorEmail'] = trim((String)$xml->creatorEmail);
 		$XMLData['serviceDescription'] = trim((String)$xml->serviceDescription);
 		$XMLData['serviceUsage'] = trim((String)$xml->serviceUsage);
 		$XMLData['serviceCategory'] = trim((String)$xml->serviceCategory);
+		$XMLData['listed'] = isset($xml->listed) ? trim((String)$xml->listed) : 1;
+		$XMLData['showAds'] = isset($xml->showAds) ? trim((String)$xml->showAds) : 1;
 
 		// check if the email is valid
 		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL))
