@@ -457,38 +457,25 @@ class RunController extends Controller
 				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 				$connection->deepQuery($sql);
 
-				// hardcoded list of sellers's emails 
-				// @TODO create a table with this information
-				$sellers = array('multichat@apretaste.com' => true, 'chatmail@apretaste.com' => true);
-				
-				$prizes = false;
-				
-				if (isset($sellers[$source]))
+				// hardcoded list of sellers's emails
+				$prize = false;
+				if ($source == "multichat@apretaste.com" || $source == "chatmail@apretaste.com")
 				{
-					$prizes = true;
-					
 					// add credit and tickets
 					$sql = "UPDATE person SET credit = credit + 5 WHERE email = '$email';";
-					
-					// generate 10 tickets for new user
 					$sql = "INSERT INTO ticket(email, paid) VALUES ";
-					
-					for ($i = 0; $i < 10; $i++)
-						$sql .= "('$email', 0)".($i < 9 ? "," : ";");
-					
+					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
 					$connection->deepQuery($sql);
-					
+
+					// make the welcome email to show the prize
+					$prize = true;
 				}
-				
+
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
-				
-				$welcome->setResponseSubject("Bienvenido a Apretaste!", array(
-					'prizes' => $prizes
-				));
-				
-				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email));
+				$welcome->setResponseSubject("Bienvenido a Apretaste!");
+				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$source));
 				$welcome->internal = true;
 				$responses[] = $welcome;
 
