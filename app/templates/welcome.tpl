@@ -1,14 +1,22 @@
 {space10}
+{if $prizes}
+<table width="100%" cellpadding="0" cellspacing="0"><tr bgcolor="#F2DEDE">
+	<td width="1">&nbsp;</td>
+	<td><small><font color="#A94442">Usted ha recibido $5 de cr&eacute;dito personal y 10 tickets para la rifa.</font></small></td>
+	<td width="1">&nbsp;</td>
+	<td align="right" valign="middle">{button href="RIFA" size="small" caption="Ver RIFA"}</td>
+			<td width="1">&nbsp;</td>
+	<td align="right" valign="middle">{button href="PERFIL" size="small" caption="Ver cr&eacute;dito"}</td>
+</tr></table>
+{/if}
+
 <center>
 	<h1>Bienvenido a Apretaste!</h1>
 	<p><font color="red">&iexcl;Felicidades por usar Apretaste por primera vez! Este email es para darte la bienvenida a nuestra familia y explicarte mejor que hacemos.</font></p>
-
 	{space30}
 	<font size="25">&#9733;</font>
-
 	<p>Apretaste es la plataforma que te permite acceder a <b>internet mediante el email</b>. Nosotros conectamos miles de Cubanos entre si y a la internet, y nuestro n&uacute;mero crece por d&iacute;a gracias a usuarios como usted.</p>
 </center>
-
 {space10}
 
 <table>
