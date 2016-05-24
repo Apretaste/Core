@@ -164,7 +164,7 @@ class ExtractorTask extends \Phalcon\Cli\Task
 
 								if ($exists === false || empty($exists) || ! isset($exists[0]))
 								{
-									$db->deepQuery("INSERT IGNORE INTO autoinvitations (email) VALUES ('$a');");
+									$db->deepQuery("INSERT IGNORE INTO autoinvitations (email,source) VALUES ('$a','PORLALIVRE');");
 								}
 							}
 						}
