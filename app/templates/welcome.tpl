@@ -1,14 +1,24 @@
 {space10}
 <center>
-	<h1>Bienvenido a Apretaste!</h1>
+	<h1>&iexcl;Bienvenido a Apretaste!</h1>
 	<p><font color="red">&iexcl;Felicidades por usar Apretaste por primera vez! Este email es para darte la bienvenida a nuestra familia y explicarte mejor que hacemos.</font></p>
+
+	{if $prize}
+		{space15}
+		<table width="100%" cellpadding="5" cellspacing="0">
+		<tr><td bgcolor="#C3DAEE"><p>Antes de continuar, por ser usted un invitado de <u>{$source}</u> le hemos regalado {link href="RIFA" caption="10 tickets para nuestra rifa mensual"} y $5 para comprar incluso m&aacute;s tickets, o usar en otros servicios dentro de Apretaste.</p></td></tr>
+		<tr><td bgcolor="#C3DAEE" align="center">
+			{button href="RIFA" size="small" caption="Ver Rifa"}
+			{button href="PERFIL" size="small" caption="Ver Cr&eacute;dito"}
+		</td></tr>
+		</table>
+		{space5}
+	{/if}
 
 	{space30}
 	<font size="25">&#9733;</font>
-
 	<p>Apretaste es la plataforma que te permite acceder a <b>internet mediante el email</b>. Nosotros conectamos miles de Cubanos entre si y a la internet, y nuestro n&uacute;mero crece por d&iacute;a gracias a usuarios como usted.</p>
 </center>
-
 {space10}
 
 <table>
