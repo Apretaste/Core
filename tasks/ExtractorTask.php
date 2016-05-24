@@ -18,9 +18,10 @@ class ExtractorTask extends \Phalcon\Cli\Task
 		// get path to the www folder
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		
+
 		// inicialize supporting classes
 		$timeStart = microtime(true);
+		$addressesCount = 0;
 		$tempFolder = "$wwwroot/temp/email_extractor";
 		$logFile = "$tempFolder/extractor.log";
 		$listFile = "$tempFolder/files.list";
@@ -157,6 +158,7 @@ class ExtractorTask extends \Phalcon\Cli\Task
 							$content = fgets($f2);
 
 							$addresses = $this->getAddressFrom($content);
+							$addressesCount += count($addresses); 
 
 							foreach ($addresses as $a)
 							{
@@ -175,13 +177,17 @@ class ExtractorTask extends \Phalcon\Cli\Task
 				fclose($f);
 			}
 		}
+
+		// save the status in the database
+		$timeDiff = time() - $timeStart;
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='extractor'");
 	}
 
 	/**
 	 * Show log messages
 	 *
-	 * @param string $message        	
-	 * @param string $icon        	
+	 * @param string $message
+	 * @param string $icon
 	 */
 	private function log($message, $icon = 'INFO')
 	{
