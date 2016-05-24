@@ -6,9 +6,8 @@
  * @author kuma
  * @version 1.0
  */
-class EmailExtractorTask extends \Phalcon\Cli\Task
+class ExtractorTask extends \Phalcon\Cli\Task
 {
-
 	private $showLog = true;
 
 	/**
@@ -38,7 +37,7 @@ class EmailExtractorTask extends \Phalcon\Cli\Task
 		$this->log("List of files: $listFile");
 		
 		// preparing temporal folder
-		if (! file_exists($tempFolder))
+		if ( ! file_exists($tempFolder))
 		{
 			mkdir($tempFolder);
 		}
@@ -98,7 +97,7 @@ class EmailExtractorTask extends \Phalcon\Cli\Task
 				$total = 0;
 				$f = fopen($listFile, "r");
 				
-				while (! feof($f))
+				while ( ! feof($f))
 				{
 					$filename = trim(fgets($f));
 					$total ++;
@@ -112,7 +111,7 @@ class EmailExtractorTask extends \Phalcon\Cli\Task
 				$f = fopen($listFile, "r");
 				$lastPercent = 0;
 				
-				while (! feof($f))
+				while ( ! feof($f))
 				{
 					$filename = trim(fgets($f));
 					
@@ -131,17 +130,17 @@ class EmailExtractorTask extends \Phalcon\Cli\Task
 						$fileFullName = "$tempFolder/$prefix/$filename";
 						
 						// checking if filename is a full path (differents results from Windows/dir and Linux/find)
-						if (! file_exists($fileFullName) && file_exists($filename))
+						if ( ! file_exists($fileFullName) && file_exists($filename))
 						{
 							$fileFullName = $filename;
 						}
 						
 						// checking if file exists
-						if (! file_exists($fileFullName))
+						if ( ! file_exists($fileFullName))
 						{
 							continue;
 						}
-						
+
 						// checking file size
 						$fileSize = filesize($fileFullName) / 1024 / 1024;
 						
@@ -150,22 +149,22 @@ class EmailExtractorTask extends \Phalcon\Cli\Task
 							$this->log("Ingoring big file: $fileFullName ({$fileSize}M)");
 							continue;
 						}
-						
+
 						$f2 = fopen($fileFullName, "r");
-						
-						while (! feof($f2))
+
+						while ( ! feof($f2))
 						{
 							$content = fgets($f2);
-							
+
 							$addresses = $this->getAddressFrom($content);
-							
+
 							foreach ($addresses as $a)
 							{
-								$exists = $db->deepQuery("SELECT * FROM autoinvitations WHERE email = '$a';");
-								
-								if ($exists === false || empty($exists) || !isset($exists[0]))
+								$exists = $db->deepQuery("SELECT * FROM person WHERE email = '$a';");
+
+								if ($exists === false || empty($exists) || ! isset($exists[0]))
 								{
-									$db->deepQuery("INSERT INTO autoinvitations (email) VALUES ('$a');");
+									$db->deepQuery("INSERT IGNORE INTO autoinvitations (email) VALUES ('$a');");
 								}
 							}
 						}
