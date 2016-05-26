@@ -74,7 +74,7 @@ class InvitarController extends Controller
 						{
 							$this->view->message_type = 'warning';
 							$this->view->message_code = 3;
-							$this->view->message = "The invitation was not sent because your friend <b>$g</b> was invited in the past.";
+							$this->view->message = "La invitaci&oacute;n no se envi&oacute; porque tu amigo <b>$g</b> fue invitado anteriormente.";
 							$allok = false;
 							break;
 						}
@@ -83,7 +83,7 @@ class InvitarController extends Controller
 					{
 						$this->view->message_type = 'warning';
 						$this->view->message_code = 2;
-						$this->view->message = "The invitation was not sent because your friend <b>$g</b> is using Apretaste.";
+						$this->view->message = "La invitaci&oacute;n no se envi&oacute; porque tu amigo <b>$g</b> ya usa Apretaste.";
 						$allok = false;
 						break;
 					}
@@ -94,6 +94,7 @@ class InvitarController extends Controller
 					foreach ($guest as $g)
 					{
 						$g = trim($g);
+						
 						// create the invitation for the user
 						$response = new Response();
 						$response->setResponseEmail($guest);
@@ -117,7 +118,7 @@ class InvitarController extends Controller
 					// send notification to the inviter
 					$response = new Response();
 					$response->setResponseEmail($emailaddress);
-					$subject = "Thanks for invite your friends to use Apretaste";
+					$subject = "Gracias por invitar a tus amigos para que usen Apretaste";
 					$response->setResponseSubject($subject);
 					
 					$response->createFromTemplate('invitation_notification.tpl', array(
@@ -132,19 +133,19 @@ class InvitarController extends Controller
 					
 					$this->view->message_type = 'success';
 					$this->guest = array();
-					$this->view->message = "Thanks for your invitation. We sent an invitation email to your friend(s) and a notification for you. Now you can invite to others.";
+					$this->view->message = "Gracias por invitar a tus amigos. Enviamos emails de invitaci&oacute;n a cada uno de ellos y notificaci&oacute;n para ti. Ahora puedes invitar a otros.";
 				}
 			}
 			else
 			{
 				$this->view->message_type = 'danger';
 				$this->view->message_code = 1;
-				$this->view->message = 'The typed text is wrong';
+				$this->view->message = 'El texto escrito no coincide con la imagen';
 			}
 		}
 		
 		// show the form
-		$this->view->title = "Invite your friends";
+		$this->view->title = "Invitar a tus amigos para usen Apretaste";
 	}
 
 	/**
