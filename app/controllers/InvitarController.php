@@ -146,6 +146,8 @@ class InvitarController extends Controller
 		
 		// show the form
 		$this->view->title = "Invitar a tus amigos para que usen Apretaste";
+		var_dump($this->view);
+		die();
 	}
 
 	/**
