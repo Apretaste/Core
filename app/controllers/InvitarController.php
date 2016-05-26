@@ -16,6 +16,12 @@ use Gregwar\Captcha\CaptchaBuilder;
 class InvitarController extends Controller
 {
 
+	/**
+	 * Invite from the web page
+	 *
+	 * @author kuma
+	 * @version 1.0
+	 */
 	public function indexAction()
 	{
 		session_start();
@@ -58,6 +64,8 @@ class InvitarController extends Controller
 				$allok = true;
 				foreach ($guest as $g)
 				{
+					$g = trim($g);
+					
 					// check if guest exists / if is user of AP
 					if ($utils->personExist($g) === false)
 					{
@@ -85,6 +93,7 @@ class InvitarController extends Controller
 				{
 					foreach ($guest as $g)
 					{
+						$g = trim($g);
 						// create the invitation for the user
 						$response = new Response();
 						$response->setResponseEmail($guest);
