@@ -134,8 +134,6 @@ class InvitarController extends Controller
 					$this->view->message_type = 'success';
 					$this->guest = array();
 					$this->view->message = "Gracias por invitar a tus amigos. Enviamos emails de invitaci&oacute;n a cada uno de ellos y notificaci&oacute;n para ti. Ahora puedes invitar a otros.";
-					
-					die();
 				}
 			}
 			else
