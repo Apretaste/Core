@@ -380,70 +380,59 @@ class RunController extends Controller
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
-			   	// check if the person was invited to use Apretaste
-				$sql = "SELECT * FROM invitations WHERE email_invited='$email' AND used='0'";
-				$invitations = $connection->deepQuery($sql);
 				$inviteSource = 'alone'; // alone if the user came by himself, no invitation
+				$sql = "START TRANSACTION;"; // start the long query
 
-				// if the person was invited to Apretaste
-				if(count($invitations)>0)
+				// check if the person was invited to Apretaste
+				$invite = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
+				if(count($invite)>0)
 				{
 					// check how this user came to know Apretaste, for stadistics
-					// if he/she was invited more than once, only get the first invitation
-					$inviteSource = $invitations[0]->source;
+					$invite = $invite[0];
+					$inviteSource = $invite->source;
 
-					// create tickets for all the people invited. When somebody 
-					// is invited by more than one person, they all get tickets
-					$sql = "START TRANSACTION;";
-					foreach ($invitations as $invite)
+					// only for the invitations done via the service invitar
+					if($inviteSource == 'internal')
 					{
-						// only for the invitations done via the service invitar
-						if($invite->source == 'internal')
-						{
-							// give tickets and assign credits
-							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
-							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
+						// assign tickets and credits
+						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 
-							// email the invitor
-							$newTicket = new Response();
-							$newTicket->setResponseEmail($email);
-							$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
-							$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
-							$newTicket->internal = true;
-							$responses[] = $newTicket;
-						}
-
-						// set the invitation as used
-						$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
+						// email the invitor
+						$newTicket = new Response();
+						$newTicket->setResponseEmail($email);
+						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
+						$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
+						$newTicket->internal = true;
+						$responses[] = $newTicket;
 					}
-					$sql .= "COMMIT;";
-					$connection->deepQuery($sql);
+
+					// set the invitation as used
+					$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
 				}
 
-				// create a unique username
+				// create a unique username and save the new person
 				$username = $utils->usernameFromEmail($email);
-
-				// save the new person
-				$sql = "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource')";
-				$connection->deepQuery($sql);
+				$sql .= "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource');";
 
 				// save details of first visit
-				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
-				$connection->deepQuery($sql);
+				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 
 				// hardcoded list of sellers's emails
 				$prize = false;
 				if ($source == "multichat@apretaste.com" || $source == "chatmail@apretaste.com")
 				{
 					// add credit and tickets
-					$sql = "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email'; ";
+					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
 					$sql .= "INSERT INTO ticket(email, paid) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
-					$connection->deepQuery($sql);
 
 					// make the welcome email to show the prize
 					$prize = true;
 				}
+
+				// run the long query all at the same time
+				$connection->deepQuery($sql."COMMIT;");
 
 				// send the welcome email
 				$welcome = new Response();
@@ -506,7 +495,33 @@ class RunController extends Controller
 			$adBottom = isset($ads[1]) ? $ads[1]->id : "NULL";
 
 			// save the logs on the utilization table
-			$safeQuery = $connection->escape($query);
+			$safeQuery = $connection->escape($
+				if($rs->render) // ommit default Response()
+				{
+					// save impressions in the database
+					$ads = $rs->getAds();
+					if($userService->showAds && ! empty($ads))
+					{
+						$sql = "";
+						if( ! empty($ads[0])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[0]->id}';";
+						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
+						$connection->deepQuery($sql);
+					}
+
+					// prepare the email variable
+					$emailTo = $rs->email;
+					$subject = $rs->subject;
+					$images = $rs->images;
+					$attachments = $rs->attachments;
+					$body = $render->renderHTML($userService, $rs);
+
+					// remove dangerous characters that may break the SQL code
+					$subject = trim(preg_replace('/\'|`/', "", $subject));
+
+					// send the response email
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+				}
+			query);
 			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain',$adTop,$adBottom)";
 			$connection->deepQuery($sql);
 
