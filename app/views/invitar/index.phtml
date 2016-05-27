@@ -1,209 +1,109 @@
-<?php $wwwhttp = $this->di->get('path')['http']; ?>
+<?php if ( ! empty($message)): ?>
+	<div class="alert alert-success" role="alert"><?= $message; ?></div>
+<?php endif; ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title><?php echo $title; ?>| Apretaste</title>
+<div id="error-captcha" class="alert alert-danger" style="display:none;" role="alert">El texto que escribi&oacute; no es el mismo de la imagen.</div>
 
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Devoted activists working to connect thousands of Cubans to the Internet each month via accessible, effective and legal ways">
-<meta name="author" content="Salvi Pascual">
-
-<!-- Twitter Card data -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:site" content="@apretaste">
-<meta name="twitter:title" content="We are connecting Cubans to the Web">
-<meta name="twitter:description" content="Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways">
-<meta name="twitter:creator" content="@apretaste">
-<meta name="twitter:image" content="<?php echo $wwwhttp; ?>/images/background.jpg">
-
-<!-- Open Graph data -->
-<meta name="fb:app_id" content="285099284865702" />
-<meta name="og:url" content="https://apretaste.com" />
-<meta name="og:type" content="website" />
-<meta name="og:locale" content="en_US" />
-<meta name="og:locale:alternate" content="es_ES" />
-<meta name="og:site_name" content="Apretaste" />
-<meta name="og:title" content="We are connecting Cubans to the Web" />
-<meta name="og:description" content="Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways" />
-<meta name="og:image" content="<?php echo $wwwhttp; ?>/images/background.jpg" />
-
-<link rel="icon" href="<?php echo $wwwhttp; ?>/images/apretaste.icon.png">
-<link rel="canonical" href="https://apretaste.com/welcome/aboutus">
-
-<!-- Bootstrap Core CSS -->
-<link href="<?php echo $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Custom CSS -->
-<link href="<?php echo $wwwhttp; ?>/css/welcome.css" rel="stylesheet">
-
-<script src="js/jquery.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/validator.min.js"></script>
-
-<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-		<![endif]-->
-
-<!-- Custom Fonts -->
-<link href="<?php echo $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
-
-</head>
-
-<body>
-	<nav class="navbar navbar-inverse" style="border-radius: 0px; -webkit-border-radius: 0px; -moz-border-radius: 0px;">
-		<div class="container">
-			<div class="navbar-header">
-				<span class="navbar-brand" style="text-transform: uppercase;"><?php if(isset($title)) echo $title; ?></span>
+<div class="row">
+	<div class="col-xs-6">
+		<form action="invitar/process" method="POST" data-toggle="validator" role="form">
+			<div class="form-group">
+				<label class="control-label" for="name">Su nombre, para sepan quien les invita</label>
+				<input required id="name" class="form-control" type="text" name="name" placeholder="Escriba su nombre"/>
 			</div>
-			<div class="navbar-right">
-				<a href="/welcome" class="btn btn-default navbar-btn">Go Back</a>
+
+			<div class="form-group">
+				<label class="control-label" for="email">Su email, para enviarte una confirmaci&oacute;n</label>
+				<input required id="email" class="form-control" type="email" name="email" placeholder="Escriba su email" data-error="Email invalido"/>
 			</div>
-		</div>
-	</nav>
-	<div class="container" style="max-width: 500px; margin: 0 auto;">
-		<section id="form-section">
-			
 
-					<?php if ($message !== false): ?>
-					<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
-					<?php endif;?>
-	
-					<!-- The Form -->
+			<div id="guest-group" class="form-group">
+				<label class="control-label" for="guest">El email de la persona a invitar</label>
+				<input required id="guest" class="form-control" type="email" name="guest" placeholder="Email de su amigo en Cuba" data-error="Email invalido"/>
+			</div>
 
-			<form action="invitar" method="POST" data-toggle="validator" role="form" id="invitationForm">
-				<p align="justify">Apretaste permite acceder a Internet mediante el email, y es &uacute;til para aquellas personas que viven en lugares de escasa conectividad. Seguramente tienes amigos que viven en lugares como estos, como por ejemplo Cuba, y quisieras mejorarle sus vidas cuando usen Apretaste. Pues mediante este formulario puedes invitarlos. Solo debes ingresar los siguientes datos:</p>
-
-				<div class="form-group">
-					<label class="control-label" for="name">Tu nombre:</label>
-					<br /> <small>Tu nombre se mostrar&aacute; en la invitaci&oacute;n que enviaremos a tus amigos y as&iacute; sepan quien se las envi&oacute;.</small>
-					<input required id="name" class="form-control" type="text" name="name" placeholder="escribe tu nombre aqu&iacute;..." value="<?php echo $name;?>">
+			<div class="form-group">
+				<label class="control-label" for="captcha">Escriba el texto que ve en la imagen</label>
+				<div class="input-group">
+					<input required id="captcha" class="form-control" type="text" name="captcha" style="height: 42px;">
+					<span class="input-group-addon" style="padding: 0px;"><img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="invitar/captcha"></span>
+					<span class="input-group-btn">
+						<button style="height: 42px;" class="btn btn-default" type="button" onclick="$('#captchaimg').attr('src','invitar/captcha?rand='+mt_rand(1,9000));$('#captcha').val('');">
+							<span class="glyphicon glyphicon-refresh"></span>
+						</button>
+					</span>
 				</div>
-				<div class="form-group">
-					<label class="control-label" for="email">Tu email:</label>
-					<br /> <small>Usaremos tu email para mandarte una notificaci&oacute;n del resultado de esta invitaci&oacute;n.</small>
-					<input required id="email" class="form-control" type="email" name="email" placeholder="escribe tu email aqu&iacute;..." data-error="Esta direcci&oacute;n email no es v&aacute;lida" value="<?php echo $email;?>">
-				</div>
-				<div class="form-group">
-					<label class="control-label">Los emails de tus amigos:</label>
-					<br /> <small>Puedes escribir varios emails aqu&iacute; y ser&aacute;n invitados a usar Apretaste.</small><br />
-					<input type="hidden" value="<?php echo count($guest); ?>" id="totalGuests">
-					<ul class="list-group" id="emailList">
-						<?php foreach ($guest as $i => $g): ?>
-						<li class="list-group-item" id="guest<?php echo $i;?>" style="padding: 0px;">
-							<?php if ($i >0): ?>
-								<div class="input-group">
-								<input inviteother="0" required class="form-control friend-email" type="email" name="guest[<?php echo $i;?>]" placeholder="escribe el email de tu amigo aqu&iacute;..." data-error="Esta direcci&oacute;n email no es v&aacute;lida" value="<?php if ($message_code > 0) echo $g;?>" style="box-shadow: none; border: 0px;">
-								<span class="input-group-btn">
-									<button id="btnGuestRemove<?php echo $i;?>" class="btn btn-default btn-remove" type="button" style="border: 0px;" onclick="$('#guest<?php echo $i;?>').remove();">
-										<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-									</button>
-								</span>
-							</div>
-							<?php else: ?>
-									<input inviteother="0" required class="form-control friend-email" type="email" name="guest[<?php echo $i;?>]" placeholder="escribe el email de tu amigo aqu&iacute;..." data-error="Esta direcci&oacute;n email no es v&aacute;lida" value="<?php if ($message_code > 0) echo $g;?>" style="box-shadow: none; border: 0px;">
-							<?php endif;?>
-						</li>
-						<?php endforeach;?>
-					</ul>
-					<!-- <a class="btn btn-default" onclick="inviteOther();">Invite other</a>  -->
-				</div>
+			</div>
 
-				<div class="form-group <?php if ($message_code === 1) echo 'alert alert-danger'; ?>">
-					<label>Escribe el texto que ves en la imagen:</label>
-					<br />
-					<div class="input-group">
-						<span class="input-group-addon" style="padding: 0px;"><img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="invitar/captcha"> </span>
-						<input required class="form-control" type="text" name="captcha" style="height: 42px;" id="captcha">
-						<span class="input-group-btn">
-							<button style="height: 42px;" class="btn btn-default" type="button" onclick="$('#captchaimg').attr('src','invitar/captcha?rand='+mt_rand(1,9000));$('#captcha').val('');">
-								<span class="glyphicon glyphicon-refresh"></span>
-							</button>
-
-						</span>
-					</div>
-				</div>
-
-				<center>
-					<button class="btn btn-success btn-lg" type="submit" value="">Enviar invitaci&oacute;n</button>
-				</center>
-			</form>
-
-			<!-- template -->
-			<ul style="display: none;">
-				<li class="list-group-item" id="guestTpl" style="padding: 0px;">
-					<div class="input-group">
-						<input inviteother="0" class="form-control friend-email" type="email" name="guest" placeholder="escribe otro email aqu&iacute;..." data-error="Bruh, that email address is invalid" value="" style="box-shadow: none; border: 0px;">
-						<span class="input-group-btn" id>
-							<button id="btnGuestRemove" class="btn btn-default btn-remove" type="button" style="border: 0px;" onclick="$('#guestTpl').remove();">
-								<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-							</button>
-						</span>
-					</div>
-				</li>
-			</ul>
-	
+			<div class="text-center">
+				<button class="btn btn-success btn-lg" type="submit" onclick="return checkCaptcha();">Enviar invitaci&oacute;n</button>
+			</div>
+		</form>
 	</div>
-	</section>
+
+	<div class="col-xs-6">
+		<p>Apretaste permite acceder a Internet mediante el email, y es &uacute;til para aquellas personas que viven en lugares de escasa conectividad. Seguramente tienes amigos que viven en lugares como estos, como por ejemplo Cuba, y quisieras mejorarle sus vidas cuando usen Apretaste. Pues mediante este formulario puedes invitarlos. Solo debes ingresar los siguientes datos:</p>
 	</div>
-	<script>
-		function inviteOther(){
-			var total = $("#totalGuests").val() * 1;
-			
-			var g = $("#guestTpl").clone();
-			var id = "#guest" + total;
-			g.attr('id', 'guest' + total);
-			$("#emailList").append(g);			
-			$(id + ' input').attr('name', 'guest[' + total + ']');
-			$(id + ' input').attr('value', '');
-			$(id + ' .btn-remove').attr('onclick', "$('#guest" + total + "').remove();");
-			total++;
-			$("#totalGuests").val(total);
-			 events();
-		}
+</div>
 
-		function checkAddress(email)
-		{
-			if (email.match(/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/))
-				return true;
-			
-			return false;
-		}
+<!-- new element that will be created to add new emails -->
+<div id="guest-clone" class="form-group" style="display:none;">
+	<div class="input-group">
+		<input required class="form-control" type="email" name="guest" placeholder="Tiene mas amigos? Esciba su email aqui" data-error="Email invalido"/>
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-remove" type="button" onclick="$(this).parents('.form-group').remove();">
+				<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+			</button>
+		</span>
+	</div>
+</div>
 
-		function events(){
-			$(".friend-email").keyup(function(event){
-				if (checkAddress($(this).val())){
-					if ($(this).attr('inviteother') == '0'){
-						inviteOther();
-						$(this).attr('inviteother','1');
-					}
-					return event.keyCode;
-				}
-			});
-		}
+<script>
+	$(document).ready(function(){
+		// add another email automatically
+		$("#guest").keyup(addGuest);
+	});
 
-		function mt_rand(min,max){
-		    var argc=arguments.length;
-		    if(argc===0){
-		        min=0;
-		        max=2147483647;
-		    }else if(argc===1){
-		        throw new Error('Warning: mt_rand() expects exactly 2 parameters, 1 given');
-		    }
-		    return Math.floor(Math.random()*(max-min+1))+min;
+	//add another email automatically
+	function addGuest(){
+		var guestclone = $('#guest-clone').clone().removeAttr('id');
+		var email = $(this).val();
+		if(checkEmail(email)) {
+			$(this).parents('.form-group').after(guestclone);
+			guestclone.slideDown('slow');
+			guestclone.find('input').keyup(addGuest);
+			$(this).unbind('keyup');
 		}
-		
-		$(function(){
-			$("#btnGuestRemove0").hide();
-			events();
-		});
-		
-	</script>
-</body>
-</html>
+	}
+
+	// check email
+	function checkEmail(email) {
+		return email.match(/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/);
+	}
+
+	// return random number for the captcha
+	function mt_rand(min,max) {
+		var argc=arguments.length;
+		if(argc===0) {
+			min=0;
+			max=2147483647;
+		}else if(argc===1) {
+			throw new Error('Warning: mt_rand() expects exactly 2 parameters, 1 given');
+		}
+		return Math.floor(Math.random()*(max-min+1))+min;
+	}
+
+	// check if the captcha is valid by Ajax
+	function checkCaptcha() {
+		var ret = false;
+		var text = $('#captcha').val();
+		$.ajax({
+			url: "invitar/check?text="+text,
+			async: false
+		}).done(function(data) {
+			ret = $.trim(data) == "true";
+			if( ! ret) $('#error-captcha').show();
+		});	
+		return ret;
+	}
+</script>
