@@ -67,40 +67,41 @@
 			</div>
 		</div>
 	</nav>
-	<div class="container">
+	<div class="container" style="max-width: 500px; margin: 0 auto;;">
 		<section id="form-section">
-			<div class="panel panel-default " style="max-width: 500px; margin: 0 auto;;">
-			<div class="panel-heading">
-			<h1 class="panel-title"><span class="glyphicon glyphicon-send"></span> Fill this form for invite your friends to use Apretaste!
-			</h1></div>
 			
-				<div class="panel-body" style="text-align: left;">
+
 					<?php if ($message !== false): ?>
 					<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
 					<?php endif;?>
 	
 					<!-- The Form -->
 
-					<form action="invitar" method="POST" data-toggle="validator" role="form">
-
+					<form action="invitar" method="POST" data-toggle="validator" role="form" id="invitationForm">
+						<p>Apretaste le permite acceder a Internet mediante su email, d&iacute;gase Vender o Comprar, 
+						consultar Wikipedia, Traducir documentos a decenas de idiomas, ver el Estado del Tiempo y m&aacute;s; siempre desde su email.</p>
+						<p>Seguramente tienes amigos que viven en lugares de escasa Internet como Cuba y quisieras que ellos usen Apretaste. Pues mediante este formulario puedes invitarlos. Solo debes ingresar los siguientes datos:</p> 
+						
 						<div class="form-group">
-							<label class="control-label" for="name">Your name:</label>
-							<input required id="name" class="form-control" type="text" name="name" placeholder="type your name here..." value="<?php echo $name;?>">
+							<label class="control-label" for="name">Tu nombre:</label>
+							<br/><small>Tu nombre se mostrar&aacute; en la invitaci&oacute;n que enviaremos a tus amigos y as&iacute; sepan quien se las envi&oacute;.</small>
+							<input required id="name" class="form-control" type="text" name="name" placeholder="escribe tu nombre aqu&iacute;..." value="<?php echo $name;?>">
 						</div>
 						<div class="form-group">
-							<label class="control-label" for="email">Your email:</label>
-							<input required id="email" class="form-control" type="email" name="email" placeholder="type your email address here..." data-error="Bruh, that email address is invalid" value="<?php echo $email;?>">
+							<label class="control-label" for="email">Tu email:</label>
+							<br/><small>Usaremos tu email para mandarte una notificaci&oacute;n del resultado de esta invitaci&oacute;n.</small>
+							<input required id="email" class="form-control" type="email" name="email" placeholder="escribe tu email aqu&iacute;..." data-error="Bruh, that email address is invalid" value="<?php echo $email;?>">
 						</div>
 						<div class="form-group">
-							<label class="control-label">Friend's email:</label>
+							<label class="control-label">El o los emails de tus amigos:</label>
 							<br /> <small>Los emails que debe introducir a continuaci&oacute;n ser&aacute;n invitados a usar Apretaste.</small><br />
 							<input type="hidden" value="<?php echo count($guest); ?>" id="totalGuests">
-							<ul class="list-group" id="invitationForm">
+							<ul class="list-group" id="emailList">
 						<?php foreach ($guest as $i => $g): ?>
 						<li class="list-group-item" id="guest<?php echo $i;?>" style="padding: 0px;">
 							<?php if ($i >0): ?>
 								<div class="input-group">
-										<input required class="form-control" type="email" name="guest[<?php echo $i;?>]" placeholder="type the email of your friend here.." data-error="Bruh, that email address is invalid" value="<?php if ($message_code > 0) echo $g;?>" style="box-shadow: none; border: 0px;">
+										<input required class="form-control friend-email" type="email" name="guest[<?php echo $i;?>]" placeholder="type the email of your friend here.." data-error="Bruh, that email address is invalid" value="<?php if ($message_code > 0) echo $g;?>" style="box-shadow: none; border: 0px;">
 										<span class="input-group-btn">
 											<button id="btnGuestRemove<?php echo $i;?>" class="btn btn-default btn-remove" type="button" style="border: 0px;" onclick="$('#guest<?php echo $i;?>').remove();">
 												<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
@@ -117,7 +118,7 @@
 						</div>
 
 						<div class="form-group <?php if ($message_code === 1) echo 'alert alert-danger'; ?>">
-							<label>Type the text in the image:</label>
+							<label>Escribe el texto que ves en la imagen:</label>
 							<br />
 							<img style="margin: 5px;" src="invitar/captcha">
 							<br />
@@ -125,14 +126,14 @@
 						</div>
 
 
-						<input class="btn btn-success" type="submit" value="Send invitation">
+						<input class="btn btn-success" type="submit" value="Enviar invitaci&oacute;n">
 					</form>
 
 					<!-- template -->
 					<ul style="display: none;">
 						<li class="list-group-item" id="guestTpl" style="padding: 0px;">
 							<div class="input-group">
-								<input required class="form-control" type="email" name="guest" placeholder="type the email of your friend here.." data-error="Bruh, that email address is invalid" value="" style="box-shadow: none; border: 0px;">
+								<input required class="form-control friend-email" type="email" name="guest" placeholder="type the email of your friend here.." data-error="Bruh, that email address is invalid" value="" style="box-shadow: none; border: 0px;">
 								<span class="input-group-btn" id>
 									<button id="btnGuestRemove" class="btn btn-default btn-remove" type="button" style="border: 0px;" onclick="$('#guestTpl').remove();">
 										<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
@@ -141,8 +142,6 @@
 							</div>
 						</li>
 					</ul>
-
-				</div>
 			</div>
 		</section>
 	</div>
@@ -153,7 +152,7 @@
 			var g = $("#guestTpl").clone();
 			var id = "#guest" + total;
 			g.attr('id', 'guest' + total);
-			$("#invitationForm").append(g);			
+			$("#emailList").append(g);			
 			$(id + ' input').attr('name', 'guest[' + total + ']');
 			$(id + ' input').attr('value', '');
 			$(id + ' .btn-remove').attr('onclick', "$('#guest" + total + "').remove();");
@@ -164,6 +163,9 @@
 
 		$(function(){
 			$("#btnGuestRemove0").hide();
+			$(".field-email").keyup(function(event){
+				
+				});
 		});
 		
 	</script>
