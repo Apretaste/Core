@@ -169,13 +169,8 @@ class RunController extends Controller
 		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
 		$logger->close();
 
-		// get message id
-		$messageID = null;
-		if (isset($_POST['Message-Id']))
-			$messageID = $_POST['Message-Id'];
-		
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $messageID);
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
 	}
 
 	/**
@@ -189,9 +184,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array
 	 * @param Enum mandrill,mailgun
-	 * @param String messageID
+	 * @param String
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $messageID)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -250,8 +245,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email",$messageID, $toEmail);
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
 	}
 
 	/**
@@ -264,9 +258,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
-	 * @param string messageID
+	 * @param String, email
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $messageID = null, $source = null)
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="")
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -519,7 +513,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
 
