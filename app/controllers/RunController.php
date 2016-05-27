@@ -397,12 +397,12 @@ class RunController extends Controller
 					$sql = "START TRANSACTION;";
 					foreach ($invitations as $invite)
 					{
+						// only for the invitations done via the service invitar
 						if($invite->source == 'internal')
 						{
-							// create the query
+							// give tickets and assign credits
 							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
 							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
-							$sql .= "UPDATE invitations SET used='1', used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
 
 							// email the invitor
 							$newTicket = new Response();
@@ -412,6 +412,9 @@ class RunController extends Controller
 							$newTicket->internal = true;
 							$responses[] = $newTicket;
 						}
+
+						// set the invitation as used
+						$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
 					}
 					$sql .= "COMMIT;";
 					$connection->deepQuery($sql);
