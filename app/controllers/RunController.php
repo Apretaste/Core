@@ -495,33 +495,7 @@ class RunController extends Controller
 			$adBottom = isset($ads[1]) ? $ads[1]->id : "NULL";
 
 			// save the logs on the utilization table
-			$safeQuery = $connection->escape($
-				if($rs->render) // ommit default Response()
-				{
-					// save impressions in the database
-					$ads = $rs->getAds();
-					if($userService->showAds && ! empty($ads))
-					{
-						$sql = "";
-						if( ! empty($ads[0])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[0]->id}';";
-						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
-						$connection->deepQuery($sql);
-					}
-
-					// prepare the email variable
-					$emailTo = $rs->email;
-					$subject = $rs->subject;
-					$images = $rs->images;
-					$attachments = $rs->attachments;
-					$body = $render->renderHTML($userService, $rs);
-
-					// remove dangerous characters that may break the SQL code
-					$subject = trim(preg_replace('/\'|`/', "", $subject));
-
-					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
-				}
-			query);
+			$safeQuery = $connection->escape($query);
 			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain',$adTop,$adBottom)";
 			$connection->deepQuery($sql);
 
