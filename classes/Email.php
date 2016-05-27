@@ -40,6 +40,9 @@ class Email
 			"o:tracking-opens" => false
 		);
 
+		if ( ! is_null($messageID))
+			$message["h:In-Reply-To"] = $messageID;
+		
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$mailgunKey = $di->get('config')['mailgun']['key'];
