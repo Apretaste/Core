@@ -493,13 +493,15 @@ class ManageController extends Controller
 		{
 			$adsOwner = $this->request->getPost("owner");
 			$adsTittle = $this->request->getPost("title");
-			$AdsDesc = $this->request->getPost("description");
+			$adsDesc = $this->request->getPost("description");
+			$adsPrice = $this->request->getPost('price');
+			
 			$today = date("Y-m-d H:i:s"); // date the ad was posted
 			$expirationDay = date("Y-m-d H:i:s", strtotime("+1 months"));
 
 			// insert the ad
 			$connection = new Connection();
-			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date) VALUES ('$adsOwner','$adsTittle','$AdsDesc', '$expirationDay', '$today')";
+			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price) VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
 			$insertAd = $connection->deepQuery($queryInsertAds);
 
 			if($insertAd)

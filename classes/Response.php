@@ -129,7 +129,7 @@ class Response
 		$sql = "
 			SELECT * FROM ads WHERE active = '1' 
 			AND expiration_date > CURRENT_TIMESTAMP 
-			AND (SELECT credit FROM person WHERE person.email = ads.owner) > 0.10
+			AND (SELECT credit FROM person WHERE person.email = ads.owner) >= price
 			AND ads.owner <> '{$this->email}' ";
 		if ( ! empty($person->age)) $sql .= " AND (from_age * 1 <= {$person->age} OR from_age = 'ALL') AND (to_age * 1 >= {$person->age} OR to_age = 'ALL') ";
 		if ( ! empty($person->gender)) $sql .= " AND (gender = '{$person->gender}' OR gender = 'ALL') ";
