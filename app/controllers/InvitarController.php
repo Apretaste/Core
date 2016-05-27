@@ -33,7 +33,6 @@ class InvitarController extends Controller
 		$this->view->guest = array(
 			''
 		);
-		
 		$this->view->email = '';
 		$this->view->name = '';
 		

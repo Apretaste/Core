@@ -13,7 +13,7 @@ class Email
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $messageID = null)
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
 		$utils = new Utils();
@@ -40,9 +40,6 @@ class Email
 			"o:tracking-opens" => false
 		);
 
-		if ( ! is_null($messageID))
-			$message["h:In-Reply-To"] = $messageID;
-		
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$mailgunKey = $di->get('config')['mailgun']['key'];
