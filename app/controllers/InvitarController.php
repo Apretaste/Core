@@ -112,9 +112,9 @@ class InvitarController extends Controller
 						$email->sendEmail($g, $subject, $html);
 						
 						// save invitation
-						$db->deepQuery("INSERT INTO invitations (email_inviter, email_invited) VALUES ('$emailaddress', '$g');");
+						$db->deepQuery("INSERT INTO invitations (email_inviter, email_invited, source) VALUES ('$emailaddress', '$g', 'abroad');");
 					}
-					
+
 					// send notification to the inviter
 					$response = new Response();
 					$response->setResponseEmail($emailaddress);
