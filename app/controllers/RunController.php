@@ -135,6 +135,9 @@ class RunController extends Controller
 	 * */
 	public function mailgunAction()
 	{
+		// do not allow fake income messages 
+		if( ! isset($_POST['From'])) return;
+
 		// filter email From and To 
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match_all($pattern, $_POST['From'], $emailFrom);
@@ -145,7 +148,7 @@ class RunController extends Controller
 		$fromName = trim(explode("<", $_POST['From'])[0]);
 		$toEmail = isset($toFrom[0][0]) ? trim($toFrom[0][0], " \t\n\r\0\x0B\"\',") : "";
 		$subject = $_POST['subject'];
-		$body = $_POST['body-plain'];
+		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
 
 		// save the attached files and create the response array
@@ -166,8 +169,13 @@ class RunController extends Controller
 		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
 		$logger->close();
 
+		// get message id
+		$messageID = null;
+		if (isset($_POST['Message-Id']))
+			$messageID = $_POST['Message-Id'];
+		
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $messageID);
 	}
 
 	/**
@@ -181,9 +189,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array
 	 * @param Enum mandrill,mailgun
-	 * @param String
+	 * @param String messageID
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $messageID)
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -242,7 +250,8 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
+
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email",$messageID, $toEmail);
 	}
 
 	/**
@@ -255,9 +264,9 @@ class RunController extends Controller
 	 * @param String
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
-	 * @param String, email
+	 * @param string messageID
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="")
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $messageID = null, $source = null)
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -510,7 +519,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
 				}
 			}
 

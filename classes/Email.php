@@ -13,7 +13,7 @@ class Email
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $messageID = null)
 	{
 		// do not email if there is an error
 		$utils = new Utils();
