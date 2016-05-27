@@ -421,7 +421,7 @@ class RunController extends Controller
 				$username = $utils->usernameFromEmail($email);
 
 				// save the new person
-				$sql = "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, $inviteSource)";
+				$sql = "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource')";
 				$connection->deepQuery($sql);
 
 				// save details of first visit
