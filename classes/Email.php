@@ -40,6 +40,7 @@ class Email
 			"o:tracking-opens" => false
 		);
 
+		// adding In-Reply-To header (creating conversation with the user)
 		if ( ! is_null($messageID))
 			$message["h:In-Reply-To"] = $messageID;
 		
