@@ -457,13 +457,12 @@ class RunController extends Controller
 				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 				$connection->deepQuery($sql);
 
-				// hardcoded list of sellers's emails 
-				// @TODO create a table with this information
-				$sellers = array('multichat@apretaste.com' => true, 'chatmail@apretaste.com' => true);
-				
 				$prizes = false;
 				
-				if (isset($sellers[$source]))
+				// check list of sellers's emails 
+				$sellers = $connection->deepQuery("SELECT * FROM jumper WHERE email = '$source' AND advertise = 1;");
+				
+				if (isset($sellers[0]))
 				{
 					$prizes = true;
 					
