@@ -12,6 +12,7 @@ class Email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
+	 * @param String $messageID, the id of request message from user
 	 * */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $messageID = null)
 	{
