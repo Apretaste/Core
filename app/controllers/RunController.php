@@ -108,7 +108,8 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-
+		$messageID = isset($_POST['Message-ID']) ? $_POST['Message-ID'] : null;
+		
 		// save the attached files and create the response array
 		$attachments = array();
 		for ($i=1; $i<=$attachmentCount; $i++)
@@ -128,7 +129,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $messageID);
 	}
 
 	/**
@@ -143,8 +144,9 @@ class RunController extends Controller
 	 * @param Array
 	 * @param Enum mandrill,mailgun
 	 * @param String
+	 * @param String $messageID
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $messageID = null)
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -203,7 +205,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail, $messageID);
 	}
 
 	/**
@@ -217,8 +219,9 @@ class RunController extends Controller
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
 	 * @param String, email
+	 * @param String $messageID
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="")
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="", $messageID = null)
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -473,7 +476,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
 				}
 			}
 
