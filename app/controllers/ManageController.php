@@ -42,12 +42,11 @@ class ManageController extends Controller
 
 		// START measure the effectiveness of each promoter
 		$promoters = $connection->deepQuery("
-			SELECT * FROM (SELECT mailbox, count(*) as total
-			FROM delivery_received
-			WHERE datediff(inserted, CURRENT_DATE) <= 7 
-			GROUP BY mailbox) subq 
-			WHERE (SELECT promoter FROM jumper WHERE subq.mailbox = jumper.email) = 1
-			ORDER BY total DESC;");
+			SELECT source, COUNT(source) AS total 
+			FROM first_timers 
+			WHERE datediff(inserted, CURRENT_DATE) <= 7
+			AND source IN (SELECT email FROM jumper WHERE promoter=1)
+			GROUP BY source");
 		// END measure the effectiveness of each promoter
 
 		$this->view->title = "Home";
