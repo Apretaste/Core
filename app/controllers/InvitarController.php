@@ -1,8 +1,6 @@
 <?php
-include_once ('../vendor/gregwar/captcha/CaptchaBuilderInterface.php');
-include_once ('../vendor/gregwar/captcha/PhraseBuilderInterface.php');
-include_once ('../vendor/gregwar/captcha/CaptchaBuilder.php');
-include_once ('../vendor/gregwar/captcha/PhraseBuilder.php');
+
+session_start();
 
 use Phalcon\Mvc\Controller;
 use Gregwar\Captcha\CaptchaBuilder;
@@ -15,7 +13,6 @@ use Gregwar\Captcha\CaptchaBuilder;
  */
 class InvitarController extends Controller
 {
-
 	/**
 	 * Invite from the web page
 	 *
@@ -24,129 +21,84 @@ class InvitarController extends Controller
 	 */
 	public function indexAction()
 	{
-		session_start();
-		
-		$this->view->wwwhttp = $this->di->get('path')['http'];
-		$this->view->wwwroot = $this->di->get('path')['root'];
-		$this->view->message = false;
-		$this->view->message_code = 0;
-		$this->view->guest = array(
-			''
-		);
-		$this->view->email = '';
-		$this->view->name = '';
-		
-		$db = new Connection();
+		$this->view->setLayout('manage');
+		$this->view->home = "/bienvenido";
+		$this->view->title = "Invita un Cubano a Internet";
+	}
+
+	/**
+	 * Process the page when its submitted
+	 *
+	 * @author kuma, salvipascual
+	 * @version 1.0
+	 * */
+	public function processAction()
+	{
+		// get the values from the post
+		$captcha = trim($this->request->getPost('captcha'));
+		$name = trim($this->request->getPost('name'));
+		$inviter = trim($this->request->getPost('email'));
+		$guest = $this->request->getPost('guest');
+
+		// check all values passed are valid
+		if(
+			strtoupper($captcha) != strtoupper($_SESSION['phrase']) ||
+			$name == "" || 
+			! filter_var($inviter, FILTER_VALIDATE_EMAIL) ||
+			! is_array($guest) || 
+			empty($guest)
+		) die("Error procesando, por favor valla atras y empiece nuevamente.");
+
+		// create classes needed
+		$connection = new Connection();
+		$email = new Email();
 		$utils = new Utils();
 		$render = new Render();
-		
-		if ($this->request->isPost())
-		{
-			// proccess invitation
-			
-			$captcha = $this->request->getPost('captcha');
-			$name = $this->request->getPost('name');
-			$emailaddress = $this->request->getPost('email');
-			$guest = $this->request->getPost('guest');
-			$email = new Email();
-			$service = new Service();
-			$service->showAds = true;
-			
-			if (is_null($guest))
-				$guest = array();
-			
-			$this->view->guest = $guest;
-			$this->view->email = $emailaddress;
-			$this->view->name = $name;
-			
-			if ($captcha == $_SESSION['phrase'])
-			{
-				$allok = true;
-				foreach ($guest as $g)
-				{
-					$g = trim($g);
-					
-					// check if guest exists / if is user of AP
-					if ($utils->personExist($g) === false)
-					{
-						$exists = $db->deepQuery("SELECT * FROM invitations WHERE email_invited = '$g';");
-						if (isset($exists[0]))
-						{
-							$this->view->message_type = 'warning';
-							$this->view->message_code = 3;
-							$this->view->message = "La invitaci&oacute;n no se envi&oacute; porque tu amigo <b>$g</b> fue invitado anteriormente.";
-							$allok = false;
-							break;
-						}
-					}
-					else
-					{
-						$this->view->message_type = 'warning';
-						$this->view->message_code = 2;
-						$this->view->message = "La invitaci&oacute;n no se envi&oacute; porque tu amigo <b>$g</b> ya usa Apretaste.";
-						$allok = false;
-						break;
-					}
-				}
-				
-				if ($allok)
-				{
-					foreach ($guest as $g)
-					{
-						$g = trim($g);
-						
-						// create the invitation for the user
-						$response = new Response();
-						$response->setResponseEmail($guest);
-						$subject = "$name le ha invitado a usar Apretaste";
-						$response->setResponseSubject($subject);
-						$responseContent = array(
-							"author" => $emailaddress
-						);
-						
-						$response->createFromTemplate("invitation.tpl", $responseContent);
-						$response->internal = true;
-						
-						$html = $render->renderHTML($service, $response);
-						
-						$email->sendEmail($g, $subject, $html);
-						
-						// save invitation
-						$db->deepQuery("INSERT INTO invitations (email_inviter, email_invited, source) VALUES ('$emailaddress', '$g', 'abroad');");
-					}
 
-					// send notification to the inviter
-					$response = new Response();
-					$response->setResponseEmail($emailaddress);
-					$subject = "Gracias por invitar a tus amigos para que usen Apretaste";
-					$response->setResponseSubject($subject);
-					
-					$response->createFromTemplate('invitation_notification.tpl', array(
-						'guests' => $guest,
-						'name' => $name
-					));
-					
-					$response->internal = true;
-					
-					$html = $render->renderHTML($service, $response);
-					$email->sendEmail($emailaddress, $subject, $html);
-					
-					$this->view->message_type = 'success';
-					$this->guest = array();
-					$this->view->message = "Gracias por invitar a tus amigos. Enviamos emails de invitaci&oacute;n a cada uno de ellos y notificaci&oacute;n para ti. Ahora puedes invitar a otros.";
-				}
-			}
-			else
-			{
-				$this->view->message_type = 'danger';
-				$this->view->message_code = 1;
-				$this->view->message = 'El texto escrito no coincide con la imagen';
-			}
+		// send notification to the inviter
+		$response = new Response();
+		$response->setResponseSubject("Gracias por darle internet a un Cubano");
+		$response->setEmailLayout("email_simple.tpl");
+		$response->createFromTemplate("invitationThankYou.tpl", array());
+		$response->internal = true;
+		$html = $render->renderHTML(new Service(), $response);
+		$email->sendEmail($inviter, $response->subject, $html);
+
+		// send invitations to the Cubans
+		$sql = "START TRANSACTION;";
+		foreach ($guest as $g)
+		{
+			// check the email is fully valid
+			$guestEmail = trim($g);
+			if( ! filter_var($guestEmail, FILTER_VALIDATE_EMAIL)) continue;
+
+			// do not invite people who were already invited
+			if($utils->checkPendingInvitation($guestEmail)) continue;
+
+			// do not invite people who are already using Apretaste
+			if($utils->personExist($guestEmail)) continue;
+
+			// send invitation
+			$response = new Response();
+			$response->setResponseSubject("$name le ha invitado a revisar internet desde su email");
+			$responseContent = array("host"=>$name, "guest"=>$guestEmail);
+			$response->createFromTemplate("invitation.tpl", $responseContent);
+			$response->internal = true;
+			$html = $render->renderHTML(new Service(), $response);
+			$email->sendEmail($guestEmail, $response->subject, $html);
+
+			// create query to save invitation into the database
+			$sql .= "INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guestEmail','abroad');";
 		}
-		
-		// show the form
-		$this->view->title = "Invitar a tus amigos para que usen Apretaste";
-		
+
+		// save all the invitations into the database at the same time
+		$connection->deepQuery($sql."COMMIT;");
+
+		// redirect to the invite page
+		$this->view->name = $name;
+		$this->view->email = $inviter;
+		$this->view->message = true;
+		return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
 	}
 
 	/**
@@ -156,16 +108,25 @@ class InvitarController extends Controller
 	 */
 	public function captchaAction()
 	{
-		session_start();
-		
 		$builder = new CaptchaBuilder();
 		$builder->build();
-		
+
 		$_SESSION['phrase'] = $builder->getPhrase();
-		
+
 		header('Content-type: image/jpeg');
 		$builder->output();
-		
 		$this->view->disable();
+	}
+
+	/**
+	 * Ajax call to check if the captcha is ok
+	 * 
+	 * @author salvipascual
+	 * */
+	public function checkAction()
+	{
+		$captcha = $this->request->get('text');
+		if(strtoupper($captcha) == strtoupper($_SESSION['phrase'])) die("true");
+		else die("false");
 	}
 }

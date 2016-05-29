@@ -52,7 +52,7 @@ class Render
 		$smarty->assign($templateVariables);
 
 		// renderig and removing tabs, double spaces and break lines
-		$renderedTemplate = $smarty->fetch("email_default.tpl");
+		$renderedTemplate = $smarty->fetch($response->layout);
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 
