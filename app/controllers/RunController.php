@@ -387,31 +387,35 @@ class RunController extends Controller
 				$sql = "START TRANSACTION;"; // start the long query
 
 				// check if the person was invited to Apretaste
-				$invite = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
-				if(count($invite)>0)
+				$invites = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0 ORDER BY invitation_time DESC");
+				if(count($invites)>0)
 				{
 					// check how this user came to know Apretaste, for stadistics
-					$invite = $invite[0];
-					$inviteSource = $invite->source;
+					$inviteSource = $invites[0]->source;
 
-					// only for the invitations done via the service invitar
-					if($inviteSource == 'internal')
+					// give prizes to the invitations via service invitar
+					// if more than one person invites X, they all get prizes
+					foreach ($invites as $invite)
 					{
-						// assign tickets and credits
-						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
-						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
+						if($invite->source == "internal")
+						{
+							// assign tickets and credits
+							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 
-						// email the invitor
-						$newTicket = new Response();
-						$newTicket->setResponseEmail($email);
-						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
-						$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
-						$newTicket->internal = true;
-						$responses[] = $newTicket;
+							// email the invitor
+							$newTicket = new Response();
+							$newTicket->setResponseEmail($email);
+							$newTicket->setEmailLayout("email_simple.tpl");
+							$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
+							$newTicket->createFromTemplate("invitationWonTicket.tpl", array("guest"=>$invite->email_invited));
+							$newTicket->internal = true;
+							$responses[] = $newTicket;
+						}
 					}
 
-					// set the invitation as used
-					$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
+					// mark all opened invitations to that email as used
+					$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE email_invited='$email' AND used=0;";
 				}
 
 				// create a unique username and save the new person
@@ -419,23 +423,17 @@ class RunController extends Controller
 				$sql .= "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource');";
 
 				// save details of first visit
-				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
-				$connection->deepQuery($sql);
+				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 
-				$prizes = false;
-				
 				// check list of sellers's emails 
-				$sellers = $connection->deepQuery("SELECT * FROM jumper WHERE email = '$source' AND advertise = 1;");
-				
-				if (isset($sellers[0]))
+				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$source' AND promoter=1;");
+				$prize = count($promoters)>0;
+				if ($prizes)
 				{
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
 					$sql .= "INSERT INTO ticket(email, paid) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
-
-					// make the welcome email to show the prize
-					$prize = true;
 				}
 
 				// run the long query all at the same time

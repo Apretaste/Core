@@ -73,16 +73,17 @@ class Utils
 	}
 
 	/**
-	 * Check if the Person was invited and is still pending 
+	 * Check if a person was invited by the same host and it is still pending 
 	 *
 	 * @author salvipascual
-	 * @param String $personEmail, email of the person
-	 * @return Boolean, true if Person invitation is pending
+	 * @param String $host, Email of the person who is inviting
+	 * @param String $guest, Email of the person invited
+	 * @return Boolean, true if the invitation is pending
 	 * */
-	public function checkPendingInvitation($email)
+	public function checkPendingInvitation($host, $guest)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
+		$res = $connection->deepQuery("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
 		return count($res) > 0;
 	}
 
