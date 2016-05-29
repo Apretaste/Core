@@ -113,15 +113,15 @@
 				</table>
 			</div>
 		</div>
-		
+
 		<div class="panel panel-default">
-			<div class="panel-heading">Advertisement (last 7 days)</div>
+			<div class="panel-heading">Promoters (last 7 days)</div>
 			<table class="table">
 				<tr><th>Mailbox</th><th>Total sent</th></tr>
-				<?php foreach ($ads as $ad): ?>
+				<?php foreach ($promoters as $promoter): ?>
 				<tr>
-					<td><?php echo $ad->mailbox; ?></td>
-					<td><?php echo $ad->total; ?></td>
+					<td><?= $promoter->mailbox; ?></td>
+					<td><?= $promoter->total; ?></td>
 				</tr>
 				<?php endforeach; ?>
 			</table>
