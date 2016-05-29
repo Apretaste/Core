@@ -1,32 +1,45 @@
-<?php if ( ! empty($message)): ?>
-	<div class="alert alert-success" role="alert"><?= $message; ?></div>
+<?php 
+	$wwwhttp = $this->di->get('path')['http'];
+	if( ! isset($name)) $name = ""; 
+	if( ! isset($email)) $email = "";
+	if(isset($message)) : 
+?>
+	<div class="alert alert-success" role="alert">Gracias por traer a sus amigos y familia en Cuba a disfrutar la internet. <b>Sus contactos han sido invitados correctamente.</b> Le hemos mandado un email de agradecimiento. Si&eacute;ntase libre de invitar incluso m&aacute;s personas usando este formulario.</div>
 <?php endif; ?>
 
 <div id="error-captcha" class="alert alert-danger" style="display:none;" role="alert">El texto que escribi&oacute; no es el mismo de la imagen.</div>
 
 <div class="row">
-	<div class="col-xs-6">
-		<form action="invitar/process" method="POST" data-toggle="validator" role="form">
+	<div class="col-xs-12 col-sm-6 col-sm-push-6">
+		<img src="<?= $wwwhttp ?>/images/apretaste.logo.big.transp.png" alt="Logo de Apretaste" style="width:200px;">
+		<p><b>Apretaste permite a su amigo o familiar en Cuba acceder a Internet desde su Email gratuitamente.</b></p>
+		<p>En Cuba, un 5% de la poblaci&oacute;n tiene acceso a la web, pero m&aacute;s del 25% solo puede enviar y recibir emails. Apretaste permite utilizar Wikipedia, Noticias, Redes Sociales, Traducci&oacute;n, Mapas, Google y m&aacute;s, enviando un email y esperando otro en respuesta. As&iacute; explotamos al m&aacute;ximo la infraestructura de Cuba, y resolvemos las necesidades de los miles de Cubanos que son nuestros usuarios.</p>
+		<p class="hidden-xs">Gracias por compartir Apretaste, y conectar a sus seres queridos a la internet.</p>
+		<hr class="visible-xs"/>
+	</div>
+
+	<div class="col-xs-12 col-sm-6 col-sm-pull-6">
+		<form action="<?= $wwwhttp ?>/invitar/process" method="POST" data-toggle="validator" role="form">
 			<div class="form-group">
-				<label class="control-label" for="name">Su nombre, para sepan quien les invita</label>
-				<input required id="name" class="form-control" type="text" name="name" placeholder="Escriba su nombre"/>
+				<label class="control-label" for="name">Nombre, para sepan quien les invita</label>
+				<input required id="name" class="form-control" type="text" name="name" value="<?= $name ?>" placeholder="Escriba su nombre"/>
 			</div>
 
 			<div class="form-group">
-				<label class="control-label" for="email">Su email, para enviarte una confirmaci&oacute;n</label>
-				<input required id="email" class="form-control" type="email" name="email" placeholder="Escriba su email" data-error="Email invalido"/>
+				<label class="control-label" for="email">Email, para enviarte una confirmaci&oacute;n</label>
+				<input required id="email" class="form-control" type="email" name="email" value="<?= $email ?>" placeholder="Escriba su email" data-error="Email invalido"/>
 			</div>
 
 			<div id="guest-group" class="form-group">
-				<label class="control-label" for="guest">El email de la persona a invitar</label>
-				<input required id="guest" class="form-control" type="email" name="guest" placeholder="Email de su amigo en Cuba" data-error="Email invalido"/>
+				<label class="control-label" for="guest">Email de la persona a invitar</label>
+				<input required id="guest" class="form-control" type="email" name="guest[]" placeholder="Email de su amigo en Cuba" data-error="Email invalido"/>
 			</div>
 
 			<div class="form-group">
 				<label class="control-label" for="captcha">Escriba el texto que ve en la imagen</label>
 				<div class="input-group">
 					<input required id="captcha" class="form-control" type="text" name="captcha" style="height: 42px;">
-					<span class="input-group-addon" style="padding: 0px;"><img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="invitar/captcha"></span>
+					<span class="input-group-addon" style="padding: 0px;"><img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="<?= $wwwhttp ?>/invitar/captcha"></span>
 					<span class="input-group-btn">
 						<button style="height: 42px;" class="btn btn-default" type="button" onclick="$('#captchaimg').attr('src','invitar/captcha?rand='+mt_rand(1,9000));$('#captcha').val('');">
 							<span class="glyphicon glyphicon-refresh"></span>
@@ -36,20 +49,16 @@
 			</div>
 
 			<div class="text-center">
-				<button class="btn btn-success btn-lg" type="submit" onclick="return checkCaptcha();">Enviar invitaci&oacute;n</button>
+				<button id="submitBtn" class="btn btn-success btn-lg" type="submit" onclick="return checkCaptcha();">Enviar invitaci&oacute;n</button>
 			</div>
 		</form>
-	</div>
-
-	<div class="col-xs-6">
-		<p>Apretaste permite acceder a Internet mediante el email, y es &uacute;til para aquellas personas que viven en lugares de escasa conectividad. Seguramente tienes amigos que viven en lugares como estos, como por ejemplo Cuba, y quisieras mejorarle sus vidas cuando usen Apretaste. Pues mediante este formulario puedes invitarlos. Solo debes ingresar los siguientes datos:</p>
 	</div>
 </div>
 
 <!-- new element that will be created to add new emails -->
 <div id="guest-clone" class="form-group" style="display:none;">
 	<div class="input-group">
-		<input required class="form-control" type="email" name="guest" placeholder="Tiene mas amigos? Esciba su email aqui" data-error="Email invalido"/>
+		<input required class="form-control" type="email" name="guest[]" placeholder="Email de otro amigo en Cuba" data-error="Email invalido"/>
 		<span class="input-group-btn">
 			<button class="btn btn-default btn-remove" type="button" onclick="$(this).parents('.form-group').remove();">
 				<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
@@ -95,15 +104,23 @@
 
 	// check if the captcha is valid by Ajax
 	function checkCaptcha() {
+		// check if the captcha is right
 		var ret = false;
 		var text = $('#captcha').val();
 		$.ajax({
-			url: "invitar/check?text="+text,
+			url: "<?= $wwwhttp ?>/invitar/check?text="+text,
 			async: false
 		}).done(function(data) {
 			ret = $.trim(data) == "true";
 			if( ! ret) $('#error-captcha').show();
 		});	
+
+		// if right, show loading
+		if(ret) {
+//			$('#submitBtn').attr("disabled", "disabled"); // @TODO disable provents submmittion
+			$('#submitBtn').html("Invitando ...");
+		}
+
 		return ret;
 	}
 </script>
