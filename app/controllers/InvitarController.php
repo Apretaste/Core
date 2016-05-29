@@ -73,7 +73,10 @@ class InvitarController extends Controller
 			$guestEmail = trim($g);
 			if( ! filter_var($guestEmail, FILTER_VALIDATE_EMAIL)) continue;
 
-			// check the person is not our user already
+			// do not invite people who were already invited
+			if($utils->checkPendingInvitation($guestEmail)) continue;
+
+			// do not invite people who are already using Apretaste
 			if($utils->personExist($guestEmail)) continue;
 
 			// send invitation
