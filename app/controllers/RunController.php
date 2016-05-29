@@ -428,7 +428,7 @@ class RunController extends Controller
 				// check list of sellers's emails 
 				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$source' AND promoter=1;");
 				$prize = count($promoters)>0;
-				if ($prizes)
+				if ($prize)
 				{
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
@@ -442,6 +442,7 @@ class RunController extends Controller
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
+				$welcome->setEmailLayout("email_simple.tpl");
 				$welcome->setResponseSubject("Bienvenido a Apretaste!");
 				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$source));
 				$welcome->internal = true;
