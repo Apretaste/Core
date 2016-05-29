@@ -11,6 +11,7 @@ class Response
 	public $internal; // false if the user provides the template
 	public $render; // false if the response should not be email to the user
 	public $ads;
+	public $layout;
 
 	/**
 	 * Create default template
@@ -23,6 +24,7 @@ class Response
 		$this->content = array("text"=>"<b>Warning:</b> Default responses will never be emailed to the user.");
 		$this->images = array();
 		$this->attachments = array();
+		$this->layout = "email_default.tpl";
 
 		$this->internal = true;
 		$this->render = false;
@@ -50,6 +52,18 @@ class Response
 	public function setResponseEmail($email)
 	{
 		$this->email = $email;
+	}
+
+	/**
+	 * Set the global layout to control how the email looks
+	 * All layouts are from app/controller/layouts
+	 *
+	 * @author salvipascual
+	 * @param String $layout
+	 * */
+	public function setEmailLayout($layout)
+	{
+		$this->layout = $layout;
 	}
 
 	/**
@@ -127,9 +141,9 @@ class Response
 
 		// select the ads to show
 		$sql = "
-			SELECT * FROM ads WHERE active = '1' 
+			SELECT * FROM ads WHERE active=1 
 			AND expiration_date > CURRENT_TIMESTAMP 
-			AND (SELECT credit FROM person WHERE person.email = ads.owner) > 0.10
+			AND (SELECT credit FROM person WHERE person.email = ads.owner) >= ads.price
 			AND ads.owner <> '{$this->email}' ";
 		if ( ! empty($person->age)) $sql .= " AND (from_age * 1 <= {$person->age} OR from_age = 'ALL') AND (to_age * 1 >= {$person->age} OR to_age = 'ALL') ";
 		if ( ! empty($person->gender)) $sql .= " AND (gender = '{$person->gender}' OR gender = 'ALL') ";

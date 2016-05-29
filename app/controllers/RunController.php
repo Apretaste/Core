@@ -108,7 +108,8 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-
+		$messageID = isset($_POST['Message-ID']) ? $_POST['Message-ID'] : null;
+		
 		// save the attached files and create the response array
 		$attachments = array();
 		for ($i=1; $i<=$attachmentCount; $i++)
@@ -128,7 +129,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun");
+		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $messageID);
 	}
 
 	/**
@@ -143,8 +144,9 @@ class RunController extends Controller
 	 * @param Array
 	 * @param Enum mandrill,mailgun
 	 * @param String
+	 * @param String $messageID
 	 * */
-	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook)
+	private function processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, $webhook, $messageID = null)
 	{
 		$connection = new Connection();
 		$utils = new Utils();
@@ -203,7 +205,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail);
+		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail, $messageID);
 	}
 
 	/**
@@ -217,8 +219,9 @@ class RunController extends Controller
 	 * @param Array of Objects {type,content,path}
 	 * @param Enum: html,json,email
 	 * @param String, email
+	 * @param String $messageID
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="")
+	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="", $messageID = null)
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -384,31 +387,35 @@ class RunController extends Controller
 				$sql = "START TRANSACTION;"; // start the long query
 
 				// check if the person was invited to Apretaste
-				$invite = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0");
-				if(count($invite)>0)
+				$invites = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0 ORDER BY invitation_time DESC");
+				if(count($invites)>0)
 				{
 					// check how this user came to know Apretaste, for stadistics
-					$invite = $invite[0];
-					$inviteSource = $invite->source;
+					$inviteSource = $invites[0]->source;
 
-					// only for the invitations done via the service invitar
-					if($inviteSource == 'internal')
+					// give prizes to the invitations via service invitar
+					// if more than one person invites X, they all get prizes
+					foreach ($invites as $invite)
 					{
-						// assign tickets and credits
-						$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
-						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
+						if($invite->source == "internal")
+						{
+							// assign tickets and credits
+							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 
-						// email the invitor
-						$newTicket = new Response();
-						$newTicket->setResponseEmail($email);
-						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
-						$newTicket->createFromText("<h1>Nuevo ticket para nuestra Rifa</h1><p>Su contacto {$invite->email_invited} ha usado Apretaste por primera vez gracias a su invitaci&oacute;n, por lo cual hemos agregado a su perfil un ticket para nuestra rifa y 25&cent; en cr&eacute;dito de Apretaste.</p><p>Muchas gracias por invitar a sus amigos, y gracias por usar Apretaste</p>");
-						$newTicket->internal = true;
-						$responses[] = $newTicket;
+							// email the invitor
+							$newTicket = new Response();
+							$newTicket->setResponseEmail($email);
+							$newTicket->setEmailLayout("email_simple.tpl");
+							$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
+							$newTicket->createFromTemplate("invitationWonTicket.tpl", array("guest"=>$invite->email_invited));
+							$newTicket->internal = true;
+							$responses[] = $newTicket;
+						}
 					}
 
-					// set the invitation as used
-					$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE invitation_id='{$invite->invitation_id}';";
+					// mark all opened invitations to that email as used
+					$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE email_invited='$email' AND used=0;";
 				}
 
 				// create a unique username and save the new person
@@ -418,17 +425,15 @@ class RunController extends Controller
 				// save details of first visit
 				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 
-				// hardcoded list of sellers's emails
-				$prize = false;
-				if ($source == "multichat@apretaste.com" || $source == "chatmail@apretaste.com")
+				// check list of sellers's emails 
+				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$source' AND promoter=1;");
+				$prize = count($promoters)>0;
+				if ($prize)
 				{
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
 					$sql .= "INSERT INTO ticket(email, paid) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
-
-					// make the welcome email to show the prize
-					$prize = true;
 				}
 
 				// run the long query all at the same time
@@ -437,6 +442,7 @@ class RunController extends Controller
 				// send the welcome email
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
+				$welcome->setEmailLayout("email_simple.tpl");
 				$welcome->setResponseSubject("Bienvenido a Apretaste!");
 				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$source));
 				$welcome->internal = true;
@@ -473,7 +479,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
 				}
 			}
 

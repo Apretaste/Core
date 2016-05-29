@@ -1,29 +1,27 @@
 <h1>&iexcl;Bienvenido a Apretaste!</h1>
 
-<p style="color:red;">Usted ha recibido este email porque <b><a href="mailto:{$author}">{$author}</a></b> le ha invitado a descubrir 
-Apretaste.</p>
+<p style="color:red;">Has recibido este mensaje porque <b>{$host}</b> le invit&oacute; a revisar internet desde su email. &iquest;Como se hace? Le explico m&aacute;s abajo.</p>
 
 {space5}
 
-<p>Apretaste le permite acceder a Internet mediante su email. Con Apretaste usted puede Vender o Comprar, consultar Wikipedia, Traducir documentos a decenas de idiomas, ver el Estado del Tiempo y m&aacute;s; siempre desde su email.</p>
+<p>Apretaste le permite <b>acceder a internet mediante su email</b>. Con Apretaste usted puede Comprar o Vender, buscar en Google, leer Noticias, compartir en nuestra Red Social, consultar Wikipedia, Traducir documentos a decenas de idiomas, ver el Estado del Tiempo, buscar su Media Naranja y m&aacute;s; siempre desde su email.</p>
 
 {space15}
 
 <table>
 	<tr>
 		<td valign="top">
-			<h2>Navegue en internet por email</h2>
-			<p><b>1.</b> Cree nuevo email. En la secci&oacute;n "Para" escriba: {apretaste_email}</p>
-			<p><b>2.</b> En la secci&oacute;n "Asunto" escriba: <span style="color:green;">NAVEGAR</span></p>
-			<p><b>3.</b> Env&iacute;e el email. En segundos recibir&aacute; otro email con la p&aacute;gina de inicio del servicio NAVEGAR.</p>
+			<h2>Pruebe nuestra Tienda online</h2>
+			<p><b>1.</b> Cree un nuevo email. En la secci&oacute;n "Para" escriba: {apretaste_email}</p>
+			<p><b>2.</b> En la secci&oacute;n "Asunto" escriba: <span style="color:green;">TIENDA televisor lcd</span></p>
+			<p><b>3.</b> Env&iacute;e el email. En segundos recibir&aacute; otro email con televisores a la venta</p>
 			{space10}
 			<center>
-				{button href="NAVEGAR revolico.com" caption="Probar NAVEGAR"} {button href="NAVEGAR" caption="Ir a NAVEGAR" color="blue"}
-
+				{button href="TIENDA televisor lcd" caption="Probar Tienda"}
 			</center>
 		</td>
 		<td valign="top">
-			{emailbox title="Navegar" from="{$userEmail}" subject="NAVEGAR revolico.com"}
+			{emailbox title="Tienda" from="{$guest}" subject="TIENDA televisor lcd"}
 		</td>
 	</tr>
 </table>

@@ -36,7 +36,7 @@ class Render
 
 		// getting the ads
 		$ads = $service->showAds ? $response->getAds() : array();
-		
+
 		// list the system variables
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
@@ -52,7 +52,7 @@ class Render
 		$smarty->assign($templateVariables);
 
 		// renderig and removing tabs, double spaces and break lines
-		$renderedTemplate = $smarty->fetch("email_default.tpl");
+		$renderedTemplate = $smarty->fetch($response->layout);
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 

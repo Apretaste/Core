@@ -45,7 +45,7 @@
 		<center>
 			<table id="container" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
 				<!--top links-->
-					<tr>
+				<tr>
 					<td align="right" bgcolor="#D0D0D0" style="padding: 5px;">
 						<small>
 							{link href="AYUDA" caption="Ayuda"}{separator}
