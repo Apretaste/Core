@@ -419,11 +419,15 @@ class RunController extends Controller
 				$sql .= "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource');";
 
 				// save details of first visit
-				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
+				$sql = "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
+				$connection->deepQuery($sql);
 
-				// hardcoded list of sellers's emails
-				$prize = false;
-				if ($source == "multichat@apretaste.com" || $source == "chatmail@apretaste.com")
+				$prizes = false;
+				
+				// check list of sellers's emails 
+				$sellers = $connection->deepQuery("SELECT * FROM jumper WHERE email = '$source' AND advertise = 1;");
+				
+				if (isset($sellers[0]))
 				{
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
