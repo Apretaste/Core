@@ -117,14 +117,18 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">Promoters (last 7 days)</div>
 			<div class="panel-body">
-				<table class="table">
-					<tr><th>Promoter</th><th>Total</th></tr>
-					<?php foreach ($promoters as $promoter): ?>
-					<tr>
-						<td><?= $promoter->source; ?></td>
-						<td class="text-right"><?= $promoter->total; ?></td>
-					</tr>
-					<?php endforeach; ?>
+				<table class="table table-condensed fullscreen">
+					<thead>
+						<tr><th>Promoter</th><th>Total</th></tr>
+					</thead>
+					<tbody>
+						<?php foreach ($promoters as $promoter): ?>
+						<tr>
+							<td><?= $promoter->source; ?></td>
+							<td class="text-center"><?= $promoter->total; ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
 				</table>
 			</div>
 		</div>
