@@ -42,24 +42,21 @@ class ManageController extends Controller
 
 		// START measure the effectiveness of each advertisement mailbox
 		$ads = $connection->deepQuery("
-		SELECT * FROM (SELECT mailbox, count(*) as total
-		FROM delivery_received
-		WHERE datediff(inserted, CURRENT_DATE) <= 7 
-		GROUP BY mailbox) subq 
-		WHERE (SELECT advertise FROM jumper WHERE subq.mailbox = jumper.email) = 1
-		ORDER BY total DESC;");
-		
-		$this->view->ads = $ads;
-		
+			SELECT * FROM (SELECT mailbox, count(*) as total
+			FROM delivery_received
+			WHERE datediff(inserted, CURRENT_DATE) <= 7 
+			GROUP BY mailbox) subq 
+			WHERE (SELECT promoter FROM jumper WHERE subq.mailbox = jumper.email) = 1
+			ORDER BY total DESC;");
 		// END measure the effectiveness of each advertisement mailbox
-		
+
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
+		$this->view->ads = $ads;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
 	}
-
 
 	/**
 	 * Audience
