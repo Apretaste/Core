@@ -40,6 +40,19 @@ class ManageController extends Controller
 		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 		// END tasks status widget
 
+		// START measure the effectiveness of each advertisement mailbox
+		$ads = $connection->deepQuery("
+		SELECT * FROM (SELECT mailbox, count(*) as total
+		FROM delivery_received
+		WHERE datediff(inserted, CURRENT_DATE) <= 7 
+		GROUP BY mailbox) subq 
+		WHERE (SELECT advertise FROM jumper WHERE subq.mailbox = jumper.email) = 1
+		ORDER BY total DESC;");
+		
+		$this->view->ads = $ads;
+		
+		// END measure the effectiveness of each advertisement mailbox
+		
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
 		$this->view->delivery = $delivery;

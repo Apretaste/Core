@@ -12,8 +12,9 @@ class Email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
+	 * @param String $messageID, the id of request message from user
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $messageID = null)
 	{
 		// do not email if there is an error
 		$utils = new Utils();
@@ -39,6 +40,10 @@ class Email
 			"o:tracking-clicks" => false,
 			"o:tracking-opens" => false
 		);
+
+		// adding In-Reply-To header (creating conversation with the user)
+		if ( ! is_null($messageID))
+			$message["h:In-Reply-To"] = $messageID;
 
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
