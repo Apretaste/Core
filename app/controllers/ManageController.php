@@ -40,13 +40,22 @@ class ManageController extends Controller
 		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 		// END tasks status widget
 
+		// START measure the effectiveness of each promoter
+		$promoters = $connection->deepQuery("
+			SELECT source, COUNT(source) AS total 
+			FROM first_timers 
+			WHERE datediff(inserted, CURRENT_DATE) <= 7
+			AND source IN (SELECT email FROM jumper WHERE promoter=1)
+			GROUP BY source");
+		// END measure the effectiveness of each promoter
+
 		$this->view->title = "Home";
 		$this->view->revolicoCrawler = $revolicoCrawler;
+		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
 	}
-
 
 	/**
 	 * Audience
@@ -489,17 +498,21 @@ class ManageController extends Controller
 	public function createadAction()
 	{
 		// handle the submit if an ad is posted
+		// @TODO: move post process to other action?
 		if($this->request->isPost())
 		{
+			// getting post data
 			$adsOwner = $this->request->getPost("owner");
 			$adsTittle = $this->request->getPost("title");
-			$AdsDesc = $this->request->getPost("description");
+			$adsDesc = $this->request->getPost("description");
+			$adsPrice = $this->request->getPost('price');
 			$today = date("Y-m-d H:i:s"); // date the ad was posted
 			$expirationDay = date("Y-m-d H:i:s", strtotime("+1 months"));
 
 			// insert the ad
 			$connection = new Connection();
-			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date) VALUES ('$adsOwner','$adsTittle','$AdsDesc', '$expirationDay', '$today')";
+			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price) 
+			                   VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
 			$insertAd = $connection->deepQuery($queryInsertAds);
 
 			if($insertAd)
