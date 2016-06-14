@@ -1448,6 +1448,10 @@ class ManageController extends Controller
         	foreach($result['results'] as $question){
             	$csv[][0] = $question['t'];
             	foreach($question['a'] as $ans) {
+            	
+            		if (!isset($ans['total'])) $ans['total'] = 0;
+            		if (!isset($question['total'])) $question['total'] = 0;
+            	
             		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));         
             	    foreach ($result['pivots'] as $pivot => $label) {
                 		if (!isset($ans['p'][$pivot])) {
