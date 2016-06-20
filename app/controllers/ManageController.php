@@ -12,22 +12,6 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// START revolico widget
-		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
-		$revolicoCrawler = array();
-		if(file_exists($revolicoCrawlerFile))
-		{
-			$details = file_get_contents($revolicoCrawlerFile);
-			$details = explode("|", $details);
-
-			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
-			$revolicoCrawler["TimeBehind"] = (time() - strtotime($details[0])) / 60 / 60; 
-			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
-			$revolicoCrawler["PostsDownloaded"] = $details[2];
-			$revolicoCrawler["RuningMemory"] = $details[3];
-		}
-		// END revolico widget
-
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
