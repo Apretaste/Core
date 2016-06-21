@@ -1,5 +1,5 @@
-<h1>Tu amigo a atendido tu invitaci&oacute;</h1>
-<p>Hola {$inviter}, tu amigo {$guest} se ha unido a Apretaste gracias a tu invitaci&oacute;n. 
+<h1>Tu amigo a atendido tu invitaci&oacute;n</h1>
+<p align="justify">Hola {$inviter}, tu amigo {$guest} se ha unido a Apretaste gracias a tu invitaci&oacute;n. 
 Creemos que puedes hacer m&aacute;s por los Cubanos, haci&eacute;ndonos una modesta donaci&oacute;n.
 Tu donación cambia la vida de aquellos que nunca han accedido a la Web; por favor ayúdanos a mantener 
 este servicio </p>
