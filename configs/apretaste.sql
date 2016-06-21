@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: May 24, 2016 at 12:28 AM
+-- Generation Time: Jun 01, 2016 at 10:41 AM
 -- Server version: 5.6.25-0ubuntu0.15.04.1
 -- PHP Version: 5.6.4-4ubuntu6.4
 
@@ -104,7 +104,8 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `marital_status` enum('SOLTERO','SALIENDO','COMPROMETIDO','CASADO','ALL') DEFAULT 'ALL',
   `sexual_orientation` enum('BI','HETERO','HOMO','ALL') DEFAULT 'ALL',
   `religion` enum('ATEISMO','SECULARISMO','AGNOSTICISMO','ISLAM','JUDAISTA','ABAKUA','SANTERO','YORUBA','BUDISMO','CATOLICISMO','OTRA','CRISTIANISMO','ALL') DEFAULT 'ALL',
-  `last_usage` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+  `last_usage` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `price` float NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -133,7 +134,7 @@ CREATE TABLE IF NOT EXISTS `delivery_checked` (
   `reason` varchar(15) NOT NULL,
   `code` int(3) NOT NULL COMMENT 'Status returned by the email validator',
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=55497 DEFAULT CHARSET=latin1 COMMENT='To store all emails checked by the email validator service';
+) ENGINE=InnoDB AUTO_INCREMENT=57237 DEFAULT CHARSET=latin1 COMMENT='To store all emails checked by the email validator service';
 
 -- --------------------------------------------------------
 
@@ -149,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `delivery_dropped` (
   `code` varchar(5) NOT NULL,
   `description` varchar(1000) DEFAULT NULL,
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=34116 DEFAULT CHARSET=latin1 COMMENT='Save dropped emails in Mandrill';
+) ENGINE=InnoDB AUTO_INCREMENT=34466 DEFAULT CHARSET=latin1 COMMENT='Save dropped emails in Mandrill';
 
 -- --------------------------------------------------------
 
@@ -165,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `delivery_received` (
   `attachments_count` int(2) NOT NULL,
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `webhook` varchar(15) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=100674 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=120410 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -182,7 +183,7 @@ CREATE TABLE IF NOT EXISTS `delivery_sent` (
   `attachments` tinyint(1) NOT NULL DEFAULT '0',
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `domain` varchar(30) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=413129 DEFAULT CHARSET=latin1 COMMENT='List of emails successfully sent';
+) ENGINE=InnoDB AUTO_INCREMENT=433512 DEFAULT CHARSET=latin1 COMMENT='List of emails successfully sent';
 
 -- --------------------------------------------------------
 
@@ -220,13 +221,14 @@ CREATE TABLE IF NOT EXISTS `inventory` (
 --
 
 CREATE TABLE IF NOT EXISTS `invitations` (
-`invitation_id` int(11) NOT NULL,
+`id` int(11) NOT NULL,
   `invitation_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `email_inviter` char(100) NOT NULL,
   `email_invited` char(100) NOT NULL,
+  `source` enum('promoter','internal','abroad','campaign','manual') NOT NULL DEFAULT 'manual',
   `used` tinyint(1) NOT NULL,
   `used_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
-) ENGINE=InnoDB AUTO_INCREMENT=34606 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=35158 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -240,7 +242,8 @@ CREATE TABLE IF NOT EXISTS `jumper` (
   `received_count` int(11) NOT NULL DEFAULT '0',
   `blocked_domains` varchar(1000) NOT NULL COMMENT 'Comma separated list of the domains that are blocked for that email',
   `status` enum('Inactive','SendOnly','ReceiveOnly','SendReceive') NOT NULL DEFAULT 'Inactive',
-  `last_usage` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `last_usage` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `promoter` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 if the email is from a promoter'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -281,7 +284,7 @@ CREATE TABLE IF NOT EXISTS `person` (
   `cupido` tinyint(1) NOT NULL DEFAULT '1',
   `sexual_orientation` enum('BI','HETERO','HOMO') NOT NULL DEFAULT 'HETERO',
   `religion` enum('ATEISMO','SECULARISMO','AGNOSTICISMO','ISLAM','JUDAISTA','ABAKUA','SANTERO','YORUBA','BUDISMO','CATOLICISMO','OTRA','CRISTIANISMO') DEFAULT NULL,
-  `source` enum('email','api','manual') NOT NULL DEFAULT 'email'
+  `source` enum('api','manual','promoter','internal','abroad','campaign','alone') NOT NULL DEFAULT 'manual'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -312,7 +315,7 @@ CREATE TABLE IF NOT EXISTS `remarketing` (
   `type` varchar(10) NOT NULL,
   `sent` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `opened` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=11384 DEFAULT CHARSET=latin1 COMMENT='Emails remarketed to attract our users back';
+) ENGINE=InnoDB AUTO_INCREMENT=13726 DEFAULT CHARSET=latin1 COMMENT='Emails remarketed to attract our users back';
 
 -- --------------------------------------------------------
 
@@ -357,7 +360,7 @@ CREATE TABLE IF NOT EXISTS `ticket` (
   `raffle_id` int(11) DEFAULT NULL COMMENT 'NULL when the ticket belong to the current Raffle or ID of the Raffle where it was used',
   `email` char(100) NOT NULL,
   `paid` tinyint(1) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=11129 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=12529 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -374,7 +377,7 @@ CREATE TABLE IF NOT EXISTS `transfer` (
   `confirmation_hash` varchar(32) NOT NULL,
   `transfered` tinyint(1) NOT NULL DEFAULT '0',
   `inventory_code` varchar(20) DEFAULT NULL COMMENT 'Code from the inventory table, if it was a purchase'
-) ENGINE=InnoDB AUTO_INCREMENT=1367 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1504 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -393,7 +396,7 @@ CREATE TABLE IF NOT EXISTS `utilization` (
   `domain` varchar(30) NOT NULL,
   `ad_top` int(11) DEFAULT NULL,
   `ad_bottom` int(11) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=436426 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=456024 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -469,7 +472,7 @@ CREATE TABLE IF NOT EXISTS `_note` (
   `to_user` char(100) DEFAULT NULL,
   `text` varchar(255) DEFAULT NULL,
   `send_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=9708 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10189 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -508,7 +511,7 @@ CREATE TABLE IF NOT EXISTS `_pizarra_notes` (
   `likes` int(5) NOT NULL DEFAULT '0',
   `inserted` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `auto` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Autopost from ourside, 0=User insertion'
-) ENGINE=InnoDB AUTO_INCREMENT=13377 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=13747 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -572,7 +575,7 @@ CREATE TABLE IF NOT EXISTS `_survey_answer` (
 `id` bigint(20) NOT NULL,
   `question` bigint(20) NOT NULL,
   `title` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=164 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=163 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -640,7 +643,7 @@ CREATE TABLE IF NOT EXISTS `_tienda_post` (
   `featured` tinyint(1) NOT NULL DEFAULT '0',
   `source` varchar(20) NOT NULL,
   `source_url` varchar(250) DEFAULT NULL
-) ENGINE=MyISAM AUTO_INCREMENT=951559 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=967966 DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -713,7 +716,7 @@ ALTER TABLE `inventory`
 -- Indexes for table `invitations`
 --
 ALTER TABLE `invitations`
- ADD PRIMARY KEY (`invitation_id`);
+ ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `jumper`
@@ -890,27 +893,27 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=26;
 -- AUTO_INCREMENT for table `delivery_checked`
 --
 ALTER TABLE `delivery_checked`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=55497;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=57237;
 --
 -- AUTO_INCREMENT for table `delivery_dropped`
 --
 ALTER TABLE `delivery_dropped`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=34116;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=34466;
 --
 -- AUTO_INCREMENT for table `delivery_received`
 --
 ALTER TABLE `delivery_received`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=100674;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=120410;
 --
 -- AUTO_INCREMENT for table `delivery_sent`
 --
 ALTER TABLE `delivery_sent`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=413129;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=433512;
 --
 -- AUTO_INCREMENT for table `invitations`
 --
 ALTER TABLE `invitations`
-MODIFY `invitation_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=34606;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=35158;
 --
 -- AUTO_INCREMENT for table `raffle`
 --
@@ -920,32 +923,32 @@ MODIFY `raffle_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=11;
 -- AUTO_INCREMENT for table `remarketing`
 --
 ALTER TABLE `remarketing`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=11384;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=13726;
 --
 -- AUTO_INCREMENT for table `ticket`
 --
 ALTER TABLE `ticket`
-MODIFY `ticket_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=11129;
+MODIFY `ticket_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=12529;
 --
 -- AUTO_INCREMENT for table `transfer`
 --
 ALTER TABLE `transfer`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1367;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1504;
 --
 -- AUTO_INCREMENT for table `utilization`
 --
 ALTER TABLE `utilization`
-MODIFY `usage_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=436426;
+MODIFY `usage_id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=456024;
 --
 -- AUTO_INCREMENT for table `_note`
 --
 ALTER TABLE `_note`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=9708;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=10189;
 --
 -- AUTO_INCREMENT for table `_pizarra_notes`
 --
 ALTER TABLE `_pizarra_notes`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=13377;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=13747;
 --
 -- AUTO_INCREMENT for table `_survey`
 --
@@ -955,7 +958,7 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=7;
 -- AUTO_INCREMENT for table `_survey_answer`
 --
 ALTER TABLE `_survey_answer`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=164;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=163;
 --
 -- AUTO_INCREMENT for table `_survey_question`
 --
@@ -965,7 +968,7 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=48;
 -- AUTO_INCREMENT for table `_tienda_post`
 --
 ALTER TABLE `_tienda_post`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=951559;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=967966;
 --
 -- Constraints for dumped tables
 --
