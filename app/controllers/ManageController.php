@@ -1431,9 +1431,8 @@ class ManageController extends Controller
 	    $results = $this->getSurveyResults($id);
 	    $csv = array();
 	    
-	    $csv[0][0] = "Survey Results";
-	    $csv[1][0] = $survey->title;
-	    $csv[2][0] = "";
+	    $csv[0][0] = $survey->title;
+	    $csv[1][0] = "";
 
 	     foreach ($results as $field => $result){
 	        		
@@ -1461,6 +1460,7 @@ class ManageController extends Controller
             	    }
             	    $csv[] = $row;
             	}
+            	$csv[][0] = '';
         	}
 	     }
 	    
