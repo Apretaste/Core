@@ -1435,7 +1435,7 @@ class ManageController extends Controller
 	    $csv[1][0] = "";
 
 	     foreach ($results as $field => $result){
-	        		
+	        
     		$csv[][0] = $result['label'];
             $row = array('','Total','Percentage');
           
@@ -1462,6 +1462,9 @@ class ManageController extends Controller
             	}
             	$csv[][0] = '';
         	}
+        	
+        	$csv[][0] = '';
+        	$csv[][0] = '';
 	     }
 	    
 	     
