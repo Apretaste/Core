@@ -908,7 +908,8 @@ class ManageController extends Controller
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
-					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error,
+					SUM(case when type = 'LESSUSAGE' then 1 else 0 end) as lessusage
 				FROM remarketing
 				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
 				GROUP BY moment";
@@ -921,7 +922,8 @@ class ManageController extends Controller
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
-					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error,
+					SUM(case when type = 'LESSUSAGE' then 1 else 0 end) as lessusage
 				FROM remarketing
 				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
 				GROUP BY moment";
