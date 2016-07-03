@@ -90,7 +90,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			// only crawl for today
 			$site = file_get_contents($url . "pagina-$n.html");
 			$exist = stripos($site, $this->getTodaysDateSpanishString());
-			if (! $exist) return $links;
+			if ( ! $exist) return $links;
 			
 			// move to the next page
 			$crawler = $client->request('GET', $url . "pagina-$n.html");
@@ -142,11 +142,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 		if (empty($email)) $email = $this->getEmailFromText($body);
 		
 		// get the phone number
-		$phone = getPhoneFromText($title);
+		$phone = $this->getPhoneFromText($title);
 		if (empty($phone)) $phone = $this->getPhoneFromText($body);
 		
 		// get the cell number
-		$cell = getCellFromText($title);
+		$cell = $this->getCellFromText($title);
 		if (empty($cell)) $cell = $this->getCellFromText($body);
 		
 		// get all code into lineBloks
@@ -210,7 +210,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			$file = file_get_contents($picURl);
 			$insert = file_put_contents($path, $file);
 			
-			if (! $insert)
+			if ( ! $insert)
 			{
 				// save error log
 				$this->saveCrawlerLog(" Could not save image $path");
@@ -429,7 +429,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match($pattern, $text, $matches);
 		
-		if (! empty($matches))
+		if ( ! empty($matches))
 			return $matches[0];
 		else
 			return false;
@@ -447,7 +447,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$pattern = "/5(2|3)\d{6}/"; // every 8 digits numbers starting by 52 or 53
 		preg_match($pattern, $cleanText, $matches);
 		
-		if (! empty($matches))
+		if ( ! empty($matches))
 			return $matches[0];
 		else
 			return false;
@@ -465,7 +465,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$pattern = "/(48|33|47|32|7|31|47|24|45|23|42|22|43|21|41|46)\d{6,7}/";
 		preg_match($pattern, $cleanText, $matches);
 		
-		if (! empty($matches))
+		if ( ! empty($matches))
 			return $matches[0];
 		else
 			return false;
