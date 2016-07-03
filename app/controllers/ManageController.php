@@ -12,22 +12,6 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// START revolico widget
-		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
-		$revolicoCrawler = array();
-		if(file_exists($revolicoCrawlerFile))
-		{
-			$details = file_get_contents($revolicoCrawlerFile);
-			$details = explode("|", $details);
-
-			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
-			$revolicoCrawler["TimeBehind"] = (time() - strtotime($details[0])) / 60 / 60; 
-			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
-			$revolicoCrawler["PostsDownloaded"] = $details[2];
-			$revolicoCrawler["RuningMemory"] = $details[3];
-		}
-		// END revolico widget
-
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
@@ -254,21 +238,21 @@ class ManageController extends Controller
 		$queryPrefilesPerPravince = 
 		"SELECT c.ProvCount,
 			CASE c.mnth
-				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
+				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del RÃ­o'
 				WHEN 'LA_HABANA' THEN 'Ciudad de La Habana'
 				WHEN 'ARTEMISA' THEN 'CU-X01'
 				WHEN 'MAYABEQUE' THEN 'CU-X02'
 				WHEN 'MATANZAS' THEN 'Matanzas'
 				WHEN 'VILLA_CLARA' THEN 'Villa Clara'
 				WHEN 'CIENFUEGOS' THEN 'Cienfuegos'
-				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti Spíritus'
-				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ávila'
-				WHEN 'CAMAGUEY' THEN 'Camagüey'
+				WHEN 'SANCTI_SPIRITUS' THEN 'Sancti SpÃ­ritus'
+				WHEN 'CIEGO_DE_AVILA' THEN 'Ciego de Ã�vila'
+				WHEN 'CAMAGUEY' THEN 'CamagÃ¼ey'
 				WHEN 'LAS_TUNAS' THEN 'Las Tunas'
-				WHEN 'HOLGUIN' THEN 'Holguín'
+				WHEN 'HOLGUIN' THEN 'HolguÃ­n'
 				WHEN 'GRANMA' THEN 'Granma'
 				WHEN 'SANTIAGO_DE_CUBA' THEN 'Santiago de Cuba'
-				WHEN 'GUANTANAMO' THEN 'Guantánamo'
+				WHEN 'GUANTANAMO' THEN 'GuantÃ¡namo'
 				WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
 			END as NewProv
 		FROM (SELECT count(b.province) as ProvCount, a.mnth
