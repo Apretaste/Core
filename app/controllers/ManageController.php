@@ -1512,4 +1512,113 @@ class ManageController extends Controller
     		$this->view->survey = $survey;
 		}
 	}
+	
+	/**
+	 * Download survey's results as CSV
+	 *
+	 * @author kuma
+	 */
+	public function surveyReportPDFAction()
+	{
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = intval($id[count($id)-1]);
+		$db = new Connection();
+		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $survey[0];
+		$results = $this->getSurveyResults($id);
+		$csv = array();
+		$html = '<html><head>
+			<style>
+			@page {
+				orientation: L;
+				size: 8.5in 11in landscape;
+			}
+	
+			body{
+				font-family:Verdana;
+			}
+			</style>
+			<body>';
+	
+		$html .= '<span style="white-space:nowrap;">
+					<nobr>
+						<font size="10" face="Verdana" color="#5ebb47"><i>A</i>pretaste</font>
+						<font style="margin-left:-5px;" size="18" face="Verdana" color="#A03E3B"><i>!</i></font>
+					</nobr>
+				</span>';
+		$html .= "<h1>Survey Results</h1>";
+		$html .= "<h2>{$survey->title}</h2>";
+		$html .= "<hr/>";
+	
+		$first = true;
+		foreach ($results as $field => $result){
+	
+			$csv[][0] = '<br/><h3>'.$result['label'].'</h3>';
+			
+			$csv[][0] = (!$first?'<pagebreak>':'<br/>').'<br/><h3>'.$result['label'].'</h3>';
+				
+			$first = false;
+			
+			$row = array('','<i>Total</i>','<i>Percentage</i>');
+	
+			foreach ($result['pivots'] as $pivot => $label)
+				$row[] = $label;
+	
+				$csv[] = $row;
+					
+				foreach($result['results'] as $question){
+					$xrow = array('<b>'.$question['t'].'</b>','<b>','<b>');
+					$csv[] = $xrow;
+					foreach($question['a'] as $ans) {
+						if (!isset($ans['total'])) $ans['total'] = 0;
+						if (!isset($question['total'])) $question['total'] = 0;
+						$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
+						foreach ($result['pivots'] as $pivot => $label) {
+							if (!isset($ans['p'][$pivot])) {
+								$row[] = "0.0";
+							} else {
+								$part = intval($ans['p'][$pivot]);
+								$total = intval($ans['total']);
+								$percent = $total === 0?0:$part/$total*100;
+								$row[] = number_format($percent,1);
+							}
+						}
+						$csv[] = $row;
+					}
+				}
+		}
+			
+	
+		$html .= '<table cellspacing="0" style="font-family: Verdana;">';
+		foreach($csv as $i => $row){
+			$html .="<tr>";
+			foreach ($row as $j => $cell){
+				$align="left";
+				if (is_numeric($cell)) $align="right";
+				$borders = 'border-bottom: 1px solid #eeeeee;border-left:1px solid #eeeeee;';
+				$background = 'background: #eeeeee;';
+				if (stripos($cell,'<h')!==false || trim($cell)=='') $borders='';
+				if (stripos($cell,'<b>')===false) $background = '';
+				$html .= '<td align="'.$align.'" style="padding: 5px;'.$borders.$background.'">'.$cell.'</td>';
+			}
+			$html .="</tr>";
+		}
+	
+		$html .= "</table>";
+	
+		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
+	
+		$html .= '</body></html>';
+	
+		$mpdf = new mPDF();
+		$mpdf->WriteHTML($html);
+	
+		$mpdf->Output("Survey Report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
+	
+		//echo $html;
+		$this->view->disable();
+	}
 }
