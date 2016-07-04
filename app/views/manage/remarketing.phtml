@@ -15,7 +15,7 @@
 	// emails sent
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['day','reminder1','reminder2','excluded','invited','autoinvited','survey','error'],
+			['day','reminder1','reminder2','excluded','invited','autoinvited','survey','error','lessusage'],
 			<?php foreach ($sent as $data) { ?>
 			['<?php echo date("D j", strtotime($data->moment)); ?>',
 				<?php echo $data->reminder1; ?>,
@@ -24,7 +24,8 @@
 				<?php echo $data->invite; ?>,
 				<?php echo $data->autoinvite; ?>,
 				<?php echo $data->survey; ?>,
-				<?php echo $data->error; ?>],
+				<?php echo $data->error; ?>,
+				<?php echo $data->lessusage; ?>],
 				<?php } ?>
 			]);
 		var chart = new google.visualization.AreaChart(document.getElementById('remarketSent'));
@@ -34,7 +35,7 @@
 	// emails opened
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['day','reminder1','reminder2','excluded','invited','autoinvited','survey','error'],
+			['day','reminder1','reminder2','excluded','invited','autoinvited','survey','error','lessusage'],
 			<?php foreach ($opened as $data) { ?>
 				['<?php echo date("D j", strtotime($data->moment)); ?>',
 				<?php echo $data->reminder1; ?>,
@@ -43,7 +44,8 @@
 				<?php echo $data->invite; ?>,
 				<?php echo $data->autoinvite; ?>,
 				<?php echo $data->survey; ?>,
-				<?php echo $data->error; ?>],
+				<?php echo $data->error; ?>,
+				<?php echo $data->lessusage; ?>],
 			<?php } ?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('remarketOpened'));
