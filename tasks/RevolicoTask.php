@@ -6,9 +6,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 {
 
 	private $connection;
+<<<<<<< HEAD
 
 	public function mainAction()
 	{
+=======
+	public function mainAction()
+	{		
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 		// starting points for the crawler
 		$revolicoMainUrls = array(
 			'http://www.revolico.com/computadoras/',
@@ -73,7 +78,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 * * * * * * * * * * * * * * * * * * * * *
 	 */
 	private function getRevolicoPagesFromMainURL($url)
+<<<<<<< HEAD
 	{
+=======
+	{		
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 		$client = new Client();
 		$crawler = $client->request('GET', $url);
 		
@@ -109,8 +118,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Crawler
+<<<<<<< HEAD
 	 *
 	 * @param unknown $url        	
+=======
+	 * 
+	 * @param unknown $url
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 */
 	private function crawlRevolicoURL($url)
 	{
@@ -142,11 +156,19 @@ class revolicoTask extends \Phalcon\Cli\Task
 		if (empty($email)) $email = $this->getEmailFromText($body);
 		
 		// get the phone number
+<<<<<<< HEAD
 		$phone = $this->getPhoneFromText($title);
 		if (empty($phone)) $phone = $this->getPhoneFromText($body);
 		
 		// get the cell number
 		$cell = $this->getCellFromText($title);
+=======
+		$phone = getPhoneFromText($title);
+		if (empty($phone)) $phone = $this->getPhoneFromText($body);
+		
+		// get the cell number
+		$cell = getCellFromText($title);
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 		if (empty($cell)) $cell = $this->getCellFromText($body);
 		
 		// get all code into lineBloks
@@ -179,7 +201,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 						$owner = $data;
 						break;
 					}
+<<<<<<< HEAD
 				case "Teléfono:":
+=======
+				case "TelÃ©fono:":
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 					{
 						if (empty($phone)) $phone = $this->getPhoneFromText($data);
 						if (empty($cell)) $cell = $this->getCellFromText($data);
@@ -241,8 +267,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Save to database
+<<<<<<< HEAD
 	 *
 	 * @param mixed $data        	
+=======
+	 * 
+	 * @param mixed $data
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 */
 	private function saveToDatabase($data)
 	{
@@ -251,6 +282,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 		
 		// create the query to insert only if it is not repeated in the last month
+<<<<<<< HEAD
 		/*
 		 * $sql = "
 		 * INSERT INTO _tienda_post (
@@ -294,6 +326,51 @@ class revolicoTask extends \Phalcon\Cli\Task
 		 * ) = 0
 		 * LIMIT 1";
 		 */
+=======
+/*
+	$sql = "
+	INSERT INTO _tienda_post (
+		contact_name,
+		contact_email_1,
+		contact_phone,
+		contact_cellphone,
+		location_province,
+		ad_title,
+		ad_body,
+		category,
+		number_of_pictures,
+		price,
+		currency,
+		date_time_posted,
+		source,
+		source_url
+	) 
+	SELECT 
+		'{$data['owner']}',
+		'{$data['email']}',
+		'{$data['phone']}',
+		'{$data['cell']}',
+		'{$data['province']}',
+		'{$data['title']}',
+		'{$data['body']}',
+		'{$data['category']}',
+		'{$data['images']}',
+		'{$data['price']}',
+		'{$data['currency']}',
+		'{$data['date']}',
+		'revolico',
+		'{$data['url']}'
+	FROM _tienda_post
+	WHERE (
+		SELECT COUNT(id)
+		FROM _tienda_post
+		WHERE 
+			date_time_posted > (NOW() - INTERVAL 1 MONTH) AND
+			levenshtein('{$data['title']}', ad_title) < 10
+		) = 0
+	LIMIT 1";
+*/
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 		
 		// clean the body and title of characters that may break the query
 		$title = $conn->real_escape_string($data['title']);
@@ -301,6 +378,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		
 		$sql = "
 		INSERT INTO _tienda_post (
+<<<<<<< HEAD
 		contact_name,
 		contact_email_1,
 		contact_phone,
@@ -330,6 +408,37 @@ class revolicoTask extends \Phalcon\Cli\Task
 		'{$data['date']}',
 		'revolico',
 		'{$data['url']}'
+=======
+			contact_name,
+			contact_email_1,
+			contact_phone,
+			contact_cellphone,
+			location_province,
+			ad_title,
+			ad_body,
+			category,
+			number_of_pictures,
+			price,
+			currency,
+			date_time_posted,
+			source,
+			source_url
+		) VALUES (
+			'{$data['owner']}',
+			'{$data['email']}',
+			'{$data['phone']}',
+			'{$data['cell']}',
+			'{$data['province']}',
+			'$title',
+			'$body',
+			'{$data['category']}',
+			'{$data['images']}',
+			'{$data['price']}',
+			'{$data['currency']}',
+			'{$data['date']}',
+			'revolico',
+			'{$data['url']}'
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 		)";
 		
 		// save into the database, log on error
@@ -355,8 +464,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Convert date from spanish to mysql
+<<<<<<< HEAD
 	 *
 	 * @param string $spanishDate        	
+=======
+	 * 
+	 * @param string $spanishDate
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return string
 	 */
 	private function dateSpanishToMySQL($spanishDate)
@@ -394,7 +508,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Get today date in spanish
+<<<<<<< HEAD
 	 *
+=======
+	 * 
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return string
 	 */
 	private function getTodaysDateSpanishString()
@@ -419,8 +537,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Extract emails from text
+<<<<<<< HEAD
 	 *
 	 * @param string $text        	
+=======
+	 * 
+	 * @param string $text
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return mixed
 	 */
 	private function getEmailFromText($text)
@@ -437,8 +560,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Extract cell phone numbers from text
+<<<<<<< HEAD
 	 *
 	 * @param string $text        	
+=======
+	 * 
+	 * @param string $text
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return mixed
 	 */
 	private function getCellFromText($text)
@@ -455,8 +583,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Extact phone numbers from text
+<<<<<<< HEAD
 	 *
 	 * @param string $text        	
+=======
+	 * 
+	 * @param string $text
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return mixed
 	 */
 	private function getPhoneFromText($text)
@@ -473,8 +606,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Detect province from phone number
+<<<<<<< HEAD
 	 *
 	 * @param string $phone        	
+=======
+	 * 
+	 * @param string $phone
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return string
 	 */
 	private function getProvinceFromPhone($phone)
@@ -499,8 +637,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Convert file size to friendly message
+<<<<<<< HEAD
 	 *
 	 * @param integer $size        	
+=======
+	 * 
+	 * @param integer $size
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 * @return string
 	 */
 	private function convert($size)
@@ -520,9 +663,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 * Get a category for the post
 	 *
 	 * @author kuma
+<<<<<<< HEAD
 	 * @param String, $text
 	 *        	title and body concatenated
 	 * @return String category
+=======
+	 * @param String, $text title and body concatenated
+	 * @return String category 
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
 	 */
 	private function classify($text)
 	{
@@ -560,4 +708,9 @@ class revolicoTask extends \Phalcon\Cli\Task
 		
 		return 'for_sale';
 	}
+<<<<<<< HEAD
 }
+=======
+}
+
+>>>>>>> a8ae667db2ec94b4ac7c1398448ef4dd86da22ed
