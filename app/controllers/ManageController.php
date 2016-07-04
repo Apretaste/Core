@@ -1522,6 +1522,7 @@ class ManageController extends Controller
 			<style>
 			@page {
 				orientation: L;
+				size: 8.5in 11in landscape;
 			}
 			
 			body{
@@ -1529,7 +1530,7 @@ class ManageController extends Controller
 			}
 			</style>
 			<body>';
-		
+
 		$html .= '<span style="white-space:nowrap;">
 					<nobr>
 						<font size="10" face="Verdana" color="#5ebb47"><i>A</i>pretaste</font>
@@ -1539,17 +1540,24 @@ class ManageController extends Controller
 		$html .= "<h1>Survey Results</h1>";
 		$html .= "<h2>{$survey->title}</h2>";
 		$html .= "<hr/>";
-		
+
+	
+		$first = true;
 		foreach ($results as $field => $result){
-			 
+	
 			$csv[][0] = '<br/><h3>'.$result['label'].'</h3>';
+			
+			$csv[][0] = (!$first?'<pagebreak>':'<br/>').'<br/><h3>'.$result['label'].'</h3>';
+				
+			$first = false;
+
 			$row = array('','<i>Total</i>','<i>Percentage</i>');
 	
 			foreach ($result['pivots'] as $pivot => $label)
 				$row[] = $label;
 	
 				$csv[] = $row;
-				 
+
 				foreach($result['results'] as $question){
 					$xrow = array('<b>'.$question['t'].'</b>','<b>','<b>');
 					$csv[] = $xrow;
@@ -1571,7 +1579,6 @@ class ManageController extends Controller
 					}
 				}
 		}
-		 
 	
 		$html .= '<table cellspacing="0" style="font-family: Verdana;">';
 		foreach($csv as $i => $row){
@@ -1582,25 +1589,28 @@ class ManageController extends Controller
 				$borders = 'border-bottom: 1px solid #eeeeee;border-left:1px solid #eeeeee;';
 				$background = 'background: #eeeeee;';
 				if (stripos($cell,'<h')!==false || trim($cell)=='') $borders='';
+
 				if (stripos($cell,'<b>')===false) $background = ''; 
+
 				$html .= '<td align="'.$align.'" style="padding: 5px;'.$borders.$background.'">'.$cell.'</td>';
 			}
 			$html .="</tr>";
 		}
-		
-		$html .= "</table>";
 
+	
+		$html .= "</table>";
+	
 		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
-		
+	
 		$html .= '</body></html>';
-		
-		include "../classes/mpdf/mpdf.php";
+	
 		$mpdf = new mPDF();
 		$mpdf->WriteHTML($html);
-		
+	
 		$mpdf->Output("Survey Report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
-		
-		//echo $html; 
+	
+		//echo $html;
+
 		$this->view->disable();
 	}
 }
