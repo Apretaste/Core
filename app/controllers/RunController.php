@@ -397,20 +397,40 @@ class RunController extends Controller
 					// if more than one person invites X, they all get prizes
 					foreach ($invites as $invite)
 					{
-						if($invite->source == "internal")
+						switch($invite->source)
 						{
+							case "internal":
 							// assign tickets and credits
 							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
 							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 
 							// email the invitor
 							$newTicket = new Response();
-							$newTicket->setResponseEmail($email);
+							$newTicket->setResponseEmail($invite->email_inviter);
 							$newTicket->setEmailLayout("email_simple.tpl");
 							$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
-							$newTicket->createFromTemplate("invitationWonTicket.tpl", array("guest"=>$invite->email_invited));
+							$newTicket->createFromTemplate("invitationWonTicket.tpl", array("guest"=>$email));
 							$newTicket->internal = true;
 							$responses[] = $newTicket;
+							break;
+							
+							case "abroad":
+							$newGuest = new Response();
+							$newGuest->setResponseEmail($invite->email_inviter);
+							$newGuest->setResponseSubject("Tu amigo ha atendido tu invitacion");
+							
+							$inviter = $utils->usernameFromEmail($invite->email_inviter);
+							$pInviter = $utils->getPerson($invite->email_inviter);
+							if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name; 
+							
+							$pGuest = $utils->getPerson($email);
+							$guest = $email;
+							if ($pGuest !== false) $guest = $pGuest->username;
+
+							$newGuest->createFromTemplate("invitationNewGuest.tpl", array("inviter"=>$inviter, "guest"=>$guest, "guest_email" => $email));
+							$newGuest->internal = true;
+							$responses[] = $newGuest;
+							break;
 						}
 					}
 

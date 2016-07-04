@@ -12,22 +12,6 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
 
-		// START revolico widget
-		$revolicoCrawlerFile = "$wwwroot/temp/crawler.revolico.last.run";
-		$revolicoCrawler = array();
-		if(file_exists($revolicoCrawlerFile))
-		{
-			$details = file_get_contents($revolicoCrawlerFile);
-			$details = explode("|", $details);
-
-			$revolicoCrawler["LastRun"] = date("D F j, h:i A", strtotime($details[0])); 
-			$revolicoCrawler["TimeBehind"] = (time() - strtotime($details[0])) / 60 / 60; 
-			$revolicoCrawler["RuningTime"] = number_format($details[1], 2);
-			$revolicoCrawler["PostsDownloaded"] = $details[2];
-			$revolicoCrawler["RuningMemory"] = $details[3];
-		}
-		// END revolico widget
-
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
@@ -908,7 +892,8 @@ class ManageController extends Controller
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
-					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error,
+					SUM(case when type = 'LESSUSAGE' then 1 else 0 end) as lessusage
 				FROM remarketing
 				WHERE DATE(sent) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
 				GROUP BY moment";
@@ -921,7 +906,8 @@ class ManageController extends Controller
 					SUM(case when type = 'INVITE' then 1 else 0 end) as invite,
 					SUM(case when type = 'AUTOINVITE' then 1 else 0 end) as autoinvite,
 					SUM(case when type = 'SURVEY' then 1 else 0 end) as survey,
-					SUM(case when type = 'ERROR' then 1 else 0 end) as error
+					SUM(case when type = 'ERROR' then 1 else 0 end) as error,
+					SUM(case when type = 'LESSUSAGE' then 1 else 0 end) as lessusage
 				FROM remarketing
 				WHERE DATE(opened) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
 				GROUP BY moment";
@@ -1431,12 +1417,11 @@ class ManageController extends Controller
 	    $results = $this->getSurveyResults($id);
 	    $csv = array();
 	    
-	    $csv[0][0] = "Survey Results";
-	    $csv[1][0] = $survey->title;
-	    $csv[2][0] = "";
+	    $csv[0][0] = $survey->title;
+	    $csv[1][0] = "";
 
 	     foreach ($results as $field => $result){
-	        		
+	        
     		$csv[][0] = $result['label'];
             $row = array('','Total','Percentage');
           
@@ -1448,10 +1433,12 @@ class ManageController extends Controller
         	foreach($result['results'] as $question){
             	$csv[][0] = $question['t'];
             	foreach($question['a'] as $ans) {
+            		if (!isset($ans['total'])) $ans['total']=0;
+            		if (!isset($question['total'])) $question['total']=0;
             		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));         
             	    foreach ($result['pivots'] as $pivot => $label) {
                 		if (!isset($ans['p'][$pivot])) {
-                			$row[] = "--";
+                			$row[] = "0.0";
                 		} else { 
                 		    $part = intval($ans['p'][$pivot]);
                 		    $total = intval($ans['total']);
@@ -1461,10 +1448,11 @@ class ManageController extends Controller
             	    }
             	    $csv[] = $row;
             	}
+            	$csv[][0] = '';
         	}
+        	$csv[][0] = '';
 	     }
 	    
-	     
 	    $csvtext = '';
 	    foreach($csv as $i => $row){
 	        foreach ($row as $j => $cell){
@@ -1536,13 +1524,13 @@ class ManageController extends Controller
 				orientation: L;
 				size: 8.5in 11in landscape;
 			}
-	
+			
 			body{
 				font-family:Verdana;
 			}
 			</style>
 			<body>';
-	
+
 		$html .= '<span style="white-space:nowrap;">
 					<nobr>
 						<font size="10" face="Verdana" color="#5ebb47"><i>A</i>pretaste</font>
@@ -1552,6 +1540,7 @@ class ManageController extends Controller
 		$html .= "<h1>Survey Results</h1>";
 		$html .= "<h2>{$survey->title}</h2>";
 		$html .= "<hr/>";
+
 	
 		$first = true;
 		foreach ($results as $field => $result){
@@ -1561,14 +1550,14 @@ class ManageController extends Controller
 			$csv[][0] = (!$first?'<pagebreak>':'<br/>').'<br/><h3>'.$result['label'].'</h3>';
 				
 			$first = false;
-			
+
 			$row = array('','<i>Total</i>','<i>Percentage</i>');
 	
 			foreach ($result['pivots'] as $pivot => $label)
 				$row[] = $label;
 	
 				$csv[] = $row;
-					
+
 				foreach($result['results'] as $question){
 					$xrow = array('<b>'.$question['t'].'</b>','<b>','<b>');
 					$csv[] = $xrow;
@@ -1590,7 +1579,6 @@ class ManageController extends Controller
 					}
 				}
 		}
-			
 	
 		$html .= '<table cellspacing="0" style="font-family: Verdana;">';
 		foreach($csv as $i => $row){
@@ -1601,11 +1589,14 @@ class ManageController extends Controller
 				$borders = 'border-bottom: 1px solid #eeeeee;border-left:1px solid #eeeeee;';
 				$background = 'background: #eeeeee;';
 				if (stripos($cell,'<h')!==false || trim($cell)=='') $borders='';
-				if (stripos($cell,'<b>')===false) $background = '';
+
+				if (stripos($cell,'<b>')===false) $background = ''; 
+
 				$html .= '<td align="'.$align.'" style="padding: 5px;'.$borders.$background.'">'.$cell.'</td>';
 			}
 			$html .="</tr>";
 		}
+
 	
 		$html .= "</table>";
 	
@@ -1619,6 +1610,7 @@ class ManageController extends Controller
 		$mpdf->Output("Survey Report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
 	
 		//echo $html;
+
 		$this->view->disable();
 	}
 }
