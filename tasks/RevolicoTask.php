@@ -297,8 +297,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 		 */
 		
 		// clean the body and title of characters that may break the query
-		$title = $conn->real_escape_string($data['title']);
-		$body = $conn->real_escape_string($data['body']);
+		$title = $connection->real_escape_string($data['title']);
+		$body = $connection->real_escape_string($data['body']);
 		
 		$sql = "
 		INSERT INTO _tienda_post (
