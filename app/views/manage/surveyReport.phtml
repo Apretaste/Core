@@ -62,7 +62,7 @@
 									<?php foreach ($result['pivots'] as $pivot => $label): ?>
 										<td align="right">
 											<?php if (!isset($ans['p'][$pivot])): ?> 
-												<?php echo "--"; ?>
+												<?php echo "0.0%"; ?>
 											<?php else: ?> 
 												<?php echo $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?>%
 											<?php endif; ?>
@@ -77,3 +77,4 @@
 		<?php endforeach; ?>
 	</div>
 </div>
+
