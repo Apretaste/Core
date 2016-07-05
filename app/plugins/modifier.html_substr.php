@@ -29,6 +29,7 @@ function smarty_modifier_html_substr($string, $length, $addstring, $link, $link_
             $currentTag = "";
 
             $noTagLength = strlen(strip_tags($string));
+            $apretaste = "http://apretaste.local/run/display?subject=";
 
             // Parser loop
             $string_length = strlen($string);
@@ -105,11 +106,11 @@ function smarty_modifier_html_substr($string, $length, $addstring, $link, $link_
                 // You may add more tags here to put the link and added text before the closing tag
                 elseif ($aTag = 'p' || 'div' || 'strong') {
                     $aTag = array_pop( $tagsArray );
-                    $ret .= $strong . $addstring . "<a href=\"". $link . "\" alt=\"". $link_text . "\">" . $link_text . "</a></" . $aTag . ">\n";
+                    $ret .= $strong . $addstring . "<a href=\"". $apretaste . $link . "\" alt=\"". $link_text . "\">" . $link_text . "</a></" . $aTag . ">\n";
                 }
                 else {
                     $aTag = array_pop( $tagsArray );
-                    $ret .= $strong ."</" . $aTag . ">" . $addstring . "<a href=\"". $link . "\" alt=\"". $link_text . "\">" . $link_text . "</a>\n";
+                    $ret .= $strong ."</" . $aTag . ">" . $addstring . "<a href=\"". $apretaste . $link . "\" alt=\"". $link_text . "\">" . $link_text . "</a>\n";
                 }
             }
         } else {
