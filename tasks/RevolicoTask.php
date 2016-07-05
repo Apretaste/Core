@@ -50,13 +50,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 				// save the data into the database
 				$this->saveToDatabase($data);
 				
-				echo "\tMEMORY USED: " . convert(memory_get_usage(true)) . "\n";
+				echo "\tMEMORY USED: " . $this->convert(memory_get_usage(true)) . "\n";
 			}
 		}
 		
 		// ending message, log and time
 		$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
-		$totalMem = convert(memory_get_usage(true));
+		$totalMem = $this->convert(memory_get_usage(true));
 		$message = "CRAWLER ENDED - EXECUTION TIME: $totalTime min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
 		$this->saveCrawlerLog($message);
 		echo "\n\n$message\n\n";
