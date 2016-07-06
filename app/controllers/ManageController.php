@@ -34,7 +34,6 @@ class ManageController extends Controller
 		// END measure the effectiveness of each promoter
 
 		$this->view->title = "Home";
-		$this->view->revolicoCrawler = $revolicoCrawler;
 		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
