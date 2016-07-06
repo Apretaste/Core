@@ -42,11 +42,12 @@ class ManageController extends Controller
 
 		// START measure the effectiveness of each promoter
 		$promoters = $connection->deepQuery("
-			SELECT source, COUNT(source) AS total 
+			SELECT source, COUNT(source) AS total, MAX(inserted) as latest
 			FROM first_timers 
-			WHERE datediff(inserted, CURRENT_DATE) <= 7
+			WHERE paid=0
 			AND source IN (SELECT email FROM jumper WHERE promoter=1)
-			GROUP BY source");
+			GROUP BY source
+			ORDER BY total DESC");
 		// END measure the effectiveness of each promoter
 
 		$this->view->title = "Home";
