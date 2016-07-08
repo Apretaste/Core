@@ -45,6 +45,7 @@ class RunController extends Controller
 		header("Access-Control-Allow-Origin: *");
 
 		// check if the user is blocked
+		$connection = new Connection();
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
 		if(count($blocked)>0) die('{"error":"user blocked"}');
 
@@ -71,7 +72,6 @@ class RunController extends Controller
 		}
 
 		// update last access time to current and set remarketing
-		$connection = new Connection();
 		$connection->deepQuery("
 			START TRANSACTION;
 			UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
