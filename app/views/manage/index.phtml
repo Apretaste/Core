@@ -31,6 +31,7 @@
 				<a href="sandbox">Test a service</a><br/>
 				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://app.mailerlite.com" target="_blank">Mailer Lite <small><i class="fa fa-external-link"></i></small></a><br/>
+				<a href="http://sendy.apretaste.com" target="_blank">Sendy <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://admin.google.com/pragres.com" target="_blank">Google Admin Console <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://apretaste.zendesk.com" target="_blank">ZenDesk <small><i class="fa fa-external-link"></i></small></a><br/>
 				<a href="https://www.email-validator.net/dashboard/index.html" target="_blank">Email Validator <small><i class="fa fa-external-link"></i></small></a><br/>
@@ -104,17 +105,23 @@
 		</div>
 
 		<div class="panel panel-default">
-			<div class="panel-heading">Promoters (last 7 days)</div>
+			<div class="panel-heading">Promoters (unpaid)</div>
 			<div class="panel-body">
 				<table class="table table-condensed fullscreen">
 					<thead>
-						<tr><th>Promoter</th><th>Total</th></tr>
+						<tr>
+							<th>Promoter</th>
+							<th class="text-center">Total</th>
+							<th class="text-center">Last</th>
+						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ($promoters as $promoter): ?>
-						<tr>
-							<td><?= $promoter->source; ?></td>
-							<td class="text-center"><?= $promoter->total; ?></td>
+						<?php $daysElapsed = (time() - strtotime($promoter->latest))/60/60/24; ?>
+						<tr <?php if($daysElapsed > 31) echo 'class="danger"'; ?>>
+							<td><?= $promoter->source ?></td>
+							<td class="text-center"><?= $promoter->total ?></td>
+							<td class="text-center"><?= date("m/d/y", strtotime($promoter->latest)) ?></td>
 						</tr>
 						<?php endforeach; ?>
 					</tbody>
