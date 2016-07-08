@@ -41,6 +41,14 @@ class RunController extends Controller
 		$attachments = $this->request->get("attachments");
 		if(empty($email)) $email = "api@apretaste.com";
 
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
+		// check if the user is blocked
+		$connection = new Connection();
+		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
+		if(count($blocked)>0) die('{"error":"user blocked"}');
+
 		// create attachment as an object
 		$attach = array();
 		if ( ! empty($attachments))
@@ -64,25 +72,19 @@ class RunController extends Controller
 		}
 
 		// update last access time to current and set remarketing
-		$connection = new Connection();
 		$connection->deepQuery("
 			START TRANSACTION;
 			UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
 			UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
 			COMMIT;");
 
-		// some services cannot be called using the API
+		// some services cannot be called from the API
 		$service = strtoupper(explode(" ", $subject)[0]);
-		if ($service == 'EXCLUYEME')
-		{
-			die("You cannot execute service $service from the API");
-		}
+		if ($service == 'EXCLUYEME') die('{"error":"service unavailable from the API"}');
 
+		// get the resulting json
 		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
-
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
-		echo $result;
+		die($result);
 	}
 
 	/**
@@ -109,7 +111,7 @@ class RunController extends Controller
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
 		$messageID = isset($_POST['Message-ID']) ? $_POST['Message-ID'] : null;
-		
+
 		// save the attached files and create the response array
 		$attachments = array();
 		for ($i=1; $i<=$attachmentCount; $i++)
@@ -150,6 +152,28 @@ class RunController extends Controller
 	{
 		$connection = new Connection();
 		$utils = new Utils();
+
+		// check if the user is blocked
+		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$fromEmail' AND blocked=1");
+		if(count($blocked)>0)
+		{
+			// create the response for blocked email
+			$response = new Response();
+			$response->setEmailLayout("email_simple.tpl");
+			$subject = "Su cuenta de Apretaste ha sido bloqueada";
+			$response->setResponseSubject($subject);
+			$response->createFromTemplate("blocked.tpl", array());
+			$response->internal = true;
+
+			// render the template as html
+			$render = new Render();
+			$body = $render->renderHTML(new Service(), $response);
+
+			// let the user know that the account is blocked
+			$emailSender = new Email();
+			$emailSender->sendEmail($fromEmail, $subject, $body);
+			exit; // do not continue if the email is blocked
+		}
 
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
@@ -274,7 +298,7 @@ class RunController extends Controller
 
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
-		
+
 		// get details of the service
 		if($this->di->get('environment') == "sandbox")
 		{
