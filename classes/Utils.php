@@ -103,6 +103,9 @@ class Utils
 		if (count($person)==0) return false;
 		else $person = $person[0];
 
+		// remove the pin from the response
+		unset($person->pin);
+
 		// get number of tickets for the raffle adquired by the user
 		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
 		$tickets = $tickets[0]->tickets;
@@ -570,5 +573,57 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		return "$wwwroot/temp/";
+	}
+
+	/**
+	 * Authenticates a user and returns the token associated with the account
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 * @param String pin
+	 * @return String or false
+	 */
+	public function tokenize($email, $pin)
+	{
+		$connection = new Connection();
+
+		// check if user/pass is correct
+		$auth = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
+		if(empty($auth)) return false;
+
+		// get the new expiration date and token
+		$expires = date("Y-m-d", strtotime("+3 days"));
+		$token = md5($email.$pin.$expires.rand());
+
+		// create new entry on the authentication table
+		// and delete all previos entries for this token
+		$connection->deepQuery("
+			START TRANSACTION;
+			DELETE FROM authentication WHERE email='$email';
+			INSERT INTO authentication (token,email,expires) VALUES ('$token','$email','$expires');
+			COMMIT");
+		return $token;
+	}
+
+	/**
+	 * Check token and retrieve the user that is logged
+	 *
+	 * @author salvipascual
+	 * @param String token
+	 * @return String email OR false
+	 */
+	public function detokenize($token)
+	{
+		$connection = new Connection();
+
+		// get the user if there is an active token
+		$auth = $connection->deepQuery("SELECT * FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
+		if(empty($auth)) return false;
+
+		// extend the life of the token
+		$expires = date("Y-m-d", strtotime("+3 days"));
+		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
+
+		return $auth[0]->email;
 	}
 }
