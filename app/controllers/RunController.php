@@ -6,7 +6,8 @@ class RunController extends Controller
 {
 	public function indexAction()
 	{
-		echo "Cannot run directly. Please access to run/display or run/api instead";
+		die("Cannot run directly. Please access to run/display or run/api instead");
+		$this->view->disable();
 	}
 
 	/**
@@ -37,17 +38,21 @@ class RunController extends Controller
 	{
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$email = $this->request->get("email");
 		$attachments = $this->request->get("attachments");
-		if(empty($email)) $email = "api@apretaste.com";
+		$token = $this->request->get("token");
 
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
+		// get the email from the token
+		$utils = new Utils();
+		$email = $utils->detokenize($token);
+		if( ! $email) die('{"code":"error","message":"bad authentication"}');
+
 		// check if the user is blocked
 		$connection = new Connection();
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
-		if(count($blocked)>0) die('{"error":"user blocked"}');
+		if(count($blocked)>0) die('{"code":"error","message":"user blocked"}');
 
 		// create attachment as an object
 		$attach = array();
@@ -55,7 +60,6 @@ class RunController extends Controller
 		{
 			// save image into the filesystem
 			$wwwroot = $this->di->get('path')['root'];
-			$utils = new Utils();
 			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
 			$content = file_get_contents($attachments);
 			imagejpeg(imagecreatefromstring($content), $filePath);
@@ -80,7 +84,7 @@ class RunController extends Controller
 
 		// some services cannot be called from the API
 		$service = strtoupper(explode(" ", $subject)[0]);
-		if ($service == 'EXCLUYEME') die('{"error":"service unavailable from the API"}');
+		if ($service == 'EXCLUYEME') die('{"code":"error","message":"service not accesible"}');
 
 		// get the resulting json
 		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
