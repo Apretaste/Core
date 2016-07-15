@@ -43,7 +43,7 @@ class lessusageTask extends \Phalcon\Cli\Task
 		$sql_less_usage = "SELECT requestor as email, (SELECT sent FROM remarketing WHERE remarketing.email = subq2.requestor ORDER BY sent DESC LIMIT 1) as last_remarketing FROM ($sql_usage) subq2 WHERE part/total <= 0.2 ";
 		
 		// filtering by last remarketing (one by month)
-		$sql = "SELECT email FROM ($sql_less_usage) subq3 WHERE datediff(CURRENT_DATE, last_remarketing) > 30 or datediff(CURRENT_DATE, last_remarketing) is null";
+		$sql = "SELECT email FROM ($sql_less_usage) subq3 WHERE datediff(CURRENT_DATE, last_remarketing) > 30 or datediff(CURRENT_DATE, last_remarketing) is null group by email";
 		
 		$users = $connection->deepQuery("$sql;");
 		
