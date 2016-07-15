@@ -400,7 +400,7 @@ class Utils
 		WHERE user = '$to'
 		AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
 		GROUP BY service
-		HAVING total >= 5;";
+		HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
 		
 		$lastreceived = $connection->deepQuery($sql);
 		
