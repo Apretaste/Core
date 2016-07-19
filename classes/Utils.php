@@ -388,11 +388,29 @@ class Utils
 		// block email from/to our customer support
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
+		$connection = new Connection();
+		
+		// block address with same requested service in last hour
+		// @TODO test and think in other requests/period frecuency like as 120/day (5 * 24 = 120)
+		// @TODO save this $to address in a blacklist or penalize with 5 hours?
+		$sql = "SELECT
+		lower(substring_index(subject,' ',1)) as service,
+		count(*) as total
+		FROM delivery_received
+		WHERE user = '$to'
+		AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
+		GROUP BY service
+		HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
+		
+		$lastreceived = $connection->deepQuery($sql);
+		
+		if (is_array($lastreceived)) if (isset($lastreceived[0])) $msg = 'loop';
+		
 		// block intents from blacklisted emails @TODO create a table for emails blacklisted
-		if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
+		//if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
 
 		// block intents to email the deamons
-		if(empty($msg) && (stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false )) $msg = 'hard-bounce';
+		//if(empty($msg) && (stripos($to,"mailer-daemon@")!==false || stripos($to,"communicationservice.nl")!==false )) $msg = 'hard-bounce';
 
 		// check if the email is formatted properly
 		if (empty($msg) && ! filter_var($to, FILTER_VALIDATE_EMAIL)) $msg = 'hard-bounce';
@@ -408,8 +426,6 @@ class Utils
 			stripos($to,"no-responder")!==false ||
 			stripos($to,"noresponder")!==false)
 		) $msg = 'no-reply';
-
-		$connection = new Connection();
 
 		// do not send any email that hardfailed before
 		if(empty($msg))

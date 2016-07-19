@@ -76,17 +76,6 @@
 	</div>
 
 	<div class="col-xs-4">
-		<div class="panel panel-<?= isset($revolicoCrawler["TimeBehind"]) && $revolicoCrawler["TimeBehind"] < 24 ? "success" : "danger"; ?>">
-			<div class="panel-heading">Revolico crawler</div>
-			<div class="panel-body">
-				<p>Last run: <?php if(isset($revolicoCrawler["LastRun"])) echo $revolicoCrawler["LastRun"]; ?></p>
-				<p>Time behind: <?php if(isset($revolicoCrawler["TimeBehind"])) echo number_format($revolicoCrawler["TimeBehind"],2); ?> hours</p>
-				<p>Running time: <?php if(isset($revolicoCrawler["RuningTime"])) echo $revolicoCrawler["RuningTime"]; ?> minutes</p>
-				<p>Posts downloaded: <?php if(isset($revolicoCrawler["PostsDownloaded"])) echo $revolicoCrawler["PostsDownloaded"]; ?></p>
-				<p>Memory used: <?php if(isset($revolicoCrawler["RuningMemory"])) echo $revolicoCrawler["RuningMemory"]; ?></p>
-			</div>
-		</div>
-
 		<div class="panel panel-<?= $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>">
 			<div class="panel-heading"><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></div>
 			<div class="panel-body">

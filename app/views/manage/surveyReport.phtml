@@ -24,6 +24,7 @@
 		<h2 style="margin: 0px 0px 20px 0px;"><?php echo $survey->title; ?></h2>
 	</div>
 	<div class="col-xs-2 text-right">
+		<a href="/manage/surveyReportPDF/<?php echo $survey->id; ?>" class="btn btn-default">Download as PDF</a>
 		<a href="/manage/surveyResultsCSV/<?php echo $survey->id; ?>" class="btn btn-default">Download as CSV</a>
 	</div>
 </div>
@@ -61,7 +62,7 @@
 									<?php foreach ($result['pivots'] as $pivot => $label): ?>
 										<td align="right">
 											<?php if (!isset($ans['p'][$pivot])): ?> 
-												<?php echo "--"; ?>
+												<?php echo "0.0%"; ?>
 											<?php else: ?> 
 												<?php echo $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1); ?>%
 											<?php endif; ?>
@@ -76,3 +77,4 @@
 		<?php endforeach; ?>
 	</div>
 </div>
+
