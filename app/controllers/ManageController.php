@@ -1504,7 +1504,7 @@ class ManageController extends Controller
 	}
 	
 	/**
-	 * Download survey's results as CSV
+	 * Download survey's results as PDF
 	 *
 	 * @author kuma
 	 */
@@ -1515,104 +1515,127 @@ class ManageController extends Controller
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
+		
 		$db = new Connection();
 		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
 		$survey = $survey[0];
-		$results = $this->getSurveyResults($id);
-		$csv = array();
-		$html = '<html><head>
-			<style>
-			@page {
-				orientation: L;
-				size: 8.5in 11in landscape;
-			}
-			
-			body{
-				font-family:Verdana;
-			}
-			</style>
-			<body>';
-
-		$html .= '<span style="white-space:nowrap;">
+		
+ 		$csv = array();
+ 		$html = '<html><head><title>Apretaste | Survey\'s restults - '.$survey->title.' -'.date("Y-m-s H:i:s").'</title><style>
+ 				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
+ 			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
+ 				@page {orientation: L;size: 8.5in 11in;} body{font-family:Verdana;}</style>
+			     <body><div style="margin: 0 auto; width:900px;">
+ 				  	<div style="background: #D0D0D0;padding:5px;text-align:right;">'.date("Y-m-d H:i:s").'</div>
+ 					<div style="background:#F2F2F2;padding:20px;text-align:center;font-size:32px;"><span style="white-space:nowrap;">
 					<nobr>
-						<font size="10" face="Verdana" color="#5ebb47"><i>A</i>pretaste</font>
-						<font style="margin-left:-5px;" size="18" face="Verdana" color="#A03E3B"><i>!</i></font>
+						<font color="#5ebb47"><i>A</i>pretaste</font>
+						<font style="margin-left:-5px;font-size:36;" color="#A03E3B"><i>!</i></font>
 					</nobr>
-				</span>';
-		$html .= "<h1>Survey Results</h1>";
-		$html .= "<h2>{$survey->title}</h2>";
-		$html .= "<hr/>";
-
-	
-		$first = true;
-		foreach ($results as $field => $result){
-	
-			$csv[][0] = '<br/><h3>'.$result['label'].'</h3>';
+				</span></div>';
+ 		
+ 		$html .= '<div style="background:#c3daee;padding:5px;font-size:18px;font-weight:bold;">Survey\'s results</div>';
+ 		$html .= "<br/><h1>{$survey->title}</h1>"; 		
+ 	
+		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
+		$i = 0;
+		foreach($questions as $question)
+		{
+			$html .= "<h2>". $question->title."</h2>";
+			$answers = $db->deepQuery("SELECT *, (SELECT count(*) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 			
-			$csv[][0] = (!$first?'<pagebreak>':'<br/>').'<br/><h3>'.$result['label'].'</h3>';
-				
-			$first = false;
-
-			$row = array('','<i>Total</i>','<i>Percentage</i>');
-	
-			foreach ($result['pivots'] as $pivot => $label)
-				$row[] = $label;
-	
-				$csv[] = $row;
-
-				foreach($result['results'] as $question){
-					$xrow = array('<b>'.$question['t'].'</b>','<b>','<b>');
-					$csv[] = $xrow;
-					foreach($question['a'] as $ans) {
-						if (!isset($ans['total'])) $ans['total'] = 0;
-						if (!isset($question['total'])) $question['total'] = 0;
-						$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
-						foreach ($result['pivots'] as $pivot => $label) {
-							if (!isset($ans['p'][$pivot])) {
-								$row[] = "0.0";
-							} else {
-								$part = intval($ans['p'][$pivot]);
-								$total = intval($ans['total']);
-								$percent = $total === 0?0:$part/$total*100;
-								$row[] = number_format($percent,1);
-							}
-						}
-						$csv[] = $row;
-					}
-				}
-		}
-	
-		$html .= '<table cellspacing="0" style="font-family: Verdana;">';
-		foreach($csv as $i => $row){
-			$html .="<tr>";
-			foreach ($row as $j => $cell){
-				$align="left";
-				if (is_numeric($cell)) $align="right";
-				$borders = 'border-bottom: 1px solid #eeeeee;border-left:1px solid #eeeeee;';
-				$background = 'background: #eeeeee;';
-				if (stripos($cell,'<h')!==false || trim($cell)=='') $borders='';
-
-				if (stripos($cell,'<b>')===false) $background = ''; 
-
-				$html .= '<td align="'.$align.'" style="padding: 5px;'.$borders.$background.'">'.$cell.'</td>';
+			$values = '';
+			foreach($answers as $ans){
+				$values[$ans->choosen.' | '.$ans->title] = $ans->choosen; 
 			}
-			$html .="</tr>";
+			
+			$chart = $this->getPieChart($question->title, $values);
+			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
+			$i++;
+			if ($i % 2 == 0) $html .= '<pagebreak />';
 		}
+ 		
+ 		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"background: #F2F2F2; padding: 10px;font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
+ 		$html .= '</div></body></html>';
 
-	
-		$html .= "</table>";
-	
-		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
-	
-		$html .= '</body></html>';
-	
 		$mpdf = new mPDF();
-		$mpdf->WriteHTML($html);
+		$mpdf->WriteHTML($html);	
+		$mpdf->Output("Apretaste - Survey's report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
 	
-		$mpdf->Output("Survey Report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
-	
-		//echo $html;
-
 		$this->view->disable();
+	}
+	
+	/**
+	 * Get image with a pie chart
+	 * 
+	 * @author kuma
+	 * @param string $title
+	 * @param array $values
+	 */
+	private function getPieChart($title, $values){
+		
+		include_once "../lib/pChart2.1.4/class/pData.class.php";
+		include_once "../lib/pChart2.1.4/class/pDraw.class.php";
+		include_once "../lib/pChart2.1.4/class/pPie.class.php";
+		include_once "../lib/pChart2.1.4/class/pImage.class.php";
+			
+		$MyData = new pData();
+		$MyData->addPoints($values,"ScoreA");
+		$MyData->setSerieDescription("ScoreA",$title);
+		$MyData->addPoints(array_keys($values),"Labels");
+		$MyData->setAbscissa("Labels");
+		
+		$myPicture = new pImage(800,200,$MyData);
+		$myPicture->setFontProperties(array(
+			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
+			"FontSize" => 13,
+			"R" => 0, 
+			"G" => 0,
+			"B" => 0
+		));
+		
+		$myPicture->drawText(10, 23, $title, array(
+			"R" => 255,
+			"G" => 255,
+			"B" => 255
+		));
+		
+		$myPicture->setShadow(TRUE, array(
+			"X" => 2,
+			"Y" => 2,
+			"R" => 0,
+			"G" => 0,
+			"B" => 0,
+			"Alpha" => 50
+		));
+
+		$PieChart = new pPie($myPicture,$MyData);
+		$PieChart->draw3DPie(125, 80, array(
+			"Radius" => 100,
+			"WriteValues" => PIE_VALUE_PERCENTAGE,
+			"ValuePadding" => 10,
+			"DataGapAngle" => 10,
+			"DataGapRadius" => 8,
+			"Border" => TRUE,
+			"BorderR" => 0,
+			"BorderG" => 0, 
+			"BorderB"=> 0,
+			"ValueR"=> 0,
+			"ValueG" => 0, 
+			"ValueB" => 0
+		));
+		
+		$PieChart->drawPieLegend(300, 18, array(
+			"Style" => LEGEND_NOBORDER,
+			"Mode" => LEGEND_VERTICAL,
+			"BoxSize" => 10
+		));
+
+		ob_start();
+		imagepng($myPicture->Picture);
+		$img = ob_get_contents();
+		ob_end_clean();
+		
+		return base64_encode($img);
 	}
 }
