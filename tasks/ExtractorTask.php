@@ -180,7 +180,8 @@ class ExtractorTask extends \Phalcon\Cli\Task
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='extractor'");
+		
+		$db->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='extractor'");
 	}
 
 	/**
