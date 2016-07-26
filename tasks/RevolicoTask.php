@@ -21,6 +21,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		
 		// starting time and message
 		$timeCrawlerStart = time();
+		$timeStart = microtime(true);
 		echo "\n\nREVOLICO CRAWLER STARTED\n";
 		
 		// variable to store the total number of posts
@@ -64,6 +65,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 		// save last run time
 		$tmpRunPath = dirname(__DIR__) . "/temp/crawler.revolico.last.run";
 		file_put_contents($tmpRunPath, date("Y-m-d H:i:s") . "|$totalTime|$totalPosts|$totalMem");
+		
+		// save the status in the database
+		$timeDiff = time() - $timeStart;
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='revolico'");
+		
 	}
 
 	/*
