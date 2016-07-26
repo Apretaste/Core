@@ -2,6 +2,7 @@
 
 class Deploy
 {
+	
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -19,13 +20,18 @@ class Deploy
 
 		// remove the current project if it exist
 		$utils = new Utils();
-		if ($utils->serviceExist($service['serviceName'])) $this->removeService($service);
+		
+		$updating = false;
+		if ($utils->serviceExist($service['serviceName'])) {
+			$this->removeService($service);
+			$updating = true;
+		}
 
 		// create a new deploy key
 		$utils = new Utils();
 
 		// add the new service
-		$this->addService($service, $pathToZip, $pathToService);
+		$this->addService($service, $pathToZip, $pathToService, $updating);
 
 		// remove temp service folder
 		@system("rmdir ". escapeshellarg($dir) . " /s /q"); // windows version
@@ -102,11 +108,13 @@ class Deploy
 	 * Add a new service to the filesystem, database and create the specific service tables
 	 *
 	 * @author salvipascual
+	 * @author kuma
 	 * @param Service
 	 * @param String , the path to the location of the zip
 	 * @param String , the path to the location of the files
+	 * @paran Boolean , if service are updating
 	 * */
-	public function addService($service, $pathToZip, $pathToService)
+	public function addService($service, $pathToZip, $pathToService, $updating = false)
 	{
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -119,8 +127,34 @@ class Deploy
 		$insertUserQuery = "
 			INSERT INTO service (name,description,usage_text,creator_email,category,listed,ads) 
 			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}','{$service['showAds']}')";
+		
 		$connection->deepQuery($insertUserQuery);
 
+		$utils = new Utils();
+		
+		// create the owner of ad
+		$sql = "INSERT IGNORE INTO person (email, username, credit) VALUES ('soporte@apretaste.com', 'soporteap', 1000000);";
+		$sql .= "UPDATE person SET credit = 1000000 WHERE email = 'soporte@apretaste.com';";
+		
+		$connection->deepQuery($sql);
+				
+		// create an Ad for new service
+		$body =  "<p>".$connection->escape($service['serviceDescription'])."</p>";
+		if ($updating) $body = "<p>El servicio ".strtoupper($service['serviceName'])." has sido actualizado por el equipo de Apretaste!.</p>";
+		$toaddress = $utils->getValidEmailAddress();
+
+		$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$service['serviceName'].'">Conocer m&aacute;s sobre este servicio</a></center>';		
+		$title = strtoupper($service['serviceName']).", nuevo servicio";
+		
+		if ($updating)
+			$title = strtoupper($service['serviceName']). " actualizado";
+		
+		$sql = "INSERT INTO ads (title,description,owner,expiration_date) 
+			    VALUES ('$title',
+			   '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK));";
+		
+		$connection->deepQuery($sql);
+		
 		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
 		unlink($pathToZip);
