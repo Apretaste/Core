@@ -58,7 +58,7 @@
 								<tr>
 									<td bgcolor="#eeeeee"><?php echo $ans['t']; ?></td>
 									<td bgcolor="#eeeeee" align="right" <?php if ( $result['totals'][$ans['i']]*1 === 0):?> style="color: red;" <?php endif;?>><?php echo $result['totals'][$ans['i']]; ?></td>
-									<td bgcolor="#eeeeee" align="right"><?php if (isset($quetion['total'])) echo $question['total'] !== 0?number_format($result['totals'][$ans['i']] / $question['total'] * 100, 1):0; ?>%</td>
+									<td bgcolor="#eeeeee" align="right"><?php if (isset($question['total'])) echo $question['total'] !== 0 ? number_format($result['totals'][$ans['i']] / $question['total']*100, 1):"0.0"; ?>%</td>
 									<?php foreach ($result['pivots'] as $pivot => $label): ?>
 										<td align="right">
 											<?php if (!isset($ans['p'][$pivot])): ?> 
