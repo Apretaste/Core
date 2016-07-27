@@ -54,22 +54,17 @@ class revolicoTask extends \Phalcon\Cli\Task
 				echo "\tMEMORY USED: " . $this->convert(memory_get_usage(true)) . "\n";
 			}
 		}
-		
+
 		// ending message, log and time
 		$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
 		$totalMem = $this->convert(memory_get_usage(true));
 		$message = "CRAWLER ENDED - EXECUTION TIME: $totalTime min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
 		$this->saveCrawlerLog($message);
 		echo "\n\n$message\n\n";
-		
-		// save last run time
-		$tmpRunPath = dirname(__DIR__) . "/temp/crawler.revolico.last.run";
-		file_put_contents($tmpRunPath, date("Y-m-d H:i:s") . "|$totalTime|$totalPosts|$totalMem");
-		
+
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='revolico'");
-		
+		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$totalTime', `values`='$totalPosts' WHERE task='revolico'");
 	}
 
 	/*
@@ -161,11 +156,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 		{
 			// get the current node
 			$node = $nodes->eq($i);
-			
+
 			// get the header and data of the block
 			$header = trim($node->filter('.headingText2')->text());
 			$data = trim($node->filter('.normalText')->text());
-			
+
 			// handle the data depending the header
 			switch ($header)
 			{
@@ -301,7 +296,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		 * ) = 0
 		 * LIMIT 1";
 		 */
-		
+
 		// clean the body and title of characters that may break the query
 		$title = $connection->escape($data['title']);
 		$body = $connection->escape($data['body']);
@@ -338,7 +333,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		'revolico',
 		'{$data['url']}'
 		)";
-		
+
 		// save into the database, log on error
 		$connection->deepQuery($sql);
 		$timeEnd = time();
