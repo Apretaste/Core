@@ -76,7 +76,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 					echo "[ERROR] Page {$pages[$i]} request error \n";
 				}
 				
-				if ($dada !== false)
+				if ($data !== false)
 				{
 					// save the data into the database
 					$this->saveToDatabase($data);
