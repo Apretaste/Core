@@ -67,7 +67,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
 				
 				// get the page's data and images
-				$data = $this->crawlRevolicoURL($pages[$i]);
+				try 
+				{
+					$data = $this->crawlRevolicoURL($pages[$i]);
+				} 
+				catch (Exception $e)
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
 				if ($dada !== false)
 				{
@@ -146,8 +153,15 @@ class revolicoTask extends \Phalcon\Cli\Task
 				$nodes = $crawler->filter('td a:not(.pwtip)');
 				for ($i = 0; $i < count($nodes); $i ++)
 				{
+					$href = $nodes->eq($i)->attr('href');
+					
+					// delete double /
+					$ru = $this->revolicoURL;
+					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
+						$href = substr($href, 1);
+					
 					// get the url from the list
-					$links[] = $this->revolicoURL. $nodes->eq($i)->attr('href');
+					$links[] = $ru. $href;
 				}
 			}
 		} catch(Exception $e)
