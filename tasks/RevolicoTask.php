@@ -153,10 +153,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 				$nodes = $crawler->filter('td a:not(.pwtip)');
 				for ($i = 0; $i < count($nodes); $i ++)
 				{
-					// delete double /
 					$href = $nodes->eq($i)->attr('href');
-					$ru = $this->revolicoURL;
 					
+					// delete double /
+					$ru = $this->revolicoURL;
 					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
 						$href = substr($href, 1);
 					
