@@ -51,8 +51,20 @@ class Utils
 	 * @param String, name of the service
 	 * @return Boolean, true if service exist
 	 * */
-	public function serviceExist($serviceName)
+	public function serviceExist(&$serviceName)
 	{
+		// check serviceName as an service alias
+		$db = new Connection();
+		
+		// if serviceName is an alias and not is a name ...
+		$r = $db->deepQuery("SELECT * FROM service WHERE concat(concat(' ',alias),' ') LIKE '% $serviceName %' AND NOT EXISTS (SELECT * FROM service as s2 WHERE s2.name = '$serviceName');");
+		
+		// ... then get the service name
+		if (is_array($r)) 
+			if (isset($r[0])) 
+				if (isset($r[0]->name)) 
+					$serviceName = $r[0]->name;
+		
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		return file_exists("$wwwroot/services/$serviceName/config.xml");
@@ -625,5 +637,52 @@ class Utils
 		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
+	}
+	
+	/**
+	 * Clear string
+	 * 
+	 * @param String $name
+	 * @return String
+	 */
+	public function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
+	{
+		$l = strlen($name);
+		
+		$newname = '';
+		
+		for ($i = 0; $i < $l; $i++)
+		{
+			$ch = $name[$i];
+			if (stripos($chars, $ch) !== false)
+				$newname .= $ch;
+		}
+
+		return $newname;
+	}
+	
+	/**
+	 * Recursive str replace
+	 * 
+	 * @param mixed $search
+	 * @param mixed $replace
+	 * @param String $subject
+	 */
+	public function recursiveReplace($search, $replace, $subject)
+	{
+		$MAX = 1000;
+		$i = 0;
+		
+		while (stripos($subject, $search))
+		{
+			$i++;
+			
+			$subject = str_ireplace($search, $replace, $subject);
+			
+			if ($i > $MAX)
+				break;
+		}
+			
+		return $subject;
 	}
 }
