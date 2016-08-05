@@ -69,8 +69,15 @@ class revolicoTask extends \Phalcon\Cli\Task
 				// get the page's data and images
 				$data = $this->crawlRevolicoURL($pages[$i]);
 				
-				// save the data into the database
-				$this->saveToDatabase($data);
+				if ($dada !== false)
+				{
+					// save the data into the database
+					$this->saveToDatabase($data);
+				}
+				else 
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
 				echo "\tMEMORY USED: " . $this->utils->getFriendlySize(memory_get_usage(true)) . "\n";
 			}
@@ -161,7 +168,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 		
 		// create crawler
-		$crawler = $this->client->request('GET', $url);
+		try
+		{
+			$crawler = $this->client->request('GET', $url);
+		} 
+		catch (Exception $e)
+		{
+			return false;			
+		}
 		
 		// get title
 		$title = trim($crawler->filter('.headingText')->text());
