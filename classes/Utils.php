@@ -626,4 +626,167 @@ class Utils
 
 		return $auth[0]->email;
 	}
+	
+	/**
+	 * Extract emails from text
+	 * 
+	 * @param string $text
+	 * @return mixed
+	 */
+	public function getEmailFromText($text)
+	{
+		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
+		preg_match($pattern, $text, $matches);
+	
+		if ( ! empty($matches))
+			return $matches[0];
+			else
+				return false;
+	}
+	
+	/**
+	 * Extract cell phone numbers from text
+	 *
+	 * @param string $text
+	 * @return mixed
+	 */
+	public function getCellFromText($text)
+	{
+		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
+		$pattern = "/5(2|3)\d{6}/"; // every 8 digits numbers starting by 52 or 53
+		preg_match($pattern, $cleanText, $matches);
+	
+		if ( ! empty($matches))
+			return $matches[0];
+			else
+				return false;
+	}
+	
+	/**
+	 * Extact phone numbers from text
+	 *
+	 * @param string $text
+	 * @return mixed
+	 */
+	public function getPhoneFromText($text)
+	{
+		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
+		$pattern = "/(48|33|47|32|7|31|47|24|45|23|42|22|43|21|41|46)\d{6,7}/";
+		preg_match($pattern, $cleanText, $matches);
+	
+		if ( ! empty($matches))
+			return $matches[0];
+			else
+				return false;
+	}
+	
+	/**
+	 * Convert file size to friendly message
+	 * 
+	 * @param integer $size        	
+	 * @return string
+	 */
+	public function getFriendlySize($size)
+	{
+		$unit = array(
+			'b',
+			'kb',
+			'mb',
+			'gb',
+			'tb',
+			'pb'
+		);
+		return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
+	}
+	
+	/**
+	 * Convert date from spanish to mysql
+	 * 
+	 * @param string $spanishDate
+	 * @return string
+	 */
+	public function dateSpanishToMySQL($spanishDate)
+	{
+		$months = array(
+			"Enero",
+			"Febrero",
+			"Marzo",
+			"Abril",
+			"Mayo",
+			"Junio",
+			"Julio",
+			"Agosto",
+			"Septiembre",
+			"Octubre",
+			"Noviembre",
+			"Diciembre"
+		);
+	
+		// separate each piece of the date
+		$spanishDate = preg_replace("/\s+/", " ", $spanishDate);
+		$spanishDate = str_replace(",", "", $spanishDate);
+		$arrDate = explode(" ", $spanishDate);
+	
+		// create the standar, english date
+		$month = array_search($arrDate[3], $months) + 1;
+		$day = $arrDate[1];
+		$year = $arrDate[5];
+		$time = $arrDate[6] . " " . $arrDate[7];
+		$date = "$month/$day/$year $time";
+	
+		// format and return date
+		return date("Y-m-d H:i:s", strtotime($date));
+	}
+	
+	/**
+	 * Detect province from phone number
+	 * 
+	 * @param string $phone
+	 * @return string
+	 */
+	public function getProvinceFromPhone($phone)
+	{
+		if (strpos($phone, "7") == 0) return 'LA_HABANA';
+		if (strpos($phone, "21") == 0) return 'GUANTANAMO';
+		if (strpos($phone, "22") == 0) return 'SANTIAGO_DE_CUBA';
+		if (strpos($phone, "23") == 0) return 'GRANMA';
+		if (strpos($phone, "24") == 0) return 'HOLGUIN';
+		if (strpos($phone, "31") == 0) return 'LAS_TUNAS';
+		if (strpos($phone, "32") == 0) return 'CAMAGUEY';
+		if (strpos($phone, "33") == 0) return 'CIEGO_DE_AVILA';
+		if (strpos($phone, "41") == 0) return 'SANCTI_SPIRITUS';
+		if (strpos($phone, "42") == 0) return 'VILLA_CLARA';
+		if (strpos($phone, "43") == 0) return 'CIENFUEGOS';
+		if (strpos($phone, "45") == 0) return 'MATANZAS';
+		if (strpos($phone, "46") == 0) return 'ISLA_DE_LA_JUVENTUD';
+		if (strpos($phone, "47") == 0) return 'ARTEMISA';
+		if (strpos($phone, "47") == 0) return 'MAYABEQUE';
+		if (strpos($phone, "48") == 0) return 'PINAR_DEL_RIO';
+	}
+	
+	/**
+	 * Get today date in spanish
+	 *
+	 * @return string
+	 */
+	public function getTodaysDateSpanishString()
+	{
+		$months = array(
+			"Enero",
+			"Febrero",
+			"Marzo",
+			"Abril",
+			"Mayo",
+			"Junio",
+			"Julio",
+			"Agosto",
+			"Septiembre",
+			"Octubre",
+			"Noviembre",
+			"Diciembre"
+		);
+		
+		$today = explode(" ", date("j n Y"));
+		return $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
+	}
 }

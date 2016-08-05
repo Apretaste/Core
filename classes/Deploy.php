@@ -137,21 +137,30 @@ class Deploy
 		$sql .= "UPDATE person SET credit = 1000000 WHERE email = 'soporte@apretaste.com';";
 		
 		$connection->deepQuery($sql);
-				
-		// create an Ad for new service
-		$body =  "<p>".$connection->escape($service['serviceDescription'])."</p>";
-		if ($updating) $body = "<p>El servicio ".strtoupper($service['serviceName'])." has sido actualizado por el equipo de Apretaste!.</p>";
+		$serviceName = strtoupper($service['serviceName']);
+		$serviceDesc = $connection->escape($service['serviceDescription']);
 		$toaddress = $utils->getValidEmailAddress();
-
-		$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$service['serviceName'].'">Conocer m&aacute;s sobre este servicio</a></center>';		
-		$title = strtoupper($service['serviceName']).", nuevo servicio";
+		
+		// create an Ad for new service
+		$body =  "<p>Hola,<br/><br/>Nos alegra decir que tenemos un servicio nuevo en Apretatse. El servicio es $serviceName y $serviceDesc. ";
+		$body .= "Espero que le sea de su agrado, y si quiere saber mas al respecto, el enlace a continuacion le explicar&aacute; como se usa y detallar&aacute; m&aacute;s sobre el mismo.";
+		$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$serviceName.'">Conocer m&aacute;s sobre este servicio</a></center>';		
+		$body .= "<br/><br/>Gracias por usar Apretaste.<p>";
+		
+		if ($updating) {
+			$body =  "<p>Hola,<br/><br/>Tenemos una actualizaci&oacute;n al servicio $serviceName en Apretaste!";
+			$body .= "Con las actualizaciones vienen mejoras, nuevas funciones y soluciones a problemas antiguos. Espero que le sea de su agrado, y si quiere saber mas al respecto, el enlace a continuacion le explicar&aacute; como se usa y detallar&aacute; m&aacute;s sobre el mismo.";
+			$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$serviceName.'">Conocer m&aacute;s sobre este servicio</a></center>';
+			$body .= "<br/><br/>Gracias por usar Apretaste.<p>";
+		}
+		
+		$title = 'Presentando el servicio '.$serviceName.' a nuestros usuarios de Apretaste';
 		
 		if ($updating)
-			$title = strtoupper($service['serviceName']). " actualizado";
+			$title = 'Buenas noticias! Hemos realizado mejoras al servicio '.$serviceName;
 		
 		$sql = "INSERT INTO ads (title,description,owner,expiration_date) 
-			    VALUES ('$title',
-			   '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK));";
+			    VALUES ('$title', '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK));";
 		
 		$connection->deepQuery($sql);
 		
