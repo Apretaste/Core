@@ -650,6 +650,7 @@ class Utils
 		$l = strlen($name);
 		
 		$newname = '';
+		$chars .= $extra_chars;
 		
 		for ($i = 0; $i < $l; $i++)
 		{
