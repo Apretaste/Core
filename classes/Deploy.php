@@ -3,6 +3,8 @@
 class Deploy
 {
 	
+	public $utils = null;
+	
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -19,7 +21,7 @@ class Deploy
 		$service = $this->loadFromXML($pathToXML);
 
 		// remove the current project if it exist
-		$utils = new Utils();
+		$utils = $this->getUtils();
 		
 		$updating = false;
 		if ($utils->serviceExist($service['serviceName'])) {
@@ -28,7 +30,7 @@ class Deploy
 		}
 
 		// create a new deploy key
-		$utils = new Utils();
+		$utils = $this->getUtils();
 
 		// add the new service
 		$this->addService($service, $pathToZip, $pathToService, $updating);
@@ -44,6 +46,22 @@ class Deploy
 		);
 	}
 
+	/**
+	 * Get Utils member (singleton)
+	 * 
+	 * @author kuma
+	 * @return Utils 
+	 */
+	public function getUtils()
+	{
+		if (is_null($this->utils))
+		{
+			$this->utils = new Utils();
+		}
+		
+		return $this->utils;
+	}
+	
 	/**
 	 * Extract the service zip and return the path to it
 	 *
@@ -122,11 +140,11 @@ class Deploy
 
 		// create a new connection
 		$connection = new Connection();
-
+		
 		// save the new service in the database
 		$insertUserQuery = "
-			INSERT INTO service (name,description,usage_text,creator_email,category,listed,ads) 
-			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}','{$service['showAds']}')";
+			INSERT INTO service (name,description,usage_text,creator_email,category,listed,ads,alias) 
+			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}','{$service['showAds']}','{$service['serviceAlias']}')";
 		
 		$connection->deepQuery($insertUserQuery);
 
@@ -176,7 +194,7 @@ class Deploy
 	 * @param String $pathToXML, path to load the XML file
 	 * @return array, xml data
 	 * @throw Exception
-	 * */
+	 **/
 	public function loadFromXML($pathToXML)
 	{
 		// check if the XML file exists
@@ -186,15 +204,18 @@ class Deploy
 		$xml = simplexml_load_file($pathToXML);
 		$XMLData = array();
 
+		$utils = $this->getUtils();
+		
 		// get the main data of the service
 		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
+		$XMLData['serviceAlias'] = isset($xml->serviceAlias) ? strtolower(trim($utils->recursiveReplace('  ', ' ', $utils->clearStr((String)$xml->serviceAlias, ' ')))) : '';
 		$XMLData['creatorEmail'] = trim((String)$xml->creatorEmail);
 		$XMLData['serviceDescription'] = trim((String)$xml->serviceDescription);
 		$XMLData['serviceUsage'] = trim((String)$xml->serviceUsage);
 		$XMLData['serviceCategory'] = trim((String)$xml->serviceCategory);
 		$XMLData['listed'] = isset($xml->listed) ? trim((String)$xml->listed) : 1;
 		$XMLData['showAds'] = isset($xml->showAds) ? trim((String)$xml->showAds) : 1;
-
+		
 		// check if the email is valid
 		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL))
 		{
