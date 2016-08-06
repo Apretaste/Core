@@ -57,13 +57,13 @@ class Utils
 		$db = new Connection();
 		
 		// if serviceName is an alias and not is a name ...
-		$r = $db->deepQuery("SELECT * FROM service WHERE concat(concat(' ',alias),' ') LIKE '% $serviceName %' AND NOT EXISTS (SELECT * FROM service as s2 WHERE s2.name = '$serviceName');");
+		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
 		
 		// ... then get the service name
 		if (is_array($r)) 
 			if (isset($r[0])) 
-				if (isset($r[0]->name)) 
-					$serviceName = $r[0]->name;
+				if (isset($r[0]->service)) 
+					$serviceName = $r[0]->service;
 		
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
