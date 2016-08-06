@@ -266,6 +266,7 @@ class RunController extends Controller
 		// check the service requested actually exists
 		$utils = new Utils();
 		
+		// increase used counter for alias
 		$saveServiceName = $serviceName;
 		if( ! $utils->serviceExist($serviceName)) 
 		{
