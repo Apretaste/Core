@@ -265,7 +265,20 @@ class RunController extends Controller
 
 		// check the service requested actually exists
 		$utils = new Utils();
-		if( ! $utils->serviceExist($serviceName)) $serviceName = "ayuda";
+		
+		$saveServiceName = $serviceName;
+		if( ! $utils->serviceExist($serviceName)) 
+		{
+			$serviceName = "ayuda";
+		} 
+		else 
+		{
+			if ($serviceName !== $saveServiceName)
+			{
+				$connection = new Connection();
+				$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
+			}
+		}
 
 		// include the service code
 		$wwwroot = $this->di->get('path')['root'];
