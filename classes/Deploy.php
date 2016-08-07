@@ -3,6 +3,8 @@
 class Deploy
 {
 	
+	public $utils = null;
+	
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -19,7 +21,7 @@ class Deploy
 		$service = $this->loadFromXML($pathToXML);
 
 		// remove the current project if it exist
-		$utils = new Utils();
+		$utils = $this->getUtils();
 		
 		$updating = false;
 		if ($utils->serviceExist($service['serviceName'])) {
@@ -28,8 +30,34 @@ class Deploy
 		}
 
 		// create a new deploy key
-		$utils = new Utils();
+		$utils = $this->getUtils();
 
+		$connection = new Connection();
+		
+		// check if alias exists as a service name or alias
+		foreach ($service['serviceAlias'] as $alias)
+		{
+			$sql = "SELECT * FROM service WHERE name = '$alias';";
+			$r = $connection->deepQuery($sql);
+		
+			if (is_array($r))
+				if (isset($r[0]))
+					if (isset($r[0]->name))
+					{
+						throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as a service");
+					}
+		
+			$sql = "SELECT * FROM service_alias WHERE alias = '$alias' AND service <> '{$service['serviceName']}';";
+			$r = $connection->deepQuery($sql);
+				
+			if (is_array($r))
+				if (isset($r[0]))
+					if (isset($r[0]->alias))
+					{
+						throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as an alias");
+					}
+		}
+		
 		// add the new service
 		$this->addService($service, $pathToZip, $pathToService, $updating);
 
@@ -44,6 +72,22 @@ class Deploy
 		);
 	}
 
+	/**
+	 * Get Utils member (singleton)
+	 * 
+	 * @author kuma
+	 * @return Utils 
+	 */
+	public function getUtils()
+	{
+		if (is_null($this->utils))
+		{
+			$this->utils = new Utils();
+		}
+		
+		return $this->utils;
+	}
+	
 	/**
 	 * Extract the service zip and return the path to it
 	 *
@@ -116,21 +160,34 @@ class Deploy
 	 * */
 	public function addService($service, $pathToZip, $pathToService, $updating = false)
 	{
+		$utils = $this->getUtils();
+		
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
 		// create a new connection
-		$connection = new Connection();
-
+		$connection = new Connection();		
+		
 		// save the new service in the database
 		$insertUserQuery = "
 			INSERT INTO service (name,description,usage_text,creator_email,category,listed,ads) 
 			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}','{$service['showAds']}')";
 		
 		$connection->deepQuery($insertUserQuery);
+ 		
+		// clear old alias
+		$sqlClear = "DELETE FROM service_alias WHERE alias <> '";
+		$sqlClear .= implode("' AND alias <> '", $service['serviceAlias']);
+		$sqlClear .= "';";
 
-		$utils = new Utils();
+		$connection->deepQuery($sqlClear);
+
+		// insert new alias
+		foreach ($service['serviceAlias'] as $alias)
+		{				
+			$connection->deepQuery("INSERT IGNORE INTO service_alias (service, alias) VALUES ('{$service['serviceName']}','$alias');");	
+		}
 		
 		// create the owner of ad
 		$sql = "INSERT IGNORE INTO person (email, username, credit) VALUES ('soporte@apretaste.com', 'soporteap', 1000000);";
@@ -175,8 +232,8 @@ class Deploy
 	 * @author salvipascual
 	 * @param String $pathToXML, path to load the XML file
 	 * @return array, xml data
-	 * @throw Exception
-	 * */
+	 * @throws Exception
+	 **/
 	public function loadFromXML($pathToXML)
 	{
 		// check if the XML file exists
@@ -186,15 +243,30 @@ class Deploy
 		$xml = simplexml_load_file($pathToXML);
 		$XMLData = array();
 
+		$utils = $this->getUtils();
+		
 		// get the main data of the service
 		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
+		$XMLData['serviceAlias'] = isset($xml->serviceAliases) ? $xml->serviceAliases->alias: array();
 		$XMLData['creatorEmail'] = trim((String)$xml->creatorEmail);
 		$XMLData['serviceDescription'] = trim((String)$xml->serviceDescription);
 		$XMLData['serviceUsage'] = trim((String)$xml->serviceUsage);
 		$XMLData['serviceCategory'] = trim((String)$xml->serviceCategory);
 		$XMLData['listed'] = isset($xml->listed) ? trim((String)$xml->listed) : 1;
 		$XMLData['showAds'] = isset($xml->showAds) ? trim((String)$xml->showAds) : 1;
-
+		
+		// clear alias names
+		$newarr = array();
+		foreach ($XMLData['serviceAlias'] as $alias)
+		{
+			$alias = $utils->clearStr((String) $alias);
+			
+			if ($alias !== '') 
+				$newarr[] = $alias;
+		}
+		
+		$XMLData['serviceAlias'] = $newarr;
+		
 		// check if the email is valid
 		if ( ! filter_var($XMLData['creatorEmail'], FILTER_VALIDATE_EMAIL))
 		{

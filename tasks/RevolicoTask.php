@@ -67,10 +67,24 @@ class revolicoTask extends \Phalcon\Cli\Task
 				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
 				
 				// get the page's data and images
-				$data = $this->crawlRevolicoURL($pages[$i]);
+				try 
+				{
+					$data = $this->crawlRevolicoURL($pages[$i]);
+				} 
+				catch (Exception $e)
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
-				// save the data into the database
-				$this->saveToDatabase($data);
+				if ($data !== false)
+				{
+					// save the data into the database
+					$this->saveToDatabase($data);
+				}
+				else 
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
 				echo "\tMEMORY USED: " . $this->utils->getFriendlySize(memory_get_usage(true)) . "\n";
 			}
@@ -139,8 +153,15 @@ class revolicoTask extends \Phalcon\Cli\Task
 				$nodes = $crawler->filter('td a:not(.pwtip)');
 				for ($i = 0; $i < count($nodes); $i ++)
 				{
+					$href = $nodes->eq($i)->attr('href');
+					
+					// delete double /
+					$ru = $this->revolicoURL;
+					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
+						$href = substr($href, 1);
+					
 					// get the url from the list
-					$links[] = $this->revolicoURL. $nodes->eq($i)->attr('href');
+					$links[] = $ru. $href;
 				}
 			}
 		} catch(Exception $e)
@@ -161,7 +182,16 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 		
 		// create crawler
-		$crawler = $this->client->request('GET', $url);
+		try
+		{
+			$url = str_replace("//", "/", $url);
+			$url = str_replace("http:/", "http://", $url);
+			$crawler = $this->client->request('GET', $url);
+		} 
+		catch (Exception $e)
+		{
+			return false;			
+		}
 		
 		// get title
 		$title = trim($crawler->filter('.headingText')->text());
