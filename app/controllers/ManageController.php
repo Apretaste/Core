@@ -1524,17 +1524,9 @@ class ManageController extends Controller
  		$html = '<html><head><title>Apretaste | Survey\'s restults - '.$survey->title.' -'.date("Y-m-s H:i:s").'</title><style>
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
  			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
- 				@page {orientation: L;size: 8.5in 11in;} body{font-family:Verdana;}</style>
-			     <body><div style="margin: 0 auto; width:900px;">
- 				  	<div style="background: #D0D0D0;padding:5px;text-align:right;">'.date("Y-m-d H:i:s").'</div>
- 					<div style="background:#F2F2F2;padding:20px;text-align:center;font-size:32px;"><span style="white-space:nowrap;">
-					<nobr>
-						<font color="#5ebb47"><i>A</i>pretaste</font>
-						<font style="margin-left:-5px;font-size:36;" color="#A03E3B"><i>!</i></font>
-					</nobr>
-				</span></div>';
+ 				body{font-family:Verdana;}</style>
+			     <body></div>';
  		
- 		$html .= '<div style="background:#c3daee;padding:5px;font-size:18px;font-weight:bold;">Survey\'s results</div>';
  		$html .= "<br/><h1>{$survey->title}</h1>"; 		
  	
 		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
@@ -1552,13 +1544,13 @@ class ManageController extends Controller
 			$chart = $this->getPieChart($question->title, $values);
 			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
 			$i++;
-			if ($i % 2 == 0) $html .= '<pagebreak />';
+			if ($i % 3 == 0) $html .= '<pagebreak />';
 		}
  		
  		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"background: #F2F2F2; padding: 10px;font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
  		$html .= '</div></body></html>';
 
-		$mpdf = new mPDF();
+		$mpdf = new mPDF('','A4', 0, '', 5, 5, 5, 5, 1, 1, 'P');
 		$mpdf->WriteHTML($html);	
 		$mpdf->Output("Apretaste - Survey's report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
 	
