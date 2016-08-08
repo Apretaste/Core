@@ -1,23 +1,43 @@
 <?php
-use GuzzleHttp\Stream\Utils;
+
 use Goutte\Client;
+
+/**
+ * Revolico Crawler Task
+ * 
+ * @author kuma
+ * @version 2.0
+ */
 
 class revolicoTask extends \Phalcon\Cli\Task
 {
 
+	private $revolicoURL = "http://lok.myvnc.com/";
+	private $client;
 	private $connection;
+	public $utils;
 
-	public function mainAction()
+	/**
+	 * Main action 
+	 */
+	public function mainAction($revolicoMainUrls = null)
 	{		
-		// starting points for the crawler
-		$revolicoMainUrls = array(
-			'http://www.revolico.com/computadoras/',
-			'http://www.revolico.com/compra-venta/',
-			'http://www.revolico.com/servicios/',
-			'http://www.revolico.com/autos/',
-			'http://www.revolico.com/empleos/',
-			'http://www.revolico.com/vivienda/'
-		);
+		$this->utils = new Utils();
+		$this->client = new Client();
+		$this->connection = new Connection();
+				
+		if (is_null($revolicoMainUrls))
+		{
+			// starting points for the crawler
+			$revolicoMainUrls = array(
+				$this->revolicoURL.'computadoras/',
+				$this->revolicoURL.'compra-venta/',
+				$this->revolicoURL.'servicios/',
+				$this->revolicoURL.'autos/',
+				$this->revolicoURL.'empleos/',
+				$this->revolicoURL.'vivienda/'
+			);
+		}
 		
 		// starting time and message
 		$timeCrawlerStart = time();
@@ -34,6 +54,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			
 			// get the list of pages that have not been inserted yet
 			$pages = $this->getRevolicoPagesFromMainURL($url);
+			$totalPages = count($pages);
 			
 			// calculate the total number of posts
 			$totalPosts += count($pages);
@@ -41,32 +62,62 @@ class revolicoTask extends \Phalcon\Cli\Task
 			echo "PROCESSING URLs $url\n";
 			
 			// for every page
-			for ($i = 0; $i < count($pages); $i ++)
+			for ($i = 0; $i < $totalPages; $i ++)
 			{
-				echo "SAVING PAGE $i/" . count($pages) . "\n";
+				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
 				
 				// get the page's data and images
-				$data = $this->crawlRevolicoURL($pages[$i]);
+				try 
+				{
+					$data = $this->crawlRevolicoURL($pages[$i]);
+				} 
+				catch (Exception $e)
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
-				// save the data into the database
-				$this->saveToDatabase($data);
+				if ($data !== false)
+				{
+					// save the data into the database
+					$this->saveToDatabase($data);
+				}
+				else 
+				{
+					echo "[ERROR] Page {$pages[$i]} request error \n";
+				}
 				
-				echo "\tMEMORY USED: " . $this->convert(memory_get_usage(true)) . "\n";
+				echo "\tMEMORY USED: " . $this->utils->getFriendlySize(memory_get_usage(true)) . "\n";
 			}
 		}
 
 		// ending message, log and time
 		$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
-		$totalMem = $this->convert(memory_get_usage(true));
+		$totalMem = $this->utils->getFriendlySize(memory_get_usage(true));
 		$message = "CRAWLER ENDED - EXECUTION TIME: $totalTime min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
 		$this->saveCrawlerLog($message);
 		echo "\n\n$message\n\n";
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$totalTime', `values`='$totalPosts' WHERE task='revolico'");
+		$this->connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$totalTime', `values`='$totalPosts' WHERE task='revolico'");
 	}
 
+	/**
+	 * Proccess specific sections in revlico site
+	 * 
+	 * @param array $sectionNames
+	 */
+	public function sectionAction($sectionNames = array()){
+		$revolicoMainUrls = array();
+		
+		foreach($sectionNames as $sn)
+		{
+			$revolicoMainUrls[] = $this->revolicoURL.$sn."/";
+		}
+		
+		return $this->mainAction($revolicoMainUrls);
+	}
+	
 	/*
 	 * * * * * * * * * * * * * * * * * * * * *
 	 * CORE FUNCTION, PLEASE
@@ -75,36 +126,48 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 */
 	private function getRevolicoPagesFromMainURL($url)
 	{
-		$client = new Client();
-		$crawler = $client->request('GET', $url);
-		
-		// get the latest page count
-		$lastPage = $crawler->filter('[title="Final"]')->attr('href');
-		$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
-		
-		// get all valid links
 		$links = array();
-		for ($n = 1; $n < $pagesTotal; $n ++)
-		{
-			echo "PAGE $n\n";
-			
-			// only crawl for today
-			$site = file_get_contents($url . "pagina-$n.html");
-			$exist = stripos($site, $this->getTodaysDateSpanishString());
-			if ( ! $exist) return $links;
-			
-			// move to the next page
-			$crawler = $client->request('GET', $url . "pagina-$n.html");
-			
-			// get all results for that page
-			$nodes = $crawler->filter('td a:not(.pwtip)');
-			for ($i = 0; $i < count($nodes); $i ++)
-			{
-				// get the url from the list
-				$links[] = "http://www.revolico.com" . $nodes->eq($i)->attr('href');
-			}
-		}
 		
+		try
+		{
+			$crawler = $this->client->request('GET', $url);
+			
+			// get the latest page count
+			$lastPage = $crawler->filter('[title="Final"]')->attr('href');
+			$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
+			
+			// get all valid links
+			for ($n = 1; $n < $pagesTotal; $n ++)
+			{
+				echo "PAGE $n\n";
+				
+				// only crawl for today
+				$site = file_get_contents($url . "pagina-$n.html");
+				$exist = stripos($site, $this->utils->getTodaysDateSpanishString());
+				if ( ! $exist) return $links;
+				
+				// move to the next page
+				$crawler = $this->client->request('GET', $url . "pagina-$n.html");
+				
+				// get all results for that page
+				$nodes = $crawler->filter('td a:not(.pwtip)');
+				for ($i = 0; $i < count($nodes); $i ++)
+				{
+					$href = $nodes->eq($i)->attr('href');
+					
+					// delete double /
+					$ru = $this->revolicoURL;
+					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
+						$href = substr($href, 1);
+					
+					// get the url from the list
+					$links[] = $ru. $href;
+				}
+			}
+		} catch(Exception $e)
+		{
+			echo "[FATAL] Could not request the URL $url \n";
+		}
 		return $links;
 	}
 
@@ -115,12 +178,20 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 */
 	private function crawlRevolicoURL($url)
 	{
-		$client = new Client();
 		
 		$timeStart = time();
 		
 		// create crawler
-		$crawler = $client->request('GET', $url);
+		try
+		{
+			$url = str_replace("//", "/", $url);
+			$url = str_replace("http:/", "http://", $url);
+			$crawler = $this->client->request('GET', $url);
+		} 
+		catch (Exception $e)
+		{
+			return false;			
+		}
 		
 		// get title
 		$title = trim($crawler->filter('.headingText')->text());
@@ -139,16 +210,16 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$province = "";
 		
 		// get email
-		$email = $this->getEmailFromText($title);
-		if (empty($email)) $email = $this->getEmailFromText($body);
+		$email = $this->utils->getEmailFromText($title);
+		if (empty($email)) $email = $this->utils->getEmailFromText($body);
 		
 		// get the phone number
-		$phone = $this->getPhoneFromText($title);
-		if (empty($phone)) $phone = $this->getPhoneFromText($body);
+		$phone = $this->utils->getPhoneFromText($title);
+		if (empty($phone)) $phone = $this->utils->getPhoneFromText($body);
 		
 		// get the cell number
-		$cell = $this->getCellFromText($title);
-		if (empty($cell)) $cell = $this->getCellFromText($body);
+		$cell = $this->utils->getCellFromText($title);
+		if (empty($cell)) $cell = $this->utils->getCellFromText($body);
 		
 		// get all code into lineBloks
 		$nodes = $crawler->filter('#lineBlock');
@@ -172,7 +243,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Fecha:":
 					{
-						$date = $this->dateSpanishToMySQL($data);
+						$date = $this->utils->dateSpanishToMySQL($data);
 						break;
 					}
 				case "Nombre:":
@@ -183,8 +254,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 				case "Teléfono:":
 					{
-						if (empty($phone)) $phone = $this->getPhoneFromText($data);
-						if (empty($cell)) $cell = $this->getCellFromText($data);
+						if (empty($phone)) $phone = $this->utils->getPhoneFromText($data);
+						if (empty($cell)) $cell = $this->utils->getCellFromText($data);
 						break;
 					}
 				case "Email:":
@@ -196,14 +267,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 		}
 		
 		// get the province
-		if (empty($province) && ! empty($phone)) $province = $this->getProvinceFromPhone($phone);
+		if (empty($province) && ! empty($phone)) $province = $this->utils->getProvinceFromPhone($phone);
 		
 		// download images
 		$pictures = $crawler->filter('.view img');
 		for ($i = 0; $i < count($pictures); $i ++)
 		{
 			// get the current picture
-			$picURl = "http://www.revolico.com{$pictures->eq($i)->attr('src')}";
+			$picURl = "{$this->revolicoURL}{$pictures->eq($i)->attr('src')}";
 			
 			// get the path
 			$path = dirname(__DIR__) . "/public/tienda/" . md5($url) . "_" . ($i + 1) . ".jpg";
@@ -247,9 +318,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 * @param mixed $data        	
 	 */
 	private function saveToDatabase($data)
-	{
-		$connection = new Connection();
-		
+	{		
 		$timeStart = time();
 		
 		// create the query to insert only if it is not repeated in the last month
@@ -298,8 +367,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 		 */
 
 		// clean the body and title of characters that may break the query
-		$title = $connection->escape($data['title']);
-		$body = $connection->escape($data['body']);
+		$title = $this->connection->escape($data['title']);
+		$body = $this->connection->escape($data['body']);
 		
 		$sql = "
 		INSERT INTO _tienda_post (
@@ -335,7 +404,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		)";
 
 		// save into the database, log on error
-		$connection->deepQuery($sql);
+		$this->connection->deepQuery($sql);
 		$timeEnd = time();
 		$timeDiff = $timeEnd - $timeStart;
 		echo "\tDB TIME: $timeDiff\n";
@@ -356,170 +425,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 	}
 
 	/**
-	 * Convert date from spanish to mysql
-	 * @param string $spanishDate        	 
-	 * @return string
-	 */
-	private function dateSpanishToMySQL($spanishDate)
-	{
-		$months = array(
-			"Enero",
-			"Febrero",
-			"Marzo",
-			"Abril",
-			"Mayo",
-			"Junio",
-			"Julio",
-			"Agosto",
-			"Septiembre",
-			"Octubre",
-			"Noviembre",
-			"Diciembre"
-		);
-		
-		// separate each piece of the date
-		$spanishDate = preg_replace("/\s+/", " ", $spanishDate);
-		$spanishDate = str_replace(",", "", $spanishDate);
-		$arrDate = explode(" ", $spanishDate);
-		
-		// create the standar, english date
-		$month = array_search($arrDate[3], $months) + 1;
-		$day = $arrDate[1];
-		$year = $arrDate[5];
-		$time = $arrDate[6] . " " . $arrDate[7];
-		$date = "$month/$day/$year $time";
-		
-		// format and return date
-		return date("Y-m-d H:i:s", strtotime($date));
-	}
-
-	/**
-	 * Get today date in spanish
-	 *
-	 * @return string
-	 */
-	private function getTodaysDateSpanishString()
-	{
-		$months = array(
-			"Enero",
-			"Febrero",
-			"Marzo",
-			"Abril",
-			"Mayo",
-			"Junio",
-			"Julio",
-			"Agosto",
-			"Septiembre",
-			"Octubre",
-			"Noviembre",
-			"Diciembre"
-		);
-		$today = explode(" ", date("j n Y"));
-		return $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
-	}
-
-	/**
-	 * Extract emails from text
-	 * @param string $text        	
-	 * @return mixed
-	 */
-	private function getEmailFromText($text)
-	{
-		// @TODO: move this function tu Utils, refactor RevolicoTask and ExtractorTask
-		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
-		preg_match($pattern, $text, $matches);
-		
-		if ( ! empty($matches))
-			return $matches[0];
-		else
-			return false;
-	}
-
-	/**
-	 * Extract cell phone numbers from text
-	 *
-	 * @param string $text        	
-	 * @return mixed
-	 */
-	private function getCellFromText($text)
-	{
-		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
-		$pattern = "/5(2|3)\d{6}/"; // every 8 digits numbers starting by 52 or 53
-		preg_match($pattern, $cleanText, $matches);
-		
-		if ( ! empty($matches))
-			return $matches[0];
-		else
-			return false;
-	}
-
-	/**
-	 * Extact phone numbers from text
-	 *
-	 * @param string $text        	
-	 * @return mixed
-	 */
-	private function getPhoneFromText($text)
-	{
-		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
-		$pattern = "/(48|33|47|32|7|31|47|24|45|23|42|22|43|21|41|46)\d{6,7}/";
-		preg_match($pattern, $cleanText, $matches);
-		
-		if ( ! empty($matches))
-			return $matches[0];
-		else
-			return false;
-	}
-
-	/**
-	 * Detect province from phone number
-	 * @param string $phone        	
-	 * @return string
-	 */
-	private function getProvinceFromPhone($phone)
-	{
-		if (strpos($phone, "7") == 0) return 'LA_HABANA';
-		if (strpos($phone, "21") == 0) return 'GUANTANAMO';
-		if (strpos($phone, "22") == 0) return 'SANTIAGO_DE_CUBA';
-		if (strpos($phone, "23") == 0) return 'GRANMA';
-		if (strpos($phone, "24") == 0) return 'HOLGUIN';
-		if (strpos($phone, "31") == 0) return 'LAS_TUNAS';
-		if (strpos($phone, "32") == 0) return 'CAMAGUEY';
-		if (strpos($phone, "33") == 0) return 'CIEGO_DE_AVILA';
-		if (strpos($phone, "41") == 0) return 'SANCTI_SPIRITUS';
-		if (strpos($phone, "42") == 0) return 'VILLA_CLARA';
-		if (strpos($phone, "43") == 0) return 'CIENFUEGOS';
-		if (strpos($phone, "45") == 0) return 'MATANZAS';
-		if (strpos($phone, "46") == 0) return 'ISLA_DE_LA_JUVENTUD';
-		if (strpos($phone, "47") == 0) return 'ARTEMISA';
-		if (strpos($phone, "47") == 0) return 'MAYABEQUE';
-		if (strpos($phone, "48") == 0) return 'PINAR_DEL_RIO';
-	}
-
-	/**
-	 * Convert file size to friendly message
-	 * @param integer $size        	
-	 * @return string
-	 */
-	private function convert($size)
-	{
-		$unit = array(
-			'b',
-			'kb',
-			'mb',
-			'gb',
-			'tb',
-			'pb'
-		);
-		return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
-	}
-
-	/**
 	 * Get a category for the post
 	 *
 	 * @author kuma
-	 * @param String, $text
-	 *        	title and body concatenated
+	 * @param String, $text	title and body concatenated
 	 * @return String category
 	 */
 	private function classify($text)

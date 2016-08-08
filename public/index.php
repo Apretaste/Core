@@ -26,7 +26,7 @@ try
 		'../classes/',
 		'../app/controllers/'
 	))->register();
-
+	
 	//Create Run DI
 	$di = new FactoryDefault();
 
