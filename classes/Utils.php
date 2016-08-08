@@ -60,10 +60,8 @@ class Utils
 		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
 		
 		// ... then get the service name
-		if (is_array($r)) 
-			if (isset($r[0])) 
-				if (isset($r[0]->service)) 
-					$serviceName = $r[0]->service;
+		if (isset($r[0]->service)) 
+			$serviceName = $r[0]->service;
 		
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
