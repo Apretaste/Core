@@ -179,7 +179,7 @@ class Deploy
 		// clear old alias
 		$sqlClear = "DELETE FROM service_alias WHERE alias <> '";
 		$sqlClear .= implode("' AND alias <> '", $service['serviceAlias']);
-		$sqlClear .= "';";
+		$sqlClear .= "' AND service = '{$service['serviceName']}' ;";
 
 		$connection->deepQuery($sqlClear);
 
