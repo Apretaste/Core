@@ -57,7 +57,7 @@ class ExtractorTask extends \Phalcon\Cli\Task
 			chdir($tempFolder);
 			
 			// create a mirror of the site (without page resources)
-			shell_exec("wget --no-check-certificate -P $prefix -o $logFile -mk -A .html,.htm,.php,.jsf,.jsp,.aspx $site");
+			shell_exec("wget --no-check-certificate -P $prefix -o $logFile -mk -A .html $site");
 			
 			// return to www root
 			chdir($wwwroot);
@@ -172,6 +172,9 @@ class ExtractorTask extends \Phalcon\Cli\Task
 						}
 						
 						fclose($f2);
+						
+						// remove processed file
+						@unlink($fileFullName);
 					}
 				}
 				fclose($f);
@@ -180,7 +183,8 @@ class ExtractorTask extends \Phalcon\Cli\Task
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='extractor'");
+		
+		$db->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff', `values`='$addressesCount' WHERE task='extractor'");
 	}
 
 	/**
