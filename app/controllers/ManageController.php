@@ -1201,7 +1201,6 @@ class ManageController extends Controller
 		}
 	}
 
-	
 	/**
 	 * Survey reports
 	 */
@@ -1521,13 +1520,15 @@ class ManageController extends Controller
 		$survey = $survey[0];
 		
  		$csv = array();
- 		$html = '<html><head><title>Apretaste | Survey\'s restults - '.$survey->title.' -'.date("Y-m-s H:i:s").'</title><style>
+ 		$title = "{$survey->title} - ".date("d M, Y");
+ 		
+ 		$html = '<html><head><title>'.$title.'</title><style>
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
  			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
  				body{font-family:Verdana;}</style>
 			     <body></div>';
  		
- 		$html .= "<br/><h1>{$survey->title}</h1>"; 		
+ 		$html .= "<br/><h1>$title</h1>"; 		
  	
 		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
 		$i = 0;
@@ -1538,7 +1539,7 @@ class ManageController extends Controller
 			
 			$values = '';
 			foreach($answers as $ans){
-				$values[$ans->choosen.' | '.$ans->title] = $ans->choosen; 
+				$values[$ans->title." ({$ans->choosen})"] = $ans->choosen; 
 			}
 			
 			$chart = $this->getPieChart($question->title, $values);
@@ -1547,12 +1548,11 @@ class ManageController extends Controller
 			if ($i % 3 == 0) $html .= '<pagebreak />';
 		}
  		
- 		$html .= "<p bgcolor=\"#F2F2F2\" align='center' style=\"background: #F2F2F2; padding: 10px;font-family:Verdana\">Copyright &copy; 2012 - ".date("Y")." Pragres Corp.</p>";
  		$html .= '</div></body></html>';
 
 		$mpdf = new mPDF('','A4', 0, '', 5, 5, 5, 5, 1, 1, 'P');
 		$mpdf->WriteHTML($html);	
-		$mpdf->Output("Apretaste - Survey's report - " . date("Y-m-d h-i-s") . ".pdf", 'D');
+		$mpdf->Output("$title.pdf", 'D');
 	
 		$this->view->disable();
 	}
