@@ -189,6 +189,9 @@ class Deploy
 			$connection->deepQuery("INSERT IGNORE INTO service_alias (service, alias) VALUES ('{$service['serviceName']}','$alias');");	
 		}
 		
+		// clear old ads
+		$connection->deepQuery("DELETE FROM ads WHERE related_service = '{$service['serviceName']}';");
+		
 		// create the owner of ad
 		$sql = "INSERT IGNORE INTO person (email, username, credit) VALUES ('soporte@apretaste.com', 'soporteap', 1000000);";
 		$sql .= "UPDATE person SET credit = 1000000 WHERE email = 'soporte@apretaste.com';";
@@ -216,8 +219,8 @@ class Deploy
 		if ($updating)
 			$title = 'Buenas noticias! Hemos realizado mejoras al servicio '.$serviceName;
 		
-		$sql = "INSERT INTO ads (title,description,owner,expiration_date) 
-			    VALUES ('$title', '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK));";
+		$sql = "INSERT INTO ads (title,description,owner,expiration_date,related_service) 
+			    VALUES ('$title', '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK), '{$service['serviceName']}');";
 		
 		$connection->deepQuery($sql);
 		
