@@ -39,7 +39,7 @@ class Email
 			"o:tracking" => false,
 			"o:tracking-clicks" => false,
 			"o:tracking-opens" => false,
-			"h:X-Provider" => "Apretaste"
+			"h:X-service" => "Apretaste"
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
