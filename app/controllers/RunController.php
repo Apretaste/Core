@@ -120,7 +120,10 @@ class RunController extends Controller
 		{
 			$k = strtolower($k);
 			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
+			{
 				$messageID = $v;
+				break;
+			}
 		}
 
 		// save the attached files and create the response array
