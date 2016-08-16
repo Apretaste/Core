@@ -114,7 +114,17 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-		$messageID = isset($_POST['Message-ID']) ? $_POST['Message-ID'] : null;
+		
+		$messageID = null;
+		foreach($_POST as $k => $v)
+		{
+			$k = strtolower($k);
+			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
+			{
+				$messageID = $v;
+				break;
+			}
+		}
 
 		// save the attached files and create the response array
 		$attachments = array();
@@ -175,7 +185,7 @@ class RunController extends Controller
 
 			// let the user know that the account is blocked
 			$emailSender = new Email();
-			$emailSender->sendEmail($fromEmail, $subject, $body);
+			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
 			exit; // do not continue if the email is blocked
 		}
 
