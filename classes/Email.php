@@ -38,7 +38,8 @@ class Email
 			"html" => $body,
 			"o:tracking" => false,
 			"o:tracking-clicks" => false,
-			"o:tracking-opens" => false
+			"o:tracking-opens" => false,
+			"h:X-service" => "Apretaste"
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
