@@ -265,7 +265,7 @@ class Utils
 		if(empty($width) && empty($height)) $resize = "";
 		else $resize = "-resize ".$width."x".$height;
 
-		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath);
+		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath." > /var/www/Core/logs/convert.log");
 	}
 
 	/**
@@ -846,5 +846,38 @@ class Utils
 		
 		$today = explode(" ", date("j n Y"));
 		return $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
+	}
+	
+	/**
+	 * Insert anotification in database
+	 * 
+	 * @author kuma
+	 * @param string $email
+	 * @param string $origin
+	 * @param string $text
+	 * @param string $link
+	 * @param string $tag
+	 * @return integer
+	 */
+	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
+	{
+		$sql = "INSERT INTO _notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
+		$connection = new Connection();
+		$connection->deepQuery($sql);
+		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
+		return intval($r[0]->id);
+	}
+	
+	/**
+	 * Return the number of notifications for a user
+	 *
+	 * @param string $email
+	 * @return integer
+	 */
+	public function getNumberOfNotifications($email)
+	{
+		$connection = new Connection();
+		$r = $connection->deepQuery("SELECT count(*) as total FROM _notifications WHERE email ='{$email}' AND viewed = 0;");
+		return $r[0]->total * 1;
 	}
 }
