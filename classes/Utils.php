@@ -265,7 +265,7 @@ class Utils
 		if(empty($width) && empty($height)) $resize = "";
 		else $resize = "-resize ".$width."x".$height;
 
-		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath);
+		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath." > /var/www/Core/logs/convert.log");
 	}
 
 	/**
