@@ -385,6 +385,7 @@ class RunController extends Controller
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
+			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($email);				
 		}
 
 		// create a new render
@@ -539,7 +540,7 @@ class RunController extends Controller
 						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
 						$connection->deepQuery($sql);
 					}
-
+										
 					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
