@@ -50,8 +50,8 @@
 						<small>
 							{link href="AYUDA" caption="Ayuda"}{separator}
 							{link href="INVITAR escriba aqui las direcciones email de sus amigos" caption="Invitar" body=""}{separator}
-							{link href="PERFIL" caption="Mi perfil"}{separator}
-							{link href="SERVICIOS" caption="M&aacute;s servicios"}{separator}
+							{link href="PERFIL" caption="Perfil"}{separator}
+							{link href="SERVICIOS" caption="Servicios"}{separator}
 							{link href="NOTIFICACIONES" caption="Notificaciones"}
 							{if $num_notifications > 0}
 							<!--[if mso]>
