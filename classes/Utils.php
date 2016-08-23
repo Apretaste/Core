@@ -861,7 +861,7 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
-		$sql = "INSERT INTO _notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
+		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
 		$connection = new Connection();
 		$connection->deepQuery($sql);
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
@@ -877,7 +877,7 @@ class Utils
 	public function getNumberOfNotifications($email)
 	{
 		$connection = new Connection();
-		$r = $connection->deepQuery("SELECT count(*) as total FROM _notifications WHERE email ='{$email}' AND viewed = 0;");
+		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
 	}
 }
