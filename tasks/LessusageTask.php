@@ -22,7 +22,7 @@ class lessusageTask extends \Phalcon\Cli\Task
 		$log = "";
 		
 		// list and total of services
-		$services = $connection->deepQuery("SELECT name, description FROM service WHERE name <> 'ayuda' AND name <> 'terminos' AND name <> 'excluyeme';");
+		$services = $connection->deepQuery("SELECT name, description FROM service WHERE name <> 'ayuda' AND name <> 'terminos' AND name <> 'excluyeme' AND listed = 1;");
 		
 		$arr = array();
 		foreach ($services as $servicex)
@@ -34,7 +34,7 @@ class lessusageTask extends \Phalcon\Cli\Task
 		$total_services = count($services);
 		
 		// users by service
-		$sql_users_by_service = "SELECT requestor, service FROM utilization WHERE service <> 'rememberme' GROUP BY service";
+		$sql_users_by_service = "SELECT requestor, service FROM utilization WHERE service <> 'rememberme' GROUP BY requestor, service";
 		
 		// usage of services
 		$sql_usage = "SELECT requestor, count(service) as part, $total_services as total FROM ($sql_users_by_service) subq1 GROUP BY service";
