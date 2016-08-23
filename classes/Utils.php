@@ -862,10 +862,15 @@ class Utils
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
 		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
+		
 		$connection = new Connection();
 		$connection->deepQuery($sql);
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
-		return intval($r[0]->id);
+		
+		if (isset($r[0]->id)) 
+			return intval($r[0]->id);
+		
+		return false;
 	}
 	
 	/**
