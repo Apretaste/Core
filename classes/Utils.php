@@ -866,7 +866,11 @@ class Utils
 	
 	/**
 	 * Insert anotification in database
+<<<<<<< HEAD
 	 * 
+=======
+	 *
+>>>>>>> 416cd3143f7825a0b29c8e57986960b5b168560b
 	 * @author kuma
 	 * @param string $email
 	 * @param string $origin

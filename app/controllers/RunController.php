@@ -385,7 +385,7 @@ class RunController extends Controller
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($email);				
+			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
 		}
 
 		// create a new render
