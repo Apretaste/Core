@@ -272,7 +272,7 @@ class Utils
 			$img->fit_to_width($width);
 		
 		if ( ! empty($height))
-			$img->fit_to_width($height);
+			$img->fit_to_height($height);
 		
 		$img->save($imagePath, $quality, $format);
 		
