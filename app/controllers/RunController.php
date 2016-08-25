@@ -381,12 +381,11 @@ class RunController extends Controller
 		$responses = is_array($response) ? $response : array($response);
 
 		// clean the empty fields in the response  
-		$num_notifications = $utils->getNumberOfNotifications($email);
 		foreach($responses as $rs)
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-			$rs->content['num_notifications'] = $num_notifications;		
+			$rs->content['num_notifications'] =  $utils->getNumberOfNotifications($email);
 		}
 
 		// create a new render
