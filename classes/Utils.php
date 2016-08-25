@@ -272,7 +272,7 @@ class Utils
 			$img->fit_to_width($width);
 		
 		if ( ! empty($height))
-			$img->fit_to_width($height);
+			$img->fit_to_height($height);
 		
 		$img->save($imagePath, $quality, $format);
 		
@@ -901,4 +901,5 @@ class Utils
 		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
 	}
+
 }
