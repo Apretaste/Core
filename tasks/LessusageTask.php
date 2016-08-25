@@ -37,7 +37,7 @@ class lessusageTask extends \Phalcon\Cli\Task
 		$sql_users_by_service = "SELECT requestor, service FROM utilization WHERE service <> 'rememberme' GROUP BY requestor, service";
 		
 		// usage of services
-		$sql_usage = "SELECT requestor, count(service) as part, $total_services as total FROM ($sql_users_by_service) subq1 GROUP BY service";
+		$sql_usage = "SELECT requestor, count(service) as part, $total_services as total FROM ($sql_users_by_service) subq1 GROUP BY requestor";
 		
 		// filtering by less usage
 		$sql_less_usage = "SELECT requestor as email, (SELECT sent FROM remarketing WHERE remarketing.email = subq2.requestor ORDER BY sent DESC LIMIT 1) as last_remarketing FROM ($sql_usage) subq2 WHERE part/total <= 0.2 ";
