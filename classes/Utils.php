@@ -263,7 +263,7 @@ class Utils
 	 * */
 	public function optimizeImage($imagePath, $width = "", $height="", $quality = 70, $format = 'image/jpeg')
 	{
-		include "../lib/SimpleImage.php";
+		include_once "../lib/SimpleImage.php";
 		
 		$img = new SimpleImage();
 		$img->load($imagePath);
