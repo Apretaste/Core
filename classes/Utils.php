@@ -265,16 +265,25 @@ class Utils
 	{
 		include_once "../lib/SimpleImage.php";
 		
-		$img = new SimpleImage();
-		$img->load($imagePath);
+		try 
+		{
+			$img = new SimpleImage();
+			$img->load($imagePath);
+			
+			if ( ! empty($width))
+				$img->fit_to_width($width);
+			
+			if ( ! empty($height))
+				$img->fit_to_height($height);
+			
+			$img->save($imagePath, $quality, $format);
+		}
+		catch (Exception $e)
+		{
+			return false;
+		}
 		
-		if ( ! empty($width))
-			$img->fit_to_width($width);
-		
-		if ( ! empty($height))
-			$img->fit_to_height($height);
-		
-		$img->save($imagePath, $quality, $format);
+		return true;
 		
 		/*
 		if(empty($width) && empty($height)) $resize = "";
