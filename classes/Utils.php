@@ -285,13 +285,6 @@ class Utils
 		}
 		
 		return true;
-		
-		/*
-		if(empty($width) && empty($height)) $resize = "";
-		else $resize = "-resize ".$width."x".$height;
-
-		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath." > /var/www/Core/logs/convert.log");
-		*/
 	}
 
 	/**
@@ -876,11 +869,7 @@ class Utils
 	
 	/**
 	 * Insert anotification in database
-<<<<<<< HEAD
 	 * 
-=======
-	 *
->>>>>>> 416cd3143f7825a0b29c8e57986960b5b168560b
 	 * @author kuma
 	 * @param string $email
 	 * @param string $origin
