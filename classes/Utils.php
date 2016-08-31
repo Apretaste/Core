@@ -876,7 +876,11 @@ class Utils
 	
 	/**
 	 * Insert anotification in database
+<<<<<<< HEAD
+	 * 
+=======
 	 *
+>>>>>>> 416cd3143f7825a0b29c8e57986960b5b168560b
 	 * @author kuma
 	 * @param string $email
 	 * @param string $origin
@@ -888,13 +892,15 @@ class Utils
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
 		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
+		
 		$connection = new Connection();
 		$connection->deepQuery($sql);
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
-		if (isset($r[0]->id))
+		
+		if (isset($r[0]->id)) 
 			return intval($r[0]->id);
-	
-			return false;
+		
+		return false;
 	}
 	
 	/**
@@ -909,4 +915,5 @@ class Utils
 		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
 	}
+
 }
