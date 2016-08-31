@@ -1539,7 +1539,7 @@ class ManageController extends Controller
 			
 			$values = '';
 			foreach($answers as $ans){
-				$values[$ans->title." ({$ans->choosen})"] = $ans->choosen; 
+				$values[wordwrap($ans->title,80)." ({$ans->choosen})"] = $ans->choosen; 
 			}
 			
 			$chart = $this->getPieChart($question->title, $values);
