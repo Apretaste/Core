@@ -1,5 +1,6 @@
 <div class="row">
 	<div class="col-xs-12">
+	
 	<?php if (isset($message)):?>
 	<?php if ($message!==false): ?>
 		<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
@@ -86,44 +87,49 @@
 		</div>
 	</div>
 	
- 
-	<table id="marketTable" class="table">
-		<thead>
-			<tr>
-				<th>Active</th>
-				<th>Code</th>
-				<th>Name</th>
-				<th>Price</th>
-				<th>Shipping price</th>
-				<th>Credits</th>
-				<th>Agency</th>
-				<th>Owner</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php foreach ($products as $product): ?>
-				<tr id = "<?php echo $product->code; ?>" <?php if ($product->active == '1'):?> class = "product-active" <?php else: ?> class = "product-non-active" <?php endif;?>>
-					<?php if ($product->active == '1'):?>
-					<td ><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-check"></span></button></td>
-					<?php else:?>
-					<td><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-unchecked"></span></button></td>
-					<?php endif;?>
-					<td><?php echo $product->code; ?></td>
-					<td><?php echo $product->name; ?></td>
-					<td><?php echo $product->price; ?></td>
-					<td><?php echo $product->shipping_price; ?></td>
-					<td><?php echo $product->credits; ?></td>
-					<td><?php echo $product->agency; ?></td>
-					<td><a href="mailto:<?php echo $product->owner;?>"><?php echo $product->owner;?></a></td>
-					<td>
-						<a href="/manage/marketDetail/<?php echo $product->code;?>" class="btn btn-success"><span class="glyphicon glyphicon-edit"></span></a>
-						<a onclick ="return confirm('Are you sure?');" href="/manage/marketDelete/<?php echo $product->code;?>" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span></a>
-					</td>
-					
-				</tr>
-			<?php endforeach;?>
-		</tbody>
+ <div class="ibox float-e-margins">
+ 	<div class="ibox-content">
+		<div class="table-responsive">
+			<table id="marketTable" class="table">
+				<thead>
+					<tr>
+						<th>Active</th>
+						<th>Code</th>
+						<th>Name</th>
+						<th>Price</th>
+						<th>Shipping price</th>
+						<th>Credits</th>
+						<th>Agency</th>
+						<th>Owner</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ($products as $product): ?>
+						<tr id = "<?php echo $product->code; ?>" <?php if ($product->active == '1'):?> class = "product-active" <?php else: ?> class = "product-non-active" <?php endif;?>>
+							<?php if ($product->active == '1'):?>
+							<td ><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-check"></span></button></td>
+							<?php else:?>
+							<td><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-unchecked"></span></button></td>
+							<?php endif;?>
+							<td><?php echo $product->code; ?></td>
+							<td><?php echo $product->name; ?></td>
+							<td><?php echo $product->price; ?></td>
+							<td><?php echo $product->shipping_price; ?></td>
+							<td><?php echo $product->credits; ?></td>
+							<td><?php echo $product->agency; ?></td>
+							<td><a href="mailto:<?php echo $product->owner;?>"><?php echo $product->owner;?></a></td>
+							<td>
+								<a href="/manage/marketDetail/<?php echo $product->code;?>" class="btn btn-success"><span class="glyphicon glyphicon-edit"></span></a>
+								<a onclick ="return confirm('Are you sure?');" href="/manage/marketDelete/<?php echo $product->code;?>" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span></a>
+							</td>
+							
+						</tr>
+					<?php endforeach;?>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
 
 <script>

@@ -1,58 +1,67 @@
-<div class="row">
-	<div class="col-xs-4">
-		<p>Welcome to Apretaste's management tool.</p>
-		<br/>
+<div class="row  border-bottom white-bg dashboard-header">
+	<div class="col-sm-3">
+		<h2>Welcome Salvi</h2>
+		<small>You have 42 messages and 6 notifications.</small>
+		<ul class="list-group clear-list m-t">
+			<li class="list-group-item fist-item"><span class="pull-right"> 09:00 pm </span> <span class="label label-success">1</span> Please contact me</li>
+			<li class="list-group-item"><span class="pull-right"> 10:16 am </span> <span class="label label-info">2</span> Sign a contract</li>
+			<li class="list-group-item"><span class="pull-right"> 08:22 pm </span> <span class="label label-primary">3</span> Open new shop</li>
+			<li class="list-group-item"><span class="pull-right"> 11:06 pm </span> <span class="label label-default">4</span> Call back to Sylvia</li>
+			<li class="list-group-item"><span class="pull-right"> 12:00 am </span> <span class="label label-primary">5</span> Write a letter to Sandra</li>
+		</ul>
+	</div>
+	<div class="col-sm-6">
+		<div class="flot-chart dashboard-chart">
+			<div class="flot-chart-content" id="flot-dashboard-chart"></div>
+		</div>
+		<div class="row text-left">
+			<div class="col-xs-4">
+				<div class=" m-l-md">
+					<span class="h4 font-bold m-t block">$ 406,100</span> <small class="text-muted m-b block">Sales marketing report</small>
+				</div>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block">$ 150,401</span> <small class="text-muted m-b block">Annual sales revenue</small>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block">$ 16,822</span> <small class="text-muted m-b block">Half-year revenue margin</small>
+			</div>
+
+		</div>
+	</div>
+	<div class="col-sm-3">
+		<div class="statistic-box">
+			<h4>Project Beta progress</h4>
+			<p>You have two project with not compleated task.</p>
+			<div class="row text-center">
+				<div class="col-lg-6">
+					<canvas id="polarChart" width="80" height="80"></canvas>
+					<h5>Kolter</h5>
+				</div>
+				<div class="col-lg-6">
+					<canvas id="doughnutChart" width="78" height="78"></canvas>
+					<h5>Maxtor</h5>
+				</div>
+			</div>
+			<div class="m-t">
+				<small>Lorem Ipsum is simply dummy text of the printing and typesetting industry.</small>
+			</div>
+
+		</div>
 	</div>
 </div>
-
 <div class="row">
 	<div class="col-xs-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">Analytics</div>
-			<div class="panel-body">
-				<a href="/manage/audience">Audience</a><br/>
-				<a href="/manage/profile">Profile</a><br/>
-				<a href="/manage/profilesearch">Profile Search</a><br/>
-				<a href="/manage/remarketing">Remarketing</a><br/>
-				<a href="/manage/raffles">Raffles</a><br/>
-				<a href="/manage/services">List of Services</a><br/>
-				<a href="/manage/ads">List of Ads</a><br/>
-				<a href="/manage/dropped">Dropped emails</a><br/>
-				<a href="/manage/surveys">Surveys</a><br/>
-				<a href="/manage/addcredit">Add credit</a><br/>
-			</div>
-		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading">Developer</div>
-			<div class="panel-body">
-				<a href="/manage/deploy">Deploy</a><br/>
-				<a href="/manage/errors">Error logs</a><br/>
-				<a href="sandbox">Test a service</a><br/>
-				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://app.mailerlite.com" target="_blank">Mailer Lite <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="http://sendy.apretaste.com" target="_blank">Sendy <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://admin.google.com/pragres.com" target="_blank">Google Admin Console <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://apretaste.zendesk.com" target="_blank">ZenDesk <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://www.email-validator.net/dashboard/index.html" target="_blank">Email Validator <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://block.io" target="_blank">Bitcoin API <small><i class="fa fa-external-link"></i></small></a><br/>
-			</div>
-		</div>
+		
 	</div>
 
 	<div class="col-xs-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">Admin</div>
-			<div class="panel-body">
-				<a href="/manage/createad">Create ad</a><br/>
-				<a href="/manage/createraffle">Create raffle</a><br/>
-				<a href="/manage/jumper">Jumper</a><br/>
-				<a href="/manage/market">Market</a><br/>
-			</div>
-		</div>
 		
+
 		<div class="panel panel-default">
-			<div class="panel-heading"><a href="/manage/remarketing">Tasks status</a></div>
+			<div class="panel-heading">
+				<a href="/manage/remarketing">Tasks status</a>
+			</div>
 			<div class="panel-body">
 				<table class="table table-condensed fullscreen">
 					<thead>
@@ -78,7 +87,9 @@
 
 	<div class="col-xs-4">
 		<div class="panel panel-<?= $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>">
-			<div class="panel-heading"><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></div>
+			<div class="panel-heading">
+				<a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small>
+			</div>
 			<div class="panel-body">
 				<table class="fullscreen">
 					<tr>

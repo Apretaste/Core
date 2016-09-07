@@ -34,7 +34,6 @@ class ManageController extends Controller
 			ORDER BY total DESC");
 		// END measure the effectiveness of each promoter
 
-		$this->view->title = "Home";
 		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
@@ -1634,7 +1633,7 @@ class ManageController extends Controller
 				$this->view->menu = array(
 					array('caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'),
 					array('caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'),
-					array('caption' => 'Stats', 'href' => '/manage/stats', 'icon' => 'stats')
+					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
 				);
 		}
 		
@@ -1941,6 +1940,11 @@ class ManageController extends Controller
 		$this->view->title = "Market's orders";
 	}
 	
+	/**
+	 * Edit product's destination data
+	 * 
+	 *  @author kuma
+	 */
 	public function marketDestinationAction()
 	{
 		$this->setMenu('market');
@@ -1991,6 +1995,7 @@ class ManageController extends Controller
 			}
 		}
 	}
+	
 	/**
 	 * Market statistics
 	 *
@@ -1998,6 +2003,41 @@ class ManageController extends Controller
 	 */
 	public function marketStatsAction()
 	{
+		$connection = new Connection();
+		
+		// max credit
+		$maxCredit = $connection->deepQuery("SELECT max(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$maxCredit = $maxCredit[0]->m;
+		
+		// max credit
+		$minCredit = $connection->deepQuery("SELECT min(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;");
+		$minCredit = $minCredit[0]->m;
+		
+		// avg credit
+		$avgCredit = $connection->deepQuery("SELECT avg(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$avgCredit = $avgCredit[0]->m;
+		
+		// total credit
+		$sumCredit = $connection->deepQuery("SELECT sum(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$sumCredit = $sumCredit[0]->m;
+				
+		$monthlySells = $connection->deepQuery("SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;");
+		
+		$totalUsers = $connection->deepQuery("SELECT count(*) as t FROM person;");
+		$totalUsers = $totalUsers[0]->t;
+		
+		$totalUsersWidthCredit = $connection->deepQuery("SELECT count(*) as t FROM person where credit > 0;");
+		$totalUsersWidthCredit = $totalUsersWidthCredit[0]->t;
+		
+		$this->view->maxCredit = $maxCredit;
+		$this->view->avgCredit = $avgCredit;
+		$this->view->sumCredit = $sumCredit;
+		$this->view->minCredit = $minCredit;
+		$this->view->monthlySells = $monthlySells;
+		$this->view->totalUsersWidthCredit = $totalUsersWidthCredit;
+		$this->view->totalUsers = $totalUsers;
+		
+		$this->view->title = "Market' stats";
 		$this->updateMarketOrders();
 	}
 	
