@@ -1,68 +1,37 @@
 <div class="row  border-bottom white-bg dashboard-header">
 	<div class="col-sm-3">
-		<h2>Welcome Salvi</h2>
-		<small>You have 42 messages and 6 notifications.</small>
-		<ul class="list-group clear-list m-t">
-			<li class="list-group-item fist-item"><span class="pull-right"> 09:00 pm </span> <span class="label label-success">1</span> Please contact me</li>
-			<li class="list-group-item"><span class="pull-right"> 10:16 am </span> <span class="label label-info">2</span> Sign a contract</li>
-			<li class="list-group-item"><span class="pull-right"> 08:22 pm </span> <span class="label label-primary">3</span> Open new shop</li>
-			<li class="list-group-item"><span class="pull-right"> 11:06 pm </span> <span class="label label-default">4</span> Call back to Sylvia</li>
-			<li class="list-group-item"><span class="pull-right"> 12:00 am </span> <span class="label label-primary">5</span> Write a letter to Sandra</li>
-		</ul>
+		<h2>Welcome <?php if (isset($currentUser->fullName)) echo $currentUser->fullName;?></h2>
+		<small>You have <?php echo count($notifications); ?> notifications.</small>
 	</div>
 	<div class="col-sm-6">
-		<div class="flot-chart dashboard-chart">
-			<div class="flot-chart-content" id="flot-dashboard-chart"></div>
-		</div>
 		<div class="row text-left">
 			<div class="col-xs-4">
 				<div class=" m-l-md">
-					<span class="h4 font-bold m-t block">$ 406,100</span> <small class="text-muted m-b block">Sales marketing report</small>
+					<span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
 				</div>
 			</div>
 			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block">$ 150,401</span> <small class="text-muted m-b block">Annual sales revenue</small>
+				<span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
 			</div>
 			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block">$ 16,822</span> <small class="text-muted m-b block">Half-year revenue margin</small>
+				<span class="h4 font-bold m-t block">$ <?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
 			</div>
-
 		</div>
 	</div>
 	<div class="col-sm-3">
 		<div class="statistic-box">
-			<h4>Project Beta progress</h4>
-			<p>You have two project with not compleated task.</p>
-			<div class="row text-center">
-				<div class="col-lg-6">
-					<canvas id="polarChart" width="80" height="80"></canvas>
-					<h5>Kolter</h5>
-				</div>
-				<div class="col-lg-6">
-					<canvas id="doughnutChart" width="78" height="78"></canvas>
-					<h5>Maxtor</h5>
-				</div>
-			</div>
-			<div class="m-t">
-				<small>Lorem Ipsum is simply dummy text of the printing and typesetting industry.</small>
-			</div>
-
+			
 		</div>
 	</div>
 </div>
+<br/>
 <div class="row">
 	<div class="col-xs-4">
-		
-	</div>
-
-	<div class="col-xs-4">
-		
-
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<a href="/manage/remarketing">Tasks status</a>
+		<div class="ibox float-e-margins">
+			 <div class="ibox-title">
+				<h5><a href="/manage/remarketing">Tasks status</a></h5>
 			</div>
-			<div class="panel-body">
+			<div class="ibox-content">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>
@@ -86,11 +55,16 @@
 	</div>
 
 	<div class="col-xs-4">
-		<div class="panel panel-<?= $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>">
-			<div class="panel-heading">
-				<a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small>
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></h5>
+				<?php if ($deliveryFailurePercentage > 2): ?>
+				<div class="ibox-tools">
+                     <span class="label label-danger pull-right">ALERT !!!</span>
+                </div>
+				<?php endif; ?>
 			</div>
-			<div class="panel-body">
+			<div class="ibox-content">
 				<table class="fullscreen">
 					<tr>
 						<td width="50%">delivered: <?= number_format($delivery['delivered']); ?></td>
@@ -115,10 +89,13 @@
 				</table>
 			</div>
 		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading">Promoters (unpaid)</div>
-			<div class="panel-body">
+	</div>
+	<div class="col-xs-4">
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5>Promoters <small>(unpaid)</small></h5>
+			</div>
+			<div class="ibox-content">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>
