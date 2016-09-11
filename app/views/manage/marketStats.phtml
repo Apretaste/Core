@@ -7,12 +7,8 @@
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
-				<span class="label label-info pull-right"><?php echo $totalUsersWidthCredit; ?> with credit of <?php echo $totalUsers; ?> users</span>
+				<span class="label label-info pull-right"><?php echo $totalUsersWidthCredit; ?> / <?php echo $totalUsers; ?> users</span>
 				<h5>Total credit</h5>
-				<div class="stat-percent font-bold text-info">
-			<?php echo $totalUsersWidthCredit; ?> with credit of <?php echo $totalUsers; ?> users 
-			<i class="fa fa-level-up"></i>
-			</div>
 			</div>
 			
 			<div class="ibox-content">
@@ -92,13 +88,13 @@
 	$(function(){
 
 		 var data2 = [
-		<?php foreach($monthlySells as $k=> $m): ?>
+		<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
 		<?php echo "[gd({$m->y},{$m->m}, 1),{$m->total}],\n";?>
 		<?php endforeach;?>
             ];
 
             var data3 = [
-		<?php foreach($monthlySells as $k=> $m): ?>
+		<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
 		<?php echo "[gd({$m->y},{$m->m}, 1),{$m->pays}],\n";?>
 		<?php endforeach;?>
             ];
@@ -191,23 +187,15 @@
 
             $.plot($("#monthly"), dataset, options);
 
-            var dataPie = [{
-                label: "Sales 1",
-                data: 21,
-                color: "#d3d3d3",
-            }, {
-                label: "Sales 2",
-                data: 3,
-                color: "#bababa",
-            }, {
-                label: "Sales 3",
-                data: 15,
-                color: "#79d2c0",
-            }, {
-                label: "Sales 4",
-                data: 52,
-                color: "#1ab394",
-            }];
+            var dataPie = [
+                           <?php if (is_array($sellsByProduct)) foreach($sellsByProduct as $p): ?>
+                           {
+               				label: "<?php echo $p->name; ?>",
+               				data: <?php echo $p->total; ?>,
+               				color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)
+                           }
+                           <?php endforeach; ?> 
+                           ];
 
             var plotObj = $.plot($("#flot-pie-chart"), dataPie, {
                 series: {

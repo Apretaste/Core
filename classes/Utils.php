@@ -908,4 +908,75 @@ class Utils
 		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
 	}
+	
+
+	/**
+	 * Return user's notifications
+	 *
+	 * @param string $email
+	 * @return array
+	 */
+	public function getUnreadNotifications($email, $limit = 50)
+	{
+		$connection = new Connection();
+		$sql = "SELECT * FROM notifications WHERE viewed = '0' AND email ='{$email}' ORDER BY inserted_date DESC LIMIT $limit;";
+		$n = $connection->deepQuery($sql);
+		if ( ! is_array($n))
+			$n = array();
+			return $n;
+	}
+	
+	/**
+	 * Get differents statistics
+	 *
+	 * @author kuma
+	 * @param string $stat_name
+	 * @param array $params
+	 * @return mixed
+	 */
+	public function getStat($statName = 'person.count', $params = array())
+	{
+		$sql = '';
+		$connection = new Connection();
+	
+		// prepare query templates...
+		$sqls = array(
+			'person.count' => "SELECT count(*) as c FROM person;",
+			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
+			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.count' => "SELECT count(*) as c FROM person where credit > 0;",
+			'market.sells.monthly' => "SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
+			'utilization.count' => "SELECT count(*) FROM utilization;",
+			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(*) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
+		);
+	
+		if (!isset($sqls[$statName]))
+			throw new Exception('Unknown stat '.$statName);
+				
+			$sql = $sqls[$statName];
+	
+			// replace params
+			foreach ($params as $param => $value)
+				$sql = str_replace($param, $value, $sql);
+	
+				// querying db ...
+				$r = $connection->deepQuery($sql);
+	
+				if (!is_array($r))
+					return null;
+	
+					// try return atomic result
+					if (count($r) === 1)
+						if (isset($r[0]))
+						{
+							$x = get_object_vars($r[0]);
+							if (count($x) === 1)
+								return array_pop($x);
+						}
+	
+					// else return the entire array
+					return $r;
+	}
 }
