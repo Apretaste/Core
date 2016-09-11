@@ -34,7 +34,6 @@ class ManageController extends Controller
 			ORDER BY total DESC");
 		// END measure the effectiveness of each promoter
 
-		$this->view->title = "Home";
 		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
@@ -188,7 +187,6 @@ class ManageController extends Controller
 		$this->view->currentNumberOfRunningaAds = $runningAds[0]->CountAds;
 	}
 
-
 	/**
 	 * Profile
 	 * */
@@ -313,7 +311,6 @@ class ManageController extends Controller
 		$this->view->profilesPerProvince = $profilesPerProvince;
 	}
 
-
 	/**
 	 * Profile search
 	 * */
@@ -364,7 +361,6 @@ class ManageController extends Controller
 		$this->view->title = "Search for a profile";
 	}
 
-
 	/**
 	 * List of raffles
 	 * */
@@ -395,7 +391,6 @@ class ManageController extends Controller
 		$this->view->title = "List of raffles";
 		$this->view->raffleListData = $raffleListCollection;
 	}
-
 
 	/**
 	 * create raffle
@@ -439,7 +434,6 @@ class ManageController extends Controller
 
 		$this->view->title = "Create raffle";
 	}
-		
 
 	/**
 	 * List of services
@@ -460,7 +454,6 @@ class ManageController extends Controller
 		$this->view->services = $services;
 	}
 
-
 	/**
 	 * List of ads
 	 * */
@@ -474,7 +467,6 @@ class ManageController extends Controller
 		$this->view->title = "List of ads";
 		$this->view->ads = $ads;
 	}
-
 
 	/**
 	 * Manage the ads
@@ -532,7 +524,6 @@ class ManageController extends Controller
 		$this->view->title = "Create ad";
 	}
 
-
 	/**
 	 * Jumper
 	 * */
@@ -546,7 +537,6 @@ class ManageController extends Controller
 		$this->view->title = "Jumper";
 		$this->view->jumperData = $jumperData;
 	}
-
 
 	/**
 	 * Deploy a new service or update an old one
@@ -1628,5 +1618,431 @@ class ManageController extends Controller
 		ob_end_clean();
 		
 		return base64_encode($img);
+	}
+	
+	/**
+	 * Top menu
+	 * 
+	 * @param string $name
+	 */
+	private function setMenu($name = 'default')
+	{
+		switch ($name)
+		{
+			case 'market':
+				$this->view->menu = array(
+					array('caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'),
+					array('caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'),
+					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
+				);
+		}
+		
+	}
+	
+	/**
+	 * Market
+	 * 
+	 * @author kuma
+	 */
+	public function marketAction()
+	{
+		$connection = new Connection();
+		$sql = "SELECT * FROM _tienda_products ORDER BY name;";
+		$products = $connection->deepQuery($sql);
+		
+		if (!is_array($products))
+			$products = array();
+		
+		$this->view->products = $products;
+		$this->view->title = "Market's products";
+		$this->setMenu('market');
+	}
+	
+	/**
+	 * New product
+	 * 
+	 * @author kuma
+	 */
+	public function marketNewProductAction()
+	{
+		$connection = new Connection();
+		
+		if($this->request->isPost())
+		{
+			// generate code
+			$code = substr(date("Ymdhi"), 2);
+			
+			// get data from post
+			$name = $this->request->getPost('edtName');
+			$description = $this->request->getPost('edtDesc');
+			$category = $this->request->getPost('edtCategory');
+			$price = $this->request->getPost('edtPrice') * 1;
+			$shipping_price = $this->request->getPost('edtShippingPrice') * 1;
+			$credits = $this->request->getPost('edtCredits') * 1;
+			$agency = $this->request->getPost('edtAgency');
+			$owner = $this->request->getPost('edtOwner');
+			
+			// add product
+			$sql = "INSERT INTO _tienda_products (code, name, description, category, price, shipping_price, credits, agency, owner)
+					VALUES ('$code', '$name', '$description','$category','$price','$shipping_price','$credits','$agency','$owner');";
+			
+			$connection->deepQuery($sql);
+			
+			// add inventory
+			$sql = "INSERT INTO inventory (code, price, name, seller, service, active)
+					VALUES ('$code','$credits','$name','$owner','MERCADO',0);";
+			
+			$connection->deepQuery($sql);
+			
+			// redirect to edit product page
+			$this->view->code = $code;
+			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketDetail"));
+		}
+	}
+	
+	/**
+	 * Update product
+	 * 
+	 * @author kuma
+	 */
+	public function marketUpdateAction()
+	{
+		$connection = new Connection();
+		
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$code =  explode("/",$url);
+		$code = $code[count($code)-1];
+		
+		if ($this->request->isPost())
+		{
+			$name = $this->request->getPost('edtName');
+			$description = $this->request->getPost('edtDesc');
+			$category = $this->request->getPost('edtCategory');
+			$price = $this->request->getPost('edtPrice') * 1;
+			$shipping_price = $this->request->getPost('edtShippingPrice') * 1;
+			$credits = $this->request->getPost('edtCredits') * 1;
+			$agency = $this->request->getPost('edtAgency');
+			$owner = $this->request->getPost('edtOwner');
+				
+			$sql = "
+			UPDATE _tienda_products
+			SET       name = '$name', 				
+			   description = '$description',
+			      category = '$category', 			
+			         price = '$price',
+			shipping_price = '$shipping_price',	
+			       credits = '$credits',
+			        agency = '$agency',
+			         owner = '$owner'
+			WHERE code = '$code';";
+		
+			$connection->deepQuery($sql);
+			
+			// update inventory
+			$sql = "
+			UPDATE inventory
+			SET name = '$name', 
+			   price = '$credits',
+			  seller = '$owner'
+			WHERE code = '$code';";
+			
+			$connection->deepQuery($sql);
+			
+			$this->view->message = 'The product was updated';
+			$this->view->message_type = "success";
+			$this->view->code = $code;
+			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketDetail"));
+		}
+	}
+	
+	/**
+	 * Edit product
+	 * 
+	 * @author kuma
+	 */
+	public function marketDetailAction()
+	{
+		$connection = new Connection();
+		$wwwroot = $this->di->get('path')['root'];
+		
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$code =  explode("/",$url);
+		$code = $code[count($code)-1];
+
+		if ($code == 'marketNewProduct' || $code == 'marketDetail' || empty(trim($code)))
+			$code = null;
+		
+		if (is_null($code))
+			if (isset($this->view->code))
+				$code = $this->view->code;
+			else 
+			{
+				$this->view->message_type = "danger";
+				$this->view->message = "Missing product's code";
+				return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
+			}
+		
+		$sql = "SELECT * FROM _tienda_products WHERE code = '$code';";
+		
+		$product = $connection->deepQuery($sql);
+	
+		if ( ! is_array($product))
+		{
+			$this->view->message_type = "danger";
+			$this->view->message = "Product <b>$code</b> not exists";
+			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
+		}
+		
+		$this->view->product = $product[0];
+		$this->view->wwwroot = $wwwroot;
+		$this->view->title = "Product's details";
+		$this->setMenu('market');
+	}
+	
+	/**
+	 * Set product's picture
+	 * 
+	 * @author kuma
+	 */
+	public function marketPictureAction()
+	{
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$code =  explode("/",$url);
+		$code = $code[count($code)-1];
+		
+		$wwwroot = $this->di->get('path')['root'];
+		
+		copy($_FILES['file_data']['tmp_name'], "$wwwroot/public/products/$code");
+		
+		echo '{}';
+		$this->view->disable();
+	}
+	
+	/**
+	 * Delete product's picture
+	 * 
+	 * @author kuma
+	 */
+	public function marketPictureDeleteAction()
+	{
+		$code = $this->request->getPost('code');
+		$wwwroot = $this->di->get('path')['root'];
+		
+		$fn = "$wwwroot/public/products/$code";
+		if (file_exists($fn))
+			unlink($fn);
+		
+		echo '{result: true}';
+		$this->view->disable();
+	}
+		
+	/**
+	 * Delete product
+	 * 
+	 * @author kuma
+	 */
+	public function marketDeleteAction()
+	{
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$code =  explode("/",$url);
+		$code = $code[count($code)-1];
+		
+		$connection = new Connection();
+		$wwwroot = $this->di->get('path')['root'];
+		
+		// delete record from database
+		$sql = "DELETE FROM _tienda_products WHERE code = '$code';";
+		$connection->deepQuery($sql);
+		
+		// delete record from inventory
+		$sql = "DELETE FROM inventory WHERE code = '$code';";
+		$connection->deepQuery($sql);
+		
+		// delete related picture
+		$fn = "$wwwroot/public/products/$code";
+		if (file_exists($fn))
+			unlink($fn);
+		
+		$this->view->message = "The product $code was deleted";
+		$this->view->message_type = "success";
+		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
+	}
+	
+	/**
+	 * Toggle product's activation
+	 * 
+	 * @author kuma
+	 */
+	public function marketToggleActivationAction()
+	{
+		$connection = new Connection();
+		$code = $this->request->getPost('code');
+		$product = $connection->deepQuery("SELECT active FROM _tienda_products WHERE code = '$code';");
+		if (is_array($product))
+		{
+			$product = $product[0];
+			$active = $product->active;
+			$toggle = '1';
+			if ($active == '1') 
+				$toggle = '0';
+			
+			$sql = "UPDATE _tienda_products SET active = '$toggle' WHERE code = '$code';";
+			$connection->deepQuery($sql);
+			
+			$sql = "UPDATE inventory SET active = '$toggle' WHERE code = '$code';";
+			$connection->deepQuery($sql);
+			
+			echo $toggle;
+			$this->view->disable();
+		}
+		
+	}
+	
+	/**
+	 * Retrieve transfer into market's orders
+	 * 
+	 * @author kuma
+	 */
+	private function updateMarketOrders()
+	{
+		$sql = "INSERT INTO _tienda_orders (id, product, email, inserted_date)
+				SELECT id, inventory_code, sender, transfer_time
+				FROM transfer INNER JOIN inventory on transfer.inventory_code = inventory.code 
+				WHERE inventory.service = 'MERCADO' AND transfer.transfered = '1' 
+					AND NOT EXISTS (SELECT * FROM _tienda_orders WHERE _tienda_orders.id = transfer.id);";
+		
+		$connection = new Connection();
+		$connection->deepQuery($sql);
+	}
+	
+	/**
+	 * Manage market's orders
+	 * 
+	 * @author kuma
+	 */
+	public function marketOrdersAction()
+	{
+		$this->setMenu('market');
+		$this->updateMarketOrders();
+		$connection = new Connection();
+		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = '0';";
+		$orders = $connection->deepQuery($sql);
+		
+		$this->view->orders = $orders;
+		$this->view->title = "Market's orders";
+	}
+	
+	/**
+	 * Edit product's destination data
+	 * 
+	 *  @author kuma
+	 */
+	public function marketDestinationAction()
+	{
+		$this->setMenu('market');
+		
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = $id[count($id)-1];
+		
+		$wwwroot = $this->di->get('path')['root'];
+		$connection = new Connection();
+		
+		if ($this->request->isPost())
+		{
+			$ci = $this->request->getPost('edtCI');
+			$name = $this->request->getPost('edtName');
+			$address = $this->request->getPost('edtAddress');
+			$province = $this->request->getPost('edtProvince');
+			$phone = $this->request->getPost('edtPhone');
+			
+			$sql = "UPDATE _tienda_orders SET ci = '$ci', name = '$name', address = '$address', province = '$province', phone = '$phone'
+					WHERE id = '$id';";
+			
+			$connection->deepQuery($sql);
+		}		
+		
+		$sql = "SELECT * FROM _tienda_orders WHERE id = '$id';";
+		$order = $connection->deepQuery($sql);
+		
+		if (is_array($order))
+		{
+			$order = $order[0];
+			$sql = "SELECT * FROM _tienda_products WHERE code = '$order->product';";
+			$product = $connection->deepQuery($sql);
+			
+			if (is_array($product))
+			{
+				$product = $product[0];
+				
+				$product->image = false;
+				
+				if (file_exists("$wwwroot/public/products/{$product->code}"))
+					$product->image = true;
+				
+				$this->view->product = $product;
+				$this->view->order = $order;
+			}
+		}
+	}
+	
+	/**
+	 * Market statistics
+	 *
+	 * @author kuma
+	 */
+	public function marketStatsAction()
+	{
+		$connection = new Connection();
+		
+		// max credit
+		$maxCredit = $connection->deepQuery("SELECT max(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$maxCredit = $maxCredit[0]->m;
+		
+		// max credit
+		$minCredit = $connection->deepQuery("SELECT min(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;");
+		$minCredit = $minCredit[0]->m;
+		
+		// avg credit
+		$avgCredit = $connection->deepQuery("SELECT avg(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$avgCredit = $avgCredit[0]->m;
+		
+		// total credit
+		$sumCredit = $connection->deepQuery("SELECT sum(credit) as m from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';");
+		$sumCredit = $sumCredit[0]->m;
+				
+		$monthlySells = $connection->deepQuery("SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;");
+		
+		$totalUsers = $connection->deepQuery("SELECT count(*) as t FROM person;");
+		$totalUsers = $totalUsers[0]->t;
+		
+		$totalUsersWidthCredit = $connection->deepQuery("SELECT count(*) as t FROM person where credit > 0;");
+		$totalUsersWidthCredit = $totalUsersWidthCredit[0]->t;
+		
+		$this->view->maxCredit = $maxCredit;
+		$this->view->avgCredit = $avgCredit;
+		$this->view->sumCredit = $sumCredit;
+		$this->view->minCredit = $minCredit;
+		$this->view->monthlySells = $monthlySells;
+		$this->view->totalUsersWidthCredit = $totalUsersWidthCredit;
+		$this->view->totalUsers = $totalUsers;
+		
+		$this->view->title = "Market' stats";
+		$this->updateMarketOrders();
+	}
+	
+	public function testAction()
+	{
+		
 	}
 }
