@@ -263,7 +263,8 @@ class Utils
 	 * */
 	public function optimizeImage($imagePath, $width = "", $height="", $quality = 70, $format = 'image/jpeg')
 	{
-		include_once "../lib/SimpleImage.php";
+		if ( ! class_exists('SimpleImage'))
+			include_once "../lib/SimpleImage.php";
 		
 		try 
 		{
@@ -284,13 +285,6 @@ class Utils
 		}
 		
 		return true;
-		
-		/*
-		if(empty($width) && empty($height)) $resize = "";
-		else $resize = "-resize ".$width."x".$height;
-
-		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath." > /var/www/Core/logs/convert.log");
-		*/
 	}
 
 	/**
@@ -875,7 +869,7 @@ class Utils
 	
 	/**
 	 * Insert anotification in database
-	 *
+	 * 
 	 * @author kuma
 	 * @param string $email
 	 * @param string $origin
@@ -887,13 +881,15 @@ class Utils
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
 		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
+		
 		$connection = new Connection();
 		$connection->deepQuery($sql);
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
-		if (isset($r[0]->id))
+		
+		if (isset($r[0]->id)) 
 			return intval($r[0]->id);
-	
-			return false;
+		
+		return false;
 	}
 	
 	/**
@@ -908,7 +904,6 @@ class Utils
 		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
 	}
-	
 
 	/**
 	 * Return user's notifications
@@ -955,28 +950,28 @@ class Utils
 		if (!isset($sqls[$statName]))
 			throw new Exception('Unknown stat '.$statName);
 				
-			$sql = $sqls[$statName];
+		$sql = $sqls[$statName];
 	
-			// replace params
-			foreach ($params as $param => $value)
-				$sql = str_replace($param, $value, $sql);
+		// replace params
+		foreach ($params as $param => $value)
+			$sql = str_replace($param, $value, $sql);
 	
-				// querying db ...
-				$r = $connection->deepQuery($sql);
+		// querying db ...
+		$r = $connection->deepQuery($sql);
+
+		if (!is_array($r))
+			return null;
 	
-				if (!is_array($r))
-					return null;
-	
-					// try return atomic result
-					if (count($r) === 1)
-						if (isset($r[0]))
-						{
-							$x = get_object_vars($r[0]);
-							if (count($x) === 1)
-								return array_pop($x);
-						}
-	
-					// else return the entire array
-					return $r;
+		// try return atomic result
+		if (count($r) === 1)
+			if (isset($r[0]))
+			{
+				$x = get_object_vars($r[0]);
+				if (count($x) === 1)
+					return array_pop($x);
+			}
+
+		// else return the entire array
+		return $r;
 	}
 }
