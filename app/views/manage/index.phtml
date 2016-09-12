@@ -1,59 +1,38 @@
-<div class="row">
-	<div class="col-xs-4">
-		<p>Welcome to Apretaste's management tool.</p>
-		<br/>
+<div class="row  border-bottom white-bg dashboard-header">
+	<div class="col-sm-3">
+		<h2>Welcome <?php if (isset($currentUser->fullName)) echo $currentUser->fullName; else echo substr($currentUser->email,0,strpos($currentUser->email,'@'));?></h2>
+		<small>You have <?php echo count($notifications); ?> notifications.</small>
+	</div>
+	<div class="col-sm-6">
+		
+		<div class="row text-left">
+			<div class="col-xs-4">
+				<div class=" m-l-md">
+					<span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
+				</div>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-3">
+		<div class="statistic-box">
+			
+		</div>
 	</div>
 </div>
-
+<br/>
 <div class="row">
 	<div class="col-xs-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">Analytics</div>
-			<div class="panel-body">
-				<a href="/manage/audience">Audience</a><br/>
-				<a href="/manage/profile">Profile</a><br/>
-				<a href="/manage/profilesearch">Profile Search</a><br/>
-				<a href="/manage/remarketing">Remarketing</a><br/>
-				<a href="/manage/raffles">Raffles</a><br/>
-				<a href="/manage/services">List of Services</a><br/>
-				<a href="/manage/ads">List of Ads</a><br/>
-				<a href="/manage/dropped">Dropped emails</a><br/>
-				<a href="/manage/surveys">Surveys</a><br/>
-				<a href="/manage/addcredit">Add credit</a><br/>
+		<div class="ibox float-e-margins">
+			 <div class="ibox-title">
+				<h5><a href="/manage/remarketing">Tasks status</a></h5>
 			</div>
-		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading">Developer</div>
-			<div class="panel-body">
-				<a href="/manage/deploy">Deploy</a><br/>
-				<a href="/manage/errors">Error logs</a><br/>
-				<a href="sandbox">Test a service</a><br/>
-				<a href="data" target="_blank">phpMyAdmin <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://app.mailerlite.com" target="_blank">Mailer Lite <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="http://sendy.apretaste.com" target="_blank">Sendy <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://admin.google.com/pragres.com" target="_blank">Google Admin Console <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://apretaste.zendesk.com" target="_blank">ZenDesk <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://www.email-validator.net/dashboard/index.html" target="_blank">Email Validator <small><i class="fa fa-external-link"></i></small></a><br/>
-				<a href="https://block.io" target="_blank">Bitcoin API <small><i class="fa fa-external-link"></i></small></a><br/>
-			</div>
-		</div>
-	</div>
-
-	<div class="col-xs-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">Admin</div>
-			<div class="panel-body">
-				<a href="/manage/createad">Create ad</a><br/>
-				<a href="/manage/createraffle">Create raffle</a><br/>
-				<a href="/manage/jumper">Jumper</a><br/>
-				<a href="/manage/market">Market</a><br/>
-			</div>
-		</div>
-		
-		<div class="panel panel-default">
-			<div class="panel-heading"><a href="/manage/remarketing">Tasks status</a></div>
-			<div class="panel-body">
+			<div class="ibox-content">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>
@@ -77,9 +56,16 @@
 	</div>
 
 	<div class="col-xs-4">
-		<div class="panel panel-<?= $deliveryFailurePercentage > 2 ? "danger" : "success"; ?>">
-			<div class="panel-heading"><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></div>
-			<div class="panel-body">
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></h5>
+				<?php if ($deliveryFailurePercentage > 2): ?>
+				<div class="ibox-tools">
+                     <span class="label label-danger pull-right">ALERT !!!</span>
+                </div>
+				<?php endif; ?>
+			</div>
+			<div class="ibox-content">
 				<table class="fullscreen">
 					<tr>
 						<td width="50%">delivered: <?= number_format($delivery['delivered']); ?></td>
@@ -104,10 +90,13 @@
 				</table>
 			</div>
 		</div>
-
-		<div class="panel panel-default">
-			<div class="panel-heading">Promoters (unpaid)</div>
-			<div class="panel-body">
+	</div>
+	<div class="col-xs-4">
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5>Promoters <small>(unpaid)</small></h5>
+			</div>
+			<div class="ibox-content">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>

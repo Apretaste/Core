@@ -4,20 +4,25 @@ use Phalcon\Mvc\Controller;
 
 class ManageController extends Controller
 {
+	
+	private $currentUser = false;
+	private $currentPerson = null;
+	
 	/**
 	 * Index for the manage system
 	 * */
 	public function indexAction()
 	{
-		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
-
+		$connection = new Connection();
+		$utils = new Utils();
+		
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
-		$failurePercentage = ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent;
+		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
 		// END delivery status widget
 
 		// START tasks status widget
@@ -34,13 +39,120 @@ class ManageController extends Controller
 			ORDER BY total DESC");
 		// END measure the effectiveness of each promoter
 
-		$this->view->title = "Home";
+		$this->view->totalUsers =  $utils->getStat('person.count');
+		$this->view->sumCredit = $utils->getStat('person.credit.sum');
+		$this->view->utilization = $utils->getStat('utilization.count');
 		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
 	}
 
+	public function beforeExecuteRoute($dispatcher)
+	{
+		$utils = new Utils();
+		$this->startSession();
+	
+		if ($dispatcher->getActionName() !== 'login' && $dispatcher->getActionName() !== 'logout')
+		{
+			if ($this->getCurrentUser() == false)
+			{
+				return $dispatcher->forward(array("controller"=> "manage", "action" => "login"));
+			}
+		}
+	
+		$this->view->currentUser = $this->getCurrentPerson();
+		$this->view->notifications = $utils->getUnreadNotifications($this->getCurrentUser(), 5);
+		$this->view->totalNotifications = $utils->getNumberOfNotifications($this->getCurrentUser());
+	}
+	
+	private function startSession()
+	{
+		if ( ! isset($_SESSION)) {
+			@session_start();
+			@session_name("apretaste.manage");
+		}
+	}
+	
+	/**
+	 * Return current user email
+	 *
+	 * @author kuma
+	 * @return mixed
+	 */
+	private function getCurrentUser()
+	{
+		$this->startSession();
+	
+		if (isset($_SESSION['user']))
+			return $_SESSION['user'];
+	
+			return false;
+	}
+	
+	private function getCurrentPerson()
+	{
+		$this->startSession();
+		$utils = new Utils();
+		$email = $this->getCurrentUser();
+	
+		if (is_null($this->currentPerson))
+		{
+			$this->currentPerson = $utils->getPerson($email);
+			if ($this->currentPerson === false)
+			{
+				$this->currentPerson = new stdClass();
+				$this->currentPerson->email = $email;
+				$this->currentPerson->fullName = ucfirst(substr($email,0,strpos($email,'@')));
+			}
+		} else
+		{
+			$this->currentPerson->fullName = $this->currentPerson->full_name;
+		}
+	
+		return $this->currentPerson;
+	}
+	
+	/**
+	 * Login in manage
+	 *
+	 * @author kuma
+	 */
+	public function loginAction()
+	{
+		$this->view->loginFail = false;
+		if ($this->request->isPost())
+		{
+			$email = $this->request->getPost('email');
+				
+			if ( ! is_null($email) && ! empty($email))
+			{
+				$pass = sha1($this->request->getPost('password'));
+	
+				$sql = "SELECT * FROM manage_users WHERE email = '$email' and password = '$pass';";
+				$connection = new Connection();
+				$r = $connection->deepQuery($sql);
+	
+				if (is_array($r))
+					if (isset($r[0]))
+						if ($r[0]->email == $email)
+						{
+							$this->startSession();
+							$_SESSION['user'] = $email;
+							return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
+						}
+					$this->view->loginFail = true;
+			}
+		}
+		$this->view->setLayout('login');
+	}
+	
+	public function logoutAction()
+	{
+		unset($_SESSION['user']);
+		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
+	}
+	
 	/**
 	 * Audience
 	 * */
@@ -1666,7 +1778,7 @@ class ManageController extends Controller
 				$this->view->menu = array(
 					array('caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'),
 					array('caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'),
-					array('caption' => 'Stats', 'href' => '/manage/stats', 'icon' => 'stats')
+					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
 				);
 		}
 		
@@ -1688,6 +1800,11 @@ class ManageController extends Controller
 		
 		$this->view->products = $products;
 		$this->view->title = "Market's products";
+		$this->view->breadcrumb = array(
+			"/manage" => "Home",
+			"/manage/admin" => "Admin",
+			"/manage/admin/market" => "Market"
+		);
 		$this->setMenu('market');
 	}
 	
@@ -1973,6 +2090,11 @@ class ManageController extends Controller
 		$this->view->title = "Market's orders";
 	}
 	
+	/**
+	 * Edit product's destination data
+	 * 
+	 *  @author kuma
+	 */
 	public function marketDestinationAction()
 	{
 		$this->setMenu('market');
@@ -2023,6 +2145,7 @@ class ManageController extends Controller
 			}
 		}
 	}
+	
 	/**
 	 * Market statistics
 	 *
@@ -2031,6 +2154,17 @@ class ManageController extends Controller
 	public function marketStatsAction()
 	{
 		$this->updateMarketOrders();
+		$utils = new Utils();
+		$this->view->maxCredit = $utils->getStat('person.credit.max');
+		$this->view->avgCredit = $utils->getStat('person.credit.avg');
+		$this->view->sumCredit = $utils->getStat('person.credit.sum');
+		$this->view->minCredit = $utils->getStat('person.credit.min');
+		$this->view->monthlySells = $utils->getStat('market.sells.monthly');
+		$this->view->totalUsersWidthCredit = $utils->getStat('person.credit.count');
+		$this->view->totalUsers =  $utils->getStat('person.count');
+		$this->view->sellsByProduct = $utils->getStat('market.sells.byproduct.last30days');
+		$this->view->title = "Market' stats";
+		
 	}
 	
 	public function testAction()
