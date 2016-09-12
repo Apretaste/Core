@@ -2088,6 +2088,12 @@ class ManageController extends Controller
 		
 		$this->view->orders = $orders;
 		$this->view->title = "Market's orders";
+		$this->view->breadcrumb = array(
+			'/manage' => 'Home',
+			'/manage/admin' => 'Admin',
+			'/manage/market' => 'Market',
+			'/manage/marketOrders' =>'Orders' 
+		);
 	}
 	
 	/**
