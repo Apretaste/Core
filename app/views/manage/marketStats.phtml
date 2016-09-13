@@ -1,22 +1,37 @@
 <script src="/js/jquery.flot.js"></script>
 <script src="/js/jquery.flot.tooltip.min.js"></script>
+<script src="/js/jquery.flot.spline.js"></script>
 <script src="/js/jquery.flot.resize.js"></script>
 <script src="/js/jquery.flot.pie.js"></script>
+<script src="/js/jquery.flot.symbol.js"></script>
 <script src="/js/jquery.flot.time.js"></script>
+<script src="/js/curvedLines.js"></script>
 <div class="row">
+	<div class="col-lg-6">
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5>
+					Sells by product <small>(last 30 days)</small>
+				</h5>
+			</div>
+			<div class="ibox-content">
+				<div class="flot-chart">
+					<div class="flot-chart-pie-content" id="flot-pie-chart"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
 				<span class="label label-info pull-right"><?php echo $totalUsersWidthCredit; ?> / <?php echo $totalUsers; ?> users</span>
 				<h5>Total credit</h5>
 			</div>
-			
+
 			<div class="ibox-content">
 				<h1 class="no-margins">$<?php echo number_format($sumCredit,2);?></h1>
 			</div>
 		</div>
-	</div>
-	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
 				<span class="label label-info pull-right">Users with credits</span>
@@ -36,8 +51,6 @@
 				<h1 class="no-margins">$<?php echo number_format($maxCredit,2);?></h1>
 			</div>
 		</div>
-	</div>
-	<div class="col-lg-3">
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
 				<h5>Credit average</h5>
@@ -48,144 +61,29 @@
 		</div>
 	</div>
 </div>
+
 <div class="row">
-<div class="col-lg-6">
-                    <div class="ibox float-e-margins">
-                        <div class="ibox-title">
-                            <h5>Pie Chart Example</h5>
-                            <div class="ibox-tools">
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <i class="fa fa-wrench"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-user">
-                                    <li><a href="#">Config option 1</a>
-                                    </li>
-                                    <li><a href="#">Config option 2</a>
-                                    </li>
-                                </ul>
-                                <a class="close-link">
-                                    <i class="fa fa-times"></i>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="ibox-content">
-                            <div class="flot-chart">
-                                <div class="flot-chart-pie-content" id="flot-pie-chart"></div>
+                    <div class="col-lg-12">
+                        <div class="ibox float-e-margins">
+                        	<div class="ibox-title">
+                        	<h5>Monthly sells <small>(last year)</small></h5>
+                        	</div>
+                            <div class="ibox-content">
+                                <div>
+                                    <canvas id="lineChart" height="70"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
-	
-	<div class="col-xs-8">
-	<div id="monthly" class="panel panel-default" style="width: 750px; height: 300px;"></div>
-	</div>
-	
-</div>
+                </div>
 
+ <!-- ChartJS-->
+    <script src="/js/Chart.min.js"></script>
+    
 <script>
 	$(function(){
 
-		 var data2 = [
-		<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
-		<?php echo "[gd({$m->y},{$m->m}, 1),{$m->total}],\n";?>
-		<?php endforeach;?>
-            ];
-
-            var data3 = [
-		<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
-		<?php echo "[gd({$m->y},{$m->m}, 1),{$m->pays}],\n";?>
-		<?php endforeach;?>
-            ];
-
-
-            var dataset = [
-                {
-                    label: "Number of orders",
-                    data: data3,
-                    color: "#1ab394",
-                    bars: {
-                        show: true,
-                        align: "center",
-                        barWidth: 24 * 60 * 60 * 600,
-                        lineWidth:0
-                    }
-
-                }, {
-                    label: "Payments",
-                    data: data2,
-                    yaxis: 2,
-                    color: "#1C84C6",
-                    lines: {
-                        lineWidth:1,
-                            show: true,
-                            fill: true,
-                        fillColor: {
-                            colors: [{
-                                opacity: 0.2
-                            }, {
-                                opacity: 0.4
-                            }]
-                        }
-                    },
-                    splines: {
-                        show: true,
-                        tension: 0.6,
-                        lineWidth: 1,
-                        fill: 0.1
-                    },
-                }
-            ];
-
-
-            var options = {
-                xaxis: {
-                    mode: "time",
-                    tickSize: [1, "month"],
-                    tickLength: 0,
-                    axisLabel: "Date",
-                    axisLabelUseCanvas: true,
-                    axisLabelFontSizePixels: 12,
-                    axisLabelFontFamily: 'Arial',
-                    axisLabelPadding: 10,
-                    color: "#d5d5d5"
-                },
-                yaxes: [{
-                    position: "left",
-                    max: 1070,
-                    color: "#d5d5d5",
-                    axisLabelUseCanvas: true,
-                    axisLabelFontSizePixels: 12,
-                    axisLabelFontFamily: 'Arial',
-                    axisLabelPadding: 3
-                }, {
-                    position: "right",
-                    clolor: "#d5d5d5",
-                    axisLabelUseCanvas: true,
-                    axisLabelFontSizePixels: 12,
-                    axisLabelFontFamily: ' Arial',
-                    axisLabelPadding: 67
-                }
-                ],
-                legend: {
-                    noColumns: 1,
-                    labelBoxBorderColor: "#000000",
-                    position: "nw"
-                },
-                grid: {
-                    hoverable: true,
-                    borderWidth: 0
-                }
-            };
-
-            function gd(year, month, day) {
-                return new Date(year, month - 1, day).getTime();
-            }
-
             var previousPoint = null, previousLabel = null;
-
-            $.plot($("#monthly"), dataset, options);
 
             var dataPie = [
                            <?php if (is_array($sellsByProduct)) foreach($sellsByProduct as $p): ?>
@@ -217,5 +115,65 @@
                 }
             });
 
+
+            var lineData = {
+                    labels: [<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>'<?php echo date("M", (new DateTime("{$m->y}-{$m->m}-01"))->getTimestamp()).' '.$m->y; ?>',<?php endforeach;?>],
+                    datasets: [
+                        {
+                            label: "Monthly sells",
+                            fillColor: "rgba(220,220,220,0.5)",
+                            strokeColor: "rgba(220,220,220,1)",
+                            pointColor: "rgba(220,220,220,1)",
+                            pointStrokeColor: "#fff",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(220,220,220,1)",
+                            data: [
+								<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
+								<?php echo "{$m->total},"; ?>
+								<?php endforeach;?>
+							]
+                        },
+                        {
+                            label: "Example dataset",
+                            fillColor: "rgba(26,179,148,0.5)",
+                            strokeColor: "rgba(26,179,148,0.7)",
+                            pointColor: "rgba(26,179,148,1)",
+                            pointStrokeColor: "#fff",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(26,179,148,1)",
+                            data: [
+   								<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
+								<?php echo "{$m->pays},"; ?>
+								<?php endforeach;?>
+								
+                            ]
+                        }
+                    ]
+                };
+
+                var lineOptions = {
+                    scaleShowGridLines: true,
+                    scaleGridLineColor: "rgba(0,0,0,.05)",
+                    scaleGridLineWidth: 1,
+                    bezierCurve: true,
+                    bezierCurveTension: 0.4,
+                    pointDot: true,
+                    pointDotRadius: 4,
+                    pointDotStrokeWidth: 1,
+                    pointHitDetectionRadius: 20,
+                    datasetStroke: true,
+                    datasetStrokeWidth: 2,
+                    datasetFill: true,
+                    responsive: true,
+                };
+
+
+                var ctx = document.getElementById("lineChart").getContext("2d");
+                var myNewChart = new Chart(ctx).Line(lineData, lineOptions);
+                
 	});
+
+
+
+	
 </script>
