@@ -1,76 +1,99 @@
 <script src="/js/summernote.min.js"></script>
 <link href="/css/summernote.css" rel="stylesheet">
 <link href="/css/summernote-bs3.css" rel="stylesheet">
-    	
+
 <?php if (isset($message)):?>
 	<?php if ($message!==false): ?>
-		<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
-	<?php endif;?>
+<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
 <?php endif;?>
-	
-<div class="row">
-	<div class="col-md-4" id ="pictureZone">
-		<input id="pictures" type="file" multiple=true data-max-file-count="1">
-		<br/>
-		<button class ="btn btn-danger" onclick="removePicture();">
-			<span class="glyphicon glyphicon-trash"></span> Remove picture
-		</button>
+<?php endif;?>
+
+<div class="ibox float-e-margins">
+
+	<div class="ibox-title">
+		<h5><?php echo $product->code.": ".$product->name; ?></h5>
 	</div>
-	<div class="col-md-8">
-		<form role="form" action = "/manage/marketUpdate/<?php echo $product->code; ?>" method = "post" id="newProductForm" enctype="multipart/form-data" data-toggle="validator">
-			<div class="form-group">
-				<label for="edtCode">Code</label>
-				<input type="text" class="form-control text" name="edtCode" id="edtCode" value="<?php echo $product->code;?>" disabled>						
+
+	<div class="ibox-content">
+		<form role="form" action="/manage/marketUpdate/<?php echo $product->code; ?>" method="post" id="newProductForm" enctype="multipart/form-data" data-toggle="validator">
+			<div class="row">
+				<div class="col-md-4" id="pictureZone">
+					<input id="pictures" type="file" multiple=true data-max-file-count="1">
+					<br />
+					<button class="btn btn-danger" onclick="removePicture();">
+						<span class="glyphicon glyphicon-trash"></span> Remove picture
+					</button>
+				</div>
+				<div class="col-md-8">
+					<div class="form-group">
+						<label for="edtCode">Code</label>
+						<input type="text" class="form-control text" name="edtCode" id="edtCode" value="<?php echo $product->code;?>" disabled>
+					</div>
+					<div class="form-group">
+						<label for="edtName">Name</label>
+						<input required type="text" class="form-control text" name="edtName" id="edtName" placeholder="name of the product" title="Insert name of the product" value="<?php echo $product->name;?>">
+					</div>
+
+
+
+					<div class="form-group">
+						<label for="edtCategory">Category</label>
+						<select required class="form-control m-b" name="edtCategory" id="edtCategory">
+							<option value="mobile" <?php if ($product->category == 'mobile'):?> SELECTED <?php endif;?>>Mobile</option>
+							<option value="accessory" <?php if ($product->category == 'accessory'):?> SELECTED <?php endif;?>>Accessory</option>
+							<option value="computer" <?php if ($product->category == 'computer'):?> SELECTED <?php endif;?>>Computer</option>
+							<option value="peripheral" <?php if ($product->category == 'peripheral'):?> SELECTED <?php endif;?>>Peripheral</option>
+							<option value="clothe" <?php if ($product->category == 'clothe'):?> SELECTED <?php endif;?>>Clothe</option>
+							<option value="service" <?php if ($product->category == 'service'):?> SELECTED <?php endif;?>>Service</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="edtPrice">Pricing</label>
+						<div class="row">
+							<div class="col-md-3">
+								<span>Price:</span>&nbsp;
+								<input placeholder="" value="<?php echo $product->price;?>" required type="text" class="form-control text" name="edtPrice" id="edtPrice">
+							</div>
+							<div class="col-md-3">
+								<span>&nbsp;Shipping:</span>&nbsp;
+								<input placeholder="" value="<?php echo $product->shipping_price;?>" required type="text" class="form-control text" name="edtShippingPrice" id="edtShippingPrice">
+							</div>
+							<div class="col-md-3">
+								<span>&nbsp;Credits:</span>&nbsp;
+								<input placeholder="" value="<?php echo $product->credits;?>" required type="text" class="form-control text" name="edtCredits" id="edtCredits">
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="edtAgency">Agency</label>
+						<input value="<?php echo $product->agency;?>" required type="text" class="form-control text" name="edtAgency" id="edtAgency" placeholder="name of the agency" title="Insert name of the product">
+					</div>
+
+					<div class="form-group">
+						<label for="edtOwner" class="control-label">Owner</label>
+						<input value="<?php echo $product->owner;?>" required type="email" class="form-control" name="edtOwner" id="edtOwner" placeholder="Email" data-error="Bruh, that email address is invalid" title="Insert the email of the product's owner">
+						<div class="help-block with-errors"></div>
+					</div>
+				</div>
 			</div>
-			<div class="form-group">
-				<label for="edtName">Name</label>
-				<input required type="text" class="form-control text" name="edtName" id="edtName" placeholder="name of the product" title="Insert name of the product" value="<?php echo $product->name;?>">						
+			<div class="row">
+				<div class="col-md-12">
+					<div class="form-group">
+						<label for="edtDesc">Description</label>
+						<textarea class="form-control" name="edtDesc" id="edtDesc"><?php echo $product->description;?></textarea>
+					</div>
+
+					<div class="form-footer">
+						<button type="submit" name="btnUpdate" class="btn btn-success">Update</button>
+					</div>
+
+				</div>
 			</div>
-			
-			<div class="form-group">
-				<label for="edtDesc">Description</label>
-				<textarea class="form-control" name="edtDesc" id="edtDesc"><?php echo $product->description;?></textarea>						
-			</div>
-			
-			<div class="form-group">
-				<label for="edtCategory">Category</label>
-				<select required class="form-control" name="edtCategory" id="edtCategory">
-					<option value="mobile"     <?php if ($product->category == 'mobile'):?>SELECTED<?php endif;?>>Mobile</option>
-					<option value="accessory"  <?php if ($product->category == 'accessory'):?>SELECTED<?php endif;?>>Accessory</option>
-					<option value="computer"   <?php if ($product->category == 'computer'):?>SELECTED<?php endif;?>>Computer</option>
-					<option value="peripheral" <?php if ($product->category == 'peripheral'):?>SELECTED<?php endif;?>>Peripheral</option>
-					<option value="clothe"     <?php if ($product->category == 'clothe'):?>SELECTED<?php endif;?>>Clothe</option>
-					<option value="service"    <?php if ($product->category == 'service'):?>SELECTED<?php endif;?>>Service</option>
-				</select>						
-			</div>
-			<div class="form-group">
-				<label for="edtPrice">Pricing</label>
-				<table>
-					<tr>
-						<td><span>Price:</span>&nbsp;</td><td><input  value="<?php echo $product->price;?>" required type="text" class="form-control text" name="edtPrice" id="edtPrice"></td>
-						<td><span>&nbsp;Shipping:</span>&nbsp;</td><td><input value="<?php echo $product->shipping_price;?>" required type="text" class="form-control text" name="edtShippingPrice" id="edtShippingPrice"></td>
-						<td><span>&nbsp;Credits:</span>&nbsp;</td><td><input value="<?php echo $product->credits;?>" required type="text" class="form-control text" name="edtCredits" id="edtCredits"></td>
-				</table>
-			</div>
-			
-			<div class="form-group">
-				<label for="edtAgency">Agency</label>
-				<input  value="<?php echo $product->agency;?>" required type="text" class="form-control text" name="edtAgency" id="edtAgency" placeholder="name of the agency" title="Insert name of the product">						
-			</div>
-			
-			<div class="form-group">
-				<label for="edtOwner" class="control-label">Owner</label>
-				<input  value="<?php echo $product->owner;?>" required type="email" class="form-control" name="edtOwner" id="edtOwner"placeholder="Email" data-error="Bruh, that email address is invalid" title="Insert the email of the product's owner">
-				<div class="help-block with-errors"></div> 						
-			</div>
-			
-			<div class="form-footer"> 
-				<button type="submit" name="btnUpdate" class="btn btn-success">Update</button>
-			</div> 
 		</form>
 	</div>
 </div>
-      
+
 <script>
 
 var pictureConfig = {
@@ -82,7 +105,7 @@ var pictureConfig = {
     autoReplace: false,
     initialPreviewShowDelete: false,
     initialPreview: [
-          '<img src="/products/<?php echo $product->code; ?>" class="file-preview-image" width="270px">',
+          '<img src="/products/<?php echo $product->code; ?>.jpg" class="file-preview-image">',
     ],
     initialPreviewConfig: {
         caption: 'picture', 
@@ -96,14 +119,20 @@ var pictureConfig = {
     maxImageHeight: 200,
     resizePreference: 'width',
     browseOnZoneClick: true,
+    removeLabel: '',
+    uploadLabel: '',
+    showClose: false,
+    showBrowse: false,
     //allowedFileTypes: ['image', 'video', 'flash'],
     slugCallback: function(filename) {
         return filename.replace('(', '_').replace(']', '_');
     }
 };
 
-$("#pictures").fileinput(pictureConfig);
-$('#edtDesc').summernote();
+$(function(){
+	$("#pictures").fileinput(pictureConfig);
+	$('#edtDesc').summernote();
+});
 
 function removePicture(){
 	 jQuery.ajax({

@@ -1950,6 +1950,12 @@ class ManageController extends Controller
 		$this->view->product = $product[0];
 		$this->view->wwwroot = $wwwroot;
 		$this->view->title = "Product's details";
+		$this->view->breadcrumb = array(
+			'/manage' => 'Home',
+			'/manage/admin' => 'Admin',
+			'/manage/market' => 'Market',
+			'/manage/marketDetail/'.$code => 'Product '.$code,
+		);
 		$this->setMenu('market');
 	}
 	
@@ -1967,8 +1973,10 @@ class ManageController extends Controller
 		$code = $code[count($code)-1];
 		
 		$wwwroot = $this->di->get('path')['root'];
-		
-		copy($_FILES['file_data']['tmp_name'], "$wwwroot/public/products/$code");
+		$fname = "$wwwroot/public/products/$code.jpg";
+		copy($_FILES['file_data']['tmp_name'], $fname);
+		$utils = new Utils();
+		$utils->optimizeImage($fname, '', '', 100, 'image/jpeg');
 		
 		echo '{}';
 		$this->view->disable();

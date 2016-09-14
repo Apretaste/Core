@@ -257,11 +257,18 @@ class Utils
 	/**
 	 * Reduce image size and optimize the image quality
 	 * 
-	 * @TODO Find an faster image optimization solution
 	 * @author salvipascual
+	 * @author kuma
+	 * @version 2.0
 	 * @param String $imagePath, path to the image
-	 * */
-	public function optimizeImage($imagePath, $width = "", $height="", $quality = 70, $format = 'image/jpeg')
+	 * @param number $width Fit to width
+	 * @param number $height Fit to height
+	 * @param number $quality Decrease/increase quality
+	 * @param string $format Convert to format
+	 * @return boolean
+	 */
+	 
+	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
 		if ( ! class_exists('SimpleImage'))
 			include_once "../lib/SimpleImage.php";
