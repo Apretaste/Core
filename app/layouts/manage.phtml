@@ -26,27 +26,15 @@
 		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
 
 		<!-- Bootstrap plugins -->
-		<script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
 		<link href="<?= $wwwhttp; ?>/css/fileinput.min.css" rel="stylesheet">
-		<script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
-		
 		<link href="<?= $wwwhttp; ?>/css/animate.css" rel="stylesheet">
-    	    
-		<!-- Font awesome -->
-		<link rel="stylesheet" href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css">
-
-		<!-- Custom stylesheets -->
+		<link href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
 		<link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
 		<link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
-		
-		<!-- Toastr style -->
-	    <link href="/css/toastr.min.css" rel="stylesheet">
-	
-	    <!-- Gritter -->
-	    <link href="/css/jquery.gritter.css" rel="stylesheet">
-	    
-	    <link href="/css/datatables.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/toastr.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
 	</head>
 
 	<body>
@@ -341,37 +329,24 @@
         </div>
     </div>
 </div>
-		<!-- Mainly scripts -->
-    <script src="/js/jquery.metisMenu.js"></script>
-    <script src="/js/jquery.slimscroll.min.js"></script>
-
-    <!-- Peity -->
-    <script src="/js/jquery.peity.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.metisMenu.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.slimscroll.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.peity.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/manage.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/pace.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery-ui.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.gritter.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.sparkline.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/toastr.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/datatables.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jasny-bootstrap.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
+	<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
+    
+    <!-- <script src="<?= $wwwhttp; ?>/js/demo/sparkline-demo.js"></script>  -->
+    <!-- <script src="<?= $wwwhttp; ?>/js/plugins/chartJs/Chart.min.js"></script>  -->
     <!--  <script src="js/demo/peity-demo.js"></script>  -->
-
-    <!-- Custom and plugin javascript -->
-    <script src="/js/manage.js"></script>
-    <script src="/js/pace.min.js"></script>
-
-    <!-- jQuery UI -->
-    <script src="/js/jquery-ui.min.js"></script>
-
-    <!-- GITTER -->
-    <script src="/js/jquery.gritter.min.js"></script>
-
-    <!-- Sparkline -->
-    <script src="/js/jquery.sparkline.min.js"></script>
-
-    <!-- Sparkline demo data  -->
-    <!-- <script src="js/demo/sparkline-demo.js"></script>  -->
-
-    <!-- ChartJS-->
-    <!-- <script src="js/plugins/chartJs/Chart.min.js"></script>  -->
-
-    <!-- Toastr -->
-    <script src="/js/toastr.min.js"></script>
-   
-    <script src="/js/datatables.min.js"></script>
     
     <?php if (isset($loginSuccess)) if ($loginSuccess): ?>
     $(document).ready(function() {
