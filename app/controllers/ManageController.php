@@ -2151,11 +2151,18 @@ class ManageController extends Controller
 				
 				$product->image = false;
 				
-				if (file_exists("$wwwroot/public/products/{$product->code}"))
+				if (file_exists("$wwwroot/public/products/{$product->code}.jpg"))
 					$product->image = true;
 				
 				$this->view->product = $product;
 				$this->view->order = $order;
+				$this->view->title = "Product's destination";
+				$this->view->breadcrumb = array(
+					'/manage' => 'Home',
+					'/manage/market' => 'Market',
+					'/manage/marketDetail/' . $product->code => substr($product->name, 0, 30),
+					'/manage/marketDestination/' . $id => "Destination"
+				);
 			}
 		}
 	}

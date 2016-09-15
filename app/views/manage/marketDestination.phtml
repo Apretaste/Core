@@ -5,62 +5,65 @@
 <?php endif;?>
 
 <div class="row">
-	<div class="col-md-4">
-		<?php if ($product->image): ?>
-		<img src="/products/<?php echo $product->code; ?>.jpg" width="300">
-		<?php endif;?>
-		<p><?php echo $product->description; ?></p>
-	</div>
-	<div class="col-md-3">
-		Product name: <br />
-		<b><?php echo $product->name; ?></b><br />
-		<br /> Price: <br />$<b><?php echo number_format($product->price,2); ?></b><br />
-		<br /> Shipping: <br />$<b><?php echo number_format($product->price,2); ?></b><br />
-		<br /> Credits: <br />$<b><?php echo number_format($product->price,2); ?></b><br />
-		<br /> Agency: <br />
-		<b><?php echo $product->agency; ?></b><br />
-		<br /> Owner: <br />
-		<b><?php echo $product->owner; ?></b><br />
-	</div>
-	<div class="col-md-5">
-		<div class="panel panel-default">
-			<div class="panel-body">
-				<form action="/manage/marketDestination/<?php echo $order->id; ?>" method="post" data-toggle="validator">
-					<div class="form-group">
-						<label for="edtCI">CI:</label>
-						<input type="text" class="form-control" id="edtCI" name="edtCI" value="<?php echo $order->ci;?>">
-					</div>
-					<div class="form-group">
-						<label for="edtName">Name:</label>
-						<input type="text" class="form-control" id="edtName" name="edtName" value="<?php echo $order->name;?>">
-					</div>
-					<div class="form-group">
-						<label for="edtAddress">Address:</label>
-						<input type="text" class="form-control" id="edtAddress" name="edtAddress" value="<?php echo $order->address;?>">
-					</div>
-					<div class="form-group">
-						<label for="edtPhone">Phone:</label>
-						<input type="text" class="form-control" id="edtPhone" name="edtPhone" value="<?php echo $order->phone;?>">
-					</div>
-					<div class="form-group">
-						<label for="edtProvince">Province:</label>
+	<div class="col-ld-12">
+		<div class="tabs-container">
+			<ul class="nav nav-tabs">
+				<li class="active"><a data-toggle="tab" href="#tab-1"> Destination</a></li>
+				<li class=""><a data-toggle="tab" href="#tab-2"> Product info</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="tab-1" class="tab-pane active">
+					<div class="panel-body">
+
+						<form action="/manage/marketDestination/<?php echo $order->id; ?>" method="post" data-toggle="validator">
+							<div class="form-group">
+								<label for="edtCI">CI:</label>
+								<input type="text" class="form-control" id="edtCI" name="edtCI" value="<?php echo $order->ci;?>">
+							</div>
+							<div class="form-group">
+								<label for="edtName">Name:</label>
+								<input type="text" class="form-control" id="edtName" name="edtName" value="<?php echo $order->name;?>">
+							</div>
+							<div class="form-group">
+								<label for="edtAddress">Address:</label>
+								<input type="text" class="form-control" id="edtAddress" name="edtAddress" value="<?php echo $order->address;?>">
+							</div>
+							<div class="form-group">
+								<label for="edtPhone">Phone:</label>
+								<input type="text" class="form-control" id="edtPhone" name="edtPhone" value="<?php echo $order->phone;?>">
+							</div>
+							<div class="form-group">
+								<label for="edtProvince">Province:</label>
 						<?php $provinces = array('PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD'); ?>
 						<select id="edtProvince" name="edtProvince" class="form-control">
 							<?php foreach($provinces as $prov): ?>
 							<option value="<?php echo $prov;?>" <?php if ($prov == $order->province):?> selected <?php endif;?>><?php echo ucwords(strtolower(str_replace("_"," ",$prov))); ?></option>
 							<?php endforeach;?>
 						</select>
+							</div>
+							<div class="form-group">
+								<button type="submit" name="btnUpdate" class="btn btn-success">Update</button>
+							</div>
+						</form>
+
 					</div>
-					<div class="form-group">
-						<button type="submit" name="btnUpdate" class="btn btn-success">Update</button>
-					</div>
-				</form>
+				</div>
+
+			</div>
+			<div id="tab-2" class="tab-pane">
+				<div class="panel-body">
+                                    <?php if ($product->image): ?>
+										<img src="/products/<?php echo $product->code; ?>.jpg" width="300">
+									<?php endif;?>
+									<p><?php echo $product->description; ?></p>
+
+					Product name: <br /> <b><?php echo $product->name; ?></b><br /> <br /> Price: <br />$<b><?php echo number_format($product->price,2); ?></b><br /> <br /> Shipping: <br />$<b><?php echo number_format($product->price,2); ?></b><br /> <br /> Credits: <br />$<b><?php echo number_format($product->price,2); ?></b><br /> <br /> Agency: <br /> <b><?php echo $product->agency; ?></b><br /> <br /> Owner: <br /> <b><?php echo $product->owner; ?></b><br />
+				</div>
 			</div>
 		</div>
+
+
 	</div>
+
+
 </div>
-<style>
-body {
-	background: #eeeeee;
-}
-</style>
