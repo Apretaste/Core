@@ -376,6 +376,13 @@
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://event.on24.com/wcc/r/1237558/E17397506918D1078847DF56BBA25D2E" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/oreilly.png">
+								</a>
+							</div>
+						</div>
+						<div class="col-md-3 col-sm-4 col-xs-6">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.telemundo51.com/noticias/cuba/Concurso-Hey-Cuba-Hackaton_TLMD---Miami-368985671.html" target="_blank">
 									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/telemundo.png">
 								</a>
@@ -404,13 +411,6 @@
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
-								<a href="http://www.elmundo.es/economia/2016/02/15/56c192b0268e3ef5758b45bd.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/elmundo.png">
-								</a>
-							</div>
-						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.elnuevoherald.com/noticias/mundo/america-latina/cuba-es/article64126537.html" target="_blank">
 									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/nuevoherald.png">
 								</a>
@@ -425,6 +425,13 @@
 						</div>
 
 						<?php /* hidden press to show on click */ ?>
+						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
+							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
+								<a href="http://www.elmundo.es/economia/2016/02/15/56c192b0268e3ef5758b45bd.html" target="_blank">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/elmundo.png">
+								</a>
+							</div>
+						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.martinoticias.com/content/apretaste-servicio-clasificados-por-email/31982.html" target="_blank">
@@ -571,7 +578,6 @@
 				</div>
 
 				<div class="col-sm-6 text-center">
-					<a id="paymentBtn10" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $10</a>
 					<a id="paymentBtn30" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $30</a>
 					<a id="paymentBtn50" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $50</a>
 					<a id="paymentBtn100" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $100</a>
@@ -705,17 +711,6 @@
 			$('#stripeEmailInput').val(token.email);
 			$('#stripePaymentInfo').submit();
 		}
-	});
-
-	// Donate $10
-	$('#paymentBtn10').on('click', function(e) {
-		$('#stripeAmountInput').val(1000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Donate using our secure form below',
-			amount: 1000
-		});
-		e.preventDefault();
 	});
 
 	// Donate $30
