@@ -17,39 +17,348 @@
 
 		<!-- jQuery -->
 		<script src="<?= $wwwhttp; ?>/js/jquery.js"></script>
-
+		<link href="<?= $wwwhttp; ?>/css/jquery-ui.min.css" rel="stylesheet">
+		
 		<!-- Bootstrap Core CSS -->
 		<link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
 		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
 
 		<!-- Bootstrap plugins -->
-		<script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
-
-		<!-- Font awesome -->
-		<link rel="stylesheet" href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css">
-
-		<!-- Custom stylesheets -->
+		<link href="<?= $wwwhttp; ?>/css/fileinput.min.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/animate.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
 		<link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/toastr.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
 	</head>
 
 	<body>
-		<?php if($environment=="sandbox") { ?>
-			<div style="color:white; background-color:red; font-weight:bold; display:inline-block; padding:5px; position:absolute; top:10px; right:10px; z-index:99">SANDBOX</div>
-		<?php } ?>
+		
+		<div id="wrapper">
+			<nav class="navbar-default navbar-static-side" role="navigation">
+				<div class="sidebar-collapse">
+					<ul class="nav metismenu" id="side-menu">
+						<li class="nav-header">
+							<div class="dropdown profile-element"> <span>
+									<?php if (isset($currentUser->thumbnail)): ?>
+										<?php if (file_exists($currentUser->thumnail)): ?>
+												<img alt="image" class="img-circle" src="<?php echo $currentUser->thumbnail; ?>" width="60"/>
+										<?php else: ?>
+											<img alt="image" class="img-circle" src="/images/userWhite.png" width="60"/>
+										<?php endif; ?>
+									<?php else: ?>
+										<img alt="image" class="img-circle" src="/images/userWhite.png" width="60"/>										
+									<?php endif;?>
+									 </span>
+								<a data-toggle="dropdown" class="dropdown-toggle" href="#">
+									<span class="clear"> <span class="block m-t-xs"> <strong class="font-bold"><?php if (isset($currentUser->fullName)) echo $currentUser->fullName; else echo substr($currentUser->email,0,strpos($currentUser->email,'@'));?></strong></span> 
+									 <?php if (isset($currentUser->occupation)) if ( ! empty($currentUser->occupation)):?>
+									 <span class="text-muted text-xs block"> <?php echo $currentUser->occupation; ?><b class="caret"></b></span> </span> </a>
+									 <?php else: ?>
+									 <span class="text-muted text-xs block">Team member<b class="caret"></b></span> </span> </a>
+									 <?php endif; ?>
+									 <ul class="dropdown-menu animated fadeInRight m-t-xs">
+									<li><a href="#">Profile</a></li>
+									<li><a href="#">Contacts</a></li>
+									<li><a href="#">Mailbox</a></li>
+									<li class="divider"></li>
+									<li><a href="/manage/logout">Logout</a></li>
+								</ul>
+							</div>
+							<div class="logo-element">
+								A!
+							</div>
+						</li>
+						<li>
+							<a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span> <span class="fa arrow"></span></a>
+						</li>
+						<?php if (isset($menu)): ?>
+						<li>
+							<a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Context</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level collapse in">
+									<?php foreach($menu as $item):?>
+										<li><a href="<?php echo $item['href'];?>">
+											<?php if (isset($item['icon'])): ?><span class="glyphicon glyphicon-<?php echo $item['icon']; ?>"></span>
+											<?php endif;?><?php echo $item['caption'];?>
+										</a></li>
+									<?php endforeach;?>
+							</ul>
+						</li>
+						<?php endif;?>
+						<li>
+							<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/audience">Audience</a></li>
+								<li><a href="/manage/profile">Profile</a></li>
+								<li><a href="/manage/profilesearch">Profile search</a></li>
+								<li><a href="/manage/remarketing">Remarketing</a></li>
+								<li><a href="/manage/raffles">Raffles</a></li>
+								<li><a href="/manage/services">List of services</a></li>
+								<li><a href="/manage/ads">List of ads</a></li>
+								<li><a href="/manage/dropped">Dropped emails</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-edit"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/createad">Create ad</a></li>
+								<li><a href="/manage/createraffle">Create raffle</a></li>
+								<li><a href="/manage/addcredit">Add credit</a></li>
+								<li><a href="/manage/jumper">Jumper</a></li>
+								<li><a href="/manage/surveys">Surveys</a></li>
+								<li><a href="/manage/market">Market<span class="label label-primary pull-right">NEW</span></a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-edit"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/deploy">Deploy</a></li>
+								<li><a href="/manage/errors">Errors log</a></li>
+								<li><a href="/manage/sandbox">Test a service</a></li>
+								<li><a href="/manage/data">phpMyAdmin</a></li>
+								<li><a href="https://app.mailerlite.com/" target = "_blank">Mailer Lite</a></li>
+								<li><a href="http://sendy.apretaste.com/">Sendy</a></li>
+								<li><a href="https://admin.google.com/pragres.com">Google Admin Console</a></li>
+								<li><a href="https://apretaste.zendesk.com/">Zendesk</a></li>
+								<li><a href="https://www.email-validator.net/dashboard/index.html">Email Validator</a></li>
+								<li><a href="https://block.io/">Bitcoin API</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</nav>
+	
+			<div id="page-wrapper" class="gray-bg dashbard-1">
+			
+			
+			<div class="row border-bottom">
+        <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+            <form role="search" class="navbar-form-custom" action="search_results.html">
+                <div class="form-group">
+                    <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search">
+                </div>
+            </form>
+        </div>
+            <ul class="nav navbar-top-links navbar-right">
+                <li>
+                    <span class="m-r-sm text-muted welcome-message">Welcome to Apretaste's management tool.</span>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                        <i class="fa fa-bell"></i>  <span class="label label-primary"><?php echo count($notifications); ?></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-alerts">
+                   	 <?php foreach($notifications as $n): ?>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-envelope fa-fw"></i> <?php echo $n->text; ?>
+                                    <span class="pull-right text-muted small"><?php echo $n->inserted_date; ?></span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                         <?php endforeach; ?>
+                         <li>
+                         <a href="#">
+                                    <strong>See All Alerts</strong>
+                                    <i class="fa fa-angle-right"></i>
+                                </a>
+                         </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="/manage/logout">
+                        <i class="fa fa-sign-out"></i> Log out
+                    </a>
+                </li>
+            </ul>
 
-		<nav class="navbar navbar-inverse" style="border-radius:0px; -webkit-border-radius:0px; -moz-border-radius:0px;">
-			<div class="container">
-				<div class="navbar-header">
-					<span class="navbar-brand"style="text-transform: uppercase;"><?php if(isset($title)) echo $title; ?></span>
-				</div>
-				<div class="navbar-right hidden-xs">
-					<a href="<?= $home ?>" class="btn btn-default navbar-btn">Home</a>
-				</div>
+        </nav>
+        </div>
+			<?php if(isset($title)): ?>
+	
+			 	<div class="row wrapper border-bottom white-bg page-heading">
+	                    <h2><?php  echo $title; ?></h2>
+	                    <?php if (isset($breadcrumb)): ?>
+	                    <ol class="breadcrumb">
+	                    	<?php foreach ($breadcrumb as $path => $caption): ?>
+	                    	<?php $active = false;?>
+	                    	<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
+	                        <li <?php if ($active) echo 'class="active"';?>>
+	                            <a href="/<?php echo $path; ?>"><?php echo $caption; ?></a>
+	                        </li>
+	                        <?php endforeach;?>
+	                    </ol>
+	                    <?php endif;?>
+	                </div>
+	            <?php endif;?>
+				<?php echo $this->getContent(); ?>
 			</div>
-		</nav>
-
-		<div class="container">
-			<?= $this->getContent(); ?>
 		</div>
+		
+<div class="theme-config">
+    <div class="theme-config-box">
+        <div class="spin-icon">
+            <i class="fa fa-cogs fa-spin"></i>
+        </div>
+        <div class="skin-setttings">
+            <div class="title">Configuration</div>
+            <div class="setings-item">
+                    <span>
+                        Collapse menu
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="collapsemenu" class="onoffswitch-checkbox" id="collapsemenu">
+                        <label class="onoffswitch-label" for="collapsemenu">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="setings-item">
+                    <span>
+                        Fixed sidebar
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="fixedsidebar" class="onoffswitch-checkbox" id="fixedsidebar">
+                        <label class="onoffswitch-label" for="fixedsidebar">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="setings-item">
+                    <span>
+                        Top navbar
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="fixednavbar" class="onoffswitch-checkbox" id="fixednavbar">
+                        <label class="onoffswitch-label" for="fixednavbar">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="setings-item">
+                    <span>
+                        Top navbar v.2
+                        <br/>
+                        <small>*Primary layout</small>
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="fixednavbar2" class="onoffswitch-checkbox" id="fixednavbar2">
+                        <label class="onoffswitch-label" for="fixednavbar2">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="setings-item">
+                    <span>
+                        Boxed layout
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="boxedlayout" class="onoffswitch-checkbox" id="boxedlayout">
+                        <label class="onoffswitch-label" for="boxedlayout">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="setings-item">
+                    <span>
+                        Fixed footer
+                    </span>
+
+                <div class="switch">
+                    <div class="onoffswitch">
+                        <input type="checkbox" name="fixedfooter" class="onoffswitch-checkbox" id="fixedfooter">
+                        <label class="onoffswitch-label" for="fixedfooter">
+                            <span class="onoffswitch-inner"></span>
+                            <span class="onoffswitch-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="title">Skins</div>
+            <div class="setings-item default-skin">
+                    <span class="skin-name ">
+                         <a href="#" class="s-skin-0">
+                             Default
+                         </a>
+                    </span>
+            </div>
+            <div class="setings-item blue-skin">
+                    <span class="skin-name ">
+                        <a href="#" class="s-skin-1">
+                            Blue light
+                        </a>
+                    </span>
+            </div>
+            <div class="setings-item yellow-skin">
+                    <span class="skin-name ">
+                        <a href="#" class="s-skin-3">
+                            Yellow/Purple
+                        </a>
+                    </span>
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="<?= $wwwhttp; ?>/js/jquery.metisMenu.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.slimscroll.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.peity.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/manage.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/pace.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery-ui.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.gritter.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jquery.sparkline.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/toastr.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/datatables.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/jasny-bootstrap.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
+	<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
+    
+    <!-- <script src="<?= $wwwhttp; ?>/js/demo/sparkline-demo.js"></script>  -->
+    <!-- <script src="<?= $wwwhttp; ?>/js/plugins/chartJs/Chart.min.js"></script>  -->
+    <!--  <script src="js/demo/peity-demo.js"></script>  -->
+    
+    <?php if (isset($loginSuccess)) if ($loginSuccess): ?>
+    $(document).ready(function() {
+         setTimeout(function() {
+             toastr.options = {
+                 closeButton: true,
+                 progressBar: true,
+                 showMethod: 'slideDown',
+                 timeOut: 4000
+             };
+             toastr.success('Login successfull', 'Welcome to Apretaste!');
+
+         }, 1300);
+	 });
+    <?php endif;?>
 	</body>
 </html>
