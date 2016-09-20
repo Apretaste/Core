@@ -16,6 +16,8 @@ public/profile/*
 public/ads/*
 public/raffle/*
 public/tienda/*
+public/w/*
+public/download/*
 migration/*
 services/*
 app/controllers/TestController.php
