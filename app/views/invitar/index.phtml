@@ -3,6 +3,7 @@
 	if( ! isset($name)) $name = ""; 
 	if( ! isset($email)) $email = "";
 	if(isset($message)) echo '<div class="alert alert-success" role="alert">Gracias por traer a sus amigos y familia en Cuba a disfrutar la internet. <b>Sus contactos han sido invitados correctamente.</b> Le hemos mandado un email de agradecimiento. Si&eacute;ntase libre de invitar incluso m&aacute;s personas usando este formulario.</div>'; 
+	if(isset($already)) echo '<div class="alert alert-warning" role="alert">La persona que usted invit&oacute; ya usa Apretaste. Si&eacute;ntase libre de invitar m&aacute;s amigos o familia usando este formulario.</div>';
 ?>
 
 <style>
@@ -43,7 +44,7 @@
 			<div id="guest-group" class="form-group">
 				<label class="control-label" for="guest"><b>Paso #3:</b> Email del invitado en Cuba</label>
 				<p class="label-support">Este es la persona que recibir&aacute; acceso a internet</p>
-				<input required id="guest" class="form-control" type="email" name="guest[]" placeholder="invitado@nauta.cu" data-error="Email invalido"/>
+				<input required id="guest" class="form-control" type="email" name="guest" placeholder="invitado@nauta.cu" data-error="Email invalido"/>
 			</div>
 
 			<div class="form-group">
@@ -96,6 +97,7 @@
 
 	// check if the captcha is valid by Ajax
 	function checkCaptcha() {
+return true;
 		// check if the captcha is right
 		var ret = false;
 		var text = $('#captcha').val();
