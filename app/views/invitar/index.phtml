@@ -22,8 +22,8 @@
 <div class="row">
 	<div class="col-xs-12 text-center">
 		<img src="<?= $wwwhttp ?>/images/apretaste.logo.big.transp.png" alt="Logo de Apretaste" style="width:200px;">
-		<p class="lead" style="margin-bottom:0px;">INVITE A SU GENTE <span style="color:#962F1F;">EN CUBA</span> <br class="hidden-sm hidden-md hidden-lg"> A NAVEGAR POR INTERNET</p>
-		<p class="label-support">Apretaste permite utilizar Google, Wikipedia, Noticias, Redes Sociales y m&aacute;s de 40 otras websites desde Cuba, usando Nauta.</p>
+		<p class="lead">INVITE A SU GENTE <span style="color:#962F1F;">EN CUBA</span> <br class="hidden-sm hidden-md hidden-lg"> A <a onclick="$('#how').slideDown();" href="#">NAVEGAR POR INTERNET</a></p>
+		<p id="how" class="label-support" style="display:none;">Apretaste permite utilizar Google, Wikipedia, Noticias, Redes Sociales y m&aacute;s de 40 otras websites desde Cuba, usando Nauta.</p>
 	</div>
 
 	<div class="col-xs-12">
@@ -66,6 +66,8 @@
 		</form>
 	</div>
 </div>
+
+<br/><br/>
 
 <!-- new element that will be created to add new emails -->
 <div id="guest-clone" class="form-group" style="display:none;">
