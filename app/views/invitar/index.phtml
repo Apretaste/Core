@@ -5,36 +5,50 @@
 	if(isset($message)) echo '<div class="alert alert-success" role="alert">Gracias por traer a sus amigos y familia en Cuba a disfrutar la internet. <b>Sus contactos han sido invitados correctamente.</b> Le hemos mandado un email de agradecimiento. Si&eacute;ntase libre de invitar incluso m&aacute;s personas usando este formulario.</div>'; 
 ?>
 
-<div id="error-captcha" class="alert alert-danger" style="display:none;" role="alert">El texto que escribi&oacute; no es el mismo de la imagen.</div>
+<style>
+	.control-label {
+		font-weight: normal;
+		text-transform: uppercase;
+		font-size: large;
+		margin-top: 30px;
+	}
+	
+	.label-support {
+		color: gray;
+		font-size: small;
+	}
+</style>
 
 <div class="row">
-	<div class="col-xs-12 col-sm-6 col-sm-push-6">
+	<div class="col-xs-12 text-center">
 		<img src="<?= $wwwhttp ?>/images/apretaste.logo.big.transp.png" alt="Logo de Apretaste" style="width:200px;">
-		<p><b>Apretaste permite a su amigo o familiar en Cuba acceder gratuitamente a Internet desde su Email.</b></p>
-		<p>En Cuba, un 5% de la poblaci&oacute;n tiene acceso a la web, pero m&aacute;s del 25% solo puede enviar y recibir emails. Apretaste permite utilizar Wikipedia, Noticias, Redes Sociales, Traducci&oacute;n, Mapas, Google y m&aacute;s, enviando un email y esperando otro en respuesta. As&iacute; explotamos al m&aacute;ximo la infraestructura de Cuba, y resolvemos las necesidades de los miles de Cubanos que son nuestros usuarios.</p>
-		<p class="hidden-xs">Gracias por compartir Apretaste, y conectar a sus seres queridos a la internet.</p>
-		<hr class="visible-xs"/>
+		<p class="lead" style="margin-bottom:0px;">INVITE A SU GENTE <span style="color:#962F1F;">EN CUBA</span> <br class="hidden-sm hidden-md hidden-lg"> A NAVEGAR POR INTERNET</p>
+		<p class="label-support">Apretaste permite utilizar Google, Wikipedia, Noticias, Redes Sociales y m&aacute;s de 40 otras websites desde Cuba, usando Nauta.</p>
 	</div>
 
-	<div class="col-xs-12 col-sm-6 col-sm-pull-6">
+	<div class="col-xs-12">
 		<form action="<?= $wwwhttp ?>/invitar/process" method="POST" data-toggle="validator" role="form">
 			<div class="form-group">
-				<label class="control-label" for="name">Nombre, para que sepan quien les invita</label>
-				<input required id="name" class="form-control" type="text" name="name" value="<?= $name ?>" placeholder="Escriba su nombre"/>
+				<label class="control-label" for="name"><b>Paso #1:</b> Escriba su nombre</label>
+				<p class="label-support">Usaremos su nombre para firmar la invitaci&oacute;n</p>
+				<input required id="name" class="form-control" type="text" name="name" value="<?= $name ?>" placeholder="Periquito Perez"/>
 			</div>
 
 			<div class="form-group">
-				<label class="control-label" for="email">Email, para enviarte una confirmaci&oacute;n</label>
-				<input required id="email" class="form-control" type="email" name="email" value="<?= $email ?>" placeholder="Escriba su email" data-error="Email invalido"/>
+				<label class="control-label" for="email"><b>Paso #2:</b> Escriba su email</label>
+				<p class="label-support">Usaremos su email para mandarle una confirmaci&oacute;n</p>
+				<input required id="email" class="form-control" type="email" name="email" value="<?= $email ?>" placeholder="yo@gmail.com" data-error="Email invalido"/>
 			</div>
 
 			<div id="guest-group" class="form-group">
-				<label class="control-label" for="guest">Email de la persona a invitar</label>
-				<input required id="guest" class="form-control" type="email" name="guest[]" placeholder="Email de su amigo en Cuba" data-error="Email invalido"/>
+				<label class="control-label" for="guest"><b>Paso #3:</b> Email del invitado en Cuba</label>
+				<p class="label-support">Este es la persona que recibir&aacute; acceso a internet</p>
+				<input required id="guest" class="form-control" type="email" name="guest[]" placeholder="invitado@nauta.cu" data-error="Email invalido"/>
 			</div>
 
 			<div class="form-group">
-				<label class="control-label" for="captcha">Escriba el texto que ve en la imagen</label>
+				<label class="control-label" for="captcha"><b>Paso #4:</b> Escriba el texto en la imagen</label>
+				<p id="error-captcha" class="label-support" style="display:none; color:#A94455;">El texto que escribi&oacute; no es el mismo de la imagen.</p>
 				<div class="input-group">
 					<input required id="captcha" class="form-control" type="text" name="captcha" style="height: 42px;">
 					<span class="input-group-addon" style="padding: 0px;"><img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="<?= $wwwhttp ?>/invitar/captcha"></span>
@@ -66,28 +80,6 @@
 </div>
 
 <script>
-	$(document).ready(function(){
-		// add another email automatically
-		$("#guest").keyup(addGuest);
-	});
-
-	//add another email automatically
-	function addGuest(){
-		var guestclone = $('#guest-clone').clone().removeAttr('id');
-		var email = $(this).val();
-		if(checkEmail(email)) {
-			$(this).parents('.form-group').after(guestclone);
-			guestclone.slideDown('slow');
-			guestclone.find('input').keyup(addGuest);
-			$(this).unbind('keyup');
-		}
-	}
-
-	// check email
-	function checkEmail(email) {
-		return email.match(/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/);
-	}
-
 	// return random number for the captcha
 	function mt_rand(min,max) {
 		var argc=arguments.length;
