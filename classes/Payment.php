@@ -6,4 +6,5 @@ class Payment {
 	public $name;
 	public $seller;
 	public $buyer;
+	public $transfer;
 }
