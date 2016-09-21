@@ -126,7 +126,7 @@
 										<?php foreach ($products as $product): ?>
 											<tr id = "<?php echo $product->code; ?>" <?php if ($product->active == '1'):?> class = "product-active" <?php else: ?> class = "product-non-active" <?php endif;?>>
 												<?php if ($product->active == '1'):?>
-												<td ><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-check"></span></button></td>
+												<td><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-check"></span></button></td>
 												<?php else:?>
 												<td><button onclick="toggleActivation('<?php echo $product->code;?>');" class="btn btn-default"><span class="toggle-active-icon glyphicon glyphicon-unchecked"></span></button></td>
 												<?php endif;?>
@@ -166,7 +166,7 @@
 		       	 if ( status == "success" || status == "notmodified" ){
 		           	 if (res.responseText == '1')
 		           	 {
-		       		 	$("#"+code+" span.toggle-active-icon").attr('class', 'glyphicon glyphicon-check');
+		       		 	$("#"+code+" span.toggle-active-icon").attr('class', 'toggle-active-icon glyphicon glyphicon-check');
 		       		 	$("#"+code).attr('class', 'product-active');
 		       		 	$.notify({
 			       		 	icon: 'glyphicon glyphicon-check', 
@@ -182,7 +182,7 @@
 		           	 }
 		           	 else
 		           	 {
-		           		$("#"+code+" span.toggle-active-icon").attr('class', 'glyphicon glyphicon-unchecked');
+		           		$("#"+code+" span.toggle-active-icon").attr('class', 'toggle-active-icon glyphicon glyphicon-unchecked');
 		           		$("#"+code).attr('class', 'product-non-active');
 		           		$.notify({
 			           		icon: 'glyphicon glyphicon-unchecked', 

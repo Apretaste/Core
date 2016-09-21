@@ -1,3 +1,4 @@
+<br/>
 <div class="row">
 	<div class="col-xs-12">
 	<?php if (isset($message)):?>
@@ -24,7 +25,8 @@
 										<th>Product</th>
 										<th>User</th>
 										<th>Date</th>
-										<th></th>
+										<th>Set as received</th>
+										<th>Edit details</th> 
 									</tr>
 								</thead>
 								<tbody>
@@ -34,8 +36,22 @@
 										<td><a href="#" onclick="showProduct('<?php echo $order->product; ?>');"><?php echo $order->product_name; ?></a></td>
 										<td><?php echo $order->email; ?></td>
 										<td><?php echo $order->inserted_date; ?></td>
-										<td><a href="/manage/marketDestination/<?php echo $order->id; ?>" class="btn btn-info">Destination</a></td>
-
+										<td align="center">
+											<a href="/manage/marketOrderReceived/<?php echo $order->id; ?>" class = "btn btn-success" onclick="return confirm('Are you sure?');">
+												<span class="glyphicon glyphicon-ok"></span>
+											</a>
+										</td>
+										
+										<td align="center">
+											<a href="/manage/marketDestination/<?php echo $order->id; ?>" <?php if ($order->ready): ?>class="btn btn-warning"<?php else: ?>class="btn btn-primary"<?php endif;?>>
+											<?php if ($order->ready): ?>
+											Ready to send
+											<?php else: ?>
+											<span class="glyphicon glyphicon-edit"></span> &nbsp;Destination
+											<?php endif;?>
+											</a>
+										</td>
+									
 									</tr>
 								<?php endforeach;?>
 								</tbody>
