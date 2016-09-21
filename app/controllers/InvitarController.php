@@ -21,9 +21,6 @@ class InvitarController extends Controller
 	 */
 	public function indexAction()
 	{
-		$this->view->setLayout('manage');
-		$this->view->home = "/bienvenido";
-		$this->view->title = "Invita un Cubano a Internet";
 	}
 
 	/**
@@ -38,22 +35,32 @@ class InvitarController extends Controller
 		$captcha = trim($this->request->getPost('captcha'));
 		$name = trim($this->request->getPost('name'));
 		$inviter = trim($this->request->getPost('email'));
-		$guest = $this->request->getPost('guest');
+		$guest = trim($this->request->getPost('guest'));
 
 		// check all values passed are valid
 		if(
 			strtoupper($captcha) != strtoupper($_SESSION['phrase']) ||
 			$name == "" || 
 			! filter_var($inviter, FILTER_VALIDATE_EMAIL) ||
-			! is_array($guest) || 
-			empty($guest)
-		) die("Error procesando, por favor valla atras y empiece nuevamente.");
+			! filter_var($guest, FILTER_VALIDATE_EMAIL)
+		) die("Error procesando, por favor valla atras y comience nuevamente.");
+
+		// params for the response
+		$this->view->name = $name;
+		$this->view->email = $inviter;
 
 		// create classes needed
 		$connection = new Connection();
 		$email = new Email();
 		$utils = new Utils();
 		$render = new Render();
+
+		// do not invite people who are already using Apretaste
+		if($utils->personExist($guest))
+		{
+			$this->view->already = true;
+			return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
+		}
 
 		// send notification to the inviter
 		$response = new Response();
@@ -64,39 +71,19 @@ class InvitarController extends Controller
 		$html = $render->renderHTML(new Service(), $response);
 		$email->sendEmail($inviter, $response->subject, $html);
 
-		// send invitations to the Cubans
-		$sql = "START TRANSACTION;";
-		foreach ($guest as $g)
-		{
-			// check the email is fully valid
-			$guestEmail = trim($g);
-			if( ! filter_var($guestEmail, FILTER_VALIDATE_EMAIL)) continue;
-
-			// do not invite people who were already invited by you before
-			if($utils->checkPendingInvitation($inviter, $guestEmail)) continue;
-
-			// do not invite people who are already using Apretaste
-			if($utils->personExist($guestEmail)) continue;
-
-			// send invitation
-			$response = new Response();
-			$response->setResponseSubject("$name le ha invitado a revisar internet desde su email");
-			$responseContent = array("host"=>$name, "guest"=>$guestEmail);
-			$response->createFromTemplate("invitation.tpl", $responseContent);
-			$response->internal = true;
-			$html = $render->renderHTML(new Service(), $response);
-			$email->sendEmail($guestEmail, $response->subject, $html);
-
-			// create query to save invitation into the database
-			$sql .= "INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guestEmail','abroad');";
-		}
+		// send invitations to the guest
+		$response = new Response();
+		$response->setResponseSubject("$name le ha invitado a revisar internet desde su email");
+		$responseContent = array("host"=>$name, "guest"=>$guest);
+		$response->createFromTemplate("invitation.tpl", $responseContent);
+		$response->internal = true;
+		$html = $render->renderHTML(new Service(), $response);
+		$email->sendEmail($guest, $response->subject, $html);
 
 		// save all the invitations into the database at the same time
-		$connection->deepQuery($sql."COMMIT;");
+		$connection->deepQuery("INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guest','abroad')");
 
 		// redirect to the invite page
-		$this->view->name = $name;
-		$this->view->email = $inviter;
 		$this->view->message = true;
 		return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
 	}
