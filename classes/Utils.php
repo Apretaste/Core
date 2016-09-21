@@ -2,6 +2,7 @@
 
 use Mailgun\Mailgun;
 use abeautifulsite\SimpleImage;
+use phpseclib\Crypt\RSA;
 
 class Utils
 {
@@ -652,7 +653,7 @@ class Utils
 		$connection = new Connection();
 
 		// get the user if there is an active token
-		$auth = $connection->deepQuery("SELECT * FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
+		$auth = $connection->deepQuery("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
 		if(empty($auth)) return false;
 
 		// extend the life of the token
@@ -907,5 +908,87 @@ class Utils
 		$connection = new Connection();
 		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 		return $r[0]->total * 1;
+	}
+
+	/**
+	 * Decript a message using the user's private key. 
+	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
+	 * 
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String64 $message
+	 * @return String
+	 * */
+	public function decript($email, $message)
+	{
+		// get the user's private key
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT privatekey FROM person WHERE email='$email'");
+		$privatekey = $res[0]->privatekey;
+
+		// create the key if it does not exist
+		if(empty($privatekey))
+		{
+			$keys = $this->recreateRSAKeys($email);
+			$privatekey = $keys["privatekey"];
+		}
+
+		// decript and return
+		$rsa = new RSA();
+		$rsa->loadKey($privatekey);
+		return $rsa->decrypt(base64_decode($message));
+	}
+
+	/**
+	 * Encript a message using the user's public key.
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $message
+	 * @return String64
+	 * */
+	public function encript($email, $message)
+	{
+		// get the user's public key
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT publickey FROM person WHERE email='$email'");
+		$publickey = $res[0]->publickey;
+
+		// create the key if it does not exist
+		if(empty($publickey))
+		{
+			$keys = $this->recreateRSAKeys($email);
+			$publickey = $keys["publickey"];
+		}
+
+		// encript and return
+		$rsa = new RSA();
+		$rsa->loadKey($publickey);
+		$rsa->setEncryptionMode(RSA::ENCRYPTION_OAEP);
+		return base64_encode($rsa->encrypt($message));
+	}
+
+	/**
+	 * Regenerate and return the private and public keys for a user
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return Array(privatekey, publickey)
+	 * */
+	public function recreateRSAKeys($email)
+	{
+		$rsa = new RSA();
+//		$rsa->setPrivateKeyFormat(RSA::ENCRYPTION_OAEP);
+		$rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_OPENSSH);
+		$keys = $rsa->createKey(); // == $rsa->createKey(1024) where 1024 is the key size
+		$privatekey = $keys['privatekey'];
+		$publickey = $keys['publickey'];
+
+		// save the new keys on the user session
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET privatekey='$privatekey', publickey='$publickey' WHERE email='$email'");
+
+		// return the new keys
+		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
 	}
 }
