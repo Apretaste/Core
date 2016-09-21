@@ -21,9 +21,6 @@ class InvitarController extends Controller
 	 */
 	public function indexAction()
 	{
-		$this->view->setLayout('simple');
-		$this->view->home = "/bienvenido";
-		$this->view->title = "Invita un Cubano a Internet";
 	}
 
 	/**
