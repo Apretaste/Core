@@ -55,16 +55,13 @@ class Utils
 	 * */
 	public function serviceExist(&$serviceName)
 	{
-		// check serviceName as an service alias
-		$db = new Connection();
-		
 		// if serviceName is an alias and not is a name ...
+		$db = new Connection();
 		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
-		
-		// ... then get the service name
-		if (isset($r[0]->service)) 
-			$serviceName = $r[0]->service;
-		
+
+		// then get the service name
+		if (isset($r[0]->service)) $serviceName = $r[0]->service;
+
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		return file_exists("$wwwroot/services/$serviceName/config.xml");
