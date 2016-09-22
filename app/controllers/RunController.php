@@ -109,7 +109,6 @@ class RunController extends Controller
 	 * */
 	public function mailgunAction()
 	{
-/* @TODO
 		// do not allow fake income messages 
 		if( ! isset($_POST['From'])) return;
 
@@ -125,15 +124,6 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-*/
-		// TEST
-		$fromEmail = "salvi@apretaste.com";
-		$fromName = "Salvi Pascual";
-		$toEmail = "apretaste@mail.com";
-		$subject = "yuyu";
-		$body = "SKhmoBUsKd/51b8il6LNX5/MOnkqdK3MDEncd//fgIWnAVQk9tWI3b9GJT7WWGsFZMfJf3ajHsm4mlDhHGhUuksqTtcZJCiybJ8NFmmCf7uzKDnAg0DSkihACedMhhT0wyrr0BfQSqH4AJBQISeHNt4tq5T7qtqyjblpXaSQ1yOslEPMOmJZYwApTgEkFff1VUcmJnl3cat8lEMUE5tG89vvYONaCftanIcbmuxZPUpXLVdpaur1eEZ7UkTfzde+hn5gtRE4yUbwpQCNctO8T5kFnzF45BguquVc4F6O3w1iP+coJjXPRxkFjBvhF38ccpW9ORL81+qmrgFttIK8NA==";
-		$attachmentCount = 0;
-		// TEST
 
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
@@ -209,11 +199,11 @@ class RunController extends Controller
 			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
 			exit;
 		}
-/* @TODO
+
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
-*/
+
 		// remove double spaces and apostrophes from the subject
 		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
