@@ -65,7 +65,8 @@ class Render
 	 */
 	public function renderJSON($response)
 	{
-		return json_encode($response->content, JSON_PRETTY_PRINT);
+		if(empty($response->json)) return json_encode($response->content, JSON_PRETTY_PRINT);
+		else return $response->json;
 	}
 
 	/**
