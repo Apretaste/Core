@@ -6,6 +6,7 @@ class Response
 	public $subject;
 	public $template;
 	public $content;
+	public $json; // will be null unless the return is an email API
 	public $images;
 	public $attachments;
 	public $internal; // false if the user provides the template
@@ -26,6 +27,7 @@ class Response
 		$this->attachments = array();
 		$this->layout = "email_default.tpl";
 
+		$this->json = null;
 		$this->internal = true;
 		$this->render = false;
 		$this->ads = array();
@@ -91,6 +93,17 @@ class Response
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
+	}
+
+	/**
+	 * Receives a JSON text to be sent back by email. Used for email APIs
+	 *
+	 * @author salvipascual
+	 * @param String, $json
+	 */
+	public function createFromJSON($json)
+	{
+		$this->json = $json;
 	}
 
 	/**
