@@ -288,7 +288,7 @@ class RunController extends Controller
 		$utils = new Utils();
 		$connection = new Connection();
 
-		// select the default service (unless is the email API)
+		// select the default service (unless is the secured email API)
 		if($serviceName != "secured")
 		{
 			// select the default service if service does not exist
