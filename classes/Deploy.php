@@ -2,9 +2,8 @@
 
 class Deploy
 {
-	
 	public $utils = null;
-	
+
 	/**
 	 * Extracts and deploys a new service to the service directory
 	 *
@@ -19,45 +18,35 @@ class Deploy
 
 		// get the service data from the XML
 		$service = $this->loadFromXML($pathToXML);
+		$utils = $this->getUtils();
+		$connection = new Connection();
 
 		// remove the current project if it exist
-		$utils = $this->getUtils();
-		
 		$updating = false;
-		if ($utils->serviceExist($service['serviceName'])) {
+		if ($utils->serviceExist($service['serviceName']))
+		{
 			$this->removeService($service);
 			$updating = true;
 		}
 
-		// create a new deploy key
-		$utils = $this->getUtils();
-
-		$connection = new Connection();
-		
 		// check if alias exists as a service name or alias
 		foreach ($service['serviceAlias'] as $alias)
 		{
-			$sql = "SELECT * FROM service WHERE name = '$alias';";
-			$r = $connection->deepQuery($sql);
-		
-			if (is_array($r))
-				if (isset($r[0]))
-					if (isset($r[0]->name))
-					{
-						throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as a service");
-					}
-		
-			$sql = "SELECT * FROM service_alias WHERE alias = '$alias' AND service <> '{$service['serviceName']}';";
-			$r = $connection->deepQuery($sql);
-				
-			if (is_array($r))
-				if (isset($r[0]))
-					if (isset($r[0]->alias))
-					{
-						throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as an alias");
-					}
+			// check if the alias already exists as a service name
+			$r = $connection->deepQuery("SELECT * FROM service WHERE name = '$alias'");
+			if (is_array($r) && isset($r[0]) && isset($r[0]->name))
+			{
+				throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as a service");
+			}
+
+			// check if the alias is already defined
+			$r = $connection->deepQuery("SELECT * FROM service_alias WHERE alias = '$alias' AND service <> '{$service['serviceName']}'");
+			if (is_array($r) && isset($r[0]) && isset($r[0]->alias))
+			{
+				throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as an alias");
+			}
 		}
-		
+
 		// add the new service
 		$this->addService($service, $pathToZip, $pathToService, $updating);
 
@@ -80,14 +69,10 @@ class Deploy
 	 */
 	public function getUtils()
 	{
-		if (is_null($this->utils))
-		{
-			$this->utils = new Utils();
-		}
-		
+		if (is_null($this->utils)) $this->utils = new Utils();
 		return $this->utils;
 	}
-	
+
 	/**
 	 * Extract the service zip and return the path to it
 	 *

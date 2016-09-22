@@ -426,19 +426,19 @@ class Utils
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
 		$connection = new Connection();
-		
+
 		// block address with same requested service in last hour
 		// @TODO test and think in other requests/period frecuency like as 120/day (5 * 24 = 120)
 		// @TODO save this $to address in a blacklist or penalize with 5 hours?
-		$sql = "SELECT
-		lower(substring_index(subject,' ',1)) as service,
-		count(*) as total
-		FROM delivery_received
-		WHERE user = '$to'
-		AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
-		GROUP BY service
-		HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
-		
+		$sql = 
+			"SELECT lower(substring_index(subject,' ',1)) as service,
+			count(*) as total
+			FROM delivery_received
+			WHERE user = '$to'
+			AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
+			GROUP BY service
+			HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
+
 		$lastreceived = $connection->deepQuery($sql);
 		
 		if (is_array($lastreceived)) if (isset($lastreceived[0])) $msg = 'loop';
@@ -995,7 +995,7 @@ class Utils
 	{
 		// get the user's private key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT privatekey FROM person WHERE email='$email'");
+		$res = $connection->deepQuery("SELECT privatekey FROM `keys` WHERE email='$email'");
 		$privatekey = $res[0]->privatekey;
 
 		// create the key if it does not exist
@@ -1023,7 +1023,7 @@ class Utils
 	{
 		// get the user's public key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT publickey FROM person WHERE email='$email'");
+		$res = $connection->deepQuery("SELECT publickey FROM `keys` WHERE email='$email'");
 		$publickey = $res[0]->publickey;
 
 		// create the key if it does not exist
@@ -1049,18 +1049,34 @@ class Utils
 	 * */
 	public function recreateRSAKeys($email)
 	{
+		// create the public and private keys
 		$rsa = new RSA();
-//		$rsa->setPrivateKeyFormat(RSA::ENCRYPTION_OAEP);
 		$rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_OPENSSH);
-		$keys = $rsa->createKey(); // == $rsa->createKey(1024) where 1024 is the key size
+		$keys = $rsa->createKey();
 		$privatekey = $keys['privatekey'];
 		$publickey = $keys['publickey'];
 
-		// save the new keys on the user session
+		// update the new keys or create a new pair
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET privatekey='$privatekey', publickey='$publickey' WHERE email='$email'");
+		$connection->deepQuery("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
 
 		// return the new keys
 		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
+	}
+
+	/**
+	 * Regenerate a sentense with random Spanish words
+	 *
+	 * @author salvipascual
+	 * @param Integer $words
+	 * @return String
+	 * */
+	public function randomSentence($words=-1)
+	{
+		// get the number of words
+		if ($words == -1) $words = rand(2, 10);
+
+		// @TODO get actual random words
+		return "hola mundo chico";
 	}
 }

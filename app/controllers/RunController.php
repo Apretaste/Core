@@ -33,10 +33,16 @@ class RunController extends Controller
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
+	 * @get String $attachments
+	 * @get String $token
 	 * */
-	public function apiAction($subject="", $email="", $secured=false)
+	public function apiAction($subject="", $email="")
 	{
-		$subject = $secured ? $subject : $this->request->get("subject");
+		// if secured==true, it is an encripted call to the API
+		$secured = ! empty($subject);
+
+		// get params from GET (or from the encripted API)
+		if( ! $secured) $subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$attachments = $this->request->get("attachments");
 		$token = $this->request->get("token");
@@ -47,8 +53,8 @@ class RunController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		// if the encrypted, get the email from the token
-		if( ! $secured) // not encripted
+		// if is not encrypted, get the email from the token
+		if( ! $secured)
 		{
 			$email = $utils->detokenize($token);
 			if( ! $email) die('{"code":"error","message":"bad authentication"}');
@@ -125,7 +131,7 @@ class RunController extends Controller
 		$fromName = "Salvi Pascual";
 		$toEmail = "apretaste@mail.com";
 		$subject = "yuyu";
-		$body = "oJm3vQKA+H+5e2glKVt3PorVpbzrhucm9mEkgaunV/CFSz5VD94QeZMH0NehXwVxmWF1LsypdGcKlRLWkU8IZKBHXZTpvhi5Q2yk4G/HUZtevbEdqyXDgo3Uc6XkW+pvGv31RAYRjobDZTb9221ZzemOU9YBtkz2KRezBlm8GpZD2RsWWwe/DW1ajIN0xjIS1IhNB8OTRhrmouv7iUz52C8/HhJTcdLEZhsS2PiDFkxJBJHkgW5AkPa4durpHtkQ04RVW91clgwuA0BDdnXR6ufKvk0AGmEdsEmWEYIuDOooV2tRDhmx1X70+Z6EtXEy5sqtC9jSSj5uLNaDTiPsWw== -- 128";
+		$body = "SKhmoBUsKd/51b8il6LNX5/MOnkqdK3MDEncd//fgIWnAVQk9tWI3b9GJT7WWGsFZMfJf3ajHsm4mlDhHGhUuksqTtcZJCiybJ8NFmmCf7uzKDnAg0DSkihACedMhhT0wyrr0BfQSqH4AJBQISeHNt4tq5T7qtqyjblpXaSQ1yOslEPMOmJZYwApTgEkFff1VUcmJnl3cat8lEMUE5tG89vvYONaCftanIcbmuxZPUpXLVdpaur1eEZ7UkTfzde+hn5gtRE4yUbwpQCNctO8T5kFnzF45BguquVc4F6O3w1iP+coJjXPRxkFjBvhF38ccpW9ORL81+qmrgFttIK8NA==";
 		$attachmentCount = 0;
 		// TEST
 
@@ -312,7 +318,7 @@ class RunController extends Controller
 		}
 
 		// udpate topics if you are contacting via the secure API
-		if($encripted = $serviceName == "secured")
+		if($serviceName == "secured")
 		{
 			// disregard any footer message and decript new subject
 			$message = trim(explode("--", $body)[0]);
@@ -378,7 +384,7 @@ class RunController extends Controller
 			$serviceCategory = $result[0]->category;
 			$serviceUsageText = $result[0]->usage_text;
 			$serviceInsertionDate = $result[0]->insertion_date;
-			$showAds = $result[0]->ads == 1; // @TODO run when deploying a service
+			$showAds = $result[0]->ads == 1;
 		}
 
 		// create a new service Object of the user type
