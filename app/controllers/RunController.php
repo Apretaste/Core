@@ -288,22 +288,26 @@ class RunController extends Controller
 		$utils = new Utils();
 		$connection = new Connection();
 
-		// increase used counter for alias
-		$saveServiceName = $serviceName;
-		if( ! $utils->serviceExist($serviceName))
+		// select the default service (unless is the email API)
+		if($serviceName != "secured")
 		{
-			if(empty($source)) $serviceName = "ayuda";
-			else
+			// select the default service if service does not exist
+			$saveServiceName = $serviceName;
+			if( ! $utils->serviceExist($serviceName))
 			{
-				$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
-				$serviceName = $res[0]->default_service;
+				if(empty($source)) $serviceName = "ayuda";
+				else
+				{
+					$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
+					$serviceName = $res[0]->default_service;
+				}
 			}
-		}
-		else
-		{
-			if ($serviceName !== $saveServiceName)
+			else // increase used counter for alias
 			{
-				$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
+				if ($serviceName !== $saveServiceName)
+				{
+					$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
+				}
 			}
 		}
 
