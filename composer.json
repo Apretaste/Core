@@ -10,5 +10,6 @@
 		"gregwar/captcha": "1.*",
 		"mpdf/mpdf": "6.*",
 		"abeautifulsite/simpleimage": "2.6.0"
+		"phpseclib/phpseclib": "2.0.3"
     }
 }

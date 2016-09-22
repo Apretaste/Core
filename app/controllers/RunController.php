@@ -34,23 +34,27 @@ class RunController extends Controller
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
 	 * */
-	public function apiAction()
+	public function apiAction($subject="", $email="", $secured=false)
 	{
-		$subject = $this->request->get("subject");
+		$subject = $secured ? $subject : $this->request->get("subject");
 		$body = $this->request->get("body");
 		$attachments = $this->request->get("attachments");
 		$token = $this->request->get("token");
 
+		$utils = new Utils();
+		$connection = new Connection();
+
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		// get the email from the token
-		$utils = new Utils();
-		$email = $utils->detokenize($token);
-		if( ! $email) die('{"code":"error","message":"bad authentication"}');
+		// if the encrypted, get the email from the token
+		if( ! $secured) // not encripted
+		{
+			$email = $utils->detokenize($token);
+			if( ! $email) die('{"code":"error","message":"bad authentication"}');
+		}
 
 		// check if the user is blocked
-		$connection = new Connection();
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
 		if(count($blocked)>0) die('{"code":"error","message":"user blocked"}');
 
@@ -99,6 +103,7 @@ class RunController extends Controller
 	 * */
 	public function mailgunAction()
 	{
+/* @TODO
 		// do not allow fake income messages 
 		if( ! isset($_POST['From'])) return;
 
@@ -114,7 +119,17 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-		
+*/
+		// TEST
+		$fromEmail = "salvi@apretaste.com";
+		$fromName = "Salvi Pascual";
+		$toEmail = "apretaste@mail.com";
+		$subject = "yuyu";
+		$body = "oJm3vQKA+H+5e2glKVt3PorVpbzrhucm9mEkgaunV/CFSz5VD94QeZMH0NehXwVxmWF1LsypdGcKlRLWkU8IZKBHXZTpvhi5Q2yk4G/HUZtevbEdqyXDgo3Uc6XkW+pvGv31RAYRjobDZTb9221ZzemOU9YBtkz2KRezBlm8GpZD2RsWWwe/DW1ajIN0xjIS1IhNB8OTRhrmouv7iUz52C8/HhJTcdLEZhsS2PiDFkxJBJHkgW5AkPa4durpHtkQ04RVW91clgwuA0BDdnXR6ufKvk0AGmEdsEmWEYIuDOooV2tRDhmx1X70+Z6EtXEy5sqtC9jSSj5uLNaDTiPsWw== -- 128";
+		$attachmentCount = 0;
+		// TEST
+
+		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
 		foreach($_POST as $k => $v)
 		{
@@ -183,16 +198,16 @@ class RunController extends Controller
 			$render = new Render();
 			$body = $render->renderHTML(new Service(), $response);
 
-			// let the user know that the account is blocked
+			// let the user know that the account is blocked and stop the execution
 			$emailSender = new Email();
 			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
-			exit; // do not continue if the email is blocked
+			exit;
 		}
-
+/* @TODO
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
-
+*/
 		// remove double spaces and apostrophes from the subject
 		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
@@ -275,20 +290,36 @@ class RunController extends Controller
 
 		// check the service requested actually exists
 		$utils = new Utils();
-		
+		$connection = new Connection();
+
 		// increase used counter for alias
 		$saveServiceName = $serviceName;
-		if( ! $utils->serviceExist($serviceName)) 
+		if( ! $utils->serviceExist($serviceName))
 		{
-			$serviceName = "ayuda";
-		} 
-		else 
+			if(empty($source)) $serviceName = "ayuda";
+			else
+			{
+				$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
+				$serviceName = $res[0]->default_service;
+			}
+		}
+		else
 		{
 			if ($serviceName !== $saveServiceName)
 			{
-				$connection = new Connection();
 				$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
 			}
+		}
+
+		// udpate topics if you are contacting via the secure API
+		if($encripted = $serviceName == "secured")
+		{
+			// disregard any footer message and decript new subject
+			$message = trim(explode("--", $body)[0]);
+			$subject = $utils->decript($email, $message);
+
+			// redirect to the api interface
+			$this->apiAction($subject, $email, true);
 		}
 
 		// include the service code
@@ -320,9 +351,6 @@ class RunController extends Controller
 		$request->service = $serviceName;
 		$request->subservice = trim($subServiceName);
 		$request->query = trim($query);
-
-		// connect to the database
-		$connection = new Connection();
 
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
