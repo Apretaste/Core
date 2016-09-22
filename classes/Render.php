@@ -13,6 +13,10 @@ class Render
 	 */
 	public function renderHTML($service, $response)
 	{
+		// if the response includes json, don't render HTML
+		// this is used mainly to build email APIs
+		if( ! empty($response->json)) return $response->json;
+
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
