@@ -311,8 +311,12 @@ class RunController extends Controller
 			$serviceName = strtolower($subjectPieces[0]);
 			unset($subjectPieces[0]);
 
-			// if the service don't exist, throw an error 
-			if( ! $utils->serviceExist($serviceName)) error_log("Service $serviceName do not exist");
+			// if the service don't exist, throw an error and exit
+			if( ! $utils->serviceExist($serviceName))
+			{
+				error_log("Service $serviceName do not exist");
+				exit;
+			}
 		}
 
 		// include the service code
