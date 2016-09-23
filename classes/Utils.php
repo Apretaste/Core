@@ -55,7 +55,10 @@ class Utils
 	 * */
 	public function serviceExist(&$serviceName)
 	{
-		// if serviceName is an alias and not is a name ...
+		// return positive if trying to invoke the secured API
+		if ($serviceName == "secured") return true;
+
+		// if serviceName is an alias and not is a name
 		$db = new Connection();
 		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
 
