@@ -36,13 +36,10 @@ class RunController extends Controller
 	 * @get String $attachments
 	 * @get String $token
 	 * */
-	public function apiAction($subject="", $email="")
+	public function apiAction()
 	{
-		// if secured==true, it is an encripted call to the API
-		$secured = ! empty($subject);
-
 		// get params from GET (or from the encripted API)
-		if( ! $secured) $subject = $this->request->get("subject");
+		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$attachments = $this->request->get("attachments");
 		$token = $this->request->get("token");
@@ -54,11 +51,8 @@ class RunController extends Controller
 		header("Access-Control-Allow-Origin: *");
 
 		// if is not encrypted, get the email from the token
-		if( ! $secured)
-		{
-			$email = $utils->detokenize($token);
-			if( ! $email) die('{"code":"error","message":"bad authentication"}');
-		}
+		$email = $utils->detokenize($token);
+		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
@@ -288,27 +282,21 @@ class RunController extends Controller
 		$utils = new Utils();
 		$connection = new Connection();
 
-		// select the default service (unless is the secured email API)
-		if($serviceName != "secured")
+		// select the default service if service does not exist
+		$alias = $serviceName;
+		if( ! $utils->serviceExist($serviceName))
 		{
-			// select the default service if service does not exist
-			$saveServiceName = $serviceName;
-			if( ! $utils->serviceExist($serviceName))
+			// get the default service
+			if(empty($source)) $serviceName = "ayuda";
+			else
 			{
-				if(empty($source)) $serviceName = "ayuda";
-				else
-				{
-					$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
-					$serviceName = $res[0]->default_service;
-				}
+				$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
+				$serviceName = $res[0]->default_service;
 			}
-			else // increase used counter for alias
-			{
-				if ($serviceName !== $saveServiceName)
-				{
-					$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
-				}
-			}
+		}
+		else if ($serviceName !== $alias) // increase the counter for alias
+		{
+			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
 		}
 
 		// udpate topics if you are contacting via the secure API
@@ -318,8 +306,13 @@ class RunController extends Controller
 			$message = trim(explode("--", $body)[0]);
 			$subject = $utils->decript($email, $message);
 
-			// redirect to the api interface
-			$this->apiAction($subject, $email, true);
+			// get the name of the service based on the subject line
+			$subjectPieces = explode(" ", $subject);
+			$serviceName = strtolower($subjectPieces[0]);
+			unset($subjectPieces[0]);
+
+			// if the service don't exist, throw an error 
+			if( ! $utils->serviceExist($serviceName)) error_log("Service $serviceName do not exist");
 		}
 
 		// include the service code
