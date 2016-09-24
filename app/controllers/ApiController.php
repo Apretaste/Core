@@ -17,8 +17,8 @@ class ApiController extends Controller
 	public function authAction()
 	{
 		// get the values from the post
-		$email = trim($this->request->getPost('email'));
-		$pin = trim($this->request->getPost('pin'));
+		$email = trim($this->request->get('email'));
+		$pin = trim($this->request->get('pin'));
 
 		// authenticate and create a new token
 		$utils = new Utils();

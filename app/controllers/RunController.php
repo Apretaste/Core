@@ -33,24 +33,28 @@ class RunController extends Controller
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
+	 * @get String $attachments
+	 * @get String $token
 	 * */
 	public function apiAction()
 	{
+		// get params from GET (or from the encripted API)
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$attachments = $this->request->get("attachments");
 		$token = $this->request->get("token");
 
+		$utils = new Utils();
+		$connection = new Connection();
+
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		// get the email from the token
-		$utils = new Utils();
+		// if is not encrypted, get the email from the token
 		$email = $utils->detokenize($token);
 		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
-		$connection = new Connection();
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
 		if(count($blocked)>0) die('{"code":"error","message":"user blocked"}');
 
@@ -114,7 +118,8 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-		
+
+		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
 		foreach($_POST as $k => $v)
 		{
@@ -183,10 +188,10 @@ class RunController extends Controller
 			$render = new Render();
 			$body = $render->renderHTML(new Service(), $response);
 
-			// let the user know that the account is blocked
+			// let the user know that the account is blocked and stop the execution
 			$emailSender = new Email();
 			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
-			exit; // do not continue if the email is blocked
+			exit;
 		}
 
 		// do not continue procesing the email if the sender is not valid
@@ -275,19 +280,42 @@ class RunController extends Controller
 
 		// check the service requested actually exists
 		$utils = new Utils();
-		
-		// increase used counter for alias
-		$saveServiceName = $serviceName;
-		if( ! $utils->serviceExist($serviceName)) 
+		$connection = new Connection();
+
+		// select the default service if service does not exist
+		$alias = $serviceName;
+		if( ! $utils->serviceExist($serviceName))
 		{
-			$serviceName = "ayuda";
-		} 
-		else 
-		{
-			if ($serviceName !== $saveServiceName)
+			// get the default service
+			if(empty($source)) $serviceName = "ayuda";
+			else
 			{
-				$connection = new Connection();
-				$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
+				$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
+				$serviceName = $res[0]->default_service;
+			}
+		}
+		else if ($serviceName !== $alias) // increase the counter for alias
+		{
+			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
+		}
+
+		// udpate topics if you are contacting via the secure API
+		if($serviceName == "secured")
+		{
+			// disregard any footer message and decript new subject
+			$message = trim(explode("--", $body)[0]);
+			$subject = $utils->decript($email, $message);
+
+			// get the name of the service based on the subject line
+			$subjectPieces = explode(" ", $subject);
+			$serviceName = strtolower($subjectPieces[0]);
+			unset($subjectPieces[0]);
+
+			// if the service don't exist, throw an error and exit
+			if( ! $utils->serviceExist($serviceName))
+			{
+				error_log("Service $serviceName do not exist");
+				exit;
 			}
 		}
 
@@ -321,9 +349,6 @@ class RunController extends Controller
 		$request->subservice = trim($subServiceName);
 		$request->query = trim($query);
 
-		// connect to the database
-		$connection = new Connection();
-
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
 
@@ -350,7 +375,7 @@ class RunController extends Controller
 			$serviceCategory = $result[0]->category;
 			$serviceUsageText = $result[0]->usage_text;
 			$serviceInsertionDate = $result[0]->insertion_date;
-			$showAds = $result[0]->ads == 1; // @TODO run when deploying a service
+			$showAds = $result[0]->ads == 1;
 		}
 
 		// create a new service Object of the user type

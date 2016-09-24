@@ -21,7 +21,7 @@ function smarty_function_img($params, $template)
 	{
 		$wwwroot = $di->get('path')['root'];
 		$wwwhttp = $di->get('path')['http'];
-		copy($href, "$wwwroot/public/temp/$file");
+		@copy($href, "$wwwroot/public/temp/$file");
 		$destination = "$wwwhttp/temp/$file";
 	}
 	else
