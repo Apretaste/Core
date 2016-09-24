@@ -1,23 +1,46 @@
 <?php if (isset($message)):?>
 	<?php if ($message!==false): ?>
-<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
-<?php endif;?>
+	<br/>
+	<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+	<?php endif;?>
 <?php endif;?>
 
 <div class="row border-bottom dashboard-header">
 	<div class="col-sm-6">
+	<?php if ($order->received == '1'): ?>
+		<div class="alert alert-success">
+			<span class="glyphicon glyphicon-ok"></span> This product was received by the user
+		</div>
+		<?php else: ?>
+			<?php if ($order->ready): ?>
+			<div class="alert alert-warning">
+				<span class="glyphicon glyphicon-ok"></span> This order is ready to send
+			</div>
+			<?php endif; ?>
+		<?php endif; ?>
+		
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
 				<h5>Destination data</h5>
 			</div>
 			<div class="ibox-content">
+				
 				<form action="/manage/marketDestination/<?php echo $order->id; ?>" method="post" data-toggle="validator">
+					<div class="form-group">
+						<label for="edtProvince">Province:</label>
+						<?php $provinces = array('PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD'); ?>
+						<select id="edtProvince" name="edtProvince" class="form-control">
+							<?php foreach($provinces as $prov): ?>
+							<option value="<?php echo $prov;?>" <?php if ($prov == $order->province):?> selected <?php endif;?>><?php echo ucwords(strtolower(str_replace("_"," ",$prov))); ?></option>
+							<?php endforeach;?>
+						</select>
+					</div>
 					<div class="form-group">
 						<label for="edtCI">CI:</label>
 						<input type="text" class="form-control" id="edtCI" name="edtCI" value="<?php echo $order->ci;?>">
 					</div>
 					<div class="form-group">
-						<label for="edtName">Name:</label>
+						<label for="edtName">Full name:</label>
 						<input type="text" class="form-control" id="edtName" name="edtName" value="<?php echo $order->name;?>">
 					</div>
 					<div class="form-group">
@@ -29,16 +52,7 @@
 						<input type="text" class="form-control" id="edtPhone" name="edtPhone" value="<?php echo $order->phone;?>">
 					</div>
 					<div class="form-group">
-						<label for="edtProvince">Province:</label>
-						<?php $provinces = array('PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD'); ?>
-						<select id="edtProvince" name="edtProvince" class="form-control">
-							<?php foreach($provinces as $prov): ?>
-							<option value="<?php echo $prov;?>" <?php if ($prov == $order->province):?> selected <?php endif;?>><?php echo ucwords(strtolower(str_replace("_"," ",$prov))); ?></option>
-							<?php endforeach;?>
-						</select>
-					</div>
-					<div class="form-group">
-						<button type="submit" name="btnUpdate" class="btn btn-success">Update</button>
+						<button type="submit" name="btnUpdate" class="btn btn-primary">Update</button>
 					</div>
 				</form>
 			</div>
@@ -47,15 +61,30 @@
 	<div class="col-sm-6">
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
+				<h5>Order</h5>
+			</div>
+			<div class="ibox-content">
+			User's email:<br/>
+			<b><?php echo $order->email; ?></b><br/><br/>
+			Inserted date: <br/>
+			<b><?php echo $order->inserted_date; ?></b><br/><br/>
+			</div>
+		</div>
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
 				<h5>Product information</h5>
 			</div>
 			<div class="ibox-content">
-                                    <?php if ($product->image): ?>
-										<img src="/products/<?php echo $product->code; ?>.jpg" width="300">
-									<?php endif;?>
-									<p><?php echo $product->description; ?></p>
+             <?php if ($product->image): ?>
+				<img style="float: left;margin: 10px;" src="/products/<?php echo $product->code; ?>.jpg" width="140">
+			<?php endif;?>
+			<p><b><?php echo $product->name; ?></b>: <?php echo $product->description; ?></p>
 
-				Product name: <br /> <b><?php echo $product->name; ?></b><br /> <br /> Price: <br />$<b><?php echo number_format($product->price,2); ?></b><br /> <br /> Shipping: <br />$<b><?php echo number_format($product->shipping_price,2); ?></b><br /> <br /> Credits: <br />$<b><?php echo number_format($product->credits,2); ?></b><br /> <br /> Agency: <br /> <b><?php echo $product->agency; ?></b><br /> <br /> Owner: <br /> <b><?php echo $product->owner; ?></b><br />
+			Price: $<b><?php echo number_format($product->price,2); ?></b><br /> 
+			Shipping: $<b><?php echo number_format($product->shipping_price,2); ?></b><br />
+			Credits: $<b><?php echo number_format($product->credits,2); ?></b><br />
+			Agency: <b><?php echo $product->agency; ?></b><br /> 
+			Owner: <b><?php echo $product->owner; ?></b>
 			</div>
 		</div>
 	</div>

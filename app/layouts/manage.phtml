@@ -33,6 +33,7 @@
 	    <link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
 	    <link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
 	    <link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
+	    <link href="<?= $wwwhttp; ?>/css/iCheck/custom.css" rel="stylesheet">
 	</head>
 
 	<body>
@@ -341,13 +342,13 @@
     <script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
 	<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
     <script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
-    
+    <script src="<?= $wwwhttp; ?>/js/icheck.min.js"></script>
     <!-- <script src="<?= $wwwhttp; ?>/js/demo/sparkline-demo.js"></script>  -->
     <!-- <script src="<?= $wwwhttp; ?>/js/plugins/chartJs/Chart.min.js"></script>  -->
     <!--  <script src="js/demo/peity-demo.js"></script>  -->
     
     <?php if (isset($loginSuccess)) if ($loginSuccess): ?>
-    $(document).ready(function() {
+  	  $(document).ready(function() {
          setTimeout(function() {
              toastr.options = {
                  closeButton: true,

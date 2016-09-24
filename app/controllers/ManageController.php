@@ -2091,8 +2091,18 @@ class ManageController extends Controller
 		$this->setMenu('market');
 		$this->updateMarketOrders();
 		$connection = new Connection();
-		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = '0';";
+		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = 0;";
 		$orders = $connection->deepQuery($sql);
+		
+		if (!is_array($orders))
+			$orders = array();
+		
+		foreach ($orders as $k => $v)
+		{
+			$orders[$k]->ready = false;
+			if (trim($v->ci) !== '' && trim($v->name) !== '' && trim($v->address) !== '' && trim($v->province) !== '' )
+				$orders[$k]->ready = true;
+		}
 		
 		$this->view->orders = $orders;
 		$this->view->title = "Market's orders";
@@ -2142,6 +2152,10 @@ class ManageController extends Controller
 		if (is_array($order))
 		{
 			$order = $order[0];
+			$order->ready = false;
+			if (trim($order->ci) !== '' && trim($order->name) !== '' && trim($order->address) !== '' && trim($order->province) !== '' )
+			$order->ready = true;
+			
 			$sql = "SELECT * FROM _tienda_products WHERE code = '$order->product';";
 			$product = $connection->deepQuery($sql);
 			
@@ -2160,11 +2174,35 @@ class ManageController extends Controller
 				$this->view->breadcrumb = array(
 					'/manage' => 'Home',
 					'/manage/market' => 'Market',
+					'/manage/marketOrders' => 'Orders',
 					'/manage/marketDetail/' . $product->code => substr($product->name, 0, 30),
 					'/manage/marketDestination/' . $id => "Destination"
 				);
 			}
 		}
+	}
+	
+	/**
+	 * Edit product's destination data
+	 *
+	 *  @author kuma
+	 */
+	public function marketOrderReceivedAction()
+	{
+		$this->setMenu('market');
+	
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = $id[count($id)-1];
+	    $id = $id * 1;
+		$wwwroot = $this->di->get('path')['root'];
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE _tienda_orders SET received = 1 WHERE id = $id;");
+		$this->view->message = "Order <a href=\"/manage/marketDestination/$id\">{$id}</a> was set as sent";
+		$this->view->message_type = "success";
+		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketOrders"));
 	}
 	
 	/**
