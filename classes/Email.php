@@ -4,6 +4,8 @@ use Mailgun\Mailgun;
 
 class Email
 {
+	public $group = null;
+
 	/**
 	 * Sends an email using MailGun
 	 * @author salvipascual
@@ -43,8 +45,7 @@ class Email
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
-		if ( ! is_null($messageID))
-			$message["h:In-Reply-To"] = $messageID;
+		if ( ! is_null($messageID)) $message["h:In-Reply-To"] = $messageID;
 
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -93,5 +94,22 @@ class Email
 	        WHERE email = '$email'");
 
 		return $email;
+	}
+
+	/**
+	 * Set the group to respond based on a mailbox
+	 * 
+	 * @author salvipascual
+	 * @param String $mailbox
+	 * */
+	public function setEmailGroup($mailbox)
+	{
+		// get group for the mailbox
+		$connection = new Connection();
+		$result = $connection->deepQuery("SELECT group FROM jumper WHERE email='$mailbox'");
+
+		// set the group
+		$this->group = $result[0]->group;
+		die($this->group);
 	}
 }
