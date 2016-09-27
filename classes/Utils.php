@@ -15,16 +15,13 @@ class Utils
 	public function getValidEmailAddress()
 	{
 		$connection = new Connection();
-
-		// get the email
-		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='ReceiveOnly' ORDER BY last_usage ASC LIMIT 1";
-		$result = $connection->deepQuery($sql);
-		$email = $result[0]->email;
-
-		// update the last time used
-		$connection->deepQuery("UPDATE jumper SET last_usage=CURRENT_TIMESTAMP WHERE email='$email'");
-
-		return $email;
+		$result = $connection->deepQuery("
+			SELECT email 
+			FROM jumper 
+			WHERE status='SendReceive' OR status='ReceiveOnly' 
+			ORDER BY last_usage ASC 
+			LIMIT 1");
+		return $result[0]->email;
 	}
 
 	/**
