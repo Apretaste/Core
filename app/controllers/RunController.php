@@ -408,6 +408,11 @@ class RunController extends Controller
 		// we always treat the response as an array
 		$responses = is_array($response) ? $response : array($response);
 
+		// adding extra responses from Utils
+		$extraResponses = Utils::getExtraResponses();
+		$responses = array_merge($responses, $extraResponses);
+		Utils::clearExtraResponses();
+		
 		// clean the empty fields in the response  
 		foreach($responses as $rs)
 		{
