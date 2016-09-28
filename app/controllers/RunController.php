@@ -190,7 +190,8 @@ class RunController extends Controller
 
 			// let the user know that the account is blocked and stop the execution
 			$emailSender = new Email();
-			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
+			$emailSender->setRespondEmailID($messageID);
+			$emailSender->sendEmail($fromEmail, $subject, $body);
 			exit;
 		}
 
@@ -239,8 +240,7 @@ class RunController extends Controller
 		}
 
 		// update the counter of emails received from that mailbox
-		$today = date("Y-m-d H:i:s");
-		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
+		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1 WHERE email='$toEmail'");
 
 		// save the webhook log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
@@ -550,8 +550,12 @@ class RunController extends Controller
 				$utils->subscribeToEmailList($email);
 			}
 
-			// get params for the email and send the response emails
+			// create and configure to send email
 			$emailSender = new Email();
+			$emailSender->setRespondEmailID($messageID);
+			$emailSender->setEmailGroup($source);
+
+			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
 				if($rs->render) // ommit default Response()
@@ -565,7 +569,7 @@ class RunController extends Controller
 						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
 						$connection->deepQuery($sql);
 					}
-										
+
 					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
@@ -577,7 +581,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
 
