@@ -46,16 +46,13 @@ class Utils
 	public function getValidEmailAddress()
 	{
 		$connection = new Connection();
-
-		// get the email
-		$sql = "SELECT email FROM jumper WHERE status='SendReceive' OR status='ReceiveOnly' ORDER BY last_usage ASC LIMIT 1";
-		$result = $connection->deepQuery($sql);
-		$email = $result[0]->email;
-
-		// update the last time used
-		$connection->deepQuery("UPDATE jumper SET last_usage=CURRENT_TIMESTAMP WHERE email='$email'");
-
-		return $email;
+		$result = $connection->deepQuery("
+			SELECT email 
+			FROM jumper 
+			WHERE status='SendReceive' OR status='ReceiveOnly' 
+			ORDER BY last_usage ASC 
+			LIMIT 1");
+		return $result[0]->email;
 	}
 
 	/**
@@ -86,16 +83,16 @@ class Utils
 	 * */
 	public function serviceExist(&$serviceName)
 	{
-		// check serviceName as an service alias
+		// return positive if trying to invoke the secured API
+		if ($serviceName == "secured") return true;
+
+		// if serviceName is an alias and not is a name
 		$db = new Connection();
-		
-		// if serviceName is an alias and not is a name ...
 		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
-		
-		// ... then get the service name
-		if (isset($r[0]->service)) 
-			$serviceName = $r[0]->service;
-		
+
+		// then get the service name
+		if (isset($r[0]->service)) $serviceName = $r[0]->service;
+
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		return file_exists("$wwwroot/services/$serviceName/config.xml");
@@ -289,13 +286,21 @@ class Utils
 	/**
 	 * Reduce image size and optimize the image quality
 	 * 
-	 * @TODO Find an faster image optimization solution
 	 * @author salvipascual
+	 * @author kuma
+	 * @version 2.0
 	 * @param String $imagePath, path to the image
-	 * */
-	public function optimizeImage($imagePath, $width = "", $height="", $quality = 70, $format = 'image/jpeg')
+	 * @param number $width Fit to width
+	 * @param number $height Fit to height
+	 * @param number $quality Decrease/increase quality
+	 * @param string $format Convert to format
+	 * @return boolean
+	 */
+	 
+	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
-		include_once "../lib/SimpleImage.php";
+		if ( ! class_exists('SimpleImage'))
+			include_once "../lib/SimpleImage.php";
 		
 		try 
 		{
@@ -316,13 +321,6 @@ class Utils
 		}
 		
 		return true;
-		
-		/*
-		if(empty($width) && empty($height)) $resize = "";
-		else $resize = "-resize ".$width."x".$height;
-
-		shell_exec("/usr/bin/convert $resize ".$imagePath."[0] ".$imagePath." > /var/www/Core/logs/convert.log");
-		*/
 	}
 
 	/**
@@ -456,19 +454,19 @@ class Utils
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
 		$connection = new Connection();
-		
+
 		// block address with same requested service in last hour
 		// @TODO test and think in other requests/period frecuency like as 120/day (5 * 24 = 120)
 		// @TODO save this $to address in a blacklist or penalize with 5 hours?
-		$sql = "SELECT
-		lower(substring_index(subject,' ',1)) as service,
-		count(*) as total
-		FROM delivery_received
-		WHERE user = '$to'
-		AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
-		GROUP BY service
-		HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
-		
+		$sql = 
+			"SELECT lower(substring_index(subject,' ',1)) as service,
+			count(*) as total
+			FROM delivery_received
+			WHERE user = '$to'
+			AND timediff(CURRENT_TIMESTAMP, inserted) <= '01:00:00'
+			GROUP BY service
+			HAVING total >= 5 AND (service = 'ayuda' OR NOT EXISTS (SELECT name FROM service WHERE service.name = service));";
+
 		$lastreceived = $connection->deepQuery($sql);
 		
 		if (is_array($lastreceived)) if (isset($lastreceived[0])) $msg = 'loop';
@@ -907,7 +905,7 @@ class Utils
 	
 	/**
 	 * Insert anotification in database
-	 *
+	 * 
 	 * @author kuma
 	 * @param string $email
 	 * @param string $origin
@@ -918,6 +916,7 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
+
 		$connection = new Connection();
 		
 		$notifications = $this->getNumberOfNotifications($email);
@@ -929,6 +928,7 @@ class Utils
 		// get notification id
 		$id = false;
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
+
 		if (isset($r[0]->id))
 			$id = intval($r[0]->id);
 		
@@ -962,9 +962,9 @@ class Utils
 			$connection->deepQuery("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
 		}
 		
-		return $id;
+		return $id; 
 	}
-	
+
 	/**
 	 * Return the number of notifications for a user
 	 *
@@ -999,6 +999,75 @@ class Utils
 	}
 
 	/**
+	 * Return user's notifications
+	 *
+	 * @param string $email
+	 * @return array
+	 */
+	public function getUnreadNotifications($email, $limit = 50)
+	{
+		$connection = new Connection();
+		$sql = "SELECT * FROM notifications WHERE viewed = '0' AND email ='{$email}' ORDER BY inserted_date DESC LIMIT $limit;";
+		$n = $connection->deepQuery($sql);
+		if ( ! is_array($n)) $n = array();
+		return $n;
+	}
+
+	/**
+	 * Get differents statistics
+	 *
+	 * @author kuma
+	 * @param string $stat_name
+	 * @param array $params
+	 * @return mixed
+	 */
+	public function getStat($statName = 'person.count', $params = array())
+	{
+		$sql = '';
+		$connection = new Connection();
+	
+		// prepare query templates...
+		$sqls = array(
+			'person.count' => "SELECT count(*) as c FROM person;",
+			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
+			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
+			'person.credit.count' => "SELECT count(*) as c FROM person where credit > 0;",
+			'market.sells.monthly' => "SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
+			'utilization.count' => "SELECT count(*) FROM utilization;",
+			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(*) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
+		);
+	
+		if (!isset($sqls[$statName]))
+			throw new Exception('Unknown stat '.$statName);
+				
+		$sql = $sqls[$statName];
+	
+		// replace params
+		foreach ($params as $param => $value)
+			$sql = str_replace($param, $value, $sql);
+	
+		// querying db ...
+		$r = $connection->deepQuery($sql);
+
+		if (!is_array($r))
+			return null;
+	
+		// try return atomic result
+		if (count($r) === 1)
+			if (isset($r[0]))
+			{
+				$x = get_object_vars($r[0]);
+				if (count($x) === 1)
+					return array_pop($x);
+			}
+
+		// else return the entire array
+		return $r;
+	}
+
+	/**
 	 * Decript a message using the user's private key. 
 	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
 	 * 
@@ -1011,7 +1080,7 @@ class Utils
 	{
 		// get the user's private key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT privatekey FROM person WHERE email='$email'");
+		$res = $connection->deepQuery("SELECT privatekey FROM `keys` WHERE email='$email'");
 		$privatekey = $res[0]->privatekey;
 
 		// create the key if it does not exist
@@ -1039,7 +1108,7 @@ class Utils
 	{
 		// get the user's public key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT publickey FROM person WHERE email='$email'");
+		$res = $connection->deepQuery("SELECT publickey FROM `keys` WHERE email='$email'");
 		$publickey = $res[0]->publickey;
 
 		// create the key if it does not exist
@@ -1065,18 +1134,34 @@ class Utils
 	 * */
 	public function recreateRSAKeys($email)
 	{
+		// create the public and private keys
 		$rsa = new RSA();
-//		$rsa->setPrivateKeyFormat(RSA::ENCRYPTION_OAEP);
 		$rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_OPENSSH);
-		$keys = $rsa->createKey(); // == $rsa->createKey(1024) where 1024 is the key size
+		$keys = $rsa->createKey();
 		$privatekey = $keys['privatekey'];
 		$publickey = $keys['publickey'];
 
-		// save the new keys on the user session
+		// update the new keys or create a new pair
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET privatekey='$privatekey', publickey='$publickey' WHERE email='$email'");
+		$connection->deepQuery("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
 
 		// return the new keys
 		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
+	}
+
+	/**
+	 * Regenerate a sentense with random Spanish words
+	 *
+	 * @author salvipascual
+	 * @param Integer $words
+	 * @return String
+	 * */
+	public function randomSentence($words=-1)
+	{
+		// get the number of words
+		if ($words == -1) $words = rand(2, 10);
+
+		// @TODO get actual random words
+		return "hola mundo chico";
 	}
 }

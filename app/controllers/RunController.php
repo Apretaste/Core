@@ -33,10 +33,13 @@ class RunController extends Controller
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
+	 * @get String $attachments
+	 * @get String $token
 	 * */
-	public function apiAction($subject="", $email="", $secured=false)
+	public function apiAction()
 	{
-		$subject = $secured ? $subject : $this->request->get("subject");
+		// get params from GET (or from the encripted API)
+		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 		$attachments = $this->request->get("attachments");
 		$token = $this->request->get("token");
@@ -47,12 +50,9 @@ class RunController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		// if the encrypted, get the email from the token
-		if( ! $secured) // not encripted
-		{
-			$email = $utils->detokenize($token);
-			if( ! $email) die('{"code":"error","message":"bad authentication"}');
-		}
+		// if is not encrypted, get the email from the token
+		$email = $utils->detokenize($token);
+		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
 		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
@@ -103,7 +103,6 @@ class RunController extends Controller
 	 * */
 	public function mailgunAction()
 	{
-/* @TODO
 		// do not allow fake income messages 
 		if( ! isset($_POST['From'])) return;
 
@@ -119,15 +118,6 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-*/
-		// TEST
-		$fromEmail = "salvi@apretaste.com";
-		$fromName = "Salvi Pascual";
-		$toEmail = "apretaste@mail.com";
-		$subject = "yuyu";
-		$body = "oJm3vQKA+H+5e2glKVt3PorVpbzrhucm9mEkgaunV/CFSz5VD94QeZMH0NehXwVxmWF1LsypdGcKlRLWkU8IZKBHXZTpvhi5Q2yk4G/HUZtevbEdqyXDgo3Uc6XkW+pvGv31RAYRjobDZTb9221ZzemOU9YBtkz2KRezBlm8GpZD2RsWWwe/DW1ajIN0xjIS1IhNB8OTRhrmouv7iUz52C8/HhJTcdLEZhsS2PiDFkxJBJHkgW5AkPa4durpHtkQ04RVW91clgwuA0BDdnXR6ufKvk0AGmEdsEmWEYIuDOooV2tRDhmx1X70+Z6EtXEy5sqtC9jSSj5uLNaDTiPsWw== -- 128";
-		$attachmentCount = 0;
-		// TEST
 
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
@@ -200,14 +190,15 @@ class RunController extends Controller
 
 			// let the user know that the account is blocked and stop the execution
 			$emailSender = new Email();
-			$emailSender->sendEmail($fromEmail, $subject, $body, array(), array(), $messageID);
+			$emailSender->setRespondEmailID($messageID);
+			$emailSender->sendEmail($fromEmail, $subject, $body);
 			exit;
 		}
-/* @TODO
+
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
-*/
+
 		// remove double spaces and apostrophes from the subject
 		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
@@ -249,8 +240,7 @@ class RunController extends Controller
 		}
 
 		// update the counter of emails received from that mailbox
-		$today = date("Y-m-d H:i:s");
-		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1, last_usage='$today' WHERE email='$toEmail'");
+		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1 WHERE email='$toEmail'");
 
 		// save the webhook log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
@@ -292,10 +282,11 @@ class RunController extends Controller
 		$utils = new Utils();
 		$connection = new Connection();
 
-		// increase used counter for alias
-		$saveServiceName = $serviceName;
+		// select the default service if service does not exist
+		$alias = $serviceName;
 		if( ! $utils->serviceExist($serviceName))
 		{
+			// get the default service
 			if(empty($source)) $serviceName = "ayuda";
 			else
 			{
@@ -303,23 +294,29 @@ class RunController extends Controller
 				$serviceName = $res[0]->default_service;
 			}
 		}
-		else
+		else if ($serviceName !== $alias) // increase the counter for alias
 		{
-			if ($serviceName !== $saveServiceName)
-			{
-				$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$saveServiceName';");
-			}
+			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
 		}
 
 		// udpate topics if you are contacting via the secure API
-		if($encripted = $serviceName == "secured")
+		if($serviceName == "secured")
 		{
 			// disregard any footer message and decript new subject
 			$message = trim(explode("--", $body)[0]);
 			$subject = $utils->decript($email, $message);
 
-			// redirect to the api interface
-			$this->apiAction($subject, $email, true);
+			// get the name of the service based on the subject line
+			$subjectPieces = explode(" ", $subject);
+			$serviceName = strtolower($subjectPieces[0]);
+			unset($subjectPieces[0]);
+
+			// if the service don't exist, throw an error and exit
+			if( ! $utils->serviceExist($serviceName))
+			{
+				error_log("Service $serviceName do not exist");
+				exit;
+			}
 		}
 
 		// include the service code
@@ -378,7 +375,7 @@ class RunController extends Controller
 			$serviceCategory = $result[0]->category;
 			$serviceUsageText = $result[0]->usage_text;
 			$serviceInsertionDate = $result[0]->insertion_date;
-			$showAds = $result[0]->ads == 1; // @TODO run when deploying a service
+			$showAds = $result[0]->ads == 1;
 		}
 
 		// create a new service Object of the user type
@@ -558,8 +555,12 @@ class RunController extends Controller
 				$utils->subscribeToEmailList($email);
 			}
 
-			// get params for the email and send the response emails
+			// create and configure to send email
 			$emailSender = new Email();
+			$emailSender->setRespondEmailID($messageID);
+			$emailSender->setEmailGroup($source);
+
+			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
 				if($rs->render) // ommit default Response()
@@ -573,7 +574,7 @@ class RunController extends Controller
 						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
 						$connection->deepQuery($sql);
 					}
-										
+
 					// prepare the email variable
 					$emailTo = $rs->email;
 					$subject = $rs->subject;
@@ -585,7 +586,7 @@ class RunController extends Controller
 					$subject = trim(preg_replace('/\'|`/', "", $subject));
 
 					// send the response email
-					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments, $messageID);
+					$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
 				}
 			}
 
