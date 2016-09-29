@@ -6,6 +6,37 @@ use phpseclib\Crypt\RSA;
 
 class Utils
 {
+	
+	static private $extraResponses = array();
+	
+	/**
+	 * Add extra response to send
+	 * 
+	 * @param Response $response
+	 */
+	static function addExtraResponse(Response $response)
+	{
+		self::$extraResponses[] = $response;	
+	}
+	
+	/**
+	 * Extra responses to send
+	 * 
+	 * @return array
+	 */
+	static function getExtraResponses()
+	{
+		return self::$extraResponses;
+	}
+	
+	/**
+	 * Clear extra responses list
+	 */
+	static function clearExtraResponses()
+	{
+		self::$extraResponses = array();
+	}
+	
 	/**
 	 * Returns a valid Apretaste email to send an email
 	 *
@@ -885,16 +916,53 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
 	{
-		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
-		
+
 		$connection = new Connection();
+		
+		$notifications = $this->getNumberOfNotifications($email);
+		
+		// insert notification
+		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
 		$connection->deepQuery($sql);
+		
+		// get notification id
+		$id = false;
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
+
+		if (isset($r[0]->id))
+			$id = intval($r[0]->id);
 		
-		if (isset($r[0]->id)) 
-			return intval($r[0]->id);
+		// increase number of notifications
+		$sql = "UPDATE person SET notifications = notifications + 1 WHERE email = '$email';";
+		$connection->deepQuery($sql);
 		
-		return false;
+		// If more than 50 notifications, send the notifications to the user
+		if ($notifications + 1 >= 50)
+		{
+			// getting notifications
+			$sql = "SELECT * FROM notifications WHERE email ='{$email}' AND viewed = 0 ORDER BY inserted_date DESC;";
+			$notificationsList = $connection->deepQuery($sql);
+			
+			if ( ! is_array($notificationsList))
+				$notificationsList = array();
+			
+			// create extra response
+			$response = new Response();
+			$response->setEmailLayout('email_default.tpl');
+			$response->setResponseSubject("Tienes $notifications notificaciones sin leer");
+			$response->createFromTemplate("notifications.tpl", array('notificactions' => $notificationsList));
+			$response->internal = true;
+			
+			self::addExtraResponse($response);
+			
+			// Mark as seen
+			$connection->deepQuery("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
+			
+			// down to zero
+			$connection->deepQuery("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
+		}
+		
+		return $id; 
 	}
 
 	/**
@@ -906,8 +974,28 @@ class Utils
 	public function getNumberOfNotifications($email)
 	{
 		$connection = new Connection();
-		$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
-		return $r[0]->total * 1;
+		
+		// temporal mechanism?
+		$r = $connection->deepQuery("SELECT notifications FROM person WHERE notifications is null AND email = '{$email}';");
+		
+		if (!isset($r[0])) {
+			$r[0] = new stdClass();
+			$r[0]->notifications = ''; 
+		}
+				
+		$notifications = $r[0]->notifications;
+		
+		if (trim($notifications) == ''){
+			
+			// calculate notifications
+			$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
+			$notifications = $r[0]->total * 1;
+			
+			// update person
+			$r = $connection->deepQuery("UPDATE person SET notifications = $notifications;");
+		}
+		
+		return $notifications * 1;
 	}
 
 	/**
