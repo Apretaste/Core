@@ -1526,32 +1526,59 @@ class ManageController extends Controller
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
  			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
  				body{font-family:Verdana;}</style>
-			     <body></div>';
+			     <body>';
  		
  		$html .= "<br/><h1>$title</h1>"; 		
  	
 		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
+		
 		$i = 0;
+		$total = count($questions);
 		foreach($questions as $question)
 		{
-			$html .= "<h2>". $question->title."</h2>";
+			//$html .= "<h2>". $question->title . "</h2>";
 			$answers = $db->deepQuery("SELECT *, (SELECT count(*) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 			
 			$values = '';
 			foreach($answers as $ans){
-				$values[$ans->title." ({$ans->choosen})"] = $ans->choosen; 
+				$values[wordwrap($ans->title,50)." ({$ans->choosen})"] = $ans->choosen; 
 			}
 			
-			$chart = $this->getPieChart($question->title, $values);
+			$PieChart = null;
+			$chart = $this->getPieChart($question->title, $values, $PieChart);
+			
+			$html .= '<table width="100%"><tr><td valign="top" width="250">';
+			$html .= '<thead><caption>'.$question->title.'</caption></thead>';
 			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
+			$html .="</td><td valign=\"top\">";
+			
+			$Data    = $PieChart->pDataObject->getData();
+			$Palette = $PieChart->pDataObject->getPalette();
+			
+			$html .= "<table width=\"100%\">";
+			foreach($Data["Series"][$Data["Abscissa"]]["Data"] as $Key => $Value)
+			{
+				
+				$R = $Palette[$Key]["R"];
+				$G = $Palette[$Key]["G"];
+				$B = $Palette[$Key]["B"];
+				$html .= "<tr><td>";
+				$html .= "<tr><td><span style=\"width:30px;height:30px;background:rgb($R,$G,$B);\">&nbsp;&nbsp;</span></td><td>$Value</td></tr>";
+			}
+			$html .= "</table>";
+			
+			$html .= "</td></tr></table><br/>";
+			
 			$i++;
-			if ($i % 3 == 0) $html .= '<pagebreak />';
+			//if ($i % 4 == 0 && $i < $total) $html .= '<pagebreak />';
 		}
  		
- 		$html .= '</div></body></html>';
-
-		$mpdf = new mPDF('','A4', 0, '', 5, 5, 5, 5, 1, 1, 'P');
-		$mpdf->WriteHTML($html);	
+ 		$html .= '</body></html>';
+ 		
+ 		//die($html);
+ 		
+		$mpdf = new mPDF('','A4', 0, '', 10, 10, 10, 10, 1, 1, 'P');
+		$mpdf->WriteHTML(trim($html));	
 		$mpdf->Output("$title.pdf", 'D');
 		$this->view->disable();
 	}
@@ -1563,7 +1590,7 @@ class ManageController extends Controller
 	 * @param string $title
 	 * @param array $values
 	 */
-	private function getPieChart($title, $values){
+	private function getPieChart($title, $values, &$chartObj){
 		
 		include_once "../lib/pChart2.1.4/class/pData.class.php";
 		include_once "../lib/pChart2.1.4/class/pDraw.class.php";
@@ -1576,7 +1603,7 @@ class ManageController extends Controller
 		$MyData->addPoints(array_keys($values),"Labels");
 		$MyData->setAbscissa("Labels");
 		
-		$myPicture = new pImage(800,200,$MyData);
+		$myPicture = new pImage(250,150,$MyData);
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
 			"FontSize" => 13,
@@ -1601,27 +1628,32 @@ class ManageController extends Controller
 		));
 
 		$PieChart = new pPie($myPicture,$MyData);
-		$PieChart->draw3DPie(125, 80, array(
-			"Radius" => 100,
+		$PieChart->draw2DPie(125, 80, array(
+			"Radius" => 50,
 			"WriteValues" => PIE_VALUE_PERCENTAGE,
 			"ValuePadding" => 10,
-			"DataGapAngle" => 10,
-			"DataGapRadius" => 8,
-			"Border" => TRUE,
+			"DataGapAngle" => 0,
+			"DataGapRadius" => 0,
+			"Border" => FALSE,
 			"BorderR" => 0,
 			"BorderG" => 0, 
 			"BorderB"=> 0,
 			"ValueR"=> 0,
 			"ValueG" => 0, 
-			"ValueB" => 0
+			"ValueB" => 0,
+			"Shadow" => FALSE
 		));
-		
+		/*
 		$PieChart->drawPieLegend(300, 18, array(
 			"Style" => LEGEND_NOBORDER,
 			"Mode" => LEGEND_VERTICAL,
-			"BoxSize" => 10
+			"BoxSize" => 25,
+			"FontSize" => 10,
+			"Margin" => 20
 		));
-
+*/
+		$chartObj = $PieChart;
+		
 		ob_start();
 		imagepng($myPicture->Picture);
 		$img = ob_get_contents();
