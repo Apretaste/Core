@@ -4,6 +4,9 @@ use Mailgun\Mailgun;
 
 class Email
 {
+	public $group = 'apretaste';
+	public $messageid = null;
+
 	/**
 	 * Sends an email using MailGun
 	 * @author salvipascual
@@ -12,9 +15,8 @@ class Email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach 
-	 * @param String $messageID, the id of request message from user
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $messageID = null)
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
 		$utils = new Utils();
@@ -43,8 +45,7 @@ class Email
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
-		if ( ! is_null($messageID))
-			$message["h:In-Reply-To"] = $messageID;
+		if ( ! is_null($this->messageid)) $message["h:In-Reply-To"] = $this->messageid;
 
 		// get the key from the config
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -65,6 +66,34 @@ class Email
 	}
 
 	/**
+	 * Set the id to respond to an email. This is important
+	 * to create conversations when replying to an email
+	 *
+	 * @author salvipascual
+	 * @param String $id
+	 * */
+	public function setRespondEmailID($messageid)
+	{
+		$this->messageid = $messageid;
+	}
+
+	/**
+	 * Set the group to respond based on a mailbox
+	 *
+	 * @author salvipascual
+	 * @param String $mailbox
+	 * */
+	public function setEmailGroup($mailbox)
+	{
+		// get group for the mailbox
+		$connection = new Connection();
+		$result = $connection->deepQuery("SELECT `group` FROM jumper WHERE email='$mailbox'");
+	
+		// set the group
+		$this->group = $result[0]->group;
+	}
+
+	/**
 	 * Brings the next email to be used by Apretaste using an even distribution
 	 * 
 	 * @author salvipascual
@@ -76,22 +105,23 @@ class Email
 		// get the domain from the user's email 
 		$domain = explode("@", $email)[1];
 
-		// get the email with less usage  
+		// get the email with less usage
 		$connection = new Connection();
 		$result = $connection->deepQuery("
 			SELECT email
 			FROM jumper 
 			WHERE (status='SendReceive' OR status='SendOnly') 
+			AND `group` = '{$this->group}' 
 			AND blocked_domains NOT LIKE '%$domain%' 
 			ORDER BY last_usage ASC LIMIT 1");
 
 		// increase the send counter
-		$email = $result[0]->email;
+		$mailbox = $result[0]->email;
 		$connection->deepQuery("
 	        UPDATE jumper 
-	        SET sent_count = sent_count + 1, last_usage = CURRENT_TIMESTAMP
-	        WHERE email = '$email'");
+	        SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
+	        WHERE email='$mailbox'");
 
-		return $email;
+		return $mailbox;
 	}
 }

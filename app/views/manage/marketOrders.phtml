@@ -1,0 +1,152 @@
+<br/>
+<div class="row">
+	<div class="col-xs-12">
+	<?php if (isset($message)):?>
+	<?php if ($message!==false): ?>
+		<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+		<?php endif;?>
+	<?php endif;?>
+	</div>
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="ibox float-e-margins">
+				<div class="ibox-title">
+					<h5>Products</h5>
+				</div>
+				<div class="ibox float-e-margins">
+					<div class="ibox-content">
+						<div class="table-responsive">
+							<table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Product</th>
+										<th>User</th>
+										<th>Date</th>
+										<th>Set as received</th>
+										<th>Edit details</th> 
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($orders as $order): ?>
+										<tr>
+										<td><?php echo $order->id; ?></td>
+										<td><a href="#" onclick="showProduct('<?php echo $order->product; ?>');"><?php echo $order->product_name; ?></a></td>
+										<td><?php echo $order->email; ?></td>
+										<td><?php echo $order->inserted_date; ?></td>
+										<td align="center">
+											<a href="/manage/marketOrderReceived/<?php echo $order->id; ?>" class = "btn btn-success" onclick="return confirm('Are you sure?');">
+												<span class="glyphicon glyphicon-ok"></span>
+											</a>
+										</td>
+										
+										<td align="center">
+											<a href="/manage/marketDestination/<?php echo $order->id; ?>" <?php if ($order->ready): ?>class="btn btn-warning"<?php else: ?>class="btn btn-primary"<?php endif;?>>
+											<?php if ($order->ready): ?>
+											Ready to send
+											<?php else: ?>
+											<span class="glyphicon glyphicon-edit"></span> &nbsp;Destination
+											<?php endif;?>
+											</a>
+										</td>
+									
+									</tr>
+								<?php endforeach;?>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- product modal -->
+<div class="modal fade tooltips" id="product-modal" tabindex="-1" role="dialog" aria-labelledby="product-name" aria-hidden="true">
+	<div class="modal-dialog" style="width: 600px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title" id="product-name"></h4>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-5">
+						<img style="margin: 5px;" src="/products/code" id="product-picture">
+					</div>
+					<div class="col-md-7">
+						<p>
+							Price: <br /> <span id="product-price"></span><br /> Shipping price: <br /> <span id="product-shipping"></span><br /> Credits: <br /> <span id="product-credits"></span><br /> Agency: <br /> <span id="product-agency"></span><br />
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+#product-modal span {
+	font-weight: bold;
+}
+</style>
+<script>
+	function showProduct(code)
+	{
+		$("#product-modal").modal('show');
+		$("#product-picture").attr('src', "/products/" + code + ".jpg");
+
+		var product = {};
+		
+		jQuery.ajax({
+			url: "/ajax/getMarketProduct",
+			type: "POST",
+			async: false,
+			data: {code: code},
+			complete: function(res, status){
+		       	 if ( status == "success" || status == "notmodified" ){
+		           	var result = {};
+	           		eval('result = ' + res.responseText + ';');
+	           		product = result.product; 
+	           		$("#product-price").html(product.price_friendly);
+	           		$("#product-shipping").html(product.shipping_price_friendly);
+	           		$("#product-credits").html(product.credits_friendly);
+	           		$("#product-name").html(product.name);
+	           		$("#product-agency").html(product.agency);
+		         }
+			}
+		});
+		
+	}
+
+
+	 $(document).ready(function(){
+        $('.dataTables-example').DataTable({
+            dom: '<"html5buttons"B>lTfgitp',
+            buttons: [
+                { extend: 'copy'},
+                {extend: 'csv'},
+                {extend: 'excel', title: 'ExampleFile'},
+                {extend: 'pdf', title: 'ExampleFile'},
+
+                {extend: 'print',
+                 customize: function (win){
+                        $(win.document.body).addClass('white-bg');
+                        $(win.document.body).css('font-size', '10px');
+
+                        $(win.document.body).find('table')
+                                .addClass('compact')
+                                .css('font-size', 'inherit');
+                }
+                }
+            ]
+
+        });
+    });
+</Script>
