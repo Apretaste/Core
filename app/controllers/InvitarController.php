@@ -37,6 +37,9 @@ class InvitarController extends Controller
 		$inviter = trim($this->request->getPost('email'));
 		$guest = trim($this->request->getPost('guest'));
 
+		if ( ! isset($_SESSION['phrase']))
+			$_SESSION['phrase'] = uniqid(); // throw a die()
+		
 		// check all values passed are valid
 		if(
 			strtoupper($captcha) != strtoupper($_SESSION['phrase']) ||
