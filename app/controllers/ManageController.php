@@ -87,29 +87,23 @@ class ManageController extends Controller
 		if (isset($_SESSION['user']))
 			return $_SESSION['user'];
 	
-			return false;
+		return false;
 	}
 	
+	/**
+	 * Return current person logged
+	 * 
+	 * @author kuma
+	 * @return object
+	 */
 	private function getCurrentPerson()
 	{
 		$this->startSession();
 		$utils = new Utils();
 		$email = $this->getCurrentUser();
-	
 		if (is_null($this->currentPerson))
-		{
-			$this->currentPerson = $utils->getPerson($email);
-			if ($this->currentPerson === false)
-			{
-				$this->currentPerson = new stdClass();
-				$this->currentPerson->email = $email;
-				$this->currentPerson->fullName = ucfirst(substr($email,0,strpos($email,'@')));
-			}
-		} else
-		{
-			$this->currentPerson->fullName = $this->currentPerson->full_name;
-		}
-	
+			$this->currentPerson =  $utils->getPerson($email);
+		
 		return $this->currentPerson;
 	}
 	
