@@ -12,7 +12,7 @@ class RunController extends Controller
 
 	/**
 	 * Executes an html request the outside. Display the HTML on screen
-	 * 
+	 *
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
@@ -29,7 +29,7 @@ class RunController extends Controller
 
 	/**
 	 * Executes an API request. Display the JSON on screen
-	 * 
+	 *
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 * @get String $body, body of the email
@@ -96,25 +96,48 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives email from the MailGun webhook and send it to be parsed 
-	 * 
+	 * Receives email from the MailGun webhook and send it to be parsed
+	 *
 	 * @author salvipascual
 	 * @post Multiple Values
 	 * */
 	public function mailgunAction()
 	{
-		// do not allow fake income messages 
+		// do not allow fake income messages
 		if( ! isset($_POST['From'])) return;
 
-		// filter email From and To 
-		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
+		// filter email From
+		$pattern = '/[a-z0-9_\-\+]+@[a-z0-9\-]+\.([a-z]{2,3})(?:\.[a-z]{2})?/i';
 		preg_match_all($pattern, $_POST['From'], $emailFrom);
-		if(isset($_POST['To'])) preg_match_all($pattern, $_POST['To'], $toFrom);
+
+		// get the list of active mailboxes to calculate the "To" field
+		$connection = new Connection();
+		$res = $connection->deepQuery("SELECT email FROM  jumper");
+		$mailboxes = array();
+		foreach ($res as $k) $mailboxes[] = $k->email;
+
+		// find the Apretaste mailbox that received the email
+		$toEmail = "";
+		foreach ($_POST as $p)
+		{
+			// get  the list of emails on each block of the array received
+			preg_match_all($pattern, $p, $matches);
+			$matchEmails = $matches[0];
+
+			// get the intersect between the list of mailboxes and the emails found
+			$results = array_intersect($mailboxes, $matchEmails);
+
+			if( ! empty($results))
+			{
+				reset($results);
+				$toEmail = current($results);
+				break;
+			}
+		}
 
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
-		$toEmail = isset($toFrom[0][0]) ? trim($toFrom[0][0], " \t\n\r\0\x0B\"\',") : "";
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
@@ -155,7 +178,7 @@ class RunController extends Controller
 
 	/**
 	 * Process the requests coming by email, usually from webhooks
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String Email
 	 * @param String
@@ -209,7 +232,7 @@ class RunController extends Controller
 		// save to the webhook last usage, to alert if the web
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 
-		// if there are attachments, download them all and create the files in the temp folder 
+		// if there are attachments, download them all and create the files in the temp folder
 		$wwwroot = $this->di->get('path')['root'];
 		foreach ($attachments as $attach)
 		{
@@ -253,7 +276,7 @@ class RunController extends Controller
 
 	/**
 	 * Respond to a request based on the parameters passed
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String, email
 	 * @param String
@@ -270,7 +293,7 @@ class RunController extends Controller
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// remove double spaces and apostrophes from the subject
-		// sorry apostrophes break the SQL code :-( 
+		// sorry apostrophes break the SQL code :-(
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
 		// get the name of the service based on the subject line
@@ -409,8 +432,8 @@ class RunController extends Controller
 		$extraResponses = Utils::getExtraResponses();
 		$responses = array_merge($responses, $extraResponses);
 		Utils::clearExtraResponses();
-		
-		// clean the empty fields in the response  
+
+		// clean the empty fields in the response
 		foreach($responses as $rs)
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
@@ -496,16 +519,16 @@ class RunController extends Controller
 							$newTicket->internal = true;
 							$responses[] = $newTicket;
 							break;
-							
+
 							case "abroad":
 							$newGuest = new Response();
 							$newGuest->setResponseEmail($invite->email_inviter);
 							$newGuest->setResponseSubject("Tu amigo ha atendido tu invitacion");
-							
+
 							$inviter = $utils->usernameFromEmail($invite->email_inviter);
 							$pInviter = $utils->getPerson($invite->email_inviter);
-							if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name; 
-							
+							if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name;
+
 							$pGuest = $utils->getPerson($email);
 							$guest = $email;
 							if ($pGuest !== false) $guest = $pGuest->username;
@@ -528,7 +551,7 @@ class RunController extends Controller
 				// save details of first visit
 				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
 
-				// check list of sellers's emails 
+				// check list of sellers's emails
 				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$source' AND promoter=1;");
 				$prize = count($promoters)>0;
 				if ($prize)
