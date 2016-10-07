@@ -1,7 +1,6 @@
 <div class="row  border-bottom white-bg dashboard-header">
 	<div class="col-sm-3">
 		<h2>Welcome <?php if (isset($currentUser->fullName)) echo $currentUser->fullName; else echo substr($currentUser->email,0,strpos($currentUser->email,'@'));?></h2>
-		<small>You have <?php echo count($notifications); ?> notifications.</small>
 	</div>
 	<div class="col-sm-6">
 		
