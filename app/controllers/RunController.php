@@ -507,7 +507,7 @@ class RunController extends Controller
 						{
 							case "internal":
 							// assign tickets and credits
-							$sql .= "INSERT INTO ticket (email, paid) VALUES ('{$invite->email_inviter}', 0);";
+							$sql .= "INSERT INTO ticket (email, origin) VALUES ('{$invite->email_inviter}', 'RAFFLE');";
 							$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
 
 							// email the invitor
@@ -558,8 +558,8 @@ class RunController extends Controller
 				{
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
-					$sql .= "INSERT INTO ticket(email, paid) VALUES ";
-					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 0)".($i < 9 ? "," : ";");
+					$sql .= "INSERT INTO ticket(email, origin) VALUES ";
+					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 'PROMOTER')".($i < 9 ? "," : ";");
 				}
 
 				// run the long query all at the same time
