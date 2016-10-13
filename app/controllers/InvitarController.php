@@ -69,7 +69,7 @@ class InvitarController extends Controller
 		$response = new Response();
 		$response->setResponseSubject("Gracias por darle internet a un Cubano");
 		$response->setEmailLayout("email_simple.tpl");
-		$response->createFromTemplate("invitationThankYou.tpl", array());
+		$response->createFromTemplate("invitationThankYou.tpl", array('num_notifications' => 0));
 		$response->internal = true;
 		$html = $render->renderHTML(new Service(), $response);
 		$email->sendEmail($inviter, $response->subject, $html);
@@ -77,7 +77,7 @@ class InvitarController extends Controller
 		// send invitations to the guest
 		$response = new Response();
 		$response->setResponseSubject("$name le ha invitado a revisar internet desde su email");
-		$responseContent = array("host"=>$name, "guest"=>$guest);
+		$responseContent = array("host"=>$name, "guest"=>$guest, 'num_notifications' => 0);
 		$response->createFromTemplate("invitation.tpl", $responseContent);
 		$response->internal = true;
 		$html = $render->renderHTML(new Service(), $response);
