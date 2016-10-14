@@ -801,7 +801,7 @@ class ManageController extends Controller
 		{
 			$delivery = $connection->deepQuery("
 				SELECT * FROM (
-					SELECT 'received' as type, 
+					(SELECT 'received' as type, 
 							user, 
 							id, 
 							inserted, 
@@ -810,9 +810,9 @@ class ManageController extends Controller
 							mailbox 
 					FROM delivery_received
 					WHERE user = '$userEmail'
-					LIMIT 50
+					LIMIT 50)
 					UNION
-					SELECT 'sent' as type, 
+					(SELECT 'sent' as type, 
 							user, 
 							id, 
 							inserted, 
@@ -821,7 +821,7 @@ class ManageController extends Controller
 							mailbox 
 					FROM delivery_sent
 					WHERE user = '$userEmail'
-					LIMIT 50
+					LIMIT 50)
 				) AS subq1
 				ORDER BY inserted, type desc;");
 			
