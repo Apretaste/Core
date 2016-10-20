@@ -28,7 +28,7 @@ class Email
 		if (is_null($from))
 			$from = $this->nextEmail($to);
 		else 
-			if (self::isJumper($from)) 
+			if (self::isJumper($from, $this->group)) 
 				$from = $this->nextEmail($to); 
 		
 		$domain = explode("@", $from)[1];
@@ -141,7 +141,7 @@ class Email
 	 * @param string $email
 	 * @return boolean
 	 */
-	static function isJumper($email){
+	static function isJumper($email, $group = 'apretaste'){
 				
 		// get the email with less usage
 		$connection = new Connection();
@@ -152,7 +152,7 @@ class Email
 				SELECT email
 				FROM jumper
 				WHERE (status='SendReceive' OR status='SendOnly')
-				AND `group` = '{$this->group}'
+				AND `group` = '{$group}'
 				AND email = '$email';");
 			
 			if (isset($result[0]['email']))
