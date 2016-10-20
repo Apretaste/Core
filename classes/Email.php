@@ -155,8 +155,8 @@ class Email
 				AND `group` = '{$group}'
 				AND email = '$email';");
 			
-			if (isset($result[0]['email']))
-				return $result[0]['email'] === $email;
+			if (isset($result[0]->email))
+				return $result[0]->email === $email;
 		}
 		
 		return false;
