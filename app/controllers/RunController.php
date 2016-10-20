@@ -527,6 +527,7 @@ class RunController extends Controller
 
 							$inviter = $utils->usernameFromEmail($invite->email_inviter);
 							$pInviter = $utils->getPerson($invite->email_inviter);
+							if (!isset($pInviter->name)) $pInviter->name = '';
 							if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name;
 
 							$pGuest = $utils->getPerson($email);
