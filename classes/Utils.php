@@ -1170,7 +1170,7 @@ class Utils
 	 * @author kuma
 	 * @return array
 	 */
-	public function getJumpers()
+	public function getJumpers($group = 'apretaste')
 	{
 		// get the email with less usage
 		$connection = new Connection();
@@ -1178,7 +1178,7 @@ class Utils
 			SELECT email
 			FROM jumper
 			WHERE (status='SendReceive' OR status='SendOnly')
-			AND `group` = '{$this->group}';");
+			AND `group` = '{$group}';");
 		return $result;
 	}
 }
