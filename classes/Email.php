@@ -16,7 +16,7 @@ class Email
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $from = null, $test = false)
 	{
 		// do not email if there is an error
 		$utils = new Utils();
@@ -24,7 +24,13 @@ class Email
 		if($status != 'ok') return;
 
 		// select the from email using the jumper
-		$from = $this->nextEmail($to);
+		// ... in this order ... for performance
+		if (is_null($from))
+			$from = $this->nextEmail($to);
+		else 
+			if (self::isJumper($from, $this->group)) 
+				$from = $this->nextEmail($to); 
+		
 		$domain = explode("@", $from)[1];
 
 		// create the list of images and attachments
@@ -56,11 +62,14 @@ class Email
 			$result = $mgClient->sendMessage($domain, $message, $embedded);
 		}
 
-		// save a trace that the email was sent
-		$haveImages = empty($images) ? 0 : 1;
-		$haveAttachments = empty($attachments) ? 0 : 1;
-		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
+		if ( ! $test)
+		{
+			// save a trace that the email was sent
+			$haveImages = empty($images) ? 0 : 1;
+			$haveAttachments = empty($attachments) ? 0 : 1;
+			$connection = new Connection();
+			$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
+		}
 	}
 
 	/**
@@ -124,5 +133,32 @@ class Email
 			WHERE email='$mailbox'");
 
 		return $mailbox;
+	}
+	/**
+	 * Return TRUE if $email is a jumper
+	 *  
+	 * @author kuma
+	 * @param string $email
+	 * @return boolean
+	 */
+	static function isJumper($email, $group = 'apretaste'){
+				
+		// get the email with less usage
+		$connection = new Connection();
+
+		if (filter_var($email, FILTER_VALIDATE_EMAIL) !== false) 
+		{
+			$result = $connection->deepQuery("
+				SELECT email
+				FROM jumper
+				WHERE (status='SendReceive' OR status='SendOnly')
+				AND `group` = '{$group}'
+				AND email = '$email';");
+			
+			if (isset($result[0]->email))
+				return $result[0]->email === $email;
+		}
+		
+		return false;
 	}
 }

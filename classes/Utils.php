@@ -282,7 +282,6 @@ class Utils
 		return md5($rand . $today);
 	}
 
-
 	/**
 	 * Reduce image size and optimize the image quality
 	 * 
@@ -1163,5 +1162,23 @@ class Utils
 
 		// @TODO get actual random words
 		return "hola mundo chico";
+	}
+	
+	/**
+	 * Return a list of jumpers
+	 *
+	 * @author kuma
+	 * @return array
+	 */
+	public function getJumpers($group = 'apretaste')
+	{
+		// get the email with less usage
+		$connection = new Connection();
+		$result = $connection->deepQuery("
+			SELECT email
+			FROM jumper
+			WHERE (status='SendReceive' OR status='SendOnly')
+			AND `group` = '{$group}';");
+		return $result;
 	}
 }

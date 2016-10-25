@@ -116,25 +116,52 @@ class RunController extends Controller
 		$mailboxes = array();
 		foreach ($res as $k) $mailboxes[] = $k->email;
 
-		// find the Apretaste mailbox that received the email
 		$toEmail = "";
-		foreach ($_POST as $p)
+		
+		if (isset($_POST['To']))
+			$toEmail = $_POST['To'];
+		elseif (isset($_POST['to']))
+			$toEmail = $_POST['to'];
+		else 
 		{
-			// get  the list of emails on each block of the array received
-			preg_match_all($pattern, $p, $matches);
-			$matchEmails = $matches[0];
-
-			// get the intersect between the list of mailboxes and the emails found
-			$results = array_intersect($mailboxes, $matchEmails);
-
-			if( ! empty($results))
+			// getting headers
+			$messagesHeaders = array();
+			$messagesHeadersRaw = json_decode($_POST['message-headers']);
+			
+			foreach ($messagesHeadersRaw as $par)
+				$messagesHeaders[$par[0]] = $par[1];
+		
+			if (isset($messagesHeaders['To']))
+				$toEmail = $messagesHeaders['To'];
+			elseif (isset($messagesHeaders['to']))
+				$toEmail = $messagesHeaders['To'];
+	
+			if (empty($toEmail))
 			{
-				reset($results);
-				$toEmail = current($results);
-				break;
+				// find the Apretaste mailbox that received the email
+				foreach ($messagesHeaders as $h => $v)
+				{
+					$h = strtolower($h);
+					if ($h == 'received' || $h == 'x-received' || $h == 'to')
+					{
+						// get  the list of emails on each block of the array received
+						preg_match_all($pattern, $v, $matches);
+						$matchEmails = $matches[0];
+					
+						// get the intersect between the list of mailboxes and the emails found
+						$results = array_intersect($mailboxes, $matchEmails);
+					
+						if( ! empty($results))
+						{
+							reset($results);
+							$toEmail = current($results);
+							break;
+						}
+					}
+				}			
 			}
 		}
-
+		
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
@@ -527,6 +554,7 @@ class RunController extends Controller
 
 							$inviter = $utils->usernameFromEmail($invite->email_inviter);
 							$pInviter = $utils->getPerson($invite->email_inviter);
+							if (!isset($pInviter->name)) $pInviter->name = '';
 							if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name;
 
 							$pGuest = $utils->getPerson($email);

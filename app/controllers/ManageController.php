@@ -728,29 +728,30 @@ class ManageController extends Controller
 	 * */
 	public function droppedAction()
 	{
+		$connection = new Connection();
+		
 		// create the sql for the graph
 		$sql = "";
 		foreach (range(0,7) as $day)
 		{
 			$sql .= "
-				SELECT DATE(inserted) as moment,
-					SUM(case when reason = 'hard-bounce' then 1 else 0 end) as hardbounce,
-					SUM(case when reason = 'soft-bounce' then 1 else 0 end) as softbounce,
-					SUM(case when reason = 'spam' then 1 else 0 end) as spam,
-					SUM(case when reason = 'no-reply' then 1 else 0 end) as noreply,
-					SUM(case when reason = 'loop' then 1 else 0 end) as `loop`,
-					SUM(case when reason = 'failure' then 1 else 0 end) as failure,
-					SUM(case when reason = 'temporal' then 1 else 0 end) as temporal,
-					SUM(case when reason = 'unknown' then 1 else 0 end) as unknown,
-					SUM(case when reason = 'hardfail' then 1 else 0 end) as hardfail
-				FROM delivery_dropped
-				WHERE DATE(inserted) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
-				GROUP BY moment";
+			SELECT DATE(inserted) as moment,
+				SUM(case when reason = 'hard-bounce' then 1 else 0 end) as hardbounce,
+				SUM(case when reason = 'soft-bounce' then 1 else 0 end) as softbounce,
+				SUM(case when reason = 'spam' then 1 else 0 end) as spam,
+				SUM(case when reason = 'no-reply' then 1 else 0 end) as noreply,
+				SUM(case when reason = 'loop' then 1 else 0 end) as `loop`,
+				SUM(case when reason = 'failure' then 1 else 0 end) as failure,
+				SUM(case when reason = 'temporal' then 1 else 0 end) as temporal,
+				SUM(case when reason = 'unknown' then 1 else 0 end) as unknown,
+				SUM(case when reason = 'hardfail' then 1 else 0 end) as hardfail
+			FROM delivery_dropped
+			WHERE DATE(inserted) = DATE(DATE_SUB(NOW(), INTERVAL $day DAY))
+			GROUP BY moment";
 			if($day < 7) $sql .= " UNION ";
 		}
 
 		// get the delivery status per code
-		$connection = new Connection();
 		$dropped = $connection->deepQuery($sql);
 
 		// create the array for the view
@@ -776,7 +777,6 @@ class ManageController extends Controller
 		$dropped = $connection->deepQuery($sql);
 
 		// get last 7 days of emails received
-		$connection = new Connection();
 		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		$sent = $connection->deepQuery($sql)[0]->total;
 
@@ -787,6 +787,85 @@ class ManageController extends Controller
 		$this->view->failurePercentage = (count($dropped)*100)/$sent;
 	}
 
+	/**
+	 * Delivery status
+	 * 
+	 */
+	public function deliveryAction(){
+		$connection = new Connection();
+		$userEmail = $this->request->get('email');
+		$delivery = array();
+		$dropped = false;
+		
+		if ( ! empty("$userEmail"))
+		{
+			$delivery = $connection->deepQuery("
+				SELECT * FROM (
+					(SELECT 'received' as type, 
+							user, 
+							id, 
+							inserted, 
+							subject, 
+							attachments_count as attachments, 
+							mailbox 
+					FROM delivery_received
+					WHERE user = '$userEmail'
+					LIMIT 50)
+					UNION
+					(SELECT 'sent' as type, 
+							user, 
+							id, 
+							inserted, 
+							subject, 
+							attachments, 
+							mailbox 
+					FROM delivery_sent
+					WHERE user = '$userEmail'
+					LIMIT 50)
+				) AS subq1
+				ORDER BY inserted, type desc;");
+			
+			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
+			
+			if (isset($r[0]))
+				$dropped = true;
+		}
+		
+		$this->view->dropped = $dropped;
+		$this->view->delivery = $delivery;
+		$this->view->title = 'Delivery';
+		$this->view->userEmail = $userEmail;
+	}
+	
+	/**
+	 * Remove dropped action
+	 * 
+	 * @author kuma
+	 */
+	public function removeDroppedAction(){
+		
+		$userEmail = $this->request->get('email');
+		
+		$this->view->message = false;
+		$this->view->message_type = '';
+		
+		if ( ! empty("$userEmail"))
+		{
+			$connection = new Connection();
+			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
+				
+			if (isset($r[0]))
+			{
+				$r = $connection->deepQuery("DELETE FROM delivery_dropped WHERE email = '$userEmail';");
+				$this->view->message = 'User <b>'.$userEmail.'</b> was removed from dropped list';
+				$this->view->message_type = 'success';
+			}
+			
+		}
+		
+		$this->view->title = 'Remove users from dropped list';
+	}
+	
 	/**
 	 * Show the error log
 	 * */
@@ -1588,7 +1667,7 @@ class ManageController extends Controller
     		$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*) 
     		          FROM _survey_question 
     		          WHERE _survey_question.survey = _survey_answer_choosen.survey) as total, 
-    		        count(question)as choosen from _survey_answer_choosen GROUP BY email, survey) subq
+    		        count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
     		        WHERE subq.total>subq.choosen AND subq.survey = $id;";
     		
     		$r = $db->deepQuery($sql);
