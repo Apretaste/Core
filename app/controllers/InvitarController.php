@@ -39,11 +39,11 @@ class InvitarController extends Controller
 
 		if ( ! isset($_SESSION['phrase']))
 			$_SESSION['phrase'] = uniqid(); // throw a die()
-		
+
 		// check all values passed are valid
 		if(
 			strtoupper($captcha) != strtoupper($_SESSION['phrase']) ||
-			$name == "" || 
+			$name == "" ||
 			! filter_var($inviter, FILTER_VALIDATE_EMAIL) ||
 			! filter_var($guest, FILTER_VALIDATE_EMAIL)
 		) die("Error procesando, por favor valla atras y comience nuevamente.");
@@ -110,7 +110,7 @@ class InvitarController extends Controller
 
 	/**
 	 * Ajax call to check if the captcha is ok
-	 * 
+	 *
 	 * @author salvipascual
 	 * */
 	public function checkAction()

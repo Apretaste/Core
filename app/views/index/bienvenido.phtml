@@ -85,7 +85,7 @@
 				</div>
 				<br>
 				<a href="#problem" class="btn btn-dark btn-lg">Leer M&aacute;s</a>
-				<a href="http://www.meetup.com/HeyCuba-Software-Developer-Meetup/" target="_blank" class="btn btn-light btn-lg">S&eacute; Uno de Nosotros</a>
+				<a href="/invitar" class="btn btn-light btn-lg">Invita a un Cubano a Internet</a>
 			</div>
 		</div>
 	</header>
@@ -184,7 +184,7 @@
 					<p class="lead">Proveer con formas alternativas de informaci&oacute;n a aquellos que solo tienen acceso a las escogidas por el gobierno</p>
 				</div>
 			</div>
-			
+
 			<hr class="small">
 
 			<div class="row">
@@ -245,7 +245,7 @@
 								<h4><strong>Web</strong></h4>
 								<p>Navega la web abiertamente</p>
 							</div>
-						</div>	
+						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
@@ -289,7 +289,7 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="blank-space-divider"></div>
 
 			<div class="row">
@@ -311,7 +311,7 @@
 			</div>
 		</div>
 	</section>
-	
+
 	<!-- Users -->
 	<section id="users" style="background-color:#C1C1C1;">
 		<div class="container">
@@ -563,32 +563,19 @@
 	<section id="donate" class="call-to-action bg-customized">
 		<div class="container">
 			<div class="row">
-				<div class="col-lg-12 text-center">					
+				<div class="col-lg-12 text-center">
 					<h1>&Uacute;nete a nuestra causa</h1>
 					<hr class="small">
 					<p class="lead">Su donaci&oacute;n cambia la vida de aquellos que nunca han accedido a la Web; por favor ay&uacute;danos a mantener este servicio activo</p>
 				</div>
 
-				<div class="col-sm-6 text-center">
-					<a id="paymentBtn30" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $30</a>
-					<a id="paymentBtn50" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $50</a>
-					<a id="paymentBtn100" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $100</a>
-					<a id="paymentBtn500" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $500</a>
-
-					<p style="margin-top:10px;">Por favor <a class="link-inverted" href="#contact">Cont&aacute;ctanos</a> para recibir beneficios especiales en donaciones mayores</p>
+				<div class="col-sm-12 text-center">
+					<a href="https://www.paypal.me/apretaste/20" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $20</a>
+					<a href="https://www.paypal.me/apretaste/50" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $50</a>
+					<a href="https://www.paypal.me/apretaste/100" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $100</a>
+					<a href="https://www.paypal.me/apretaste/500" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Dona $500</a>
+					<p style="margin-top:10px;">Por favor <a class="link-inverted" href="#contact">cont&aacute;ctanos</a> para donaciones mayores.</p>
 				</div>
-
-				<div class="col-sm-6 hidden-xs">
-					<p class="donation-amount">Una vez que dones, obtendr&aacute;s:</p>
-					<ul>
-						<li>Su donaci&oacute;n es deducible de sus impuestos</li>
-						<li>Certificado de agradecimiento</li>
-						<li>Entrada en nuestra lista de usuarios VIP</li>
-					</ul>
-				</div>
-			</div>
-			<div class="col-lg-12 text-center">
-				<p style="margin-top:40px;" class="black">Todas las donaciones son libres de impuestos</p>
 			</div>
 		</div>
 	</section>
@@ -620,14 +607,14 @@
 							<a href="https://twitter.com/apretaste" target="_blank"><i class="fa fa-twitter fa-fw fa-3x"></i></a>
 						</li>
 					</ul>
-					
+
 					<br/>
 					<p class="small">A COPY OF THE OFFICIAL REGISTRATION AND FINANCIAL INFORMATION MAY BE OBTAINED FROM THE DIVISION OF CONSUMER SERVICES BY CALLING TOLL-FREE WITHIN THE STATE 1-800-HELPFLA, OR VIA THE INTERNET AT WWW.800HELPFLA.COM. REGISTRATION DOES NOT IMPLY ENDORSEMENT, APPROVAL, OR RECOMMENDATION BY THE STATE.</p>
 				</div>
 			</div>
 		</div>
 	</footer>
-	
+
 	<form id="stripePaymentInfo" action="welcome/pay" method="post">
 		<input type="hidden" id="stripeAmountInput" name="amount" value="10000" />
 		<input type="hidden" id="stripeEmailInput" name="email" value="" />
@@ -691,62 +678,6 @@
 		});
 
 		$('.tooltip-image').tooltip();
-	});
-
-	// Starts a payment with Stripe
-	var handler = StripeCheckout.configure({
-		key: '<?php echo $stripePushibleKey; ?>',
-		image: 'https://s3.amazonaws.com/stripe-uploads/acct_16M6gnLYuWaxX6xTmerchant-icon-1436316635694-apretaste.icon.big.png',
-		token: function(token) {
-			// Using the token and amount to create the charge with a server-side script.
-			$('#stripeTokenInput').val(token.id);
-			$('#stripeEmailInput').val(token.email);
-			$('#stripePaymentInfo').submit();
-		}
-	});
-
-	// Donate $30
-	$('#paymentBtn30').on('click', function(e) {
-		$('#stripeAmountInput').val(3000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Dona usando nuestro formulario seguro',
-			amount: 3000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $50
-	$('#paymentBtn50').on('click', function(e) {
-		$('#stripeAmountInput').val(5000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Dona usando nuestro formulario seguro',
-			amount: 5000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $100
-	$('#paymentBtn100').on('click', function(e) {
-		$('#stripeAmountInput').val(10000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Dona usando nuestro formulario seguro',
-			amount: 10000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $500
-	$('#paymentBtn500').on('click', function(e) {
-		$('#stripeAmountInput').val(50000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Dona usando nuestro formulario seguro',
-			amount: 50000
-		});
-		e.preventDefault();
 	});
 
 	// Close Checkout on page navigation
