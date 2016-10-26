@@ -119,10 +119,19 @@ class RunController extends Controller
 		$toEmail = "";
 		
 		if (isset($_POST['To']))
-			$toEmail = $_POST['To'];
-		elseif (isset($_POST['to']))
-			$toEmail = $_POST['to'];
-		else 
+			$toEmail = trim($_POST['To']);
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		if (empty($toEmail)) 
+			if (isset($_POST['to']))
+				$toEmail = trim($_POST['to']);
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		if (empty($toEmail))
 		{
 			// getting headers
 			$messagesHeaders = array();
@@ -134,9 +143,17 @@ class RunController extends Controller
 			// searching in params
 			if (isset($messagesHeaders['To']))
 				$toEmail = $messagesHeaders['To'];
-			elseif (isset($messagesHeaders['to']))
-				$toEmail = $messagesHeaders['To'];
+			
+			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+				$toEmail = '';
+				
+		    if (empty($toEmail))
+		    	if (isset($messagesHeaders['to']))
+					$toEmail = $messagesHeaders['To'];
 	
+			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+				$toEmail = '';
+			
 			// searching in headers
 			if (empty($toEmail))
 			{
@@ -157,36 +174,50 @@ class RunController extends Controller
 						{
 							reset($results);
 							$toEmail = trim(current($results));
+							
+							if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+								$toEmail = '';
+							
 							if ( ! empty($toEmail))
 								break;
 						}
 					}
 				}			
 			}
-			
-			// hard search ...
-			if (empty($toEmail))
+		}
+		
+		// check valid toEmail
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		// hard search ...
+		if (empty($toEmail))
+		{
+			foreach ($_POST as $h => $v)
 			{
-				foreach ($_POST as $h => $v)
-				{
 					
-					// get  the list of emails on each block of the array received
-					preg_match_all($pattern, $v, $matches);
-					$matchEmails = $matches[0];
-						
-					// get the intersect between the list of mailboxes and the emails found
-					$results = array_intersect($mailboxes, $matchEmails);
-						
-					if( ! empty($results))
-					{
-						reset($results);
-						$toEmail = trim(current($results));
-						if ( ! empty($toEmail))
-							break;
-					}
+				// get  the list of emails on each block of the array received
+				preg_match_all($pattern, $v, $matches);
+				$matchEmails = $matches[0];
+		
+				// get the intersect between the list of mailboxes and the emails found
+				$results = array_intersect($mailboxes, $matchEmails);
+		
+				if( ! empty($results))
+				{
+					reset($results);
+					$toEmail = trim(current($results));
+					break;
 				}
 			}
 		}
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		// default toEmail
+		if (empty(trim($toEmail)))
+			$toEmail = 'apretaste@gmail.com';
 		
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
