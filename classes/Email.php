@@ -28,7 +28,7 @@ class Email
 		if (is_null($from))
 			$from = $this->nextEmail($to);
 		else 
-			if (self::isJumper($from, $this->group)) 
+			if ( ! self::isJumper($from, $this->group)) 
 				$from = $this->nextEmail($to); 
 		
 		$domain = explode("@", $from)[1];
@@ -151,9 +151,10 @@ class Email
 			$result = $connection->deepQuery("
 				SELECT email
 				FROM jumper
-				WHERE (status='SendReceive' OR status='SendOnly')
-				AND `group` = '{$group}'
-				AND email = '$email';");
+				WHERE email = '$email';");
+			
+			// AND (status='SendReceive' OR status='SendOnly')
+			// AND `group` = '{$group}'
 			
 			if (isset($result[0]->email))
 				return $result[0]->email === $email;
