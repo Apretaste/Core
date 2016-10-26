@@ -119,9 +119,9 @@ class RunController extends Controller
 		$toEmail = "";
 		
 		if (isset($_POST['To']))
-			$toEmail = $_POST['To'];
+			$toEmail = trim($_POST['To']);
 		elseif (isset($_POST['to']))
-			$toEmail = $_POST['to'];
+			$toEmail = trim($_POST['to']);
 		else 
 		{
 			// getting headers
@@ -165,6 +165,10 @@ class RunController extends Controller
 			}
 		}
 		
+		// check valid toEmail
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
 		// hard search ...
 		if (empty($toEmail))
 		{
@@ -182,11 +186,14 @@ class RunController extends Controller
 				{
 					reset($results);
 					$toEmail = trim(current($results));
-					if ( ! empty($toEmail))
-						break;
+					break;
 				}
 			}
 		}
+		
+		// default toEmail
+		if (empty(trim($toEmail)))
+			$toEmail = 'apretaste@gmail.com';
 		
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
