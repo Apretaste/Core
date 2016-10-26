@@ -28,7 +28,7 @@ class Email
 		if (is_null($from))
 			$from = $this->nextEmail($to);
 		else 
-			if (self::isJumper($from, $this->group)) 
+			if ( ! self::isJumper($from, $this->group)) 
 				$from = $this->nextEmail($to); 
 		
 		$domain = explode("@", $from)[1];
