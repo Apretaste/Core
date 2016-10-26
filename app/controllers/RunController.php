@@ -131,11 +131,13 @@ class RunController extends Controller
 			foreach ($messagesHeadersRaw as $par)
 				$messagesHeaders[$par[0]] = $par[1];
 		
+			// searching in params
 			if (isset($messagesHeaders['To']))
 				$toEmail = $messagesHeaders['To'];
 			elseif (isset($messagesHeaders['to']))
 				$toEmail = $messagesHeaders['To'];
 	
+			// searching in headers
 			if (empty($toEmail))
 			{
 				// find the Apretaste mailbox that received the email
@@ -154,11 +156,35 @@ class RunController extends Controller
 						if( ! empty($results))
 						{
 							reset($results);
-							$toEmail = current($results);
-							break;
+							$toEmail = trim(current($results));
+							if ( ! empty($toEmail))
+								break;
 						}
 					}
 				}			
+			}
+			
+			// hard search ...
+			if (empty($toEmail))
+			{
+				foreach ($_POST as $h => $v)
+				{
+					
+					// get  the list of emails on each block of the array received
+					preg_match_all($pattern, $v, $matches);
+					$matchEmails = $matches[0];
+						
+					// get the intersect between the list of mailboxes and the emails found
+					$results = array_intersect($mailboxes, $matchEmails);
+						
+					if( ! empty($results))
+					{
+						reset($results);
+						$toEmail = trim(current($results));
+						if ( ! empty($toEmail))
+							break;
+					}
+				}
 			}
 		}
 		
