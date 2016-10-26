@@ -163,27 +163,27 @@ class RunController extends Controller
 					}
 				}			
 			}
-			
-			// hard search ...
-			if (empty($toEmail))
+		}
+		
+		// hard search ...
+		if (empty($toEmail))
+		{
+			foreach ($_POST as $h => $v)
 			{
-				foreach ($_POST as $h => $v)
-				{
 					
-					// get  the list of emails on each block of the array received
-					preg_match_all($pattern, $v, $matches);
-					$matchEmails = $matches[0];
-						
-					// get the intersect between the list of mailboxes and the emails found
-					$results = array_intersect($mailboxes, $matchEmails);
-						
-					if( ! empty($results))
-					{
-						reset($results);
-						$toEmail = trim(current($results));
-						if ( ! empty($toEmail))
-							break;
-					}
+				// get  the list of emails on each block of the array received
+				preg_match_all($pattern, $v, $matches);
+				$matchEmails = $matches[0];
+		
+				// get the intersect between the list of mailboxes and the emails found
+				$results = array_intersect($mailboxes, $matchEmails);
+		
+				if( ! empty($results))
+				{
+					reset($results);
+					$toEmail = trim(current($results));
+					if ( ! empty($toEmail))
+						break;
 				}
 			}
 		}
