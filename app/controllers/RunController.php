@@ -120,9 +120,18 @@ class RunController extends Controller
 		
 		if (isset($_POST['To']))
 			$toEmail = trim($_POST['To']);
-		elseif (isset($_POST['to']))
-			$toEmail = trim($_POST['to']);
-		else 
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		if (empty($toEmail)) 
+			if (isset($_POST['to']))
+				$toEmail = trim($_POST['to']);
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
+		
+		if (empty($toEmail))
 		{
 			// getting headers
 			$messagesHeaders = array();
@@ -134,9 +143,17 @@ class RunController extends Controller
 			// searching in params
 			if (isset($messagesHeaders['To']))
 				$toEmail = $messagesHeaders['To'];
-			elseif (isset($messagesHeaders['to']))
-				$toEmail = $messagesHeaders['To'];
+			
+			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+				$toEmail = '';
+				
+		    if (empty($toEmail))
+		    	if (isset($messagesHeaders['to']))
+					$toEmail = $messagesHeaders['To'];
 	
+			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+				$toEmail = '';
+			
 			// searching in headers
 			if (empty($toEmail))
 			{
@@ -157,6 +174,10 @@ class RunController extends Controller
 						{
 							reset($results);
 							$toEmail = trim(current($results));
+							
+							if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+								$toEmail = '';
+							
 							if ( ! empty($toEmail))
 								break;
 						}
@@ -190,6 +211,9 @@ class RunController extends Controller
 				}
 			}
 		}
+		
+		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
+			$toEmail = '';
 		
 		// default toEmail
 		if (empty(trim($toEmail)))
