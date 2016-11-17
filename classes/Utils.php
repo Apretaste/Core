@@ -457,7 +457,7 @@ class Utils
 			FROM delivery_received
 			WHERE user = '$to'
 			AND TIME(timediff(CURRENT_TIMESTAMP, inserted)) <= TIME('00:30:00')");
-		if (isset($lastreceived[0]->total))&& $lastreceived[0]->total > 30) $msg = 'loop';
+		if (isset($lastreceived[0]->total) && $lastreceived[0]->total > 30) $msg = 'loop';
 
 		// block intents from blacklisted emails @TODO create a table for emails blacklisted
 		if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
