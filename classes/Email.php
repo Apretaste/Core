@@ -61,7 +61,7 @@ class Email
 		{
 			$mailgunKey = $di->get('config')['mailgun']['key'];
 			$mgClient = new Mailgun($mailgunKey);
-			$result = $mgClient->sendMessage($domain, $message, $embedded);
+			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
 		}
 
 		// save a trace that the email was sent
