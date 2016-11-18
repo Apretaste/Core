@@ -5,7 +5,16 @@ use Mailgun\Mailgun;
 class Email
 {
 	public $group = 'apretaste';
-	public $messageid = null;
+	public $messageid = NULL; // ID of the email to create a reply
+	public $domain = NULL; // force a domain for test purposes
+
+	/**
+	 * Creates a new database connection for the class
+	 */
+	private $conn;
+	public function __construct() {
+		$this->conn = new Connection();
+	}
 
 	/**
 	 * Sends an email using MailGun
@@ -16,22 +25,15 @@ class Email
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach
 	 * */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array(), $from = null, $test = false)
+	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($to);
 		if($status != 'ok') return;
 
-		// select the from email using the jumper
-		// ... in this order ... for performance
-		if (is_null($from))
-			$from = $this->nextEmail($to);
-		else 
-			if (self::isJumper($from, $this->group)) 
-				$from = $this->nextEmail($to); 
-		
-		$domain = explode("@", $from)[1];
+		// select the right email to use as From
+		$from = $this->nextEmail($to);
 
 		// create the list of images and attachments
 		$embedded = array();
@@ -51,7 +53,7 @@ class Email
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
-		if ( ! is_null($this->messageid)) $message["h:In-Reply-To"] = $this->messageid;
+		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
 
 		// send the email via MailGun. Never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -59,17 +61,13 @@ class Email
 		{
 			$mailgunKey = $di->get('config')['mailgun']['key'];
 			$mgClient = new Mailgun($mailgunKey);
-			$result = $mgClient->sendMessage($domain, $message, $embedded);
+			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
 		}
 
-		if ( ! $test)
-		{
-			// save a trace that the email was sent
-			$haveImages = empty($images) ? 0 : 1;
-			$haveAttachments = empty($attachments) ? 0 : 1;
-			$connection = new Connection();
-			$connection->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain')");
-		}
+		// save a trace that the email was sent
+		$haveImages = empty($images) ? 0 : 1;
+		$haveAttachments = empty($attachments) ? 0 : 1;
+		$this->conn->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}')");
 	}
 
 	/**
@@ -85,80 +83,68 @@ class Email
 	}
 
 	/**
-	 * Set the group to respond based on a mailbox
+	 * Set the group to respond based on the user's email address
 	 *
 	 * @author salvipascual
-	 * @param String $mailbox
+	 * @param String $email, user's email
 	 * */
-	public function setEmailGroup($mailbox)
+	public function setEmailGroup($email)
 	{
-		// do not allow empty calls
-		if(empty($mailbox)) return;
-
-		// get group for the mailbox
-		$connection = new Connection();
-		$result = $connection->deepQuery("SELECT `group` FROM jumper WHERE email='$mailbox'");
-
-		// set the group
-		$this->group = $result[0]->group;
+		// @TODO find a right way to do this when needed
+		return "apretaste";
 	}
 
 	/**
 	 * Brings the next email to be used by Apretaste using an even distribution
 	 *
 	 * @author salvipascual
-	 * @param String $email, Email of the user
-	 * @return String, Email to use
+	 * @param String $email, user's email
+	 * @return String, email to use
 	 * */
 	private function nextEmail($email)
 	{
-		// get the domain from the user's email
-		$domain = explode("@", $email)[1];
+		// get the domain to generate the email
+		if (empty($this->domain)) $this->nextDomain($email);
 
-		// get the email with less usage
-		$connection = new Connection();
-		$result = $connection->deepQuery("
-			SELECT email
-			FROM jumper
-			WHERE (status='SendReceive' OR status='SendOnly')
+		// get the username part of the email and clean bad characters
+		$user = explode("@", $email)[0];
+		$user = str_replace(array(".", "+", "-"), "", $user);
+
+		// generate a two digits number that looks like a year
+		$seed = rand(80, 98);
+
+		// create and return the email
+		return "{$user}{$seed}@{$this->domain}";
+	}
+
+	/**
+	 * Select the next domain using an even distribution
+	 *
+	 * @author salvipascual
+	 * @param String $email, user's email
+	 * */
+	private function nextDomain($email)
+	{
+		// get the domain from the user's email
+		$userDomain = explode("@", $email)[1];
+
+		// get the domain with less usage
+		$result = $this->conn->deepQuery("
+			SELECT domain
+			FROM domain
+			WHERE active = 1
 			AND `group` = '{$this->group}'
-			AND blocked_domains NOT LIKE '%$domain%'
+			AND blacklist NOT LIKE '%$userDomain%'
 			ORDER BY last_usage ASC LIMIT 1");
 
 		// increase the send counter
-		$mailbox = $result[0]->email;
-		$connection->deepQuery("
-			UPDATE jumper
+		$domain = $result[0]->domain;
+		$this->conn->deepQuery("
+			UPDATE domain
 			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
-			WHERE email='$mailbox'");
+			WHERE domain='$domain'");
 
-		return $mailbox;
-	}
-	/**
-	 * Return TRUE if $email is a jumper
-	 *  
-	 * @author kuma
-	 * @param string $email
-	 * @return boolean
-	 */
-	static function isJumper($email, $group = 'apretaste'){
-				
-		// get the email with less usage
-		$connection = new Connection();
-
-		if (filter_var($email, FILTER_VALIDATE_EMAIL) !== false) 
-		{
-			$result = $connection->deepQuery("
-				SELECT email
-				FROM jumper
-				WHERE (status='SendReceive' OR status='SendOnly')
-				AND `group` = '{$group}'
-				AND email = '$email';");
-			
-			if (isset($result[0]->email))
-				return $result[0]->email === $email;
-		}
-		
-		return false;
+		// choose the domain
+		$this->domain = $domain;
 	}
 }

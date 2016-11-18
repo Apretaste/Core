@@ -52,7 +52,7 @@
 <body>
 	<!-- Go to www.addthis.com/dashboard to customize your tools -->
 	<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55b53cc3acee4add" async="async"></script>
-	
+
 	<!-- Navigation -->
 	<a id="menu-toggle-language" href="bienvenido" class="btn btn-dark btn-lg toggle"><i class="fa fa-flag"></i></a>
 	<a id="menu-donate" href="#donate" class="btn btn-dark btn-lg toggle"><i class="fa fa-life-ring"></i> Donate</a>
@@ -85,7 +85,7 @@
 				</div>
 				<br>
 				<a href="#problem" class="btn btn-dark btn-lg">Find Out More</a>
-				<a href="http://www.meetup.com/HeyCuba-Software-Developer-Meetup/" target="_blank" class="btn btn-light btn-lg">Be a Social Hacker</a>
+				<a href="/invitar" class="btn btn-light btn-lg">Invite a Cuban to the Internet</a>
 			</div>
 		</div>
 	</header>
@@ -184,7 +184,7 @@
 					<p class="lead">Grant alternative sources of information to people who can only access ones chosen by the "official" media</p>
 				</div>
 			</div>
-			
+
 			<hr class="small">
 
 			<div class="row">
@@ -245,7 +245,7 @@
 								<h4><strong>Web</strong></h4>
 								<p>Browse the web openly</p>
 							</div>
-						</div>						
+						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
@@ -289,7 +289,7 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<!--<div class="row" style="margin: 20px; padding-bottom: 30px;">
 				<div class="col-xs-12 text-center">
 					<a class="btn btn-dark btn-lg" href="services">See All Services</a>
@@ -315,7 +315,7 @@
 			</div>
 		</div>
 	</section>
-	
+
 	<!-- Users -->
 	<section id="users" style="background-color:#C1C1C1;">
 		<div class="container">
@@ -527,7 +527,7 @@
 			</div>
 		</div>
 	</section>
-	
+
 	<!-- Team -->
 	<section id="team" class="testimonials">
 		<div class="container">
@@ -571,32 +571,19 @@
 	<section id="donate" class="call-to-action bg-customized">
 		<div class="container">
 			<div class="row">
-				<div class="col-lg-12 text-center">					
+				<div class="col-lg-12 text-center">
 					<h1>Join our crusade</h1>
 					<hr class="small">
 					<p class="lead">Your donation is changing the lives of those who never had access to the Web; please help us keep this service alive</p>
 				</div>
 
-				<div class="col-sm-6 text-center">
-					<a id="paymentBtn30" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $30</a>
-					<a id="paymentBtn50" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $50</a>
-					<a id="paymentBtn100" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $100</a>
-					<a id="paymentBtn500" href="#" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $500</a>
-
-					<p style="margin-top:10px;">Please <a class="link-inverted" href="#contact">Contact Us</a> for larger donations to receive personalized benefits</p>
+				<div class="col-sm-12 text-center">
+					<a href="https://www.paypal.me/apretaste/20" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $20</a>
+					<a href="https://www.paypal.me/apretaste/50" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $50</a>
+					<a href="https://www.paypal.me/apretaste/100" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $100</a>
+					<a href="https://www.paypal.me/apretaste/500" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $500</a>
+					<p style="margin-top:10px;">Please <a class="link-inverted" href="#contact">Contact Us</a> for larger donations.</p>
 				</div>
-
-				<div class="col-sm-6 hidden-xs">
-					<p class="donation-amount">Once you donate you get:</p>
-					<ul>
-						<li>Your donations are Tax Deductible</li>
-						<li>Certificate of appreciation</li>
-						<li>Get into our VIP users list</li>
-					</ul>
-				</div>
-			</div>
-			<div class="col-lg-12 text-center">
-				<p style="margin-top:40px;" class="black">All donations are Tax Deductible</p>
 			</div>
 		</div>
 	</section>
@@ -628,7 +615,7 @@
 							<a href="https://twitter.com/apretaste" target="_blank"><i class="fa fa-twitter fa-fw fa-3x"></i></a>
 						</li>
 					</ul>
-					
+
 					<br/>
 					<p class="small">A COPY OF THE OFFICIAL REGISTRATION AND FINANCIAL INFORMATION MAY BE OBTAINED FROM THE DIVISION OF CONSUMER SERVICES BY CALLING TOLL-FREE WITHIN THE STATE 1-800-HELPFLA, OR VIA THE INTERNET AT WWW.800HELPFLA.COM. REGISTRATION DOES NOT IMPLY ENDORSEMENT, APPROVAL, OR RECOMMENDATION BY THE STATE.</p>
 				</div>
@@ -699,62 +686,6 @@
 		});
 
 		$('.tooltip-image').tooltip();
-	});
-
-	// Starts a payment with Stripe
-	var handler = StripeCheckout.configure({
-		key: '<?php echo $stripePushibleKey; ?>',
-		image: 'https://s3.amazonaws.com/stripe-uploads/acct_16M6gnLYuWaxX6xTmerchant-icon-1436316635694-apretaste.icon.big.png',
-		token: function(token) {
-			// Using the token and amount to create the charge with a server-side script.
-			$('#stripeTokenInput').val(token.id);
-			$('#stripeEmailInput').val(token.email);
-			$('#stripePaymentInfo').submit();
-		}
-	});
-
-	// Donate $30
-	$('#paymentBtn30').on('click', function(e) {
-		$('#stripeAmountInput').val(3000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Donate using our secure form below',
-			amount: 3000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $50
-	$('#paymentBtn50').on('click', function(e) {
-		$('#stripeAmountInput').val(5000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Donate using our secure form below',
-			amount: 5000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $100
-	$('#paymentBtn100').on('click', function(e) {
-		$('#stripeAmountInput').val(10000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Donate using our secure form below',
-			amount: 10000
-		});
-		e.preventDefault();
-	});
-
-	// Donate $500
-	$('#paymentBtn500').on('click', function(e) {
-		$('#stripeAmountInput').val(50000);
-		handler.open({
-			name: 'Apretaste',
-			description: 'Donate using our secure form below',
-			amount: 50000
-		});
-		e.preventDefault();
 	});
 
 	// Close Checkout on page navigation
