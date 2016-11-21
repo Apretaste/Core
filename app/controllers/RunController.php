@@ -4,12 +4,6 @@ use Phalcon\Mvc\Controller;
 
 class RunController extends Controller
 {
-	public function indexAction()
-	{
-		die("Cannot run directly. Please access to run/display or run/api instead");
-		$this->view->disable();
-	}
-
 	/**
 	 * Executes an html request the outside. Display the HTML on screen
 	 *
@@ -22,7 +16,7 @@ class RunController extends Controller
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
 
-		$result = $this->renderResponse("html@apretaste.com", $subject, "HTML", $body, array(), "html");
+		$result = $this->renderResponse("html@apretaste.com", "", $subject, "HTML", $body, array(), "html");
 		if($this->di->get('environment') == "sandbox") $result .= '<div style="color:white; background-color:red; font-weight:bold; display:inline-block; padding:5px; position:absolute; top:10px; right:10px; z-index:99">SANDBOX</div>';
 		echo $result;
 	}
@@ -91,7 +85,7 @@ class RunController extends Controller
 		if ($service == 'EXCLUYEME') die('{"code":"error","message":"service not accesible"}');
 
 		// get the resulting json
-		$result = $this->renderResponse($email, $subject, "API", $body, $attach, "json");
+		$result = $this->renderResponse($email, "", $subject, "API", $body, $attach, "json");
 		die($result);
 	}
 
@@ -106,121 +100,14 @@ class RunController extends Controller
 		// do not allow fake income messages
 		if( ! isset($_POST['From'])) return;
 
-		// filter email From
+		// filter email From and To
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match_all($pattern, $_POST['From'], $emailFrom);
+		preg_match_all($pattern, $_POST['To'], $emailTo);
 
-		// get the list of active mailboxes to calculate the "To" field
-		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email FROM  jumper");
-		$mailboxes = array();
-		foreach ($res as $k) $mailboxes[] = $k->email;
-
-		$toEmail = "";
-		
-		if (isset($_POST['To']))
-			$toEmail = trim($_POST['To']);
-		
-		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-			$toEmail = '';
-		
-		if (empty($toEmail)) 
-			if (isset($_POST['to']))
-				$toEmail = trim($_POST['to']);
-		
-		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-			$toEmail = '';
-		
-		if (empty($toEmail))
-		{
-			// getting headers
-			$messagesHeaders = array();
-			$messagesHeadersRaw = json_decode($_POST['message-headers']);
-			
-			foreach ($messagesHeadersRaw as $par)
-				$messagesHeaders[$par[0]] = $par[1];
-		
-			// searching in params
-			if (isset($messagesHeaders['To']))
-				$toEmail = $messagesHeaders['To'];
-			
-			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-				$toEmail = '';
-				
-		    if (empty($toEmail))
-		    	if (isset($messagesHeaders['to']))
-					$toEmail = $messagesHeaders['To'];
-	
-			if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-				$toEmail = '';
-			
-			// searching in headers
-			if (empty($toEmail))
-			{
-				// find the Apretaste mailbox that received the email
-				foreach ($messagesHeaders as $h => $v)
-				{
-					$h = strtolower($h);
-					if ($h == 'received' || $h == 'x-received' || $h == 'to')
-					{
-						// get  the list of emails on each block of the array received
-						preg_match_all($pattern, $v, $matches);
-						$matchEmails = $matches[0];
-					
-						// get the intersect between the list of mailboxes and the emails found
-						$results = array_intersect($mailboxes, $matchEmails);
-					
-						if( ! empty($results))
-						{
-							reset($results);
-							$toEmail = trim(current($results));
-							
-							if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-								$toEmail = '';
-							
-							if ( ! empty($toEmail))
-								break;
-						}
-					}
-				}			
-			}
-		}
-		
-		// check valid toEmail
-		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-			$toEmail = '';
-		
-		// hard search ...
-		if (empty($toEmail))
-		{
-			foreach ($_POST as $h => $v)
-			{
-					
-				// get  the list of emails on each block of the array received
-				preg_match_all($pattern, $v, $matches);
-				$matchEmails = $matches[0];
-		
-				// get the intersect between the list of mailboxes and the emails found
-				$results = array_intersect($mailboxes, $matchEmails);
-		
-				if( ! empty($results))
-				{
-					reset($results);
-					$toEmail = trim(current($results));
-					break;
-				}
-			}
-		}
-		
-		if (filter_var($toEmail, FILTER_VALIDATE_EMAIL) === false)
-			$toEmail = '';
-		
-		// default toEmail
-		if (empty(trim($toEmail)))
-			$toEmail = 'apretaste@gmail.com';
-		
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
+		$toEmail = $emailTo[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
@@ -346,16 +233,13 @@ class RunController extends Controller
 			$attach->path = $filePath;
 		}
 
-		// update the counter of emails received from that mailbox
-		$connection->deepQuery("UPDATE jumper SET received_count=received_count+1 WHERE email='$toEmail'");
-
 		// save the webhook log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
 		$logger->log("Webhook:$webhook, From:$fromEmail, To:$toEmail, Subject:$subject, Attachments:".count($attachments));
 		$logger->close();
 
 		// execute the query
-		$this->renderResponse($fromEmail, $subject, $fromName, $body, $attachments, "email", $toEmail, $messageID);
+		$this->renderResponse($fromEmail, $toEmail, $subject, $fromName, $body, $attachments, "email", $messageID);
 	}
 
 	/**
@@ -371,7 +255,7 @@ class RunController extends Controller
 	 * @param String, email
 	 * @param String $messageID
 	 * */
-	private function renderResponse($email, $subject, $sender="", $body="", $attachments=array(), $format="html", $source="", $messageID = null)
+	private function renderResponse($email, $fromEmail, $subject, $sender="", $body="", $attachments=array(), $format="html", $messageID=NULL)
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -391,22 +275,14 @@ class RunController extends Controller
 
 		// select the default service if service does not exist
 		$alias = $serviceName;
-		if( ! $utils->serviceExist($serviceName))
+		if( ! $utils->serviceExist($serviceName)) $serviceName = $utils->getDefaultService($fromEmail);
+		else if ($serviceName !== $alias)
 		{
-			// get the default service
-			if(empty($source)) $serviceName = "ayuda";
-			else
-			{
-				$res = $connection->deepQuery("SELECT default_service FROM jumper WHERE email='$source'");
-				$serviceName = $res[0]->default_service;
-			}
-		}
-		else if ($serviceName !== $alias) // increase the counter for alias
-		{
+			// increase the counter for alias
 			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
 		}
 
-		// udpate topics if you are contacting via the secure API
+		// uddate topics if you are contacting via the secure API
 		if($serviceName == "secured")
 		{
 			// disregard any footer message and decript new subject
@@ -634,10 +510,10 @@ class RunController extends Controller
 				$sql .= "INSERT INTO person (email, username, last_access, source) VALUES ('$email', '$username', CURRENT_TIMESTAMP, '$inviteSource');";
 
 				// save details of first visit
-				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$source');";
-
+				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$fromEmail');";
+/*
 				// check list of sellers's emails
-				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$source' AND promoter=1;");
+				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$fromEmail' AND promoter=1;");
 				$prize = count($promoters)>0;
 				if ($prize)
 				{
@@ -646,7 +522,7 @@ class RunController extends Controller
 					$sql .= "INSERT INTO ticket(email, origin) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 'PROMOTER')".($i < 9 ? "," : ";");
 				}
-
+*/
 				// run the long query all at the same time
 				$connection->deepQuery($sql."COMMIT;");
 
@@ -655,7 +531,7 @@ class RunController extends Controller
 				$welcome->setResponseEmail($email);
 				$welcome->setEmailLayout("email_simple.tpl");
 				$welcome->setResponseSubject("Bienvenido a Apretaste!");
-				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$source));
+				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$fromEmail));
 				$welcome->internal = true;
 				$responses[] = $welcome;
 
@@ -666,7 +542,7 @@ class RunController extends Controller
 			// create and configure to send email
 			$emailSender = new Email();
 			$emailSender->setRespondEmailID($messageID);
-			$emailSender->setEmailGroup($source);
+			$emailSender->setEmailGroup($fromEmail);
 
 			// get params for the email and send the response emails
 			foreach($responses as $rs)
