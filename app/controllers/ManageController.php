@@ -4,10 +4,10 @@ use Phalcon\Mvc\Controller;
 
 class ManageController extends Controller
 {
-	
+
 	private $currentUser = false;
 	private $currentPerson = null;
-	
+
 	/**
 	 * Index for the manage system
 	 * */
@@ -16,7 +16,7 @@ class ManageController extends Controller
 		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
 		$utils = new Utils();
-		
+
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
@@ -31,12 +31,10 @@ class ManageController extends Controller
 
 		// START measure the effectiveness of each promoter
 		$promoters = $connection->deepQuery("
-			SELECT source, COUNT(source) AS total, MAX(inserted) as latest
-			FROM first_timers 
-			WHERE paid=0
-			AND source IN (SELECT email FROM jumper WHERE promoter=1)
-			GROUP BY source
-			ORDER BY total DESC");
+		SELECT A.email, A.active, A.last_usage, B.total
+		FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
+		ON A.email = B.source
+		ORDER BY B.total DESC");
 		// END measure the effectiveness of each promoter
 
 		$this->view->totalUsers =  $utils->getStat('person.count');
@@ -52,7 +50,7 @@ class ManageController extends Controller
 	{
 		$utils = new Utils();
 		$this->startSession();
-	
+
 		if ($dispatcher->getActionName() !== 'login' && $dispatcher->getActionName() !== 'logout')
 		{
 			if ($this->getCurrentUser() == false)
@@ -60,12 +58,12 @@ class ManageController extends Controller
 				return $dispatcher->forward(array("controller"=> "manage", "action" => "login"));
 			}
 		}
-	
+
 		$this->view->currentUser = $this->getCurrentPerson();
 		$this->view->notifications = $utils->getUnreadNotifications($this->getCurrentUser(), 5);
 		$this->view->totalNotifications = $utils->getNumberOfNotifications($this->getCurrentUser());
 	}
-	
+
 	private function startSession()
 	{
 		if ( ! isset($_SESSION)) {
@@ -73,7 +71,7 @@ class ManageController extends Controller
 			@session_name("apretaste.manage");
 		}
 	}
-	
+
 	/**
 	 * Return current user email
 	 *
@@ -83,16 +81,16 @@ class ManageController extends Controller
 	private function getCurrentUser()
 	{
 		$this->startSession();
-	
+
 		if (isset($_SESSION['user']))
 			return $_SESSION['user'];
-	
+
 		return false;
 	}
-	
+
 	/**
 	 * Return current person logged
-	 * 
+	 *
 	 * @author kuma
 	 * @return object
 	 */
@@ -103,10 +101,10 @@ class ManageController extends Controller
 		$email = $this->getCurrentUser();
 		if (is_null($this->currentPerson))
 			$this->currentPerson =  $utils->getPerson($email);
-		
+
 		return $this->currentPerson;
 	}
-	
+
 	/**
 	 * Login in manage
 	 *
@@ -118,15 +116,15 @@ class ManageController extends Controller
 		if ($this->request->isPost())
 		{
 			$email = $this->request->getPost('email');
-				
+
 			if ( ! is_null($email) && ! empty($email))
 			{
 				$pass = sha1($this->request->getPost('password'));
-	
+
 				$sql = "SELECT * FROM manage_users WHERE email = '$email' and password = '$pass';";
 				$connection = new Connection();
 				$r = $connection->deepQuery($sql);
-	
+
 				if (is_array($r))
 					if (isset($r[0]))
 						if ($r[0]->email == $email)
@@ -140,13 +138,13 @@ class ManageController extends Controller
 		}
 		$this->view->setLayout('login');
 	}
-	
+
 	public function logoutAction()
 	{
 		unset($_SESSION['user']);
 		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
 	}
-	
+
 	/**
 	 * Audience
 	 * */
@@ -155,7 +153,7 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		// START weekly visitors
-		$query = 
+		$query =
 			"SELECT A.received, B.sent, A.inserted
 			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
 			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
@@ -224,7 +222,7 @@ class ManageController extends Controller
 
 
 		// START active domains last 4 months
-		$query = 
+		$query =
 			"SELECT domain, count(domain) as times_used
 			FROM utilization
 			WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m')) < 4
@@ -300,7 +298,7 @@ class ManageController extends Controller
 	public function profileAction()
 	{
 		$connection = new Connection();
-	
+
 		// Users with profile vs users without profile
 		//Users with profiles
 		$queryUsersWithProfile = "SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user = 1";
@@ -316,7 +314,7 @@ class ManageController extends Controller
 			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
 			UNION
 			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
-			UNION 
+			UNION
 			SELECT 'Gender' AS Caption, COUNT(gender) AS Number FROM person WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
 			UNION
 			SELECT 'Phone' AS Caption, COUNT(phone) AS Number FROM person WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
@@ -326,7 +324,7 @@ class ManageController extends Controller
 			SELECT 'Skin' AS Caption, COUNT(skin) AS Number FROM person WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
 			UNION
 			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person
-			UNION 
+			UNION
 			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1";
 		$profileData = $connection->deepQuery($queryProfileData);
 
@@ -337,10 +335,10 @@ class ManageController extends Controller
 			$profilesData[] = ["caption"=>$profilesList->Caption, "number"=>$profilesList->Number, "percent"=>$percentFormated];
 		}
 		//End Profile completion
-	
+
 		// Numbers of profiles per province
 		// https://en.wikipedia.org/wiki/ISO_3166-2:CU
-		$queryPrefilesPerPravince = 
+		$queryPrefilesPerPravince =
 		"SELECT c.ProvCount,
 			CASE c.mnth
 				WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
@@ -379,7 +377,7 @@ class ManageController extends Controller
 					SELECT 'SANCTI_SPIRITUS' mnth
 					UNION ALL
 					SELECT 'CIEGO_DE_AVILA' mnth
-					UNION ALL									
+					UNION ALL
 					SELECT 'CAMAGUEY' mnth
 					UNION ALL
 					SELECT 'LAS_TUNAS' mnth
@@ -396,11 +394,11 @@ class ManageController extends Controller
 				) a
 				LEFT JOIN person b
 					ON BINARY a.mnth = BINARY b.province AND
-						b.province IS not NULL AND 
-						b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD') 
+						b.province IS not NULL AND
+						b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD')
 			GROUP  BY b.province) as c";
 		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
-	
+
 		foreach($prefilesPerPravinceList as $profilesList)
 		{
 			if($profilesList->ProvCount != 0)
@@ -409,7 +407,7 @@ class ManageController extends Controller
 				$profilesPerProvince[] = ["region"=>$profilesList->NewProv, "profiles"=>0];
 		}
 		// numbers of profiles per province
-	
+
 		// send variables to the view
 		$this->view->title = "Profile";
 		$this->view->usersWithProfile = $usersWithProfile[0]->PersonWithProfiles;
@@ -476,9 +474,9 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		// List of raffles
-		$query = 
+		$query =
 			"SELECT A.item_desc, A.start_date, A.end_date, A.winner_1, A.winner_2, A.winner_3, count(B.raffle_id) as tickets
-			FROM raffle A 
+			FROM raffle A
 			LEFT JOIN ticket B
 			ON A.raffle_id = B.raffle_id
 			GROUP BY B.raffle_id
@@ -549,7 +547,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 
-		$queryServices = 
+		$queryServices =
 			"SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, B.times_used, B.avg_latency
 			FROM service A
 			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service) B
@@ -594,7 +592,7 @@ class ManageController extends Controller
 
 			// insert the ad
 			$connection = new Connection();
-			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price) 
+			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price)
 			                   VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
 			$insertAd = $connection->deepQuery($queryInsertAds);
 
@@ -604,13 +602,13 @@ class ManageController extends Controller
 				{
 					$queryGetAdsID = "SELECT id FROM ads WHERE owner='$adsOwner' ORDER BY id DESC LIMIT 1";
 					$getAdID = $connection->deepQuery($queryGetAdsID);
-	
+
 					// save the image
 					$fileName = md5($getAdID[0]->id); //Generate the picture name
 					$wwwroot = $this->di->get('path')['root'];
 					$picPath = "$wwwroot/public/ads/$fileName.jpg";
 					move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
-	
+
 					// optimize the image
 					$utils = new Utils();
 					$utils->optimizeImage($picPath, 728, 90);
@@ -729,7 +727,7 @@ class ManageController extends Controller
 	public function droppedAction()
 	{
 		$connection = new Connection();
-		
+
 		// create the sql for the graph
 		$sql = "";
 		foreach (range(0,7) as $day)
@@ -789,83 +787,83 @@ class ManageController extends Controller
 
 	/**
 	 * Delivery status
-	 * 
+	 *
 	 */
 	public function deliveryAction(){
 		$connection = new Connection();
 		$userEmail = $this->request->get('email');
 		$delivery = array();
 		$dropped = false;
-		
+
 		if ( ! empty("$userEmail"))
 		{
 			$delivery = $connection->deepQuery("
 				SELECT * FROM (
-					(SELECT 'received' as type, 
-							user, 
-							id, 
-							inserted, 
-							subject, 
-							attachments_count as attachments, 
-							mailbox 
+					(SELECT 'received' as type,
+							user,
+							id,
+							inserted,
+							subject,
+							attachments_count as attachments,
+							mailbox
 					FROM delivery_received
 					WHERE user = '$userEmail'
 					LIMIT 50)
 					UNION
-					(SELECT 'sent' as type, 
-							user, 
-							id, 
-							inserted, 
-							subject, 
-							attachments, 
-							mailbox 
+					(SELECT 'sent' as type,
+							user,
+							id,
+							inserted,
+							subject,
+							attachments,
+							mailbox
 					FROM delivery_sent
 					WHERE user = '$userEmail'
 					LIMIT 50)
 				) AS subq1
 				ORDER BY inserted, type desc;");
-			
+
 			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
-			
+
 			if (isset($r[0]))
 				$dropped = true;
 		}
-		
+
 		$this->view->dropped = $dropped;
 		$this->view->delivery = $delivery;
 		$this->view->title = 'Delivery';
 		$this->view->userEmail = $userEmail;
 	}
-	
+
 	/**
 	 * Remove dropped action
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function removeDroppedAction(){
-		
+
 		$userEmail = $this->request->get('email');
-		
+
 		$this->view->message = false;
 		$this->view->message_type = '';
-		
+
 		if ( ! empty("$userEmail"))
 		{
 			$connection = new Connection();
 			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
-				
+
 			if (isset($r[0]))
 			{
 				$r = $connection->deepQuery("DELETE FROM delivery_dropped WHERE email = '$userEmail';");
 				$this->view->message = 'User <b>'.$userEmail.'</b> was removed from dropped list';
 				$this->view->message_type = 'success';
 			}
-			
+
 		}
-		
+
 		$this->view->title = 'Remove users from dropped list';
 	}
-	
+
 	/**
 	 * Show the error log
 	 * */
@@ -899,7 +897,7 @@ class ManageController extends Controller
 
 	/**
 	 * List of surveys
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function surveysAction()
@@ -909,7 +907,7 @@ class ManageController extends Controller
 		$this->view->message_type = 'success';
 		$option = $this->request->get('option');
 		$sql = false;
-		
+
 		if($this->request->isPost())
 		{
 			switch ($option){
@@ -919,7 +917,7 @@ class ManageController extends Controller
 					$deadline = $this->request->getPost("surveyDeadline");
 					$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
 					$this->view->message = 'The survey was inserted successfull';
-					 
+
 					break;
 				case 'setSurvey':
 					$customer = $this->request->getPost("surveyCustomer");
@@ -931,7 +929,7 @@ class ManageController extends Controller
 					break;
 			}
 		}
-		 
+
 		switch ($option){
 			case "delSurvey":
 				$id = $this->request->get('id');
@@ -942,7 +940,7 @@ class ManageController extends Controller
 						COMMIT;";
 				$this->view->message = 'The survey #'.$delete.' was deleted successfull';
 				break;
-			
+
 			case "disable":
 				$id = $this->request->get('id');
 				$sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
@@ -952,20 +950,20 @@ class ManageController extends Controller
 				$sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
 				break;
 		}
-		
+
 		if ($sql!==false) $connection->deepQuery($sql);
-		
+
 		$querySurveys = "SELECT * FROM _survey ORDER BY ID";
-		 
+
 		$surveys = $connection->deepQuery($querySurveys);
-	
+
 		$this->view->title = "List of surveys (".count($surveys).")";
 		$this->view->surveys = $surveys;
 	}
 
 	/**
 	 * Manage survey's questions and answers
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function surveyQuestionsAction()
@@ -973,11 +971,11 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';
-		
+
 		$option = $this->request->get('option');
 		$sql = false;
 		if ($this->request->isPost()){
-			
+
 			switch($option){
 				case "addQuestion":
 					$survey = $this->request->getPost('survey');
@@ -1005,7 +1003,7 @@ class ManageController extends Controller
 				break;
 			}
 		}
-		
+
 		switch($option)
 		{
 			case "delAnswer":
@@ -1013,34 +1011,34 @@ class ManageController extends Controller
 				$sql = "DELETE FROM _survey_answer WHERE id ='{$answer_id}'";
 				$this->view->message = "The answer was deleted successfull";
 			break;
-			
+
 			case "delQuestion":
 				$question_id = $this->request->get('id');
-				$sql = "START TRANSACTION; 
+				$sql = "START TRANSACTION;
 						DELETE FROM _survey_question WHERE id = '{$question_id}';
 						DELETE FROM _survey_answer WHERE question ='{$question_id}';
 						COMMIT;";
 				$this->view->message = "The question was deleted successfull";
 			break;
 		}
-		
+
 		if ($sql!=false) $connection->deepQuery($sql);
-	  
+
 		$survey = $this->request->get('survey');
-					
+
 		$r = $connection->deepQuery("SELECT * FROM _survey WHERE id = '{$survey};'");
 		if ($r !== false) {
 			$sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
 			$survey = $r[0];
 			$questions = $connection->deepQuery($sql);
 			if ($questions !== false) {
-				
+
 				foreach ($questions as $k=>$q){
 					$answers = $connection->deepQuery("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
 					if ($answers==false) $answers = array();
 					$questions[$k]->answers=$answers;
 				}
-				
+
 				$this->view->title = "Survey's questions";
 				$this->view->survey = $survey;
 				$this->view->questions = $questions;
@@ -1050,7 +1048,7 @@ class ManageController extends Controller
 
 	/**
 	 * Remarket
-	 * 
+	 *
 	 * @author salvipascual
 	 * */
 	public function remarketingAction()
@@ -1060,7 +1058,7 @@ class ManageController extends Controller
 		foreach (range(0,7) as $day)
 		{
 			$sqlSent .= "
-				SELECT 
+				SELECT
 					DATE(sent) as moment,
 					SUM(case when type = 'REMINDER1' then 1 else 0 end) as reminder1,
 					SUM(case when type = 'REMINDER2' then 1 else 0 end) as reminder2,
@@ -1103,7 +1101,7 @@ class ManageController extends Controller
 
 	/**
 	 * add credits
-	 * 
+	 *
 	 * @author kuma
 	 * */
 	public function addcreditAction()
@@ -1112,12 +1110,12 @@ class ManageController extends Controller
 		$this->view->title = "Add credit";
 		$this->view->message = false;
 		$this->view->message_type = 'success';
-	
+
 		if ($this->request->isPost())
 		{
 			$email = $this->request->getPost('email');
 			$credit = $this->request->getPost('credit');
-			
+
 			if (is_null($credit) || $credit == 0)
 			{
 				$this->view->message = "Please, type the credit";
@@ -1127,7 +1125,7 @@ class ManageController extends Controller
 			{
 				$utils = new Utils();
 				$person = $utils->getPerson($email);
-				
+
 				if ($person !== false)
 				{
 					$confirm = $this->request->getPost('confirm');
@@ -1171,7 +1169,7 @@ class ManageController extends Controller
 	public function adReportAction()
 	{
 		// getting ad's id
-		$url = $_GET['_url']; 
+		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 
@@ -1179,15 +1177,15 @@ class ManageController extends Controller
 
 		$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
 		$this->view->ad = false;
-		
+
 		if ($ad !== false)
 		{
-			$week = array(); 
+			$week = array();
 
 			// @TODO fix field name in database: ad_bottom to ad_bottom
 			$sql = "SELECT WEEKDAY(request_time) as w,
 					count(usage_id) as total
-					FROM utilization 
+					FROM utilization
 					WHERE (ad_top = $id OR ad_bottom = $id)
 					and service <> 'publicidad'
 					and DATE(request_time) >= CURRENT_DATE - 6
@@ -1215,7 +1213,7 @@ class ManageController extends Controller
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY w";
-			
+
 			$r = $db->deepQuery($sql);
 			if (is_array($r))
 			{
@@ -1231,9 +1229,9 @@ class ManageController extends Controller
 			$month = array();
 
 			$sql = "
-				SELECT 
+				SELECT
 				MONTH(request_time) as m, count(usage_id) as total
-				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id) 
+				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id)
     			and service <> 'publicidad'
     			and YEAR(request_time) = YEAR(CURRENT_DATE)
     			GROUP BY m";
@@ -1249,9 +1247,9 @@ class ManageController extends Controller
 					$month[$i->m]['impressions'] = $i->total;
 				}
 			}
-			
+
 			$sql = "
-				SELECT 
+				SELECT
 				MONTH(request_time) as m,
 				count(usage_id) as total
 				FROM utilization
@@ -1260,7 +1258,7 @@ class ManageController extends Controller
 				and query * 1 = $id
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY m";
-			
+
 			$r = $db->deepQuery($sql);
 			if (is_array($r))
 			{
@@ -1274,7 +1272,7 @@ class ManageController extends Controller
 			}
 
 			// join sql
-			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email 
+			$jsql = "SELECT * FROM utilization INNER JOIN person ON utilization.requestor = person.email
 			WHERE service = 'publicidad'
 				and (subservice = '' OR subservice is NULL)
 				and query * 1 = $id
@@ -1283,7 +1281,7 @@ class ManageController extends Controller
 			// usage by age
 			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
 			$r = $db->deepQuery($sql);
-			
+
 			$usage_by_age = array(
 				'0-16' => 0,
 				'17-21' => 0,
@@ -1305,7 +1303,7 @@ class ManageController extends Controller
 					if ($a > 55) $usage_by_age['56-130'] += $t;
 				}
 			}
-			
+
 			$this->view->usage_by_age = $usage_by_age;
 
 			// usage by X (enums)
@@ -1361,14 +1359,14 @@ class ManageController extends Controller
 						$sql .= " $key = '{$value}', ";
 					}
 				}
-	
+
 				if ($go)
 				{
 					$sql = substr($sql,0,strlen($sql)-2);
 					$sql .= "WHERE id = $id;";
 					$db->deepQuery($sql);
 				}
-				
+
 				$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
 			}
 
@@ -1386,7 +1384,7 @@ class ManageController extends Controller
 	    $url = $_GET['_url'];
 	    $id =  explode("/",$url);
 	    $id = intval($id[count($id)-1]);
-	    
+
 	    $report = $this->getSurveyResults($id);
 
 	    if ($report !== false){
@@ -1399,17 +1397,17 @@ class ManageController extends Controller
 	        $this->survey = false;
 	    }
 	}
-	
+
 	/**
 	 * Calculate and return survey's results
-	 * 
+	 *
 	 * @author kuma
 	 * @param integer $id
 	 */
 	private function getSurveyResults($id){
 	    $db = new Connection();
 	    $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
-	     
+
 	    $by_age = array(
 	            '0-16' => 0,
 	            '17-21' => 0,
@@ -1417,18 +1415,18 @@ class ManageController extends Controller
 	            '36-55' => 0,
 	            '56-130' => 0
 	    );
-	     
+
 	    if ($survey !== false){
-	         
+
 	        $enums = array(
 	                'person.age' => 'By age',
 	                'person.province' => "By location",
 	                'person.gender' => 'By gender',
 	                'person.highest_school_level' => 'By level of education'
 	        );
-	         
+
 	        $report = array();
-	         
+
 	        foreach ($enums as $field => $enum_label){
 	            $sql = "
 	            SELECT
@@ -1454,9 +1452,9 @@ class ManageController extends Controller
 	            _survey_answer.title,
 	            $field
 	            ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
-	    	    
+
 	            $r = $db->deepQuery($sql);
-	             
+
 	            $pivots = array();
 	            $totals = array();
 	            $results = array();
@@ -1472,7 +1470,7 @@ class ManageController extends Controller
 	                                "a" => array(),
 	                                "total" => 0
 	                        );
-	                         
+
 	                        if (!isset($results[$q]['a'][$a]))
 	                            $results[$q]['a'][$a] = array(
 	                                    "i" => $a,
@@ -1480,9 +1478,9 @@ class ManageController extends Controller
 	                                    "p" => array(),
 	                                    "total" => 0
 	                            );
-	                             
+
 	                            $pivot = $item->pivote;
-	    
+
 	                            if ($field == 'person.age'){
 	                                if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
 	                                elseif ($pivot*1 < 17) $pivot = '0-16';
@@ -1491,19 +1489,19 @@ class ManageController extends Controller
 	                                elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
 	                                elseif ($pivot*1 > 55) $pivot = '56-130';
 	                            }
-	    
+
 	                            $results[$q]['a'][$a]['p'][$pivot] = $item->total;
-	                             
+
 	                            if (!isset($totals[$a]))
 	                                $totals[$a] = 0;
-	                                 
+
 	                                $totals[$a] += $item->total;
 	                                $results[$q]['a'][$a]['total'] += $item->total;
 	                                $results[$q]['total'] += $item->total;
 	                                $pivots[$pivot] = str_replace("_"," ", $pivot);
 	                }
 	            }
-	    
+
 	            // fill details...
 	            $sql = "
 	            SELECT
@@ -1519,9 +1517,9 @@ class ManageController extends Controller
 	            ON _survey_question.survey = _survey.id
 	            WHERE _survey.id = $id
 	            ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
-	    
+
 	            $survey_details = $db->deepQuery($sql);
-	    
+
 	            foreach($survey_details as $item){
 	                $q = intval($item->question_id);
 	                $a = intval($item->answer_id);
@@ -1531,7 +1529,7 @@ class ManageController extends Controller
 	                            "t" => $item->question_title,
 	                            "a" => array()
 	                    );
-	                     
+
 	                    if (!isset($results[$q]['a'][$a]))
 	                        $results[$q]['a'][$a] = array(
 	                                "i" => $a,
@@ -1542,22 +1540,22 @@ class ManageController extends Controller
 	                        if (!isset($totals[$a]))
 	                            $totals[$a] = 0;
 	            }
-	            
-	                    
-	            
+
+
+
 	            asort($pivots);
 	            unset($pivots['_UNKNOW']);
 	            $pivots['_UNKNOW'] = 'UNKNOW';
-	    
+
 	            $report[$field] = array(
 	                    'label' => $enum_label,
 	                    'results' => $results,
 	                    'pivots' => $pivots,
 	                    'totals' => $totals
 	            );
-	            
+
 	            // adding unknow labels
-	             
+
 	            foreach ($report[$field]['results'] as $k => $question){
 	                foreach($question['a'] as $kk => $ans){
 	                    $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']*1];
@@ -1567,16 +1565,16 @@ class ManageController extends Controller
 	                }
 	            }
 	        }
-	         
+
 	        return $report;
-	    } 
-	    
+	    }
+
 	    return false;
 	}
-	
+
 	/**
 	 * Download survey's results as CSV
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function surveyResultsCSVAction()
@@ -1591,7 +1589,7 @@ class ManageController extends Controller
 	    $survey = $survey[0];
 	    $results = $this->getSurveyResults($id);
 	    $csv = array();
-	    
+
 	    $csv[0][0] = $survey->title;
 	    $csv[1][0] = "";
 
@@ -1599,24 +1597,24 @@ class ManageController extends Controller
 
     		$csv[][0] = $result['label'];
             $row = array('','Total','Percentage');
-          
+
             foreach ($result['pivots'] as $pivot => $label)
-        		$row[] = $label; 
-            
+        		$row[] = $label;
+
         	$csv[] = $row;
-        	
+
         	foreach($result['results'] as $question){
             	$csv[][0] = $question['t'];
             	foreach($question['a'] as $ans) {
-            		
+
             		if (!isset($ans['total'])) $ans['total'] = 0;
             		if (!isset($question['total'])) $question['total'] = 0;
 
-            		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));         
+            		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
             	    foreach ($result['pivots'] as $pivot => $label) {
                 		if (!isset($ans['p'][$pivot])) {
                 			$row[] = "0.0";
-                		} else { 
+                		} else {
                 		    $part = intval($ans['p'][$pivot]);
                 		    $total = intval($ans['total']);
                 		    $percent = $total === 0?0:$part/$total*100;
@@ -1629,7 +1627,7 @@ class ManageController extends Controller
         	}
         	$csv[][0] = '';
 	     }
-	    
+
 	    $csvtext = '';
 	    foreach($csv as $i => $row){
 	        foreach ($row as $j => $cell){
@@ -1637,7 +1635,7 @@ class ManageController extends Controller
 	        }
 	        $csvtext .="\n";
 	    }
-	    
+
 	    header("Content-type: text/csv");
 	    header("Content-Type: application/force-download");
 	    header("Content-Type: application/octet-stream");
@@ -1647,9 +1645,9 @@ class ManageController extends Controller
 	    header("Pragma: public");
 	    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 	    header("Accept-Ranges: bytes");
-	    
+
 	    echo $csvtext;
-	    
+
 	    $this->view->disable();
 	}
 
@@ -1663,21 +1661,21 @@ class ManageController extends Controller
 		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
 		if ($survey!==false){
 		    $survey = $survey[0];
-		
-    		$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*) 
-    		          FROM _survey_question 
-    		          WHERE _survey_question.survey = _survey_answer_choosen.survey) as total, 
+
+    		$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*)
+    		          FROM _survey_question
+    		          WHERE _survey_question.survey = _survey_answer_choosen.survey) as total,
     		        count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
     		        WHERE subq.total>subq.choosen AND subq.survey = $id;";
-    		
+
     		$r = $db->deepQuery($sql);
-    		
+
     		$this->view->results = $r;
     		$this->view->title = "Who unfinished the survey";
     		$this->view->survey = $survey;
 		}
 	}
-	
+
 	/**
 	 * Download survey's results as PDF
 	 *
@@ -1690,51 +1688,51 @@ class ManageController extends Controller
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
-		
+
 		$db = new Connection();
 		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
 		$survey = $survey[0];
-		
+
  		$csv = array();
  		$title = "{$survey->title} - ".date("d M, Y");
- 		
+
  		$html = '<html><head><title>'.$title.'</title><style>
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
  			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
  				body{font-family:Verdana;}</style>
 			     <body>';
- 		
- 		$html .= "<br/><h1>$title</h1>"; 		
- 	
+
+ 		$html .= "<br/><h1>$title</h1>";
+
 		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
-		
+
 		$i = 0;
 		$total = count($questions);
 		foreach($questions as $question)
 		{
 			//$html .= "<h2>". $question->title . "</h2>";
 			$answers = $db->deepQuery("SELECT *, (SELECT count(*) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
-			
+
 			$values = '';
 			foreach($answers as $ans){
-				$values[wordwrap($ans->title,50)." ({$ans->choosen})"] = $ans->choosen; 
+				$values[wordwrap($ans->title,50)." ({$ans->choosen})"] = $ans->choosen;
 			}
-			
+
 			$PieChart = null;
 			$chart = $this->getPieChart($question->title, $values, $PieChart);
-			
+
 			$html .= '<table width="100%"><tr><td valign="top" width="250">';
 			$html .= '<thead><caption>'.$question->title.'</caption></thead>';
 			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
 			$html .="</td><td valign=\"top\">";
-			
+
 			$Data    = $PieChart->pDataObject->getData();
 			$Palette = $PieChart->pDataObject->getPalette();
-			
+
 			$html .= "<table width=\"100%\">";
 			foreach($Data["Series"][$Data["Abscissa"]]["Data"] as $Key => $Value)
 			{
-				
+
 				$R = $Palette[$Key]["R"];
 				$G = $Palette[$Key]["G"];
 				$B = $Palette[$Key]["B"];
@@ -1742,58 +1740,58 @@ class ManageController extends Controller
 				$html .= "<tr><td><span style=\"width:30px;height:30px;background:rgb($R,$G,$B);\">&nbsp;&nbsp;</span></td><td>$Value</td></tr>";
 			}
 			$html .= "</table>";
-			
+
 			$html .= "</td></tr></table><br/>";
-			
+
 			$i++;
 			//if ($i % 4 == 0 && $i < $total) $html .= '<pagebreak />';
 		}
- 		
+
  		$html .= '</body></html>';
- 		
+
  		//die($html);
- 		
+
 		$mpdf = new mPDF('','A4', 0, '', 10, 10, 10, 10, 1, 1, 'P');
-		$mpdf->WriteHTML(trim($html));	
+		$mpdf->WriteHTML(trim($html));
 		$mpdf->Output("$title.pdf", 'D');
 		$this->view->disable();
 	}
-	
+
 	/**
 	 * Get image with a pie chart
-	 * 
+	 *
 	 * @author kuma
 	 * @param string $title
 	 * @param array $values
 	 */
 	private function getPieChart($title, $values, &$chartObj){
-		
+
 		include_once "../lib/pChart2.1.4/class/pData.class.php";
 		include_once "../lib/pChart2.1.4/class/pDraw.class.php";
 		include_once "../lib/pChart2.1.4/class/pPie.class.php";
 		include_once "../lib/pChart2.1.4/class/pImage.class.php";
-			
+
 		$MyData = new pData();
 		$MyData->addPoints($values,"ScoreA");
 		$MyData->setSerieDescription("ScoreA",$title);
 		$MyData->addPoints(array_keys($values),"Labels");
 		$MyData->setAbscissa("Labels");
-		
+
 		$myPicture = new pImage(250,150,$MyData);
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
 			"FontSize" => 13,
-			"R" => 0, 
+			"R" => 0,
 			"G" => 0,
 			"B" => 0
 		));
-		
+
 		$myPicture->drawText(10, 23, $title, array(
 			"R" => 255,
 			"G" => 255,
 			"B" => 255
 		));
-		
+
 		$myPicture->setShadow(TRUE, array(
 			"X" => 2,
 			"Y" => 2,
@@ -1812,10 +1810,10 @@ class ManageController extends Controller
 			"DataGapRadius" => 0,
 			"Border" => FALSE,
 			"BorderR" => 0,
-			"BorderG" => 0, 
+			"BorderG" => 0,
 			"BorderB"=> 0,
 			"ValueR"=> 0,
-			"ValueG" => 0, 
+			"ValueG" => 0,
 			"ValueB" => 0,
 			"Shadow" => FALSE
 		));
@@ -1829,18 +1827,18 @@ class ManageController extends Controller
 		));
 */
 		$chartObj = $PieChart;
-		
+
 		ob_start();
 		imagepng($myPicture->Picture);
 		$img = ob_get_contents();
 		ob_end_clean();
-		
+
 		return base64_encode($img);
 	}
-	
+
 	/**
 	 * Top menu
-	 * 
+	 *
 	 * @param string $name
 	 */
 	private function setMenu($name = 'default')
@@ -1854,12 +1852,12 @@ class ManageController extends Controller
 					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
 				);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Market
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketAction()
@@ -1867,10 +1865,10 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$sql = "SELECT * FROM _tienda_products ORDER BY name;";
 		$products = $connection->deepQuery($sql);
-		
+
 		if (!is_array($products))
 			$products = array();
-		
+
 		$this->view->products = $products;
 		$this->view->title = "Market's products";
 		$this->view->breadcrumb = array(
@@ -1880,21 +1878,21 @@ class ManageController extends Controller
 		);
 		$this->setMenu('market');
 	}
-	
+
 	/**
 	 * New product
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketNewProductAction()
 	{
 		$connection = new Connection();
-		
+
 		if($this->request->isPost())
 		{
 			// generate code
 			$code = substr(date("Ymdhi"), 2);
-			
+
 			// get data from post
 			$name = $this->request->getPost('edtName');
 			$description = $this->request->getPost('edtDesc');
@@ -1904,40 +1902,40 @@ class ManageController extends Controller
 			$credits = $this->request->getPost('edtCredits') * 1;
 			$agency = $this->request->getPost('edtAgency');
 			$owner = $this->request->getPost('edtOwner');
-			
+
 			// add product
 			$sql = "INSERT INTO _tienda_products (code, name, description, category, price, shipping_price, credits, agency, owner)
 					VALUES ('$code', '$name', '$description','$category','$price','$shipping_price','$credits','$agency','$owner');";
-			
+
 			$connection->deepQuery($sql);
-			
+
 			// add inventory
 			$sql = "INSERT INTO inventory (code, price, name, seller, service, active)
 					VALUES ('$code','$credits','$name','$owner','MERCADO',0);";
-			
+
 			$connection->deepQuery($sql);
-			
+
 			// redirect to edit product page
 			$this->view->code = $code;
 			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketDetail"));
 		}
 	}
-	
+
 	/**
 	 * Update product
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketUpdateAction()
 	{
 		$connection = new Connection();
-		
+
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
 		$code =  explode("/",$url);
 		$code = $code[count($code)-1];
-		
+
 		if ($this->request->isPost())
 		{
 			$name = $this->request->getPost('edtName');
@@ -1948,48 +1946,48 @@ class ManageController extends Controller
 			$credits = $this->request->getPost('edtCredits') * 1;
 			$agency = $this->request->getPost('edtAgency');
 			$owner = $this->request->getPost('edtOwner');
-				
+
 			$sql = "
 			UPDATE _tienda_products
-			SET       name = '$name', 				
+			SET       name = '$name',
 			   description = '$description',
-			      category = '$category', 			
+			      category = '$category',
 			         price = '$price',
-			shipping_price = '$shipping_price',	
+			shipping_price = '$shipping_price',
 			       credits = '$credits',
 			        agency = '$agency',
 			         owner = '$owner'
 			WHERE code = '$code';";
-		
+
 			$connection->deepQuery($sql);
-			
+
 			// update inventory
 			$sql = "
 			UPDATE inventory
-			SET name = '$name', 
+			SET name = '$name',
 			   price = '$credits',
 			  seller = '$owner'
 			WHERE code = '$code';";
-			
+
 			$connection->deepQuery($sql);
-			
+
 			$this->view->message = 'The product was updated';
 			$this->view->message_type = "success";
 			$this->view->code = $code;
 			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketDetail"));
 		}
 	}
-	
+
 	/**
 	 * Edit product
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketDetailAction()
 	{
 		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
-		
+
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
@@ -1998,28 +1996,28 @@ class ManageController extends Controller
 
 		if ($code == 'marketNewProduct' || $code == 'marketDetail' || empty(trim($code)))
 			$code = null;
-		
+
 		if (is_null($code))
 			if (isset($this->view->code))
 				$code = $this->view->code;
-			else 
+			else
 			{
 				$this->view->message_type = "danger";
 				$this->view->message = "Missing product's code";
 				return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
 			}
-		
+
 		$sql = "SELECT * FROM _tienda_products WHERE code = '$code';";
-		
+
 		$product = $connection->deepQuery($sql);
-	
+
 		if ( ! is_array($product))
 		{
 			$this->view->message_type = "danger";
 			$this->view->message = "Product <b>$code</b> not exists";
 			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
 		}
-		
+
 		$this->view->product = $product[0];
 		$this->view->wwwroot = $wwwroot;
 		$this->view->title = "Product's details";
@@ -2031,10 +2029,10 @@ class ManageController extends Controller
 		);
 		$this->setMenu('market');
 	}
-	
+
 	/**
 	 * Set product's picture
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketPictureAction()
@@ -2044,38 +2042,38 @@ class ManageController extends Controller
 		$url = $_GET['_url'];
 		$code =  explode("/",$url);
 		$code = $code[count($code)-1];
-		
+
 		$wwwroot = $this->di->get('path')['root'];
 		$fname = "$wwwroot/public/products/$code.jpg";
 		copy($_FILES['file_data']['tmp_name'], $fname);
 		$utils = new Utils();
 		$utils->optimizeImage($fname, '', '', 100, 'image/jpeg');
-		
+
 		echo '{}';
 		$this->view->disable();
 	}
-	
+
 	/**
 	 * Delete product's picture
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketPictureDeleteAction()
 	{
 		$code = $this->request->getPost('code');
 		$wwwroot = $this->di->get('path')['root'];
-		
+
 		$fn = "$wwwroot/public/products/$code";
 		if (file_exists($fn))
 			unlink($fn);
-		
+
 		echo '{result: true}';
 		$this->view->disable();
 	}
-		
+
 	/**
 	 * Delete product
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketDeleteAction()
@@ -2085,31 +2083,31 @@ class ManageController extends Controller
 		$url = $_GET['_url'];
 		$code =  explode("/",$url);
 		$code = $code[count($code)-1];
-		
+
 		$connection = new Connection();
 		$wwwroot = $this->di->get('path')['root'];
-		
+
 		// delete record from database
 		$sql = "DELETE FROM _tienda_products WHERE code = '$code';";
 		$connection->deepQuery($sql);
-		
+
 		// delete record from inventory
 		$sql = "DELETE FROM inventory WHERE code = '$code';";
 		$connection->deepQuery($sql);
-		
+
 		// delete related picture
 		$fn = "$wwwroot/public/products/$code";
 		if (file_exists($fn))
 			unlink($fn);
-		
+
 		$this->view->message = "The product $code was deleted";
 		$this->view->message_type = "success";
 		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
 	}
-	
+
 	/**
 	 * Toggle product's activation
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketToggleActivationAction()
@@ -2122,41 +2120,41 @@ class ManageController extends Controller
 			$product = $product[0];
 			$active = $product->active;
 			$toggle = '1';
-			if ($active == '1') 
+			if ($active == '1')
 				$toggle = '0';
-			
+
 			$sql = "UPDATE _tienda_products SET active = '$toggle' WHERE code = '$code';";
 			$connection->deepQuery($sql);
-			
+
 			$sql = "UPDATE inventory SET active = '$toggle' WHERE code = '$code';";
 			$connection->deepQuery($sql);
-			
+
 			echo $toggle;
 			$this->view->disable();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Retrieve transfer into market's orders
-	 * 
+	 *
 	 * @author kuma
 	 */
 	private function updateMarketOrders()
 	{
 		$sql = "INSERT INTO _tienda_orders (id, product, email, inserted_date)
 				SELECT id, inventory_code, sender, transfer_time
-				FROM transfer INNER JOIN inventory on transfer.inventory_code = inventory.code 
-				WHERE inventory.service = 'MERCADO' AND transfer.transfered = '1' 
+				FROM transfer INNER JOIN inventory on transfer.inventory_code = inventory.code
+				WHERE inventory.service = 'MERCADO' AND transfer.transfered = '1'
 					AND NOT EXISTS (SELECT * FROM _tienda_orders WHERE _tienda_orders.id = transfer.id);";
-		
+
 		$connection = new Connection();
 		$connection->deepQuery($sql);
 	}
-	
+
 	/**
 	 * Manage market's orders
-	 * 
+	 *
 	 * @author kuma
 	 */
 	public function marketOrdersAction()
@@ -2166,45 +2164,45 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = 0;";
 		$orders = $connection->deepQuery($sql);
-		
+
 		if (!is_array($orders))
 			$orders = array();
-		
+
 		foreach ($orders as $k => $v)
 		{
 			$orders[$k]->ready = false;
 			if (trim($v->ci) !== '' && trim($v->name) !== '' && trim($v->address) !== '' && trim($v->province) !== '' )
 				$orders[$k]->ready = true;
 		}
-		
+
 		$this->view->orders = $orders;
 		$this->view->title = "Market's orders";
 		$this->view->breadcrumb = array(
 			'/manage' => 'Home',
 			'/manage/admin' => 'Admin',
 			'/manage/market' => 'Market',
-			'/manage/marketOrders' =>'Orders' 
+			'/manage/marketOrders' =>'Orders'
 		);
 	}
-	
+
 	/**
 	 * Edit product's destination data
-	 * 
+	 *
 	 *  @author kuma
 	 */
 	public function marketDestinationAction()
 	{
 		$this->setMenu('market');
-		
+
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = $id[count($id)-1];
-		
+
 		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
-		
+
 		if ($this->request->isPost())
 		{
 			$ci = $this->request->getPost('edtCI');
@@ -2212,35 +2210,35 @@ class ManageController extends Controller
 			$address = $this->request->getPost('edtAddress');
 			$province = $this->request->getPost('edtProvince');
 			$phone = $this->request->getPost('edtPhone');
-			
+
 			$sql = "UPDATE _tienda_orders SET ci = '$ci', name = '$name', address = '$address', province = '$province', phone = '$phone'
 					WHERE id = '$id';";
-			
+
 			$connection->deepQuery($sql);
-		}		
-		
+		}
+
 		$sql = "SELECT * FROM _tienda_orders WHERE id = '$id';";
 		$order = $connection->deepQuery($sql);
-		
+
 		if (is_array($order))
 		{
 			$order = $order[0];
 			$order->ready = false;
 			if (trim($order->ci) !== '' && trim($order->name) !== '' && trim($order->address) !== '' && trim($order->province) !== '' )
 			$order->ready = true;
-			
+
 			$sql = "SELECT * FROM _tienda_products WHERE code = '$order->product';";
 			$product = $connection->deepQuery($sql);
-			
+
 			if (is_array($product))
 			{
 				$product = $product[0];
-				
+
 				$product->image = false;
-				
+
 				if (file_exists("$wwwroot/public/products/{$product->code}.jpg"))
 					$product->image = true;
-				
+
 				$this->view->product = $product;
 				$this->view->order = $order;
 				$this->view->title = "Product's destination";
@@ -2254,7 +2252,7 @@ class ManageController extends Controller
 			}
 		}
 	}
-	
+
 	/**
 	 * Edit product's destination data
 	 *
@@ -2263,7 +2261,7 @@ class ManageController extends Controller
 	public function marketOrderReceivedAction()
 	{
 		$this->setMenu('market');
-	
+
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
@@ -2277,7 +2275,7 @@ class ManageController extends Controller
 		$this->view->message_type = "success";
 		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketOrders"));
 	}
-	
+
 	/**
 	 * Market statistics
 	 *
@@ -2296,11 +2294,11 @@ class ManageController extends Controller
 		$this->view->totalUsers =  $utils->getStat('person.count');
 		$this->view->sellsByProduct = $utils->getStat('market.sells.byproduct.last30days');
 		$this->view->title = "Market' stats";
-		
+
 	}
-	
+
 	public function testAction()
 	{
-		
+
 	}
 }
