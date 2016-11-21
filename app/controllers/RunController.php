@@ -4,12 +4,6 @@ use Phalcon\Mvc\Controller;
 
 class RunController extends Controller
 {
-	public function indexAction()
-	{
-		die("Cannot run directly. Please access to run/display or run/api instead");
-		$this->view->disable();
-	}
-
 	/**
 	 * Executes an html request the outside. Display the HTML on screen
 	 *
