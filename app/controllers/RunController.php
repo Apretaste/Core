@@ -511,18 +511,20 @@ class RunController extends Controller
 
 				// save details of first visit
 				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$fromEmail');";
-/*
-				// check list of sellers's emails
-				$promoters = $connection->deepQuery("SELECT email FROM jumper WHERE email='$fromEmail' AND promoter=1;");
+
+				// check list of promotor's emails
+				$promoters = $connection->deepQuery("SELECT email FROM promoters WHERE email='$fromEmail' AND active=1;");
 				$prize = count($promoters)>0;
 				if ($prize)
 				{
+					// update the promotor
+					$sql .= "UPDATE promoters SET `usage`=`usage`+1, last_usage=CURRENT_TIMESTAMP WHERE email='$fromEmail';";
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
 					$sql .= "INSERT INTO ticket(email, origin) VALUES ";
 					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 'PROMOTER')".($i < 9 ? "," : ";");
 				}
-*/
+
 				// run the long query all at the same time
 				$connection->deepQuery($sql."COMMIT;");
 
