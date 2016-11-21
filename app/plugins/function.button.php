@@ -3,7 +3,7 @@
 /**
  * Smarty plugin
  *
- * @package    Smarty
+ * @package	Smarty
  * @subpackage PluginsFunction
  */
 
@@ -20,7 +20,7 @@ function smarty_function_button($params, $template)
 	else $body = "Envie+el+correo+tal+y+como+esta,+ya+esta+preparado+para+usted";
 
 	// select the color scheema
-	switch ($color) 
+	switch ($color)
 	{
 		case "grey":
 			$stroke = '#CCCCCC';
@@ -48,17 +48,17 @@ function smarty_function_button($params, $template)
 	{
 		case "small":
 			$width = 80;
-            $fontsize = 12;
-            $height = 20;
+			$fontsize = 12;
+			$height = 20;
 			break;
 		case "medium":
 			$width = 150;
-            $fontsize = 16;
+			$fontsize = 16;
 			$height = 44;
 			break;
 		case "large":
 			$width = 220;
-            $fontsize = 24;
+			$fontsize = 24;
 			$height = 48;
 			break;
 	}
