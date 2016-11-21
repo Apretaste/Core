@@ -45,7 +45,7 @@ class NewemailTask extends \Phalcon\Cli\Task
 			$response->createFromTemplate('newEmail.tpl', $content);
 			$response->internal = true;
 			$html = $render->renderHTML($service, $response);
-die($html);
+
 			// send the email
 			$email->sendEmail($person->email, "Sorteando las dificultades, un email lleno de alegria", $html);
 
