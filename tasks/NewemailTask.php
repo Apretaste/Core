@@ -20,6 +20,7 @@ class NewemailTask extends \Phalcon\Cli\Task
 		$render = new Render();
 		$response = new Response();
 		$utils = new Utils();
+		$wwwroot = $this->di->get('path')['root'];
 
 		// get valid people
 		$people = $connection->deepQuery("
@@ -32,6 +33,7 @@ class NewemailTask extends \Phalcon\Cli\Task
 			AND email not like '%@mms.cubacel.cu'");
 
 		// send the remarketing
+		$log = "";
 		foreach ($people as $person)
 		{
 			// get the email address
@@ -49,6 +51,12 @@ class NewemailTask extends \Phalcon\Cli\Task
 			// send the email
 			$email->sendEmail($person->email, "Sorteando las dificultades, un email lleno de alegria", $html);
 
+			$log .= $person->email . "\n";
 		}
+
+		// saving the log
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/newemail.log");
+		$logger->log($log);
+		$logger->close();
 	}
 }
