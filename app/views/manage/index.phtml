@@ -3,7 +3,7 @@
 		<h2>Welcome <?php if (isset($currentUser->fullName)) echo $currentUser->fullName; else echo substr($currentUser->email,0,strpos($currentUser->email,'@'));?></h2>
 	</div>
 	<div class="col-sm-6">
-		
+
 		<div class="row text-left">
 			<div class="col-xs-4">
 				<div class=" m-l-md">
@@ -20,7 +20,7 @@
 	</div>
 	<div class="col-sm-3">
 		<div class="statistic-box">
-			
+
 		</div>
 	</div>
 </div>
@@ -100,17 +100,18 @@
 					<thead>
 						<tr>
 							<th>Promoter</th>
-							<th class="text-center">Total</th>
+							<th class="text-center">Unpaid</th>
 							<th class="text-center">Last</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ($promoters as $promoter): ?>
-						<?php $daysElapsed = (time() - strtotime($promoter->latest))/60/60/24; ?>
-						<tr <?php if($daysElapsed > 31) echo 'class="danger"'; ?>>
-							<td><?= $promoter->source ?></td>
+						<?php $daysElapsed = (time() - strtotime($promoter->last_usage))/60/60/24; ?>
+						<?php if( ! $promoter->total) $promoter->total = 0; ?>
+						<tr <?php if($promoter->active == 0) echo 'class="danger"'; else if($daysElapsed > 31) echo 'class="warning"'; ?>>
+							<td><?= $promoter->email ?></td>
 							<td class="text-center"><?= $promoter->total ?></td>
-							<td class="text-center"><?= date("m/d/y", strtotime($promoter->latest)) ?></td>
+							<td class="text-center"><?= date("m/d/y", strtotime($promoter->last_usage)) ?></td>
 						</tr>
 						<?php endforeach; ?>
 					</tbody>
