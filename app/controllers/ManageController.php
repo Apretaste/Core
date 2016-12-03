@@ -486,6 +486,10 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$connection->deepQuery("UPDATE person SET active=0 WHERE email='$email'");
 
+		// email the user user letting him know
+		$email = new Email();
+		$email->sendEmail($email, "Siento ver que se nos va", "Hola. A peticion suya le he excluido de Apretaste. Ahora no debera recibir mas nuestra correspondencia. Si desea volver a usar Apretaste en un futuro, acceda a nuestro sistema nuevamente y sera automaticamente incluido. Disculpa si le hemos causamos alguna molestia, y gracias por usar Apretaste, siempre es bienvenido nuevamente.");
+
 		// redirect back
 		header("Location: profilesearch?email=$email");
 	}
