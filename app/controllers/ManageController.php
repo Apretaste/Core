@@ -421,14 +421,14 @@ class ManageController extends Controller
 	 * */
 	public function profilesearchAction()
 	{
-		if($this->request->isPost())
+		$email = $this->request->get("email");
+		if($email)
 		{
 			// get the email passed by post
 			$connection = new Connection();
-			$email = $this->request->getPost("email");
 
 			// search for the user
-			$querryProfileSearch = "SELECT first_name, middle_name, last_name, mother_name, date_of_birth, TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS Age, gender, phone, eyes, skin, body_type, hair, city, province, about_me, credit, picture, email FROM person WHERE email = '$email'";
+			$querryProfileSearch = "SELECT active, first_name, middle_name, last_name, mother_name, date_of_birth, TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS Age, gender, phone, eyes, skin, body_type, hair, city, province, about_me, credit, picture, email FROM person WHERE email = '$email'";
 			$profileSearch = $connection->deepQuery($querryProfileSearch);
 
 			if($profileSearch)
@@ -440,6 +440,8 @@ class ManageController extends Controller
 					$this->view->email = $profileSearch[0]->email;
 				}
 
+				$this->view->email = $email;
+				$this->view->active = $profileSearch[0]->active;
 				$this->view->firstName = $profileSearch[0]->first_name;
 				$this->view->middleName = $profileSearch[0]->middle_name;
 				$this->view->lastName = $profileSearch[0]->last_name;
@@ -464,6 +466,28 @@ class ManageController extends Controller
 		}
 
 		$this->view->title = "Search for a profile";
+	}
+
+	/**
+	 * Exclude an user from Apretaste and make promotional emails stop
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 */
+	public function excludeAction()
+	{
+		$email = $this->request->get("email");
+
+		// unsubscribe from the emails
+		$utils = new Utils();
+		$utils->unsubscribeFromEmailList($email);
+
+		// mark the user inactive in the database
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET active=0 WHERE email='$email'");
+
+		// redirect back
+		header("Location: profilesearch?email=$email");
 	}
 
 	/**
@@ -593,7 +617,7 @@ class ManageController extends Controller
 			// insert the ad
 			$connection = new Connection();
 			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price)
-			                   VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
+							   VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
 			$insertAd = $connection->deepQuery($queryInsertAds);
 
 			if($insertAd)
@@ -771,7 +795,7 @@ class ManageController extends Controller
 		}
 
 		// get last 7 days of dropped emails
-		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
+		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) AND reason <> 'dismissed' ORDER BY inserted DESC";
 		$dropped = $connection->deepQuery($sql);
 
 		// get last 7 days of emails received
@@ -786,14 +810,38 @@ class ManageController extends Controller
 	}
 
 	/**
+	 * Remove dropped action
+	 *
+	 * @author salvipascual
+	 */
+	public function removeDroppedAction()
+	{
+		$userEmail = $this->request->get('email');
+
+		if ($userEmail)
+		{
+			// delete the block
+			$connection = new Connection();
+			$connection->deepQuery("UPDATE delivery_dropped SET reason='dismissed' WHERE email='$userEmail'");
+
+			// email the user user letting him know
+			$email = new Email();
+			$email->sendEmail($userEmail, "Arregle un problema con su email", "Hola. Trabajo en Apretaste y me he percatado que por error su direccion de email estaba bloqueada en nuestro sistema. He corregido este error y ahroa deberia poder usar Apretaste sin problemas. Siento mucho este inconveniente, y muchas gracias por usar Apretaste!. Un saludo.");
+		}
+
+		header("Location: dropped");
+	}
+
+	/**
 	 * Delivery status
 	 *
+	 * @author kuma
 	 */
-	public function deliveryAction(){
+	public function deliveryAction()
+	{
 		$connection = new Connection();
 		$userEmail = $this->request->get('email');
 		$delivery = array();
-		$dropped = false;
 
 		if ( ! empty("$userEmail"))
 		{
@@ -824,44 +872,11 @@ class ManageController extends Controller
 				ORDER BY inserted, type desc;");
 
 			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
-
-			if (isset($r[0]))
-				$dropped = true;
 		}
 
-		$this->view->dropped = $dropped;
 		$this->view->delivery = $delivery;
 		$this->view->title = 'Delivery';
 		$this->view->userEmail = $userEmail;
-	}
-
-	/**
-	 * Remove dropped action
-	 *
-	 * @author kuma
-	 */
-	public function removeDroppedAction(){
-
-		$userEmail = $this->request->get('email');
-
-		$this->view->message = false;
-		$this->view->message_type = '';
-
-		if ( ! empty("$userEmail"))
-		{
-			$connection = new Connection();
-			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
-
-			if (isset($r[0]))
-			{
-				$r = $connection->deepQuery("DELETE FROM delivery_dropped WHERE email = '$userEmail';");
-				$this->view->message = 'User <b>'.$userEmail.'</b> was removed from dropped list';
-				$this->view->message_type = 'success';
-			}
-
-		}
-
-		$this->view->title = 'Remove users from dropped list';
 	}
 
 	/**
@@ -1190,7 +1205,7 @@ class ManageController extends Controller
 					and service <> 'publicidad'
 					and DATE(request_time) >= CURRENT_DATE - 6
 					GROUP BY w
-			        ORDER BY w";
+					ORDER BY w";
 
 			$r = $db->deepQuery($sql);
 
@@ -1232,9 +1247,9 @@ class ManageController extends Controller
 				SELECT
 				MONTH(request_time) as m, count(usage_id) as total
 				FROM utilization WHERE (ad_top = $id OR ad_bottom = $id)
-    			and service <> 'publicidad'
-    			and YEAR(request_time) = YEAR(CURRENT_DATE)
-    			GROUP BY m";
+				and service <> 'publicidad'
+				and YEAR(request_time) = YEAR(CURRENT_DATE)
+				GROUP BY m";
 
 			$r = $db->deepQuery($sql);
 
@@ -1379,23 +1394,23 @@ class ManageController extends Controller
 	 * Survey reports
 	 */
 	public function surveyReportAction(){
-	    // getting ad's id
-	    // @TODO: improve this!
-	    $url = $_GET['_url'];
-	    $id =  explode("/",$url);
-	    $id = intval($id[count($id)-1]);
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = intval($id[count($id)-1]);
 
-	    $report = $this->getSurveyResults($id);
+		$report = $this->getSurveyResults($id);
 
-	    if ($report !== false){
-	        $db = new Connection();
-	        $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
-	        $this->view->results = $report;
-    	    $this->view->survey = $survey[0];
-    	    $this->view->title = 'Survey report';
-	    } else {
-	        $this->survey = false;
-	    }
+		if ($report !== false){
+			$db = new Connection();
+			$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+			$this->view->results = $report;
+			$this->view->survey = $survey[0];
+			$this->view->title = 'Survey report';
+		} else {
+			$this->survey = false;
+		}
 	}
 
 	/**
@@ -1405,171 +1420,171 @@ class ManageController extends Controller
 	 * @param integer $id
 	 */
 	private function getSurveyResults($id){
-	    $db = new Connection();
-	    $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$db = new Connection();
+		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
 
-	    $by_age = array(
-	            '0-16' => 0,
-	            '17-21' => 0,
-	            '22-35' => 0,
-	            '36-55' => 0,
-	            '56-130' => 0
-	    );
+		$by_age = array(
+				'0-16' => 0,
+				'17-21' => 0,
+				'22-35' => 0,
+				'36-55' => 0,
+				'56-130' => 0
+		);
 
-	    if ($survey !== false){
+		if ($survey !== false){
 
-	        $enums = array(
-	                'person.age' => 'By age',
-	                'person.province' => "By location",
-	                'person.gender' => 'By gender',
-	                'person.highest_school_level' => 'By level of education'
-	        );
+			$enums = array(
+					'person.age' => 'By age',
+					'person.province' => "By location",
+					'person.gender' => 'By gender',
+					'person.highest_school_level' => 'By level of education'
+			);
 
-	        $report = array();
+			$report = array();
 
-	        foreach ($enums as $field => $enum_label){
-	            $sql = "
-	            SELECT
-	            _survey.id AS survey_id,
-	            _survey.title AS survey_title,
-	            _survey_question.id AS question_id,
-	            _survey_question.title AS question_title,
-	            _survey_answer.id AS answer_id,
-	            _survey_answer.title AS answer_title,
-	            IFNULL($field,'_UNKNOW') AS pivote,
-	            Count(_survey_answer_choosen.email) AS total
-	            FROM
-	            _survey Inner Join (_survey_question inner join ( _survey_answer inner join (_survey_answer_choosen inner join (select *, YEAR(CURDATE()) - YEAR(person.date_of_birth) as age from person) as person ON _survey_answer_choosen.email = person.email) on _survey_answer_choosen.answer = _survey_answer.id) ON _survey_question.id = _survey_answer.question)
-	            ON _survey_question.survey = _survey.id
-	            WHERE _survey.id = $id
-	            AND trim($field) <> ''
-	            GROUP BY
-	            _survey.id,
-	            _survey.title,
-	            _survey_question.id,
-	            _survey_question.title,
-	            _survey_answer.id,
-	            _survey_answer.title,
-	            $field
-	            ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
+			foreach ($enums as $field => $enum_label){
+				$sql = "
+				SELECT
+				_survey.id AS survey_id,
+				_survey.title AS survey_title,
+				_survey_question.id AS question_id,
+				_survey_question.title AS question_title,
+				_survey_answer.id AS answer_id,
+				_survey_answer.title AS answer_title,
+				IFNULL($field,'_UNKNOW') AS pivote,
+				Count(_survey_answer_choosen.email) AS total
+				FROM
+				_survey Inner Join (_survey_question inner join ( _survey_answer inner join (_survey_answer_choosen inner join (select *, YEAR(CURDATE()) - YEAR(person.date_of_birth) as age from person) as person ON _survey_answer_choosen.email = person.email) on _survey_answer_choosen.answer = _survey_answer.id) ON _survey_question.id = _survey_answer.question)
+				ON _survey_question.survey = _survey.id
+				WHERE _survey.id = $id
+				AND trim($field) <> ''
+				GROUP BY
+				_survey.id,
+				_survey.title,
+				_survey_question.id,
+				_survey_question.title,
+				_survey_answer.id,
+				_survey_answer.title,
+				$field
+				ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
 
-	            $r = $db->deepQuery($sql);
+				$r = $db->deepQuery($sql);
 
-	            $pivots = array();
-	            $totals = array();
-	            $results = array();
-	            if ($r!==false){
-	                foreach($r as $item){
-	                    $item->total = intval($item->total);
-	                    $q = intval($item->question_id);
-	                    $a = intval($item->answer_id);
-	                    if (!isset($results[$q]))
-	                        $results[$q] = array(
-	                                "i" => $q,
-	                                "t" => $item->question_title,
-	                                "a" => array(),
-	                                "total" => 0
-	                        );
+				$pivots = array();
+				$totals = array();
+				$results = array();
+				if ($r!==false){
+					foreach($r as $item){
+						$item->total = intval($item->total);
+						$q = intval($item->question_id);
+						$a = intval($item->answer_id);
+						if (!isset($results[$q]))
+							$results[$q] = array(
+									"i" => $q,
+									"t" => $item->question_title,
+									"a" => array(),
+									"total" => 0
+							);
 
-	                        if (!isset($results[$q]['a'][$a]))
-	                            $results[$q]['a'][$a] = array(
-	                                    "i" => $a,
-	                                    "t" => $item->answer_title,
-	                                    "p" => array(),
-	                                    "total" => 0
-	                            );
+							if (!isset($results[$q]['a'][$a]))
+								$results[$q]['a'][$a] = array(
+										"i" => $a,
+										"t" => $item->answer_title,
+										"p" => array(),
+										"total" => 0
+								);
 
-	                            $pivot = $item->pivote;
+								$pivot = $item->pivote;
 
-	                            if ($field == 'person.age'){
-	                                if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
-	                                elseif ($pivot*1 < 17) $pivot = '0-16';
-	                                elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
-	                                elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
-	                                elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
-	                                elseif ($pivot*1 > 55) $pivot = '56-130';
-	                            }
+								if ($field == 'person.age'){
+									if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
+									elseif ($pivot*1 < 17) $pivot = '0-16';
+									elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
+									elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
+									elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
+									elseif ($pivot*1 > 55) $pivot = '56-130';
+								}
 
-	                            $results[$q]['a'][$a]['p'][$pivot] = $item->total;
+								$results[$q]['a'][$a]['p'][$pivot] = $item->total;
 
-	                            if (!isset($totals[$a]))
-	                                $totals[$a] = 0;
+								if (!isset($totals[$a]))
+									$totals[$a] = 0;
 
-	                                $totals[$a] += $item->total;
-	                                $results[$q]['a'][$a]['total'] += $item->total;
-	                                $results[$q]['total'] += $item->total;
-	                                $pivots[$pivot] = str_replace("_"," ", $pivot);
-	                }
-	            }
+									$totals[$a] += $item->total;
+									$results[$q]['a'][$a]['total'] += $item->total;
+									$results[$q]['total'] += $item->total;
+									$pivots[$pivot] = str_replace("_"," ", $pivot);
+					}
+				}
 
-	            // fill details...
-	            $sql = "
-	            SELECT
-	            _survey.id AS survey_id,
-	            _survey.title AS survey_title,
-	            _survey_question.id AS question_id,
-	            _survey_question.title AS question_title,
-	            _survey_answer.id AS answer_id,
-	            _survey_answer.title AS answer_title
-	            FROM
-	            _survey Inner Join (_survey_question inner join
-	            _survey_answer ON _survey_question.id = _survey_answer.question)
-	            ON _survey_question.survey = _survey.id
-	            WHERE _survey.id = $id
-	            ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
+				// fill details...
+				$sql = "
+				SELECT
+				_survey.id AS survey_id,
+				_survey.title AS survey_title,
+				_survey_question.id AS question_id,
+				_survey_question.title AS question_title,
+				_survey_answer.id AS answer_id,
+				_survey_answer.title AS answer_title
+				FROM
+				_survey Inner Join (_survey_question inner join
+				_survey_answer ON _survey_question.id = _survey_answer.question)
+				ON _survey_question.survey = _survey.id
+				WHERE _survey.id = $id
+				ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
 
-	            $survey_details = $db->deepQuery($sql);
+				$survey_details = $db->deepQuery($sql);
 
-	            foreach($survey_details as $item){
-	                $q = intval($item->question_id);
-	                $a = intval($item->answer_id);
-	                if (!isset($results[$q]))
-	                    $results[$q] = array(
-	                            "i" => $q,
-	                            "t" => $item->question_title,
-	                            "a" => array()
-	                    );
+				foreach($survey_details as $item){
+					$q = intval($item->question_id);
+					$a = intval($item->answer_id);
+					if (!isset($results[$q]))
+						$results[$q] = array(
+								"i" => $q,
+								"t" => $item->question_title,
+								"a" => array()
+						);
 
-	                    if (!isset($results[$q]['a'][$a]))
-	                        $results[$q]['a'][$a] = array(
-	                                "i" => $a,
-	                                "t" => $item->answer_title,
-	                                "p" => array(),
-	                                "total" => 0
-	                        );
-	                        if (!isset($totals[$a]))
-	                            $totals[$a] = 0;
-	            }
+						if (!isset($results[$q]['a'][$a]))
+							$results[$q]['a'][$a] = array(
+									"i" => $a,
+									"t" => $item->answer_title,
+									"p" => array(),
+									"total" => 0
+							);
+							if (!isset($totals[$a]))
+								$totals[$a] = 0;
+				}
 
 
 
-	            asort($pivots);
-	            unset($pivots['_UNKNOW']);
-	            $pivots['_UNKNOW'] = 'UNKNOW';
+				asort($pivots);
+				unset($pivots['_UNKNOW']);
+				$pivots['_UNKNOW'] = 'UNKNOW';
 
-	            $report[$field] = array(
-	                    'label' => $enum_label,
-	                    'results' => $results,
-	                    'pivots' => $pivots,
-	                    'totals' => $totals
-	            );
+				$report[$field] = array(
+						'label' => $enum_label,
+						'results' => $results,
+						'pivots' => $pivots,
+						'totals' => $totals
+				);
 
-	            // adding unknow labels
+				// adding unknow labels
 
-	            foreach ($report[$field]['results'] as $k => $question){
-	                foreach($question['a'] as $kk => $ans){
-	                    $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']*1];
-	                    foreach($ans['p'] as $kkk => $pivot){
-	                        $report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] -= $pivot;
-	                    }
-	                }
-	            }
-	        }
+				foreach ($report[$field]['results'] as $k => $question){
+					foreach($question['a'] as $kk => $ans){
+						$report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']*1];
+						foreach($ans['p'] as $kkk => $pivot){
+							$report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] -= $pivot;
+						}
+					}
+				}
+			}
 
-	        return $report;
-	    }
+			return $report;
+		}
 
-	    return false;
+		return false;
 	}
 
 	/**
@@ -1579,76 +1594,76 @@ class ManageController extends Controller
 	 */
 	public function surveyResultsCSVAction()
 	{
-	    // getting ad's id
-	    // @TODO: improve this!
-	    $url = $_GET['_url'];
-	    $id =  explode("/",$url);
-	    $id = intval($id[count($id)-1]);
-	    $db = new Connection();
-	    $survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
-	    $survey = $survey[0];
-	    $results = $this->getSurveyResults($id);
-	    $csv = array();
+		// getting ad's id
+		// @TODO: improve this!
+		$url = $_GET['_url'];
+		$id =  explode("/",$url);
+		$id = intval($id[count($id)-1]);
+		$db = new Connection();
+		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $survey[0];
+		$results = $this->getSurveyResults($id);
+		$csv = array();
 
-	    $csv[0][0] = $survey->title;
-	    $csv[1][0] = "";
+		$csv[0][0] = $survey->title;
+		$csv[1][0] = "";
 
-	     foreach ($results as $field => $result){
+		 foreach ($results as $field => $result){
 
-    		$csv[][0] = $result['label'];
-            $row = array('','Total','Percentage');
+			$csv[][0] = $result['label'];
+			$row = array('','Total','Percentage');
 
-            foreach ($result['pivots'] as $pivot => $label)
-        		$row[] = $label;
+			foreach ($result['pivots'] as $pivot => $label)
+				$row[] = $label;
 
-        	$csv[] = $row;
+			$csv[] = $row;
 
-        	foreach($result['results'] as $question){
-            	$csv[][0] = $question['t'];
-            	foreach($question['a'] as $ans) {
+			foreach($result['results'] as $question){
+				$csv[][0] = $question['t'];
+				foreach($question['a'] as $ans) {
 
-            		if (!isset($ans['total'])) $ans['total'] = 0;
-            		if (!isset($question['total'])) $question['total'] = 0;
+					if (!isset($ans['total'])) $ans['total'] = 0;
+					if (!isset($question['total'])) $question['total'] = 0;
 
-            		$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
-            	    foreach ($result['pivots'] as $pivot => $label) {
-                		if (!isset($ans['p'][$pivot])) {
-                			$row[] = "0.0";
-                		} else {
-                		    $part = intval($ans['p'][$pivot]);
-                		    $total = intval($ans['total']);
-                		    $percent = $total === 0?0:$part/$total*100;
-                		    $row[] = number_format($percent,1);
-                		}
-            	    }
-            	    $csv[] = $row;
-            	}
-            	$csv[][0] = '';
-        	}
-        	$csv[][0] = '';
-	     }
+					$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
+					foreach ($result['pivots'] as $pivot => $label) {
+						if (!isset($ans['p'][$pivot])) {
+							$row[] = "0.0";
+						} else {
+							$part = intval($ans['p'][$pivot]);
+							$total = intval($ans['total']);
+							$percent = $total === 0?0:$part/$total*100;
+							$row[] = number_format($percent,1);
+						}
+					}
+					$csv[] = $row;
+				}
+				$csv[][0] = '';
+			}
+			$csv[][0] = '';
+		 }
 
-	    $csvtext = '';
-	    foreach($csv as $i => $row){
-	        foreach ($row as $j => $cell){
-	            $csvtext .= '"'.$cell.'";';
-	        }
-	        $csvtext .="\n";
-	    }
+		$csvtext = '';
+		foreach($csv as $i => $row){
+			foreach ($row as $j => $cell){
+				$csvtext .= '"'.$cell.'";';
+			}
+			$csvtext .="\n";
+		}
 
-	    header("Content-type: text/csv");
-	    header("Content-Type: application/force-download");
-	    header("Content-Type: application/octet-stream");
-	    header("Content-Type: application/download");
-	    header("Content-Disposition: attachment; filename=\"ap-survey-$id-results-".date("Y-m-d-h-i-s").".csv\"");
-	    header("Content-Length: ".strlen($csvtext));
-	    header("Pragma: public");
-	    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-	    header("Accept-Ranges: bytes");
+		header("Content-type: text/csv");
+		header("Content-Type: application/force-download");
+		header("Content-Type: application/octet-stream");
+		header("Content-Type: application/download");
+		header("Content-Disposition: attachment; filename=\"ap-survey-$id-results-".date("Y-m-d-h-i-s").".csv\"");
+		header("Content-Length: ".strlen($csvtext));
+		header("Pragma: public");
+		header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+		header("Accept-Ranges: bytes");
 
-	    echo $csvtext;
+		echo $csvtext;
 
-	    $this->view->disable();
+		$this->view->disable();
 	}
 
 	public function surveyWhoUnfinishedAction()
@@ -1660,19 +1675,19 @@ class ManageController extends Controller
 		$db = new Connection();
 		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
 		if ($survey!==false){
-		    $survey = $survey[0];
+			$survey = $survey[0];
 
-    		$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*)
-    		          FROM _survey_question
-    		          WHERE _survey_question.survey = _survey_answer_choosen.survey) as total,
-    		        count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
-    		        WHERE subq.total>subq.choosen AND subq.survey = $id;";
+			$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*)
+					  FROM _survey_question
+					  WHERE _survey_question.survey = _survey_answer_choosen.survey) as total,
+					count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
+					WHERE subq.total>subq.choosen AND subq.survey = $id;";
 
-    		$r = $db->deepQuery($sql);
+			$r = $db->deepQuery($sql);
 
-    		$this->view->results = $r;
-    		$this->view->title = "Who unfinished the survey";
-    		$this->view->survey = $survey;
+			$this->view->results = $r;
+			$this->view->title = "Who unfinished the survey";
+			$this->view->survey = $survey;
 		}
 	}
 
@@ -1698,9 +1713,8 @@ class ManageController extends Controller
 
  		$html = '<html><head><title>'.$title.'</title><style>
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
- 			    h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
- 				body{font-family:Verdana;}</style>
-			     <body>';
+ 				h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
+ 				body{font-family:Verdana;}</style><body>';
 
  		$html .= "<br/><h1>$title</h1>";
 
@@ -1726,7 +1740,7 @@ class ManageController extends Controller
 			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
 			$html .="</td><td valign=\"top\">";
 
-			$Data    = $PieChart->pDataObject->getData();
+			$Data	= $PieChart->pDataObject->getData();
 			$Palette = $PieChart->pDataObject->getPalette();
 
 			$html .= "<table width=\"100%\">";
@@ -1949,14 +1963,14 @@ class ManageController extends Controller
 
 			$sql = "
 			UPDATE _tienda_products
-			SET       name = '$name',
+			SET	   name = '$name',
 			   description = '$description',
-			      category = '$category',
-			         price = '$price',
+				  category = '$category',
+					 price = '$price',
 			shipping_price = '$shipping_price',
-			       credits = '$credits',
-			        agency = '$agency',
-			         owner = '$owner'
+				   credits = '$credits',
+					agency = '$agency',
+					 owner = '$owner'
 			WHERE code = '$code';";
 
 			$connection->deepQuery($sql);
@@ -2267,7 +2281,7 @@ class ManageController extends Controller
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = $id[count($id)-1];
-	    $id = $id * 1;
+		$id = $id * 1;
 		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
 		$connection->deepQuery("UPDATE _tienda_orders SET received = 1 WHERE id = $id;");
