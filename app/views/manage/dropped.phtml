@@ -1,11 +1,11 @@
 <div class="row">
-    <div class="col-xs-12">
-    	<p>Dropped <b><?php echo count($droppedEmails); ?></b> out of <?php echo $sentEmails; ?> emails sent.</p>
-    	<p><span style="font-size: 1.5em;" class="badge alert-danger"><?php echo number_format($failurePercentage, 2); ?>% Failure Ratio</span></p>
+	<div class="col-xs-12">
+		<p>Dropped <b><?php echo count($droppedEmails); ?></b> out of <?php echo $sentEmails; ?> emails sent.</p>
+		<p><span style="font-size: 1.5em;" class="badge alert-danger"><?php echo number_format($failurePercentage, 2); ?>% Failure Ratio</span></p>
 
 		<div id="emailsDroppedChart" style="width:100%; height:400px;"></div>
-    	
-        <table class="table">
+
+		<table class="table">
 			<thead>
 				<tr>
 					<th>Email</th>
@@ -14,6 +14,7 @@
 					<th class="text-center">Code</th>
 					<th>Description</th>
 					<th class="text-center">Date</th>
+					<th class="text-center">Actions</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -25,11 +26,15 @@
 					<td class="text-center"><?php echo $email->code; ?></td>
 					<td><?php echo $email->description; ?></td>
 					<td class="text-center"><nobr><?php echo date("m/d h:i A", strtotime($email->inserted)); ?></nobr></td>
+					<td class="text-center">
+						<a class="btn btn-xs btn-default" href="delivery?email=<?php echo $email->email; ?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+						<a class="btn btn-xs btn-danger" onclick="return confirm('Do you really want to undrop this user?');" href="removeDropped?email=<?php echo $email->email; ?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+					</td>
 				</tr>
 			<?php } ?>
 			</tbody>
-        </table>
-    </div>
+		</table>
+	</div>
 </div>
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
