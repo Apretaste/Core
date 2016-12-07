@@ -3,9 +3,9 @@
 <?php } ?>
 
 <div class="col-xs-12">
-	<form method="post" style="margin-bottom: 20px;">
+	<form method="get" style="margin-bottom: 20px;">
 		<input type="text" name="email" placeholder="Email" />
-		<input type="submit" name="profilesearch" value="Search">
+		<input type="submit" value="Search">
 	</form>
 </div>
 
@@ -14,6 +14,7 @@
 		<img style="margin-bottom:10px;" src="/profile/<?php echo $email; ?>.png" />
 	<?php } ?>
 
+	<p><b>Active:</b> <?php if(isset($active)) echo $active; ?></p>
 	<p><b>First name:</b> <?php if(isset($firstName)) echo $firstName; ?></p>
 	<p><b>Middle name:</b> <?php if(isset($middleName)) echo $middleName; ?></p>
 	<p><b>Last name:</b> <?php if(isset($lastName)) echo $lastName; ?></p>
@@ -30,4 +31,9 @@
 	<p><b>Province:</b> <?php if(isset($province)) echo $province; ?></p>
 	<p><b>Credit:</b> <?php if(isset($credit)) echo $credit; ?></p>
 	<p><b>About Me:</b> <?php if(isset($aboutMe)) echo $aboutMe; ?></p>
+
+	<?php if(isset($email) && $active==1) { ?>
+		<br/>
+		<a onclick="return confirm('Are you sure to exlude this user?');" href="exclude?email=<?php echo $email; ?>" class="btn btn-danger">Excluir Usuario</a>
+	<?php } ?>
 </div>
