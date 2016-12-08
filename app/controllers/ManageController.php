@@ -814,13 +814,14 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * Remove dropped action
+	 * Remove dropped action async
 	 *
 	 * @author salvipascual
 	 */
 	public function removeDroppedAction()
 	{
 		$userEmail = $this->request->get('email');
+		$removed = "no";
 
 		if ($userEmail)
 		{
@@ -831,9 +832,12 @@ class ManageController extends Controller
 			// email the user user letting him know
 			$email = new Email();
 			$email->sendEmail($userEmail, "Arregle un problema con su email", "Hola. Trabajo en Apretaste y me he percatado que por error su direccion de email estaba bloqueada en nuestro sistema. He corregido este error y ahroa deberia poder usar Apretaste sin problemas. Siento mucho este inconveniente, y muchas gracias por usar Apretaste!. Un saludo.");
+
+			$removed = "ok";
 		}
 
-		header("Location: dropped");
+		echo $removed;
+		$this->view->disable();
 	}
 
 	/**
