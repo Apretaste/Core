@@ -27,8 +27,10 @@
 					<td><?php echo $email->description; ?></td>
 					<td class="text-center"><nobr><?php echo date("m/d h:i A", strtotime($email->inserted)); ?></nobr></td>
 					<td class="text-center">
-						<a class="btn btn-xs btn-default" href="delivery?email=<?php echo $email->email; ?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
-						<a class="btn btn-xs btn-danger" onclick="return confirm('Do you really want to undrop this user?');" href="removeDropped?email=<?php echo $email->email; ?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+						<nobr>
+							<a class="btn btn-xs btn-default" target="_blank" href="delivery?email=<?php echo $email->email; ?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+							<a class="btn btn-xs btn-danger" onclick="removeDropped('<?php echo $email->email; ?>');"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+						</nobr>
 					</td>
 				</tr>
 			<?php } ?>
@@ -39,6 +41,7 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
+	// visualize the graph
 	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
@@ -59,4 +62,17 @@
 		var chart = new google.visualization.AreaChart(document.getElementById('emailsDroppedChart'));
 		chart.draw(data, {});
 	});
+
+	// remove dropped by ajax
+	function removeDropped(email) {
+		question = confirm('Do you really want to undrop this user?');
+		if( ! question) return;
+
+		$.ajax({
+			url: "removeDropped?email="+email,
+			async: false
+		}).done(function(data) {
+			$("td:contains('"+email+"')").parent('tr').remove();
+		});
+	}
 </script>
