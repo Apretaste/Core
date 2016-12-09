@@ -4,7 +4,6 @@ use Phalcon\Mvc\Controller;
 
 class ManageController extends Controller
 {
-
 	private $currentUser = false;
 	private $currentPerson = null;
 
@@ -2316,7 +2315,37 @@ class ManageController extends Controller
 		$this->view->totalUsers =  $utils->getStat('person.count');
 		$this->view->sellsByProduct = $utils->getStat('market.sells.byproduct.last30days');
 		$this->view->title = "Market' stats";
+	}
 
+	/**
+	 * Creates a new campaign to send bulk email
+	 *
+	 * @author salvipascual
+	 */
+	public function newCampaignAction()
+	{
+		$wwwroot = $this->di->get('path')['root'];
+		$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
+
+		$this->view->title = "New campaign";
+		$this->view->date = date("Y-m-d")."T23:00";
+		$this->view->layout = $layout;
+	}
+
+	/**
+	 * Creates save a new the campaign in the database
+	 *
+	 * @author salvipascual
+	 */
+	public function newCampaignSubmitAction()
+	{
+		$subject = $this->request->getPost("subject");
+		$date = $this->request->getPost("date");
+		$content = $this->request->getPost("content");
+
+		die("$subject <br/><br/><br/> $date <br/><br/><br/> $content");
+
+		$this->view->title = "New campaign";
 	}
 
 	public function testAction()

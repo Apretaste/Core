@@ -1,0 +1,41 @@
+<style type="text/css">
+	.form-group{
+		margin-top: 20px;
+	}
+</style>
+
+<div class="row">
+	<div class="col-xs-12">
+		<form id="form" role="form" action="newCampaignSubmit" method="POST">
+			<!-- Subject of the email -->
+			<div class="form-group">
+				<label for="subject">Subject</label>
+				<p class="help-block">Subject of the email</p>
+				<input id="subject" type="text" class="form-control" name="subject" required />
+			</div>
+
+			<!-- Date to send the email -->
+			<div class="form-group">
+				<label for="date">Day and time to send the campaign</label>
+				<input id="date" type="datetime-local" value="<?=$date?>" class="form-control" name="date" required />
+			</div>
+
+			<!-- Create the editor container -->
+			<div class="form-group">
+				<label for="content">Content of the email</label>
+				<textarea id="content" name="content"><?=$layout?></textarea>
+			</div>
+
+			<div class="form-group">
+				<button type="submit" onclick="return confirm('Do you want to create this campaign?');" class="btn btn-default">Create campaign</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Initialize the editor -->
+<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+<script>
+	// @TODO config editor to add "view code" https://www.tinymce.com/docs/demo/
+	tinymce.init({ selector:'#content' });
+</script>
