@@ -30,7 +30,7 @@
 			<div class="form-group">
 				<label for="test">Test the email before sending</label>
 				<div class="input-group">
-					<input id="test" type="email" value="salvi@apretaste.com" class="form-control" />
+					<input id="test" type="email" value="<?=$email?>" class="form-control" />
 					<span class="input-group-btn">
 						<button type="button" onclick="testEmail();" class="btn btn-default">Test</button>
 					</span>
@@ -70,7 +70,7 @@
 		$.ajax({
 			url: "testCampaignAsync",
 			method: "POST",
-			variables: {"email":email, "subject":subject, "content":content},
+			data: {"email":email, "subject":subject, "content":content},
 			async: false
 		}).done(function(data) {
 			$("#sent").html('Text email sent to '+email).show();

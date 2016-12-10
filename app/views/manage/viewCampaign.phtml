@@ -1,5 +1,27 @@
 <p><b>Subject:</b> <?=$campaign->subject?></p>
 <p><b>Status:</b> <?=$campaign->sent ? "SENT" : "WAITING"?></p>
 <p><b>Scheduled:</b> <?=date("M d h:i A", strtotime($campaign->sending_date))?></p>
+<p><b>Test email:</b> <input id="test" type="email" value="<?=$email?>"/><button type="button" onclick="testEmail();">Test</button>
+<p id="sent" style="color:green; font-size:small; display:none;"></p>
+
 <hr/>
+
 <div><?=$campaign->content?></div>
+
+<script src="/js/jquery.js"></script>
+<script>
+	function testEmail(){
+		var email = $('#test').val();
+		var subject = '<?=$campaign->subject?>';
+		var content = '<?=$campaign->content?>';
+
+		$.ajax({
+			url: "testCampaignAsync",
+			method: "POST",
+			data: {"email":email, "subject":subject, "content":content},
+			async: false
+		}).done(function(data) {
+			$("#sent").html('Text email sent to '+email).show();
+		});
+	}
+</script>

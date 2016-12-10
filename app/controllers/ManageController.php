@@ -2356,6 +2356,7 @@ class ManageController extends Controller
 
 		// send variables to the view
 		$this->view->title = "View campaign";
+		$this->view->email = $email;
 		$this->view->campaign = $campaign[0];
 		$this->view->setLayout('empty');
 	}
@@ -2390,6 +2391,7 @@ class ManageController extends Controller
 
 		// send variables to the view
 		$this->view->title = "New campaign";
+		$this->view->email = $_SESSION['user'];
 		$this->view->date = date("Y-m-d")."T23:00";
 		$this->view->layout = $layout;
 	}
