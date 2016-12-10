@@ -1,0 +1,5 @@
+<p><b>Subject:</b> <?=$campaign->subject?></p>
+<p><b>Status:</b> <?=$campaign->sent ? "SENT" : "WAITING"?></p>
+<p><b>Scheduled:</b> <?=date("M d h:i A", strtotime($campaign->sending_date))?></p>
+<hr/>
+<div><?=$campaign->content?></div>

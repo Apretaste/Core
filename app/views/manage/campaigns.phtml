@@ -1,0 +1,38 @@
+<div class="row">
+	<div class="col-xs-12 text-right">
+		<a class="btn btn-small btn-default" href="newCampaign"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Campaign</a>
+		<br/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Scheduled</th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Subject</th>
+					<th class="text-center">People Reached</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($campaigns as $campaign) { ?>
+				<tr>
+					<td class="text-center"><?=date("M d h:i A", strtotime($campaign->sending_date))?></td>
+					<td class="text-center"><?=$campaign->sent ? "SENT" : "WAITING"?></td>
+					<td><?=$campaign->subject?></td>
+					<td class="text-center"><?=$campaign->number_reached?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" target="_blank" href="viewCampaign?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+							<?php if( ! $campaign->sent) { ?>
+								<a class="btn btn-xs btn-danger" onclick="return confirm('Are you sure? There is no way back!');" href="removeCampaign?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+							<? } ?>
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

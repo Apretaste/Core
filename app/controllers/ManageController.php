@@ -2118,8 +2118,7 @@ class ManageController extends Controller
 
 		// delete related picture
 		$fn = "$wwwroot/public/products/$code";
-		if (file_exists($fn))
-			unlink($fn);
+		if (file_exists($fn)) unlink($fn);
 
 		$this->view->message = "The product $code was deleted";
 		$this->view->message_type = "success";
@@ -2153,7 +2152,6 @@ class ManageController extends Controller
 			echo $toggle;
 			$this->view->disable();
 		}
-
 	}
 
 	/**
@@ -2318,15 +2316,79 @@ class ManageController extends Controller
 	}
 
 	/**
+	 * List all campaigns
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignsAction()
+	{
+		// get the list of campaigns
+		$connection = new Connection();
+		$campaigns = $connection->deepQuery("
+			SELECT id, subject, sending_date, sent, number_reached
+			FROM campaign
+			ORDER BY sending_date DESC");
+
+		// send variables to the view
+		$this->view->title = "List of campaigns";
+		$this->view->campaigns = $campaigns;
+	}
+
+	/**
+	 * Show the html for one campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function viewCampaignAction()
+	{
+		$id = $this->request->get("id");
+
+		// get the list of campaigns
+		$connection = new Connection();
+		$campaign = $connection->deepQuery("
+			SELECT subject, content, sending_date, sent
+			FROM campaign
+			WHERE id = $id");
+
+		// replace the template variables
+		$email = $_SESSION['user'];
+		$campaign[0]->content = $this->campaignReplaceTemplateVariables($email, $campaign[0]->content);
+
+		// send variables to the view
+		$this->view->title = "View campaign";
+		$this->view->campaign = $campaign[0];
+		$this->view->setLayout('empty');
+	}
+
+	/**
+	 * Creates a new campaign to send bulk email
+	 *
+	 * @author salvipascual
+	 */
+	public function removeCampaignAction()
+	{
+		$id = $this->request->get("id");
+
+		// remove the campaign
+		$connection = new Connection();
+		$connection->deepQuery("DELETE FROM campaign WHERE id = $id");
+
+		// go back to the list of campaigns
+		$this->response->redirect('manage/campaigns');
+	}
+
+	/**
 	 * Creates a new campaign to send bulk email
 	 *
 	 * @author salvipascual
 	 */
 	public function newCampaignAction()
 	{
+		// get the email campaign layout
 		$wwwroot = $this->di->get('path')['root'];
 		$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
 
+		// send variables to the view
 		$this->view->title = "New campaign";
 		$this->view->date = date("Y-m-d")."T23:00";
 		$this->view->layout = $layout;
@@ -2339,13 +2401,70 @@ class ManageController extends Controller
 	 */
 	public function newCampaignSubmitAction()
 	{
+		// get variales from POST
 		$subject = $this->request->getPost("subject");
+		$content = $this->request->getPost("content");
 		$date = $this->request->getPost("date");
+
+		// minify the html and remove dangerous characters
+		$content = str_replace("'", "&#39;", $content);
+		$content = preg_replace('/\s+/S', " ", $content);
+
+		// insert the new campaignin the database
+		$connection = new Connection();
+		$connection->deepQuery("INSERT INTO campaign(subject, content, sending_date) VALUES ('$subject', '$content', '$date')");
+
+		// go to the list of campaigns
+		$this->response->redirect('manage/campaigns');
+	}
+
+	/**
+	 * Email a test campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function testCampaignAsyncAction()
+	{
+		// get the variables from the POST
+		$email = $this->request->getPost("email");
+		$subject = $this->request->getPost("subject");
 		$content = $this->request->getPost("content");
 
-		die("$subject <br/><br/><br/> $date <br/><br/><br/> $content");
+		// replace the template variables
+		$content = $this->campaignReplaceTemplateVariables($email, $content);
 
-		$this->view->title = "New campaign";
+		// send test email
+		$sender = new Email();
+		$sender->sendEmail($email, $subject, $content);
+
+		// send the response
+		echo '{result: true}';
+		$this->view->disable();
+	}
+
+	/**
+	 * Replace the template variables to personalize a campaign
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $content
+	 * @return String
+	 */
+	private function campaignReplaceTemplateVariables($email, $content)
+	{
+		$utils = new Utils();
+
+		// replace all occurencies of the email
+		$mailbox = $utils->getValidEmailAddress();
+		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
+
+		// replace the name
+		$person = $utils->getPerson($email);
+		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
+		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
+
+		// return final result
+		return $content;
 	}
 
 	public function testAction()

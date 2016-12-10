@@ -10,7 +10,6 @@
 			<!-- Subject of the email -->
 			<div class="form-group">
 				<label for="subject">Subject</label>
-				<p class="help-block">Subject of the email</p>
 				<input id="subject" type="text" class="form-control" name="subject" required />
 			</div>
 
@@ -23,11 +22,25 @@
 			<!-- Create the editor container -->
 			<div class="form-group">
 				<label for="content">Content of the email</label>
+				<p>Available tags: {{APRETASTE_EMAIL}} {{APRETASTE_NAME}}</p>
 				<textarea id="content" name="content"><?=$layout?></textarea>
 			</div>
 
+			<!-- Test the email before sending -->
 			<div class="form-group">
-				<button type="submit" onclick="return confirm('Do you want to create this campaign?');" class="btn btn-default">Create campaign</button>
+				<label for="test">Test the email before sending</label>
+				<div class="input-group">
+					<input id="test" type="email" value="salvi@apretaste.com" class="form-control" />
+					<span class="input-group-btn">
+						<button type="button" onclick="testEmail();" class="btn btn-default">Test</button>
+					</span>
+				</div>
+				<p id="sent" style="color:green; font-size:small; display:none;"></p>
+			</div>
+
+			<div class="form-group">
+				<a class="btn btn-default" href="campaigns">Cancel</a>
+				<button class="btn btn-primary" type="submit" onclick="return confirm('Do you want to create this campaign?');">Create campaign</button>
 			</div>
 		</form>
 	</div>
@@ -36,6 +49,31 @@
 <!-- Initialize the editor -->
 <script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
 <script>
-	// @TODO config editor to add "view code" https://www.tinymce.com/docs/demo/
-	tinymce.init({ selector:'#content' });
+	tinymce.init({
+		selector: '#content',
+		height: 500,
+		theme: 'modern',
+		plugins: [
+			'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+			'searchreplace wordcount visualblocks visualchars code fullscreen',
+			'insertdatetime media nonbreaking save table contextmenu directionality',
+			'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc'
+		],
+		toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+	});
+
+	function testEmail(){
+		var email = $('#test').val();
+		var subject = $('#subject').val();
+		var content = $('#content').val();
+
+		$.ajax({
+			url: "testCampaignAsync",
+			method: "POST",
+			variables: {"email":email, "subject":subject, "content":content},
+			async: false
+		}).done(function(data) {
+			$("#sent").html('Text email sent to '+email).show();
+		});
+	}
 </script>
