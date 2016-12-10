@@ -6,9 +6,8 @@ use phpseclib\Crypt\RSA;
 
 class Utils
 {
-
 	static private $extraResponses = array();
-
+		
 	/**
 	 * Add extra response to send
 	 *
@@ -123,6 +122,20 @@ class Utils
 	}
 
 	/**
+	 * Get number of tickets for the raffle adquired by the user
+	 * 
+	 * @param string $email
+	 * @return integer
+	 */
+	public function getNumberOfTickets($email)
+	{
+		$connection = new Connection();
+		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+		$tickets = $tickets[0]->tickets;
+		return $tickets;
+	}
+	
+	/**
 	 * Get a person's profile
 	 *
 	 * @author salvipascual
@@ -142,8 +155,7 @@ class Utils
 		unset($person->pin);
 
 		// get number of tickets for the raffle adquired by the user
-		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
-		$tickets = $tickets[0]->tickets;
+		$tickets = $this->getNumberOfTickets($email);
 
 		// get the person's full name
 		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
@@ -1156,11 +1168,62 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $email, user's email
-	 * */
+     * @return string
+	 **/
 	public function getDefaultService($email)
 	{
 		// @TODO find a right way to do this when needed
 		// maybe we need to add a field on the service table to set up the beginning of the
 		return "ayuda";
 	}
+
+    /**
+     * Return data of ticket's game
+     *
+     * @author kuma
+     * @param $email
+     * @return array
+     */
+	public function getTicketsGameOf($email)
+    {
+        $label1 = 'tickets';
+        $label2 = 'uses';
+
+        $sql = "SELECT 
+            (SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
+		    (SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        if (isset($r[0]))
+            return $r[0];
+
+        $r = new stdClass();
+
+        $r->$label1 = 0;
+        $r->$label2 = 0;
+
+        return $r;
+    }
+
+    /**
+     * Get number of requests received from user today
+     *
+     * @author kuma
+     * @param $email
+     * @return mixed
+     */
+    public function getTotalRequestsTodayOf($email)
+    {
+        $sql = "SELECT count(*) as total FROM utilization
+                WHERE date(request_time) = current_date 
+                  and requestor = 'html@apretaste.com'
+                  and service <> 'rememberme';";
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        return $r[0]->total * 1;
+    }
 }

@@ -94,7 +94,20 @@
 					</td>
 				</tr></table></td></tr>
 				{/if}
-
+				<tr>
+					<td align="right">
+						{if $request_today == 0}
+							{for $i=1 to 5}
+								{if $i <= $tickets_game->uses}
+									&#9745;
+								{else}
+									&#9744;
+								{/if}
+							{/for}
+							= 10 tickets
+						{/if}
+					</td>
+				</tr>
 				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
