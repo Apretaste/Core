@@ -16,6 +16,7 @@ touch logs/mandrill.log
 touch logs/remarketing.log
 touch logs/webhook.log
 touch logs/crawler.log
+touch logs/campaigns.log
 chmod 777 temp
 chmod 777 temp/templates_c
 chmod 777 temp/cache
@@ -33,3 +34,4 @@ chmod 777 logs/mandrill.log
 chmod 777 logs/remarketing.log
 chmod 777 logs/webhook.log
 chmod 777 logs/crawler.log
+chmod 777 logs/campaigns.log

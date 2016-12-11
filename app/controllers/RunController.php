@@ -189,6 +189,10 @@ class RunController extends Controller
 			exit;
 		}
 
+		// if the email comes as part of a campaign, mark it as opened
+		$campaign = $utils->getCampaignTracking($toEmail);
+		if($campaign) $connection->deepQuery("UPDATE campaign SET opened=opened+1 WHERE id='$campaign'");
+
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
@@ -441,11 +445,8 @@ class RunController extends Controller
 			// if the person exist in Apretaste
 			if ($person !== false)
 			{
-				// if the person is inactive and he/she is not trying to opt-out, re-subscribe him/her
-				if( ! $person->active && $serviceName != "excluyeme") $utils->subscribeToEmailList($email);
-
-				// update last access time to current and make person active
-				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+				// update last access time to current
+				$connection->deepQuery("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
@@ -536,9 +537,6 @@ class RunController extends Controller
 				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$fromEmail));
 				$welcome->internal = true;
 				$responses[] = $welcome;
-
-				//  add to the email list in Mail Lite
-				$utils->subscribeToEmailList($email);
 			}
 
 			// create and configure to send email

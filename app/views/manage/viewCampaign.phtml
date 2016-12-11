@@ -1,6 +1,11 @@
-<p><b>Subject:</b> <?=$campaign->subject?></p>
-<p><b>Status:</b> <?=$campaign->sent ? "SENT" : "WAITING"?></p>
-<p><b>Scheduled:</b> <?=date("M d h:i A", strtotime($campaign->sending_date))?></p>
+<p>
+	<b>Subject:</b> <?=$campaign->subject?>
+	<b>Status:</b> <?=$campaign->status?>
+	<b>Sent:</b> <?=$campaign->sent?>
+	<b>Opened:</b> <?=$campaign->opened?>
+	<b>Bounced:</b> <?=$campaign->bounced?>
+	<b>Scheduled:</b> <?=date("M d h:i A", strtotime($campaign->sending_date))?>
+</p>
 <p><b>Test email:</b> <input id="test" type="email" value="<?=$email?>"/><button type="button" onclick="testEmail();">Test</button>
 <p id="sent" style="color:green; font-size:small; display:none;"></p>
 

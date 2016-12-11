@@ -76,7 +76,7 @@ foreach ($argv as $k => $arg)
 define('CURRENT_TASK',   (isset($argv[1]) ? $argv[1] : null));
 define('CURRENT_ACTION', (isset($argv[2]) ? $argv[2] : null));
 
-// Load the task selected 
+// Load the task selected
 try
 {
 	$console->handle($arguments);

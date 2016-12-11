@@ -2325,7 +2325,7 @@ class ManageController extends Controller
 		// get the list of campaigns
 		$connection = new Connection();
 		$campaigns = $connection->deepQuery("
-			SELECT id, subject, sending_date, sent, number_reached
+			SELECT id, subject, sending_date, status, sent, opened, bounced
 			FROM campaign
 			ORDER BY sending_date DESC");
 
@@ -2346,13 +2346,14 @@ class ManageController extends Controller
 		// get the list of campaigns
 		$connection = new Connection();
 		$campaign = $connection->deepQuery("
-			SELECT subject, content, sending_date, sent
+			SELECT subject, content, sending_date, status, sent, opened, bounced
 			FROM campaign
 			WHERE id = $id");
 
 		// replace the template variables
 		$email = $_SESSION['user'];
-		$campaign[0]->content = $this->campaignReplaceTemplateVariables($email, $campaign[0]->content);
+		$utils = new Utils();
+		$campaign[0]->content = $utils->campaignReplaceTemplateVariables($email, $campaign[0]->content);
 
 		// send variables to the view
 		$this->view->title = "View campaign";
@@ -2433,7 +2434,8 @@ class ManageController extends Controller
 		$content = $this->request->getPost("content");
 
 		// replace the template variables
-		$content = $this->campaignReplaceTemplateVariables($email, $content);
+		$utils = new Utils();
+		$content = $utils->campaignReplaceTemplateVariables($email, $content);
 
 		// send test email
 		$sender = new Email();
@@ -2442,31 +2444,6 @@ class ManageController extends Controller
 		// send the response
 		echo '{result: true}';
 		$this->view->disable();
-	}
-
-	/**
-	 * Replace the template variables to personalize a campaign
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String $content
-	 * @return String
-	 */
-	private function campaignReplaceTemplateVariables($email, $content)
-	{
-		$utils = new Utils();
-
-		// replace all occurencies of the email
-		$mailbox = $utils->getValidEmailAddress();
-		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
-
-		// replace the name
-		$person = $utils->getPerson($email);
-		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
-		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
-
-		// return final result
-		return $content;
 	}
 
 	public function testAction()

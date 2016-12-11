@@ -11,7 +11,9 @@
 					<th class="text-center">Scheduled</th>
 					<th class="text-center">Status</th>
 					<th class="text-center">Subject</th>
-					<th class="text-center">People Reached</th>
+					<th class="text-center">Sent</th>
+					<th class="text-center">Opened</th>
+					<th class="text-center">Bounced</th>
 					<th class="text-center">Actions</th>
 				</tr>
 			</thead>
@@ -19,13 +21,15 @@
 			<?php foreach ($campaigns as $campaign) { ?>
 				<tr>
 					<td class="text-center"><?=date("M d h:i A", strtotime($campaign->sending_date))?></td>
-					<td class="text-center"><?=$campaign->sent ? "SENT" : "WAITING"?></td>
+					<td class="text-center"><?=$campaign->status?></td>
 					<td><?=$campaign->subject?></td>
-					<td class="text-center"><?=$campaign->number_reached?></td>
+					<td class="text-center"><?=$campaign->sent?></td>
+					<td class="text-center"><?=$campaign->opened?></td>
+					<td class="text-center"><?=$campaign->bounced?></td>
 					<td class="text-center">
 						<nobr>
 							<a class="btn btn-xs btn-default" target="_blank" href="viewCampaign?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
-							<?php if( ! $campaign->sent) { ?>
+							<?php if($campaign->status == "WAITING") { ?>
 								<a class="btn btn-xs btn-danger" onclick="return confirm('Are you sure? There is no way back!');" href="removeCampaign?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
 							<? } ?>
 						</nobr>
