@@ -48,7 +48,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 
 			// send test email
 			$sender->trackCampaign = $campaign->id;
-			$result = $sender->sendEmail($person->email, $campaign->subject, $campaign->content);
+			$result = $sender->sendEmail($person->email, $campaign->subject, $content);
 
 			// add to bounced and unsubscribe if there are issues sending
 			if( ! $result)
