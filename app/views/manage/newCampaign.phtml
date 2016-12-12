@@ -64,8 +64,8 @@
 
 	function testEmail(){
 		var email = $('#test').val();
-		var subject = $('#subject').val();
-		var content = $('#content').val();
+		var subject = "TEST " + $('#subject').val();
+		var content = tinyMCE.activeEditor.getContent();
 
 		$.ajax({
 			url: "testCampaignAsync",

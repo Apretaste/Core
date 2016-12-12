@@ -94,6 +94,9 @@
 					</td>
 				</tr></table></td></tr>
 				{/if}
+
+				<!--component to show first time of the day-->
+				<!--
 				<tr>
 					<td align="right">
 						{if $request_today == 0}
@@ -108,6 +111,8 @@
 						{/if}
 					</td>
 				</tr>
+				-->
+
 				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
@@ -116,6 +121,21 @@
 						{space10}
 					</td>
 				</tr>
+
+				<!--subscribe to email list-->
+				{if ! $APRETASTE_EMAIL_LIST}
+				<tr>
+					<td align="center" bgcolor="red">
+						<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
+							<td bgcolor="#F0AD4E" valign="middle" width="1"><font color="red"><big>&nbsp;&#9888;&nbsp;</big></font></td>
+							<td bgcolor="#F0AD4E"><small>Usted no esta suscrito a nuestra lista de correos, por lo cual no recibir&aacute; informaci&oacute;n sobre nuevos servicios, concursos y rifas.</small></td>
+							<td bgcolor="#F0AD4E" align="right" valign="middle">
+								{button href="SUSCRIPCION LISTA ENTRAR" caption="Suscribirse" size="small" color="green"}
+							</td>
+						</tr></table></td></tr>
+					</td>
+				</tr>
+				{/if}
 
 				<!--bottom ad-->
 				{if $APRETASTE_ADS|@count gt 1}
@@ -129,7 +149,7 @@
 				{/if}
 
 				<!--services related-->
-				{if $APRETASTE_SERVICE_RELATED|@count gt 0} 
+				{if $APRETASTE_SERVICE_RELATED|@count gt 0}
 				<tr bgcolor="#e6e6e6">
 					<td align="left" style="padding: 0px 5px;">
 						{space5}
@@ -150,8 +170,8 @@
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
 						<small>
-							Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a><br/> 
-							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/> 
+							Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a><br/>
+							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
 							Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
 						</small>
 						{space5}

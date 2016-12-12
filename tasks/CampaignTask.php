@@ -34,7 +34,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 		else $campaign = $campaign[0];
 
 		// check campaign as SENDING
-		$connection->deepQuery("UPDATE `campaign` SET status='SENDING' WHERE id = {$campaign->id}");
+		$connection->deepQuery("UPDATE campaign SET status='SENDING' WHERE id = {$campaign->id}");
 
 		// get the list of people in the list and send emails
 		$people = $connection->deepQuery("SELECT email FROM person WHERE mail_list=1 AND active=1");
@@ -44,7 +44,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$emails[] = $person->email;
 
 			// replace the template variables
-			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content);
+			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content, $campaign->id);
 
 			// send test email
 			$sender->trackCampaign = $campaign->id;
