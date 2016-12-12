@@ -286,7 +286,7 @@ class RunController extends Controller
 			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
 		}
 
-		// uddate topics if you are contacting via the secure API
+		// update topics if you are contacting via the secure API
 		if($serviceName == "secured")
 		{
 			// disregard any footer message and decript new subject
@@ -401,8 +401,36 @@ class RunController extends Controller
 		foreach($responses as $rs)
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
+
+            // check if is first request of the day
+            $requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
+
+            if ($requestsToday == 0)
+            {
+                // run the tickets's game
+
+                // @note: este chequeo se hace despues de verificar si es el primer
+                // correo del dia, para no preguntar chequear mas veces
+                // innecesariamente en el resto del dia
+
+                $game = $utils->getTicketsGameOf($rs->email);
+
+                if ($game->tickets == 0 && $game->uses == 5)
+                {
+                    // insert 10 tickets for user
+                    $sqlValues = "('$email', 'GAME')";
+                    $sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+                    $connection->deepQuery($sql);
+
+                    // add notification to user
+                    $utils->addNotification($rs->email, "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos");
+                }
+            }
+
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
 			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
+            $rs->content['tickets_game'] = $utils->getTicketsGameOf($rs->email);
+            $rs->content['request_today'] = $requestsToday;
 		}
 
 		// create a new render
@@ -522,8 +550,8 @@ class RunController extends Controller
 					$sql .= "UPDATE promoters SET `usage`=`usage`+1, last_usage=CURRENT_TIMESTAMP WHERE email='$fromEmail';";
 					// add credit and tickets
 					$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$email';";
-					$sql .= "INSERT INTO ticket(email, origin) VALUES ";
-					for ($i = 0; $i < 10; $i++) $sql .= "('$email', 'PROMOTER')".($i < 9 ? "," : ";");
+                    $sqlValues = "('$email', 'PROMOTER')";
+                    $sql .= "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues . ",", 9) . "$sqlValues;";
 				}
 
 				// run the long query all at the same time

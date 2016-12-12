@@ -22,3 +22,4 @@ public/products/*
 migration/*
 services/*
 app/controllers/TestController.php
+.idea/*
