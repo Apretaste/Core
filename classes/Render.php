@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class Render
 {
@@ -41,6 +41,11 @@ class Render
 		// getting the ads
 		$ads = $service->showAds ? $response->getAds() : array();
 
+		// get the status of the mail list
+		$connection = new Connection();
+		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email = '{$response->email}'");
+		$onEmailList = $status[0]->mail_list == 1;
+
 		// list the system variables
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
@@ -48,6 +53,7 @@ class Render
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
+			"APRETASTE_EMAIL_LIST" => $onEmailList,
 			"WWWROOT" => $wwwroot
 		);
 
@@ -75,7 +81,7 @@ class Render
 
 	/**
 	 * Get up to five services related and return an array with them
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String $serviceName, name of the service
 	 * @return Array
@@ -87,7 +93,7 @@ class Render
 		if($di->get('environment') == "sandbox") return array('ayuda','nota','tienda','traducir','publicidad');
 
 		// get last 5 services inserted with the same category
-		$query = "SELECT name FROM service 
+		$query = "SELECT name FROM service
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
 			AND name <> 'excluyeme'

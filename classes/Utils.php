@@ -6,7 +6,6 @@ use phpseclib\Crypt\RSA;
 
 class Utils
 {
-
 	static private $extraResponses = array();
 
 	/**
@@ -41,13 +40,17 @@ class Utils
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
+	 * @param String $track, value to track campaigns
 	 * @return String, email address
 	 */
-	public function getValidEmailAddress()
+	public function getValidEmailAddress($track="")
 	{
-		// @TODO improve this function to have personalized mailboxes
+		// add a campaign tracking if exist
+		if($track) $track = "_T$track";
+
+		// @TODO improve this function to have personalized mailboxes insted of random
 		$half = $this->randomSentence(1);
-		return "apretaste+$half@gmail.com";
+		return "apretaste+{$half}{$track}@gmail.com";
 	}
 
 	/**
@@ -123,6 +126,20 @@ class Utils
 	}
 
 	/**
+	 * Get number of tickets for the raffle adquired by the user
+	 *
+	 * @param string $email
+	 * @return integer
+	 */
+	public function getNumberOfTickets($email)
+	{
+		$connection = new Connection();
+		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+		$tickets = $tickets[0]->tickets;
+		return $tickets;
+	}
+
+	/**
 	 * Get a person's profile
 	 *
 	 * @author salvipascual
@@ -142,8 +159,7 @@ class Utils
 		unset($person->pin);
 
 		// get number of tickets for the raffle adquired by the user
-		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
-		$tickets = $tickets[0]->tickets;
+		$tickets = $this->getNumberOfTickets($email);
 
 		// get the person's full name
 		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
@@ -315,55 +331,6 @@ class Utils
 		}
 
 		return true;
-	}
-
-	/**
-	 * Add a new subscriber to the email list in Mail Lite
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function subscribeToEmailList($email)
-	{
-		// never subscribe from the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') != "production") return;
-
-		// get the path to the www folder
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
-		$subscriber = array('email' => $email, 'resubscribe' => 1);
-		$ML_Subscribers->setId("1266487")->add($subscriber);
-	}
-
-	/**
-	 * Delete a subscriber from the email list in Mail Lite
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function unsubscribeFromEmailList($email)
-	{
-		// never unsubscribe from the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') != "production") return;
-
-		// get the path to the www folder
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
-		$ML_Subscribers->setId("1266487")->remove($email);
 	}
 
 	/**
@@ -1156,11 +1123,129 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $email, user's email
-	 * */
+     * @return string
+	 **/
 	public function getDefaultService($email)
 	{
 		// @TODO find a right way to do this when needed
 		// maybe we need to add a field on the service table to set up the beginning of the
 		return "ayuda";
 	}
+
+	/**
+	 * Replace the template variables to personalize an email campaign
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $content
+	 * @param Integer $id, campaign ID for tracking
+	 * @return String
+	 */
+	public function campaignReplaceTemplateVariables($email, $content, $id="")
+	{
+		// replace all occurencies of the email
+		$mailbox = $this->getValidEmailAddress($id);
+		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
+
+		// replace the name
+		$person = $this->getPerson($email);
+		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
+		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
+
+		// return final result
+		return $content;
+	}
+
+	/**
+	 * Get the tracking handle
+	 *
+	 * @author salvipascual
+	 * @param String $email, in the form salvi_T{handle}@nauta.cu
+	 * @return String, tracking handle
+	 */
+	public function getCampaignTracking($email)
+	{
+		// if it is not a campaign, return false
+		if (strpos($email, '_T') == false) return false;
+
+		// get the handle
+		$res = explode("_T", $email);
+		$res = explode("@", $res[1]);
+		$handle = explode("@", $res[0]);
+		return $handle[0];
+	}
+
+	/**
+	 * Add a new subscriber to the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function subscribeToEmailList($email)
+	{
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET mail_list=1 WHERE email='$email'");
+	}
+
+	/**
+	 * Delete a subscriber from the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function unsubscribeFromEmailList($email)
+	{
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
+	}
+
+  /**
+   * Return data of ticket's game
+   *
+   * @author kuma
+   * @param $email
+   * @return array
+   */
+	public function getTicketsGameOf($email)
+  {
+        $label1 = 'tickets';
+        $label2 = 'uses';
+
+        $sql = "SELECT
+            (SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
+		    (SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        if (isset($r[0]))
+            return $r[0];
+
+        $r = new stdClass();
+
+        $r->$label1 = 0;
+        $r->$label2 = 0;
+
+        return $r;
+    }
+
+    /**
+     * Get number of requests received from user today
+     *
+     * @author kuma
+     * @param $email
+     * @return mixed
+     */
+    public function getTotalRequestsTodayOf($email)
+    {
+        $sql = "SELECT count(*) as total FROM utilization
+                WHERE date(request_time) = current_date
+                  and requestor = 'html@apretaste.com'
+                  and service <> 'rememberme';";
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        return $r[0]->total * 1;
+    }
 }

@@ -12,12 +12,14 @@ class Email
 	 * Creates a new database connection for the class
 	 */
 	private $conn;
-	public function __construct() {
+	public function __construct()
+	{
 		$this->conn = new Connection();
 	}
 
 	/**
 	 * Sends an email using MailGun
+	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
 	 * @param String $subject, subject of the email
@@ -30,7 +32,7 @@ class Email
 		// do not email if there is an error
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($to);
-		if($status != 'ok') return;
+		if($status != 'ok') return false;
 
 		// select the right email to use as From
 		$from = $this->nextEmail($to);
@@ -62,12 +64,15 @@ class Email
 			$mailgunKey = $di->get('config')['mailgun']['key'];
 			$mgClient = new Mailgun($mailgunKey);
 			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
+			// @TODO return false when negative $result
 		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
 		$haveAttachments = empty($attachments) ? 0 : 1;
 		$this->conn->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}')");
+
+		return true;
 	}
 
 	/**
