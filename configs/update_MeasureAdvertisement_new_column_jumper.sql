@@ -1,1 +1,0 @@
-ALTER TABLE jumper ADD COLUMN advertise boolean DEFAULT '0';

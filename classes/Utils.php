@@ -330,55 +330,6 @@ class Utils
 	}
 
 	/**
-	 * Add a new subscriber to the email list in Mail Lite
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function subscribeToEmailList($email)
-	{
-		// never subscribe from the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') != "production") return;
-
-		// get the path to the www folder
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
-		$subscriber = array('email' => $email, 'resubscribe' => 1);
-		$ML_Subscribers->setId("1266487")->add($subscriber);
-	}
-
-	/**
-	 * Delete a subscriber from the email list in Mail Lite
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
-	public function unsubscribeFromEmailList($email)
-	{
-		// never unsubscribe from the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') != "production") return;
-
-		// get the path to the www folder
-		$wwwroot = $di->get('path')['root'];
-
-		// get the key from the config
-		$mailerLiteKey = $di->get('config')['mailerlite']['key'];
-
-		// adding the new subscriber to the list
-		include_once "$wwwroot/lib/mailerlite-api-php-v1/ML_Subscribers.php";
-		$ML_Subscribers = new ML_Subscribers($mailerLiteKey);
-		$ML_Subscribers->setId("1266487")->remove($email);
-	}
-
-	/**
 	 * Get the pieces of names from the full name
 	 *
 	 * @author hcarras
@@ -1177,15 +1128,81 @@ class Utils
 		return "ayuda";
 	}
 
-    /**
-     * Return data of ticket's game
-     *
-     * @author kuma
-     * @param $email
-     * @return array
-     */
+	/**
+	 * Replace the template variables to personalize an email campaign
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $content
+	 * @return String
+	 */
+	public function campaignReplaceTemplateVariables($email, $content)
+	{
+		// replace all occurencies of the email
+		$mailbox = $this->getValidEmailAddress();
+		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
+
+		// replace the name
+		$person = $this->getPerson($email);
+		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
+		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
+
+		// return final result
+		return $content;
+	}
+
+	/**
+	 * Get the tracking handle
+	 *
+	 * @author salvipascual
+	 * @param String $email, in the form salvi_T{handle}@nauta.cu
+	 * @return String, tracking handle
+	 */
+	public function getCampaignTracking($email)
+	{
+		// if it is not a campaign, return false
+		if (strpos($email, '_T') == false) return false;
+
+		// get the handle
+		$res = explode("_T", $email);
+		$res = explode("@", $res[1]);
+		$handle = explode("@", $res[0]);
+		return $handle[0];
+	}
+
+	/**
+	 * Add a new subscriber to the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function subscribeToEmailList($email)
+	{
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET mail_list=1 WHERE email='$email'");
+	}
+
+	/**
+	 * Delete a subscriber from the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 * */
+	public function unsubscribeFromEmailList($email)
+	{
+		$connection = new Connection();
+		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
+	}
+
+  /**
+   * Return data of ticket's game
+   *
+   * @author kuma
+   * @param $email
+   * @return array
+   */
 	public function getTicketsGameOf($email)
-    {
+  {
         $label1 = 'tickets';
         $label2 = 'uses';
 

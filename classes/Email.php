@@ -7,17 +7,20 @@ class Email
 	public $group = 'apretaste';
 	public $messageid = NULL; // ID of the email to create a reply
 	public $domain = NULL; // force a domain for test purposes
+	public $trackCampaign = NULL; // pass the ID of a campaign for tracking
 
 	/**
 	 * Creates a new database connection for the class
 	 */
 	private $conn;
-	public function __construct() {
+	public function __construct()
+	{
 		$this->conn = new Connection();
 	}
 
 	/**
 	 * Sends an email using MailGun
+	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
 	 * @param String $subject, subject of the email
@@ -30,7 +33,7 @@ class Email
 		// do not email if there is an error
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($to);
-		if($status != 'ok') return;
+		if($status != 'ok') return false;
 
 		// select the right email to use as From
 		$from = $this->nextEmail($to);
@@ -52,6 +55,9 @@ class Email
 			"h:X-service" => "Apretaste"
 		);
 
+		// adding the campaign header if exist
+		if ($this->trackCampaign) $message["v:my-custom-data"] = $this->trackCampaign;
+
 		// adding In-Reply-To header (creating conversation with the user)
 		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
 
@@ -62,12 +68,15 @@ class Email
 			$mailgunKey = $di->get('config')['mailgun']['key'];
 			$mgClient = new Mailgun($mailgunKey);
 			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
+			// @TODO return false when negative $result
 		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
 		$haveAttachments = empty($attachments) ? 0 : 1;
 		$this->conn->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}')");
+
+		return true;
 	}
 
 	/**
@@ -113,8 +122,12 @@ class Email
 		// generate a two digits number that looks like a year
 		$seed = rand(80, 98);
 
+		// add a campaign tracking if exist
+		$track = "";
+		if($this->trackCampaign) $track = "_T{$this->trackCampaign}";
+
 		// create and return the email
-		return "{$user}{$seed}@{$this->domain}";
+		return "{$user}{$seed}{$track}@{$this->domain}";
 	}
 
 	/**

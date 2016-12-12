@@ -4,7 +4,6 @@ use Phalcon\Mvc\Controller;
 
 class ManageController extends Controller
 {
-
 	private $currentUser = false;
 	private $currentPerson = null;
 
@@ -814,13 +813,14 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * Remove dropped action
+	 * Remove dropped action async
 	 *
 	 * @author salvipascual
 	 */
 	public function removeDroppedAction()
 	{
 		$userEmail = $this->request->get('email');
+		$removed = "no";
 
 		if ($userEmail)
 		{
@@ -831,9 +831,12 @@ class ManageController extends Controller
 			// email the user user letting him know
 			$email = new Email();
 			$email->sendEmail($userEmail, "Arregle un problema con su email", "Hola. Trabajo en Apretaste y me he percatado que por error su direccion de email estaba bloqueada en nuestro sistema. He corregido este error y ahroa deberia poder usar Apretaste sin problemas. Siento mucho este inconveniente, y muchas gracias por usar Apretaste!. Un saludo.");
+
+			$removed = "ok";
 		}
 
-		header("Location: dropped");
+		echo $removed;
+		$this->view->disable();
 	}
 
 	/**
@@ -2115,8 +2118,7 @@ class ManageController extends Controller
 
 		// delete related picture
 		$fn = "$wwwroot/public/products/$code";
-		if (file_exists($fn))
-			unlink($fn);
+		if (file_exists($fn)) unlink($fn);
 
 		$this->view->message = "The product $code was deleted";
 		$this->view->message_type = "success";
@@ -2150,7 +2152,6 @@ class ManageController extends Controller
 			echo $toggle;
 			$this->view->disable();
 		}
-
 	}
 
 	/**
@@ -2312,7 +2313,164 @@ class ManageController extends Controller
 		$this->view->totalUsers =  $utils->getStat('person.count');
 		$this->view->sellsByProduct = $utils->getStat('market.sells.byproduct.last30days');
 		$this->view->title = "Market' stats";
+	}
 
+	/**
+	 * List all campaigns
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignsAction()
+	{
+		// get the list of campaigns
+		$connection = new Connection();
+		$campaigns = $connection->deepQuery("
+			SELECT id, subject, sending_date, status, sent, opened, bounced
+			FROM campaign
+			ORDER BY sending_date DESC");
+
+		// send variables to the view
+		$this->view->title = "List of campaigns";
+		$this->view->campaigns = $campaigns;
+	}
+
+	/**
+	 * Show campaign reports
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignReportsAction()
+	{
+		$connection = new Connection();
+
+		// get the list of current suscribers
+		$suscribers = $connection->deepQuery("SELECT COUNT(email) AS suscribers FROM person WHERE active=1 AND mail_list=1");
+		$suscribers = $suscribers[0]->suscribers;
+
+		// get the last 10 campaigns
+		$campaigns = $connection->deepQuery("
+			SELECT id, subject, sending_date, status, sent, opened, bounced
+			FROM campaign
+			WHERE status = 'SENT'
+			ORDER BY sending_date ASC
+			LIMIT 10");
+
+		// send variables to the view
+		$this->view->title = "Campaign reports";
+		$this->view->suscribers = $suscribers;
+		$this->view->campaigns = $campaigns;
+	}
+
+	/**
+	 * Show the html for one campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function viewCampaignAction()
+	{
+		$id = $this->request->get("id");
+
+		// get the list of campaigns
+		$connection = new Connection();
+		$campaign = $connection->deepQuery("
+			SELECT subject, content, sending_date, status, sent, opened, bounced
+			FROM campaign
+			WHERE id = $id");
+
+		// replace the template variables
+		$email = $_SESSION['user'];
+		$utils = new Utils();
+		$campaign[0]->content = $utils->campaignReplaceTemplateVariables($email, $campaign[0]->content);
+
+		// send variables to the view
+		$this->view->title = "View campaign";
+		$this->view->email = $email;
+		$this->view->campaign = $campaign[0];
+		$this->view->setLayout('empty');
+	}
+
+	/**
+	 * Creates a new campaign to send bulk email
+	 *
+	 * @author salvipascual
+	 */
+	public function removeCampaignAction()
+	{
+		$id = $this->request->get("id");
+
+		// remove the campaign
+		$connection = new Connection();
+		$connection->deepQuery("DELETE FROM campaign WHERE id = $id");
+
+		// go back to the list of campaigns
+		$this->response->redirect('manage/campaigns');
+	}
+
+	/**
+	 * Creates a new campaign to send bulk email
+	 *
+	 * @author salvipascual
+	 */
+	public function newCampaignAction()
+	{
+		// get the email campaign layout
+		$wwwroot = $this->di->get('path')['root'];
+		$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
+
+		// send variables to the view
+		$this->view->title = "New campaign";
+		$this->view->email = $_SESSION['user'];
+		$this->view->date = date("Y-m-d")."T23:00";
+		$this->view->layout = $layout;
+	}
+
+	/**
+	 * Creates save a new the campaign in the database
+	 *
+	 * @author salvipascual
+	 */
+	public function newCampaignSubmitAction()
+	{
+		// get variales from POST
+		$subject = $this->request->getPost("subject");
+		$content = $this->request->getPost("content");
+		$date = $this->request->getPost("date");
+
+		// minify the html and remove dangerous characters
+		$content = str_replace("'", "&#39;", $content);
+		$content = preg_replace('/\s+/S', " ", $content);
+
+		// insert the new campaignin the database
+		$connection = new Connection();
+		$connection->deepQuery("INSERT INTO campaign(subject, content, sending_date) VALUES ('$subject', '$content', '$date')");
+
+		// go to the list of campaigns
+		$this->response->redirect('manage/campaigns');
+	}
+
+	/**
+	 * Email a test campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function testCampaignAsyncAction()
+	{
+		// get the variables from the POST
+		$email = $this->request->getPost("email");
+		$subject = $this->request->getPost("subject");
+		$content = $this->request->getPost("content");
+
+		// replace the template variables
+		$utils = new Utils();
+		$content = $utils->campaignReplaceTemplateVariables($email, $content);
+
+		// send test email
+		$sender = new Email();
+		$sender->sendEmail($email, $subject, $content);
+
+		// send the response
+		echo '{result: true}';
+		$this->view->disable();
 	}
 
 	public function testAction()
