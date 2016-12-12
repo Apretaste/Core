@@ -29,7 +29,7 @@
 	<!--FOOTER AND OPT-OUT-->
 	<tr>
 		<td bgcolor="#F2F2F2" align="center" valign="middle">
-			<small>Si no desea recibir m&aacute;s puede <a href="mailto:{{APRETASTE_EMAIL}}?subject=EXCLUYEME" style="color:#4863A0;" target="_blank">cerrar su cuenta de Apretaste</a></small>
+			<small>Si no desea recibir m&aacute;s puede <a href="mailto:{{APRETASTE_EMAIL}}?subject=SUSCRIPCION LISTA SALIR" style="color:#4863A0;" target="_blank">salir de la lista de correos</a></small>
 		</td>
 	</tr>
 </table>

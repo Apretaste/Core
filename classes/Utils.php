@@ -7,7 +7,7 @@ use phpseclib\Crypt\RSA;
 class Utils
 {
 	static private $extraResponses = array();
-		
+
 	/**
 	 * Add extra response to send
 	 *
@@ -40,13 +40,17 @@ class Utils
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
+	 * @param String $track, value to track campaigns
 	 * @return String, email address
 	 */
-	public function getValidEmailAddress()
+	public function getValidEmailAddress($track="")
 	{
-		// @TODO improve this function to have personalized mailboxes
+		// add a campaign tracking if exist
+		if($track) $track = "_T$track";
+
+		// @TODO improve this function to have personalized mailboxes insted of random
 		$half = $this->randomSentence(1);
-		return "apretaste+$half@gmail.com";
+		return "apretaste+{$half}{$track}@gmail.com";
 	}
 
 	/**
@@ -123,7 +127,7 @@ class Utils
 
 	/**
 	 * Get number of tickets for the raffle adquired by the user
-	 * 
+	 *
 	 * @param string $email
 	 * @return integer
 	 */
@@ -134,7 +138,7 @@ class Utils
 		$tickets = $tickets[0]->tickets;
 		return $tickets;
 	}
-	
+
 	/**
 	 * Get a person's profile
 	 *
@@ -1134,12 +1138,13 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $content
+	 * @param Integer $id, campaign ID for tracking
 	 * @return String
 	 */
-	public function campaignReplaceTemplateVariables($email, $content)
+	public function campaignReplaceTemplateVariables($email, $content, $id="")
 	{
 		// replace all occurencies of the email
-		$mailbox = $this->getValidEmailAddress();
+		$mailbox = $this->getValidEmailAddress($id);
 		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
 
 		// replace the name
@@ -1206,7 +1211,7 @@ class Utils
         $label1 = 'tickets';
         $label2 = 'uses';
 
-        $sql = "SELECT 
+        $sql = "SELECT
             (SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
 		    (SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
 
@@ -1234,7 +1239,7 @@ class Utils
     public function getTotalRequestsTodayOf($email)
     {
         $sql = "SELECT count(*) as total FROM utilization
-                WHERE date(request_time) = current_date 
+                WHERE date(request_time) = current_date
                   and requestor = 'html@apretaste.com'
                   and service <> 'rememberme';";
 

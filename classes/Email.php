@@ -7,7 +7,6 @@ class Email
 	public $group = 'apretaste';
 	public $messageid = NULL; // ID of the email to create a reply
 	public $domain = NULL; // force a domain for test purposes
-	public $trackCampaign = NULL; // pass the ID of a campaign for tracking
 
 	/**
 	 * Creates a new database connection for the class
@@ -54,9 +53,6 @@ class Email
 			"o:tracking-opens" => false,
 			"h:X-service" => "Apretaste"
 		);
-
-		// adding the campaign header if exist
-		if ($this->trackCampaign) $message["v:my-custom-data"] = $this->trackCampaign;
 
 		// adding In-Reply-To header (creating conversation with the user)
 		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
@@ -122,12 +118,8 @@ class Email
 		// generate a two digits number that looks like a year
 		$seed = rand(80, 98);
 
-		// add a campaign tracking if exist
-		$track = "";
-		if($this->trackCampaign) $track = "_T{$this->trackCampaign}";
-
 		// create and return the email
-		return "{$user}{$seed}{$track}@{$this->domain}";
+		return "{$user}{$seed}@{$this->domain}";
 	}
 
 	/**
