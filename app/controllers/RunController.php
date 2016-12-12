@@ -445,8 +445,8 @@ class RunController extends Controller
 			// if the person exist in Apretaste
 			if ($person !== false)
 			{
-				// update last access time to current
-				$connection->deepQuery("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+				// update last access time to current and make person active
+				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 			}
 			else // if the person accessed for the first time, insert him/her
 			{

@@ -2335,6 +2335,33 @@ class ManageController extends Controller
 	}
 
 	/**
+	 * Show campaign reports
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignReportsAction()
+	{
+		$connection = new Connection();
+
+		// get the list of current suscribers
+		$suscribers = $connection->deepQuery("SELECT COUNT(email) AS suscribers FROM person WHERE active=1 AND mail_list=1");
+		$suscribers = $suscribers[0]->suscribers;
+
+		// get the last 10 campaigns
+		$campaigns = $connection->deepQuery("
+			SELECT id, subject, sending_date, status, sent, opened, bounced
+			FROM campaign
+			WHERE status = 'SENT'
+			ORDER BY sending_date ASC
+			LIMIT 10");
+
+		// send variables to the view
+		$this->view->title = "Campaign reports";
+		$this->view->suscribers = $suscribers;
+		$this->view->campaigns = $campaigns;
+	}
+
+	/**
 	 * Show the html for one campaign
 	 *
 	 * @author salvipascual
