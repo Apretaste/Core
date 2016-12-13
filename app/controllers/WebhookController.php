@@ -26,7 +26,7 @@ class WebhookController extends Controller
 				SELECT * FROM `campaign_sent`
 				WHERE campaign = (SELECT id FROM campaign WHERE status='SENT' ORDER BY sending_date DESC LIMIT 1)
 			) A WHERE email = '$email'");
-		if( ! empty($campaign))
+		if(count($campaign)>0)
 		{
 			// increase the bounce number for the campaign
 			$campaign = $campaign[0];
