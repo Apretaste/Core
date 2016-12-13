@@ -84,7 +84,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 		// saving the log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/campaigns.log");
-		$logger->log("ID: {$campaign->id}, RUNTIME: $timeDiff, SENT: $counter, SUBJECT: {$campaign->subject}");
+		$logger->log("ID: {$campaign->id}, RUNTIME: $timeDiff, SUBJECT: {$campaign->subject}");
 		$logger->close();
 
 		// save the status in the database
