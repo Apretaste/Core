@@ -10,7 +10,7 @@
 			<!-- Subject of the email -->
 			<div class="form-group">
 				<label for="subject">Subject</label>
-				<input id="subject" type="text" class="form-control" name="subject" required />
+				<input id="subject" type="text" value="<?=$subject?>" class="form-control" name="subject" required />
 			</div>
 
 			<!-- Date to send the email -->
@@ -22,7 +22,7 @@
 			<!-- Create the editor container -->
 			<div class="form-group">
 				<label for="content">Content of the email</label>
-				<p>Available tags: {{APRETASTE_EMAIL}} {{APRETASTE_NAME}}</p>
+				<p>Available tags: {{APRETASTE_EMAIL}} {{APRETASTE_USER_EMAIL}} {{APRETASTE_NAME}}</p>
 				<textarea id="content" name="content"><?=$layout?></textarea>
 			</div>
 
@@ -39,8 +39,9 @@
 			</div>
 
 			<div class="form-group">
+				<input type="hidden" name="id" value="<?=$id?>"/>
 				<a class="btn btn-default" href="campaigns">Cancel</a>
-				<button class="btn btn-primary" type="submit" onclick="return confirm('Do you want to create this campaign?');">Create campaign</button>
+				<button class="btn btn-primary" type="submit"><?=ucwords("$intent campaign")?></button>
 			</div>
 		</form>
 	</div>

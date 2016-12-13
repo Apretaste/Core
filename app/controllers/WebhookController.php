@@ -19,17 +19,20 @@ class WebhookController extends Controller
 		// do not save Spam as hardfail
 		if (stripos($desc, 'spam') !== false) $reason = "spam";
 
-		$connection = new Connection();
-
 		// mark as bounced if the email is part of the latest campaign
+		$connection = new Connection();
 		$campaign = $connection->deepQuery("
-			SELECT id
-			FROM (SELECT id, emails FROM campaign WHERE status='SENT' ORDER BY sending_date DESC LIMIT 1) A
-			WHERE A.emails like '%$email%'");
-		if( ! empty($campaign))
+			SELECT campaign, email FROM (
+				SELECT * FROM `campaign_sent`
+				WHERE campaign = (SELECT id FROM campaign WHERE status='SENT' ORDER BY sending_date DESC LIMIT 1)
+			) A WHERE email = '$email'");
+		if(count($campaign)>0)
 		{
 			// increase the bounce number for the campaign
-			$connection->deepQuery("UPDATE campaign SET	bounced=bounced+1 WHERE id={$res[0]->id}");
+			$campaign = $campaign[0];
+			$connection->deepQuery("
+				UPDATE campaign SET	bounced=bounced+1 WHERE id={$campaign->id};
+				UPDATE campaign_sent SET status='BOUNCED', date_opened=CURRENT_TIMESTAMP WHERE id={$campaign->id} AND email='{$email}'");
 
 			// unsubscribe from the list
 			$utils = new Utils();
