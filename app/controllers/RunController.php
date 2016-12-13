@@ -191,7 +191,12 @@ class RunController extends Controller
 
 		// if the email comes as part of a campaign, mark it as opened
 		$campaign = $utils->getCampaignTracking($toEmail);
-		if($campaign) $connection->deepQuery("UPDATE campaign SET opened=opened+1 WHERE id='$campaign'");
+		if($campaign)
+		{
+			$connection->deepQuery("
+				UPDATE campaign SET opened=opened+1 WHERE id='$campaign';
+				UPDATE campaign_sent SET status='OPENED', date_opened=CURRENT_TIMESTAMP WHERE id='$campaign' AND email='$fromEmail'");
+		}
 
 		// do not continue procesing the email if the sender is not valid
 		$status = $utils->deliveryStatus($fromEmail, 'in');
