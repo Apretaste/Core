@@ -96,23 +96,28 @@
 				{/if}
 
 				<!--component to show first time of the day-->
-				<!--
+                {if $request_today == 0}
 				<tr>
-					<td align="right">
-						{if $request_today == 0}
+					<td align="center">
+						<big>
+							<br/>
+							Tu primer correo del d&iacute;a.<br/>
 							{for $i=1 to 5}
 								{if $i <= $tickets_game->uses}
-									&#9745;
+									&starf;
 								{else}
-									&#9744;
+									&star;
 								{/if}
-							{/for}
-							= 10 tickets
-						{/if}
+							{/for} <br/>
+						</big>
+						<small>
+							Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para Rifa
+							<br/>
+							{if $tickets_game->uses > 1}Ya tienes {$tickets_game->uses}! {/if}
+						</small>
 					</td>
 				</tr>
-				-->
-
+                {/if}
 				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
