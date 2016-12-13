@@ -2419,9 +2419,37 @@ class ManageController extends Controller
 
 		// send variables to the view
 		$this->view->title = "New campaign";
+		$this->view->intent = "create";
 		$this->view->email = $_SESSION['user'];
-		$this->view->date = date("Y-m-d")."T23:00";
+		$this->view->id = "";
+		$this->view->subject = "";
+		$this->view->date = date("Y-m-d\T23:00");
 		$this->view->layout = $layout;
+	}
+
+	/**
+	 * Updates a campaign in the database
+	 *
+	 * @author salvipascual
+	 */
+	public function updateCampaignAction()
+	{
+		$id = $this->request->get("id");
+
+		// insert the new campaignin the database
+		$connection = new Connection();
+		$campaign = $connection->deepQuery("SELECT * FROM campaign WHERE id=$id");
+		$campaign = $campaign[0];
+
+		// send variables to the view
+		$this->view->title = "Edit campaign";
+		$this->view->intent = "update";
+		$this->view->email = $_SESSION['user'];
+		$this->view->id = $campaign->id;
+		$this->view->subject = $campaign->subject;
+		$this->view->layout = $campaign->content;
+		$this->view->date = date("Y-m-d\TH:i", strtotime($campaign->sending_date));
+		$this->view->pick("manage/newCampaign");
 	}
 
 	/**
@@ -2432,6 +2460,7 @@ class ManageController extends Controller
 	public function newCampaignSubmitAction()
 	{
 		// get variales from POST
+		$id = $this->request->getPost("id"); // for when is updating
 		$subject = $this->request->getPost("subject");
 		$content = $this->request->getPost("content");
 		$date = $this->request->getPost("date");
@@ -2440,9 +2469,10 @@ class ManageController extends Controller
 		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 
-		// insert the new campaignin the database
+		// insert or update the campaign
 		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO campaign(subject, content, sending_date) VALUES ('$subject', '$content', '$date')");
+		if(empty($id)) $connection->deepQuery("INSERT INTO campaign (subject, content, sending_date) VALUES ('$subject', '$content', '$date')");
+		else $connection->deepQuery("UPDATE campaign SET subject='$subject', content='$content', sending_date='$date' WHERE id=$id");
 
 		// go to the list of campaigns
 		$this->response->redirect('manage/campaigns');

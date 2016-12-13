@@ -54,6 +54,22 @@ class Utils
 	}
 
 	/**
+	 * Returns the personal mailbox for a user
+	 *
+	 * @author salvipascual
+	 * @param String $email, user's email
+	 * @return String, email address
+	 */
+	public function getUserPersonalAddress($email)
+	{
+		$person = $this->getPerson($email);
+
+		if(empty($person)) return $this->getValidEmailAddress();
+		else return "apretaste+{$person->username}@gmail.com";
+	}
+
+
+	/**
 	 * Format a link to be an Apretaste mailto
 	 *
 	 * @author salvipascual
@@ -1151,6 +1167,10 @@ class Utils
 		$person = $this->getPerson($email);
 		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
 		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
+
+		// replace the user's personal address
+		$userMailbox = $this->getUserPersonalAddress($email);
+		$content = str_replace("{{APRETASTE_USER_EMAIL}}", $userMailbox, $content);
 
 		// return final result
 		return $content;
