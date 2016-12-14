@@ -424,7 +424,7 @@ class RunController extends Controller
 					$connection->deepQuery($sql);
 
 					// add notification to user
-					$utils->addNotification($rs->email, "system" "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", 'WEB tickets.apretaste.com');
+					$utils->addNotification($rs->email, "system", "Has ganado 10 tickets para la Rifa por usar Apretaste durante 5 d&iacute;as seguidos");
 				}
 			}
 
