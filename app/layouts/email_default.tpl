@@ -96,28 +96,39 @@
 				{/if}
 
 				<!--component to show first time of the day-->
-                {if $request_today == 0}
+                {if $raffle_stars > 0}
 				<tr>
 					<td align="center">
 						<big>
 							<br/>
-							Tu primer correo del d&iacute;a.<br/>
+							{if $raffle_stars < 5}
+								Tu primer correo del d&iacute;a.<br/>
+							{else}
+								Felicidades!<br/>
+							{/if}
 							{for $i=1 to 5}
-								{if $i <= $tickets_game->uses}
-									&starf;
+								{if $i <= $raffle_stars}
+									{img src="images/star_black.ico" alt="&starf;"}
 								{else}
-									&star;
+									{img src="images/star_white.ico" alt="&star;"}
 								{/if}
 							{/for} <br/>
 						</big>
 						<small>
-							Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para Rifa
-							<br/>
-							{if $tickets_game->uses > 1}Ya tienes {$tickets_game->uses}! {/if}
+                            {if $raffle_stars < 5}
+								Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para {link href="RIFA" caption="Rifa"}
+								<br/>
+								{if $raffle_stars > 0} Ya vas por {$raffle_stars}! {/if}
+							{else}
+								Haz ganado 10 tickets para {link href="RIFA" caption="Rifa"}
+							{/if}
 						</small>
 					</td>
 				</tr>
                 {/if}
+
+
+
 				<!--main section to load the user template-->
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
