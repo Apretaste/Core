@@ -31,8 +31,8 @@ class WebhookController extends Controller
 			// increase the bounce number for the campaign
 			$campaign = $campaign[0];
 			$connection->deepQuery("
-				UPDATE campaign SET	bounced=bounced+1 WHERE id={$campaign->id};
-				UPDATE campaign_sent SET status='BOUNCED', date_opened=CURRENT_TIMESTAMP WHERE id={$campaign->id} AND email='{$email}'");
+				UPDATE campaign SET	bounced=bounced+1 WHERE id={$campaign->campaign};
+				UPDATE campaign_sent SET status='BOUNCED', date_opened=CURRENT_TIMESTAMP WHERE id={$campaign->campaign} AND email='{$email}'");
 
 			// unsubscribe from the list
 			$utils = new Utils();
