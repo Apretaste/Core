@@ -102,15 +102,15 @@
 						<big>
 							<br/>
 							{if $raffle_stars < 5}
-								Tu primer correo del d&iacute;a.<br/>
+								Tu primer correo del d&iacute;a<br/>
 							{else}
 								Felicidades!<br/>
 							{/if}
 							{for $i=1 to 5}
 								{if $i <= $raffle_stars}
-									{img src="images/star_black.ico" alt="&starf;"}
+									<font color="#000000" size="10"><b>&hearts;</b></font>
 								{else}
-									{img src="images/star_white.ico" alt="&star;"}
+									<font color="#eeeeee" size="10">&hearts;</font>
 								{/if}
 							{/for} <br/>
 						</big>
@@ -118,7 +118,7 @@
                             {if $raffle_stars < 5}
 								Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para {link href="RIFA" caption="Rifa"}
 								<br/>
-								{if $raffle_stars > 0} Ya vas por {$raffle_stars}! {/if}
+								{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
 							{else}
 								Haz ganado 10 tickets para {link href="RIFA" caption="Rifa"}
 							{/if}

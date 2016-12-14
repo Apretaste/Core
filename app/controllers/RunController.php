@@ -438,8 +438,6 @@ class RunController extends Controller
             $rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
             $rs->content['raffle_stars'] = $stars;
             $rs->content['requests_today'] = $requestsToday;
-            $rs->images[] = "public/images/star_white.ico";
-            $rs->images[] = "public/images/star_black.ico";
 		}
 
 		// create a new render
