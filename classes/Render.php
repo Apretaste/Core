@@ -43,8 +43,8 @@ class Render
 
 		// get the status of the mail list
 		$connection = new Connection();
-		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email = '{$response->email}'");
-		$onEmailList = $status[0]->mail_list == 1;
+		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email='{$response->email}'");
+		$onEmailList = empty($status) ? false : $status[0]->mail_list == 1;
 
 		// list the system variables
 		$systemVariables = array(
