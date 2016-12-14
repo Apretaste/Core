@@ -1217,15 +1217,15 @@ class Utils
 		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
-  /**
-   * Return data of ticket's game
-   *
-   * @author kuma
-   * @param $email
-   * @return array
-   */
+	/**
+	 * Return data of ticket's game
+	 *
+	 * @author kuma
+	 * @param $email
+	 * @return array
+	 */
 	public function getTicketsGameOf($email)
-  {
+	{
 		$label1 = 'tickets';
 		$label2 = 'uses';
 
