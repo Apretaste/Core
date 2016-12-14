@@ -46,7 +46,7 @@ class Utils
 	public function getValidEmailAddress($track="")
 	{
 		// add a campaign tracking if exist
-		if($track) $track = "_T$track";
+		if($track) $track = "_t$track";
 
 		// @TODO improve this function to have personalized mailboxes insted of random
 		$half = $this->randomSentence(1);
@@ -1134,7 +1134,7 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $email, user's email
-     * @return string
+	 * @return string
 	 **/
 	public function getDefaultService($email)
 	{
@@ -1175,18 +1175,21 @@ class Utils
 	 * Get the tracking handle
 	 *
 	 * @author salvipascual
-	 * @param String $email, in the form salvi_T{handle}@nauta.cu
+	 * @param String $email, in the form salvi_t{handle}@nauta.cu
 	 * @return String, tracking handle
 	 */
 	public function getCampaignTracking($email)
 	{
 		// if it is not a campaign, return false
-		if (strpos($email, '_T') == false) return false;
+		if (strpos($email, '_t') == false) return false;
 
 		// get the handle
-		$res = explode("_T", $email);
+		$res = explode("_t", $email);
 		$res = explode("@", $res[1]);
 		$handle = explode("@", $res[0]);
+
+		// return the handle if exist
+		if( ! $handle) return false;
 		return $handle[0];
 	}
 
@@ -1214,53 +1217,53 @@ class Utils
 		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
-  /**
-   * Return data of ticket's game
-   *
-   * @author kuma
-   * @param $email
-   * @return array
-   */
+	/**
+	 * Return data of ticket's game
+	 *
+	 * @author kuma
+	 * @param $email
+	 * @return array
+	 */
 	public function getTicketsGameOf($email)
-  {
-        $label1 = 'tickets';
-        $label2 = 'uses';
+	{
+		$label1 = 'tickets';
+		$label2 = 'uses';
 
-        $sql = "SELECT
-            (SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
-		    (SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
+		$sql = "SELECT
+			(SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
+			(SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
 
-        $connection = new Connection();
-        $r = $connection->deepQuery($sql);
+		$connection = new Connection();
+		$r = $connection->deepQuery($sql);
 
-        if (isset($r[0]))
-            return $r[0];
+		if (isset($r[0]))
+			return $r[0];
 
-        $r = new stdClass();
+		$r = new stdClass();
 
-        $r->$label1 = 0;
-        $r->$label2 = 0;
+		$r->$label1 = 0;
+		$r->$label2 = 0;
 
-        return $r;
-    }
+		return $r;
+	}
 
-    /**
-     * Get number of requests received from user today
-     *
-     * @author kuma
-     * @param $email
-     * @return mixed
-     */
-    public function getTotalRequestsTodayOf($email)
-    {
-        $sql = "SELECT count(*) as total FROM utilization
-                WHERE date(request_time) = current_date
-                  and requestor = 'html@apretaste.com'
-                  and service <> 'rememberme';";
+	/**
+	 * Get number of requests received from user today
+	 *
+	 * @author kuma
+	 * @param $email
+	 * @return mixed
+	 */
+	public function getTotalRequestsTodayOf($email)
+	{
+		$sql = "SELECT count(*) as total FROM utilization
+				WHERE date(request_time) = current_date
+				  and requestor = 'html@apretaste.com'
+				  and service <> 'rememberme';";
 
-        $connection = new Connection();
-        $r = $connection->deepQuery($sql);
+		$connection = new Connection();
+		$r = $connection->deepQuery($sql);
 
-        return $r[0]->total * 1;
-    }
+		return $r[0]->total * 1;
+	}
 }
