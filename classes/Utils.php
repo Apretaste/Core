@@ -862,7 +862,7 @@ class Utils
 	}
 
 	/**
-	 * Insert anotification in database
+	 * Insert a notification in the database
 	 *
 	 * @author kuma
 	 * @param string $email
@@ -872,11 +872,9 @@ class Utils
 	 * @param string $tag
 	 * @return integer
 	 */
-	public function addNotification($email, $origin, $text, $link = '', $tag = 'INFO')
+	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
-
 		$connection = new Connection();
-
 		$notifications = $this->getNumberOfNotifications($email);
 
 		// insert notification
@@ -886,9 +884,7 @@ class Utils
 		// get notification id
 		$id = false;
 		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
-
-		if (isset($r[0]->id))
-			$id = intval($r[0]->id);
+		if (isset($r[0]->id)) $id = intval($r[0]->id);
 
 		// increase number of notifications
 		$sql = "UPDATE person SET notifications = notifications + 1 WHERE email = '$email';";
@@ -901,8 +897,7 @@ class Utils
 			$sql = "SELECT * FROM notifications WHERE email ='{$email}' AND viewed = 0 ORDER BY inserted_date DESC;";
 			$notificationsList = $connection->deepQuery($sql);
 
-			if ( ! is_array($notificationsList))
-				$notificationsList = array();
+			if ( ! is_array($notificationsList)) $notificationsList = array();
 
 			// create extra response
 			$response = new Response();
