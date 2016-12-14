@@ -107,7 +107,7 @@ class RunController extends Controller
 
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
-		$toEmail = $emailTo[0][0];
+		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
 		$fromName = trim(explode("<", $_POST['From'])[0]);
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";

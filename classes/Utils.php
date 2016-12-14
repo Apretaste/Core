@@ -1187,6 +1187,9 @@ class Utils
 		$res = explode("_T", $email);
 		$res = explode("@", $res[1]);
 		$handle = explode("@", $res[0]);
+
+		// return the handle if exist
+		if( ! $handle) return false;
 		return $handle[0];
 	}
 
