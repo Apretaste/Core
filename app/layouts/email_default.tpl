@@ -109,9 +109,9 @@
 								{/if}
 								{for $i=1 to 5}
 									{if $i <= $raffle_stars}
-										<font color="#000000"><b>&hearts;</b></font>
+										<font color="#000000" size="5"><b>&hearts;</b></font>
 									{else}
-										<font color="#eeeeee">&hearts;</font>
+										<font color="#eeeeee" size="5">&hearts;</font>
 									{/if}
 								{/for} <br/>
 							</big>
@@ -121,7 +121,8 @@
 									<br/>
 									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
 								{else}
-									Haz ganado 10 tickets para {link href="RIFA" caption="Rifa"}
+									Haz ganado 10 tickets para la {link href="RIFA" caption="Rifa"}<br/>
+									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s tickets
 								{/if}
 							</small>
 						</td>
