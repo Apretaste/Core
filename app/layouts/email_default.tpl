@@ -117,7 +117,7 @@
 							</big>
 							<small>
 								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para {link href="RIFA" caption="Rifa"}
+									Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para la {link href="RIFA" caption="Rifa"}
 									<br/>
 									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
 								{else}
