@@ -1217,34 +1217,39 @@ class Utils
 		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
-	/**
-	 * Return data of ticket's game
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @return array
-	 */
-	public function getTicketsGameOf($email)
-	{
-		$label1 = 'tickets';
-		$label2 = 'uses';
-
-		$sql = "SELECT
-			(SELECT count(*) FROM (SELECT * FROM ticket WHERE email = '$email' AND DATE(creation_time) > current_date - 5 AND origin = 'GAME') s1) as $label1,
-			(SELECT count(*) FROM (SELECT DATE(request_time) as request_date, count(*) as requests FROM utilization WHERE requestor = '$email' and DATE(request_time)> current_date - 5 GROUP BY request_date) s2) as $label2";
-
+  /**
+   * Return data of raffle's stars
+   *
+   * @author kuma
+   * @param $email string
+   * @param $from_today boolean
+   * @return integer
+   */
+	public function getRaffleStarsOf($email, $from_today = true)
+  {
 		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
+		$stars = 0;
 
-		if (isset($r[0]))
-			return $r[0];
+		for ($d = 0; $d < 5; $d++)
+		{
+			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
+			{
+				$r = $connection->deepQuery("SELECT count(*) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
+				if ($r[0]->uses < 1)
+					break;
+			}
 
-		$r = new stdClass();
+			// check tickets from GAME (include today)
+			$r = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE email = '{$email}' AND DATE(creation_time) = CURRENT_DATE - $d AND origin = 'GAME';");
 
-		$r->$label1 = 0;
-		$r->$label2 = 0;
+			if ($r[0]->tickets > 0)
+				break;
 
-		return $r;
+			if ($from_today === true || ($from_today === false && $d > 0))
+				$stars++;
+		}
+
+		return $stars;
 	}
 
 	/**
@@ -1258,7 +1263,7 @@ class Utils
 	{
 		$sql = "SELECT count(*) as total FROM utilization
 				WHERE date(request_time) = current_date
-				  and requestor = 'html@apretaste.com'
+				  and requestor = '$email'
 				  and service <> 'rememberme';";
 
 		$connection = new Connection();
