@@ -96,37 +96,38 @@
 				{/if}
 
 				<!--component to show first time of the day-->
-                {if $raffle_stars > 0}
-				<tr>
-					<td align="center">
-						<big>
-							<br/>
-							{if $raffle_stars < 5}
-								Tu primer correo del d&iacute;a<br/>
-							{else}
-								Felicidades!<br/>
-							{/if}
-							{for $i=1 to 5}
-								{if $i <= $raffle_stars}
-									<font color="#000000" size="10"><b>&hearts;</b></font>
-								{else}
-									<font color="#eeeeee" size="10">&hearts;</font>
-								{/if}
-							{/for} <br/>
-						</big>
-						<small>
-                            {if $raffle_stars < 5}
-								Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para {link href="RIFA" caption="Rifa"}
+                {if $requests_today == 0}
+					{if $raffle_stars > 0}
+					<tr>
+						<td align="center">
+							<big>
 								<br/>
-								{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
-							{else}
-								Haz ganado 10 tickets para {link href="RIFA" caption="Rifa"}
-							{/if}
-						</small>
-					</td>
-				</tr>
-                {/if}
-
+								{if $raffle_stars < 5}
+									Tu primer correo del d&iacute;a<br/>
+								{else}
+									Felicidades!<br/>
+								{/if}
+								{for $i=1 to 5}
+									{if $i <= $raffle_stars}
+										<font color="#000000"><b>&hearts;</b></font>
+									{else}
+										<font color="#eeeeee">&hearts;</font>
+									{/if}
+								{/for} <br/>
+							</big>
+							<small>
+								{if $raffle_stars < 5}
+									Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para {link href="RIFA" caption="Rifa"}
+									<br/>
+									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
+								{else}
+									Haz ganado 10 tickets para {link href="RIFA" caption="Rifa"}
+								{/if}
+							</small>
+						</td>
+					</tr>
+					{/if}
+				{/if}
 
 
 				<!--main section to load the user template-->
