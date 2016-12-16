@@ -105,7 +105,7 @@
 								{if $raffle_stars < 5}
 									Tu primer correo del d&iacute;a<br/>
 								{else}
-									Felicidades!<br/>
+									<b>&iexcl;FELICIDADES!</b><br/>
 								{/if}
 								{for $i=1 to 5}
 									{if $i <= $raffle_stars}
