@@ -1263,7 +1263,7 @@ class Utils
 	{
 		$sql = "SELECT count(*) as total FROM utilization
 				WHERE date(request_time) = current_date
-				  and requestor = 'html@apretaste.com'
+				  and requestor = '$email'
 				  and service <> 'rememberme';";
 
 		$connection = new Connection();
