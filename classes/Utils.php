@@ -1227,30 +1227,30 @@ class Utils
    */
 	public function getRaffleStarsOf($email, $from_today = true)
   {
-        $connection = new Connection();
-        $stars = 0;
+		$connection = new Connection();
+		$stars = 0;
 
-        for ($d = 0; $d < 5; $d++)
-        {
-            if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-            {
-                $r = $connection->deepQuery("SELECT count(*) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
-                if ($r[0]->uses < 1)
-                    break;
-            }
+		for ($d = 0; $d < 5; $d++)
+		{
+			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
+			{
+				$r = $connection->deepQuery("SELECT count(*) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
+				if ($r[0]->uses < 1)
+					break;
+			}
 
-            // check tickets from GAME (include today)
-            $r = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE email = '{$email}' AND DATE(creation_time) = CURRENT_DATE - $d AND origin = 'GAME';");
+			// check tickets from GAME (include today)
+			$r = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE email = '{$email}' AND DATE(creation_time) = CURRENT_DATE - $d AND origin = 'GAME';");
 
-            if ($r[0]->tickets > 0)
-                break;
+			if ($r[0]->tickets > 0)
+				break;
 
-            if ($from_today === true || ($from_today === false && $d > 0))
-                $stars++;
-        }
+			if ($from_today === true || ($from_today === false && $d > 0))
+				$stars++;
+		}
 
-        return $stars;
-    }
+		return $stars;
+	}
 
 	/**
 	 * Get number of requests received from user today
