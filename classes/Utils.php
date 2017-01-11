@@ -457,6 +457,16 @@ class Utils
 			stripos($to,"noresponder")!==false)
 		) $msg = 'no-reply';
 
+		// if the person received from Apretaste before, and he/she reaches again, unblock
+		if(empty($msg) && $direction=="in")
+		{
+			$times = $connection->deepQuery("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
+			if($times[0]->times > 0)
+			{
+				$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$to'");
+			}
+		}
+
 		// do not send any email that hardfailed before
 		if(empty($msg))
 		{
@@ -464,10 +474,10 @@ class Utils
 			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
 		}
 
-		// block any previouly dropped email that had already failed for 5 times
+		// block any previouly dropped email that had already failed for 3 times
 		if(empty($msg))
 		{
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND reason <> 'spam' AND email='$to'");
+			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 

@@ -798,7 +798,7 @@ class ManageController extends Controller
 		}
 
 		// get last 7 days of dropped emails
-		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) AND reason <> 'dismissed' ORDER BY inserted DESC";
+		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
 		$dropped = $connection->deepQuery($sql);
 
 		// get last 7 days of emails received
@@ -826,7 +826,7 @@ class ManageController extends Controller
 		{
 			// delete the block
 			$connection = new Connection();
-			$connection->deepQuery("UPDATE delivery_dropped SET reason='dismissed' WHERE email='$userEmail'");
+			$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$userEmail'");
 
 			// email the user user letting him know
 			$email = new Email();
