@@ -407,31 +407,37 @@ class RunController extends Controller
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 
-			// check if is first request of the day
-			$requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
+            // check if is first request of the day
+            $requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
+            $stars = 0;
+            if ($requestsToday == 0)
+            {
+                // run the tickets's game
 
-			if ($requestsToday == 0)
-			{
-				// run the tickets's game
-				// @note: este chequeo se hace despues de verificar si es el primer
-				// correo del dia, para no preguntar innecesariamente en el resto del dia
-				$game = $utils->getTicketsGameOf($rs->email);
-				if ($game->tickets == 0 && $game->uses == 5)
-				{
-					// insert 10 tickets for user
-					$sqlValues = "('$email', 'GAME')";
-					$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
-					$connection->deepQuery($sql);
+                // @note: este chequeo se hace despues de verificar si es el primer
+                // correo del dia, para no preguntar chequear mas veces
+                // innecesariamente en el resto del dia
 
-					// add notification to user
-					$utils->addNotification($rs->email, "system", "Has ganado 10 tickets para la Rifa por usar Apretaste durante 5 d&iacute;as seguidos");
-				}
-			}
+                $stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
+
+                if ($stars === 4) /* today is the star number five*/
+                {
+                    // insert 10 tickets for user
+                    $sqlValues = "('$email', 'GAME')";
+                    $sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+                    $connection->deepQuery($sql);
+
+                    // add notification to user
+                    $utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
+                }
+
+                $stars++;
+            }
 
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
-			$rs->content['tickets_game'] = $utils->getTicketsGameOf($rs->email);
-			$rs->content['request_today'] = $requestsToday;
+            $rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
+            $rs->content['raffle_stars'] = $stars;
+            $rs->content['requests_today'] = $requestsToday;
 		}
 
 		// create a new render
