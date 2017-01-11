@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 temp/*
 public/temp/*
 services/*
@@ -23,12 +22,3 @@ public/products/*
 migration/*
 services/*
 app/controllers/TestController.php
-.idea/*
-=======
-nbproject/*
-.settings/*
-.buildpath
-.project
-*~
-*.zip
->>>>>>> f052e8e974db2ba6bea3747eb3b9459f3678310b
