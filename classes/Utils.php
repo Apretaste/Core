@@ -625,7 +625,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// get the new expiration date and token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$token = md5($email.$pin.$expires.rand());
 
 		// create new entry on the authentication table
@@ -654,7 +654,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// extend the life of the token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
