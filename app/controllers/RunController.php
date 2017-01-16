@@ -195,7 +195,7 @@ class RunController extends Controller
 		{
 			$connection->deepQuery("
 				UPDATE campaign SET opened=opened+1 WHERE id='$campaign';
-				UPDATE campaign_sent SET status='OPENED', date_opened=CURRENT_TIMESTAMP WHERE id='$campaign' AND email='$fromEmail'");
+				UPDATE campaign_sent SET status='OPENED', date_opened=CURRENT_TIMESTAMP WHERE campaign='$campaign' AND email='$fromEmail'");
 		}
 
 		// do not continue procesing the email if the sender is not valid

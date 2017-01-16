@@ -54,18 +54,17 @@ class ApiController extends Controller
 		$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// return ok response
-		die('{"code":"ok","username":"'.$username.'"}');	
+		die('{"code":"ok","username":"'.$username.'"}');
 	}
 
 	/**
-	 * Check if an email exist in Apretaste's database
-	 * Else check if the pin is set to create it in case is not
-	 * 
+	 * Check if an email exist in Apretaste and if the pin is set
+	 *
 	 * @author salvipascual
 	 * @param GET email
 	 * @return JSON
 	 * */
-	public function personExistAction()
+	public function lookupAction()
 	{
 		$email = trim($this->request->get('email'));
 
@@ -77,33 +76,9 @@ class ApiController extends Controller
 
 		// check if the user already created a pin
 		$pin = "unset";
-		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set"; 
+		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
 
 		die('{"exist":"'.$exist.'", "pin":"'.$pin.'"}');
-	}
-
-	/**
-	 * Load a person's information based on username (more secure than email)
-	 * 
-	 * @author salvipascual
-	 * @param GET username
-	 * @return JSON
-	 * */
-	public function getPersonAction()
-	{
-		$username = trim($this->request->get('user'));
-
-		$utils = new Utils();
-		$connection = new Connection();
-
-		// get email from the username
-		$email = $connection->deepQuery("SELECT email FROM person WHERE username='$username'");
-		if(empty($email)) die('{"code":"error","message":"invalid username"}');
-		$email = $email[0]->email;
-
-		// get person 
-		$person = $utils->getPerson($email);
-		die(json_encode($person));
 	}
 
 	/**
@@ -111,11 +86,13 @@ class ApiController extends Controller
 	 *
 	 * @author salvipascual
 	 * @param GET email
+	 * @param GET template, piropazo.tpl | email_simple.tpl
 	 * @return JSON
 	 * */
 	public function recoverAction()
 	{
 		$email = trim($this->request->get('email'));
+		$template = trim($this->request->get('template'));
 
 		$utils = new Utils();
 		$connection = new Connection();
@@ -134,12 +111,17 @@ class ApiController extends Controller
 			$connection->deepQuery("UPDATE person SET pin='$pin' WHERE email='$email'");
 		}
 
+		// get the language of the user
+		$wwwroot = $this->di->get('path')['root'];
+		$lang = $connection->deepQuery("SELECT lang FROM person WHERE email='$email'")[0]->lang;
+		$lang = file_exists("$wwwroot/app/templates/pinrecover_$lang.tpl") ? $lang : "es";
+
 		// create response to email the new code
-		$subject = "Su codigo de Apretaste";
+		$subject = "Code: $pin";
 		$response = new Response();
 		$response->setEmailLayout("email_simple.tpl");
 		$response->setResponseSubject($subject);
-		$response->createFromTemplate("pinrecover.tpl", array("pin"=>$pin));
+		$response->createFromTemplate("pinrecover_$lang.tpl", array("pin"=>$pin));
 		$response->internal = true;
 
 		// render the template as html
