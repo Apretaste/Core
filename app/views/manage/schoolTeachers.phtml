@@ -1,0 +1,77 @@
+<div class="row">
+    <br/>
+    <div class="col-xs-12">
+    <?php if ($message!==false): ?>
+        <div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+    <?php endif;?>
+	<br/>
+        <p align="right"><a class="btn btn-default" href="/manage/school"><span class="glyphicon glyphicon-book" aria-hidden="true"></span> <br/>Courses</a></p>
+        <br/>
+	<div class="panel">
+    <table id="servicesTable" class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Title</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($teachers as $teacher):    ?>
+        <tr>
+            <form action="/manage/schoolTeachers?option=setTeacher&id=<?php echo $course->id; ?>" method="post">
+                <td width="50"><?php echo $teacher->id; ?></td>
+                <td><input class="form-control" name="techerName" placeholder="teacher name" value ="<?php echo $teacher->name;?>"></td>
+                <td><input class="form-control" name="techerTitle" placeholder="teacher title" value ="<?php echo $teacher->title;?>"></td>
+                <td><input class="form-control" name="techerEmail" placeholder="teacher email" value ="<?php echo $teacher->email;?>"></td>
+                <td><button class="btn btn-default" type="submit" name="teacherSubmit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button></td>
+            </form>
+            <td><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/schoolTeachers?option=del&id=<?php echo $teacher->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
+        </tr>
+	<?php endforeach; ?>
+        </tbody>
+        </table>
+    </div>
+		<button type="button" class="btn btn-primary" onclick="$('#newTeacherForm-modal').modal('show');">
+			<span class="glyphicon glyphicon-plus"></span> New teacher
+		</button>
+        
+		<!-- New course modal form -->
+		<div class="modal fade tooltips" id="newTeacherForm-modal" tabindex="-1" role="dialog" aria-labelledby="newCourseForm-label" aria-hidden="true"> 
+            <div class="modal-dialog" style="width:500px;"> 
+                <div class="modal-content"> 
+                    <div class="modal-header"> 
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"> &times; </button> 
+                            <h4 class="modal-title" id="newTeacherForm-label">New teacher</h4>
+                        </div>
+                        <div class="modal-body"> 
+                            <form role="form" action = "/manage/schoolTeachers?option=add" method = "post" id="newTeacherForm" enctype="multipart" data-toggle="validator">
+                                <div class="form-group">
+                                    <label for="courseTitle">Full name:</label>
+                                    <input required type="text" class="form-control text" name="teacherName" id="teacherName" placeholder="name of the teacher" title="Insert the name of the teacher">						
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="courseTitle">Title:</label>
+                                    <input required type="text" class="form-control text" name="teacherTitle" id="teacherTitle" placeholder="title of the teacher" title="Insert the title of the teacher">						
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="courseTitle">Email:</label>
+                                    <input required type="text" class="form-control text" name="teacherEmail" id="teacherEmail" placeholder="email of the teacher" title="Insert the email of the teacher">						
+                                </div>
+                                
+                                <div class="modal-footer"> 
+                                        <button type="submit" name="btnInsert" class="btn btn-success">Insert</button>
+                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button> 
+                                </div> 
+                            </form>
+                            </div>
+			</div>
+		</div>
+	</div>
+    </div>
+</div>
+
+

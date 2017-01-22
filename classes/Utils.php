@@ -1271,4 +1271,167 @@ class Utils
 
 		return $r[0]->total * 1;
 	}
+
+    /**
+     * Check if a manage user have a permission
+     *
+     * @author kuma
+     * @param $email
+     * @param mixed $permission
+     * @return bool
+     */
+	public static function haveManagePermission($email, $permission)
+    {
+        if (is_string($permission))
+        {
+            $permission = explode(' ', trim(str_replace(',', ' ',$permission)));
+        }
+
+        $sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
+        $permissions = '';
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        if (isset($r[0]))
+        {
+            $permissions = $r[0]->permissions;
+        }
+      
+        $permissions = ' '.str_replace(',', ' ',$permissions).' ';
+
+        $found = 0;
+        foreach($permission as $p)
+        {
+            $required = false;
+            if ($p[0] == '*')
+            {
+                $required = true;
+                $p = substr($p, 1);
+            }
+
+            $pos = stripos($permissions, ' ' . $p . ' ');
+
+            if ($pos === false || $required)
+            { 
+                return false; 
+            }
+
+            if ($pos !== false)
+            {
+                $found++;
+            }
+        }
+
+        return $found > 0;
+
+    }
+    
+    /**
+     * Parsing all line images encoded as base64
+     * 
+     * @param string $html
+     * @param string $prefix
+     * @return array
+     */
+    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:')
+    {
+        $imageList = [];
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
+        
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
+        
+        $images = $doc->getElementsByTagName('img');
+          if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $id = "img".uniqid();
+                
+                // ex: src = data:image/png;base64,...
+                $p = strpos($src, ';base64,');
+                
+                if ($p!==false)
+                {
+                    $type = str_replace("data:", "", substr($src, 0, $p));
+                    $src = substr($src, $p + 8);
+                    $ext = str_replace('image/', '', $type);
+                    $this->clearStr($ext);
+                    $filename =  $id.$ext;
+                    
+                    if ($image->hasAttribute("data-filename"))
+                    {
+                        $filename = $image->getAttribute("data-filename");
+                    }
+                    
+                    $filename = str_replace(['"','\\'], '', $filename);
+                    $imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
+                    $image->setAttribute('src', $prefix.$id);
+                }
+            }  
+        }
+        
+        $html = $doc->saveHTML();
+        return $imageList;
+    }
+    
+    /**
+     * Put images as encoded as base64 to html
+     * 
+     * @param string $html
+     * @return array
+     */
+    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
+    {
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
+        
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
+        
+        $images = $doc->getElementsByTagName('img');
+        if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $src = substr($src, strlen($prefix));
+                if (isset($imageList[$src]))
+                {
+                    $image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
+                }
+            }  
+        }
+        
+        $html = $doc->saveHTML();
+        return $html;
+    }
+    
+    /**
+    * Recursive rmdir
+    *
+    * @param string $path
+    */
+    public function rmdir($path){
+        if (is_dir($path)) {
+            $dir = scandir($path);
+            foreach ( $dir as $d ) 
+            {
+                if ($d != "." && $d != "..") {
+                    if (is_dir("$path/$d"))
+                    {
+                        self::rmdir("$path/$d");
+                    }
+                    else
+                    {
+                        unlink("$path/$d");
+                    }
+                }
+            }
+            rmdir($path);
+        }
+   }
 }
