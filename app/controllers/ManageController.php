@@ -1879,7 +1879,7 @@ class ManageController extends Controller
             case 'school':
                 $this->view->menu = [
                     ['caption' => 'Courses', 'href' => '/manage/school', 'icon' => 'book'],
-                    ['caption' => 'Teachers', 'href' => '/manage/schoolTeachers', 'icon' => 'user-secret'],
+                    ['caption' => 'Teachers', 'href' => '/manage/schoolTeachers', 'icon' => 'user'],
                 ];
         }
     }
@@ -1901,9 +1901,8 @@ class ManageController extends Controller
             $this->view->products = $products;
             $this->view->title = "Market's products";
             $this->view->breadcrumb = array(
-                "/manage" => "Home",
-                "/manage/admin" => "Admin",
-                "/manage/admin/market" => "Market"
+                "admin" => "Admin",
+                "admin/market" => "Market"
             );
             $this->setMenu('market');
     }
@@ -2051,10 +2050,9 @@ class ManageController extends Controller
             $this->view->wwwroot = $wwwroot;
             $this->view->title = "Product's details";
             $this->view->breadcrumb = array(
-                    '/manage' => 'Home',
-                    '/manage/admin' => 'Admin',
-                    '/manage/market' => 'Market',
-                    '/manage/marketDetail/'.$code => 'Product '.$code,
+                    'admin' => 'Admin',
+                    'market' => 'Market',
+                    'marketDetail/'.$code => 'Product '.$code,
             );
             $this->setMenu('market');
     }
@@ -2205,10 +2203,9 @@ class ManageController extends Controller
             $this->view->orders = $orders;
             $this->view->title = "Market's orders";
             $this->view->breadcrumb = array(
-                    '/manage' => 'Home',
-                    '/manage/admin' => 'Admin',
-                    '/manage/market' => 'Market',
-                    '/manage/marketOrders' =>'Orders'
+                    'admin' => 'Admin',
+                    'market' => 'Market',
+                    'marketOrders' =>'Orders'
             );
     }
 
@@ -2270,11 +2267,11 @@ class ManageController extends Controller
                             $this->view->order = $order;
                             $this->view->title = "Product's destination";
                             $this->view->breadcrumb = array(
-                                    '/manage' => 'Home',
-                                    '/manage/market' => 'Market',
-                                    '/manage/marketOrders' => 'Orders',
-                                    '/manage/marketDetail/' . $product->code => substr($product->name, 0, 30),
-                                    '/manage/marketDestination/' . $id => "Destination"
+                                    'admin' => 'Admin',
+                                    'market' => 'Market',
+                                    'marketOrders' => 'Orders',
+                                    'marketDetail/' . $product->code => substr($product->name, 0, 30),
+                                    'marketDestination/' . $id => "Destination"
                             );
                     }
             }
@@ -2520,9 +2517,8 @@ class ManageController extends Controller
     {
         $this->setMenu('school');
         $this->view->breadcrumb = array(
-                "manage" => "Home",
-                "manage/admin" => "Admin",
-                "manage/school" => "School"
+                "admin" => "Admin",
+                "school" => "School"
             );
         
         $connection = new Connection();
@@ -2611,10 +2607,9 @@ class ManageController extends Controller
     {
         $this->setMenu('school');
         $this->view->breadcrumb = array(
-            "/manage" => "Home",
-            "/manage/admin" => "Admin",
-            "/manage/school" => "School",
-            "/manage/schoolTeachers" => "Teachers"
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolTeachers" => "Teachers"
         );
         $connection = new Connection();
         $this->view->message = false;
@@ -2752,10 +2747,9 @@ class ManageController extends Controller
         $this->view->chapters = $chapters;
         $this->view->title = 'Course: <i>' . $course->title . '</i>';
         $this->view->breadcrumb = array(
-            "/manage" => "Home",
-            "/manage/admin" => "Admin",
-            "/manage/school" => "School",
-            "/manage/schoolChapters?course={$course->id}" => "Chapters"
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolChapters?course={$course->id}" => "Chapters"
         );
     }
 
@@ -2914,11 +2908,10 @@ class ManageController extends Controller
         $this->view->chapter = $chapter;
         $this->view->title = "Chapter #{$chapter->xorder} <i>$chapterTitle</i>";
         $this->view->breadcrumb = array(
-            "/manage" => "Home",
-            "/manage/admin" => "Admin",
-            "/manage/school" => "School's courses",
-            "/manage/schoolChapters?course={$chapter->course}" => "Course",
-            "/manage/schoolChapter?id={$chapter->id}" => "Chapter"
+            "admin" => "Admin",
+            "school" => "School's courses",
+            "schoolChapters?course={$chapter->course}" => "Course",
+            "schoolChapter?id={$chapter->id}" => "Chapter"
         );
     }
   
