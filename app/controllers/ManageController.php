@@ -2538,26 +2538,35 @@ class ManageController extends Controller
         {
             $title = $connection->escape($this->request->getPost("courseTitle"));
             $teacher = $connection->escape($this->request->getPost("courseTeacher"));
-            $content = $connection->escape($this->request->getPost("courseContent"));
+            
+            if ( ! empty("$teacher"))
+            {
+                $content = $connection->escape($this->request->getPost("courseContent"));
 
-            switch ($option){
-                case 'add':
-                    $sql = "INSERT INTO _escuela_course (title, teacher, content, email, active) VALUES ('$title', '$teacher','$content','$email',0); ";
-                    $this->view->message = 'The course was inserted successfull';
-                    break;
-                case 'set':
-                    $id = $this->request->get('id');
-                    
-                    $setContent = "";
-                    if (isset($_POST['courseContent']))
-                    {
-                        $setContent = ", content = '$content'";
-                    }
-                    
-                    $sql = "UPDATE _escuela_course SET title = '$title', teacher = '$teacher' $setContent WHERE id = '$id'; ";
-                   
-                    $this->view->message = "The course <b>$title</b> was updated successfull";
-                    break;
+                switch ($option){
+                    case 'add':
+                        $sql = "INSERT INTO _escuela_course (title, teacher, content, email, active) VALUES ('$title', '$teacher','$content','$email',0); ";
+                        $this->view->message = 'The course was inserted successfull';
+                        break;
+                    case 'set':
+                        $id = $this->request->get('id');
+
+                        $setContent = "";
+                        if (isset($_POST['courseContent']))
+                        {
+                            $setContent = ", content = '$content'";
+                        }
+
+                        $sql = "UPDATE _escuela_course SET title = '$title', teacher = '$teacher' $setContent WHERE id = '$id'; ";
+
+                        $this->view->message = "The course <b>$title</b> was updated successfull";
+                        break;
+                }
+            } 
+            else
+            {
+                $this->view->message_type = 'danger';
+                $this->view->message = 'You must select a teacher';
             }
         }
 
@@ -2565,12 +2574,12 @@ class ManageController extends Controller
             case "del":
                 $id = $this->request->get('id');
                 $sql = "START TRANSACTION;
-                        DELETE FROM _escuela_answer WHERE course = '$id');
+                        DELETE FROM _escuela_answer WHERE course = '$id';
                         DELETE FROM _escuela_question WHERE course = '$id';
                         DELETE FROM _escuela_chapter WHERE course = '$id';
                         DELETE FROM _escuela_course WHERE id = '$id';
                         COMMIT;";
-                $this->view->message = 'The course #'.$delete.' was deleted successfull';
+                $this->view->message = "The course #$id was deleted successfull";
                 break;
 
             case "disable":
@@ -2940,10 +2949,11 @@ class ManageController extends Controller
         $this->view->message = false;
         $this->view->message_type = 'success';
 
-        $course_id = intval($this->request->get('course'));
-        $r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
+        $chapter = intval($this->request->get('chapter'));
+        $r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE _escuela_course.id = (SELECT course FROM _escuela_chapter WHERE _escuela_chapter.id = '$chapter');");
         $course = $r[0];
-
+        $course_id = $course->id;
+        
         $this->view->course = $course;
         $option = $this->request->get('option');
         $sql = false;
@@ -2956,7 +2966,7 @@ class ManageController extends Controller
                         $title = $this->request->getPost('chapterQuestionTitle');
                         $r = $connection->deepQuery("SELECT max(xorder) as m FROM _escuela_question WHERE chapter = '$chapter';");
                         $order = $r[0]->m + 1;
-                        $sql ="INSERT INTO _escuela_question (chapter, title, xorder) VALUES ('$chapter', '$title', '$order');";
+                        $sql ="INSERT INTO _escuela_question (course, chapter, title, xorder) VALUES ('$course_id', '$chapter', '$title', '$order');";
                         $this->view->message = "Question <b>$title</b> was inserted successfull";
                 break;
                 case "setQuestion":
@@ -2969,7 +2979,7 @@ class ManageController extends Controller
                 case "addAnswer":
                         $question_id = $this->request->get('question');
                         $title = $this->request->getPost('chapterAnswerTitle');
-                        $sql ="INSERT INTO _escuela_answer (question, title) VALUES ('$question_id', '$title');";
+                        $sql ="INSERT INTO _escuela_answer (course, chapter, question, title) VALUES ('$course_id', '$chapter', '$question_id', '$title');";
                         $this->view->message = "Answer <b>$title</b> was inserted successfull";
                 break;
                 case "setAnswer":
@@ -2992,9 +3002,9 @@ class ManageController extends Controller
             case "delQuestion":
                 $question_id = $this->request->get('id');
                 $sql = "START TRANSACTION;
-                                DELETE FROM _escuela_question WHERE id = '{$question_id}';
-                                DELETE FROM _escuela_answer WHERE question ='{$question_id}';
-                                COMMIT;";
+                        DELETE FROM _escuela_question WHERE id = '{$question_id}';
+                        DELETE FROM _escuela_answer WHERE question ='{$question_id}';
+                        COMMIT;";
                 $this->view->message = "The question was deleted successfull";
             break;
         }

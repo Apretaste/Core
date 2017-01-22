@@ -21,9 +21,8 @@
                     <label for="content">
                         <?php echo $type=='CAPITULO'? 'Content of the chapter' : 'Explanation'; ?>
                     </label><br/>
-                    <textarea id="content" name="content" style="xdisplay:xnone;"></textarea>
+                    <textarea id="content" name="content"></textarea>
                 </div>
-                <div id="summernote"></div>
                 <div class="form-group">
                     <button class="btn btn-default" type="submit" onclick="return getcontent();">Save</button>
                     <a class="btn btn-default" href="/manage/schoolChapters?course=<?php echo $course->id; ?>">Cancel</a>
@@ -32,29 +31,19 @@
         </div>
     </div>
 </div>
-    <script src="/js/tinymce/tinymce.min.js"></script>
-<script>
-    function getcontent(){
-       // $("#content").val($("#summernote").summernote('code'));
-        return true;
-    }
-  
-    $(document).ready(function(){
-       $('#summernote').html($("#content").val());
-       $('#summernote').summernote();
-    });
-    
-    tinymce.init({
-		selector: '#content',
-		height: 500,
-		theme: 'modern',
-		plugins: [
-			'advlist autolink lists link image charmap print preview hr anchor pagebreak',
-			'searchreplace wordcount visualblocks visualchars code fullscreen',
-			'insertdatetime media nonbreaking save table contextmenu directionality',
-			'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
-		],
-		toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
-	});
 
+<script src="/js/tinymce/tinymce.min.js"></script>
+<script>
+    tinymce.init({
+        selector: '#content',
+        height: 500,
+        theme: 'modern',
+        plugins: [
+                'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+                'searchreplace wordcount visualblocks visualchars code fullscreen',
+                'insertdatetime media nonbreaking save table contextmenu directionality',
+                'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
+        ],
+        toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+    });
 </script>
