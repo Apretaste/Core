@@ -2870,7 +2870,7 @@ class ManageController extends Controller
         {
             $chapter = $r[0];
             $images = $this->getChapterImages($id);
-            $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+            $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
             $this->view->chapter = $chapter;
         }
         else
@@ -2899,7 +2899,7 @@ class ManageController extends Controller
         $chapter = $r[0];
 
         $images = $this->getChapterImages($id);
-        $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+        $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
 
         $this->view->message = "The chapter <i>{$chapter->title}</i> was successful inserted";
         $this->view->message_type = 'success';
@@ -2922,7 +2922,7 @@ class ManageController extends Controller
         if ($r !== false)
         {
             foreach ($r as $row)
-            {   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}");
+            {   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
                 $images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
             }
         }
