@@ -2598,7 +2598,7 @@ class ManageController extends Controller
 
         $courses = $connection->deepQuery($queryCourses);
 
-        $this->view->title = "List of courses (".count($courses).")";
+        $this->view->title = "School";
         $this->view->courses = $courses;
 	$this->view->teachers = $teachers;
     }
@@ -2662,7 +2662,7 @@ class ManageController extends Controller
          }
          
          $this->view->teachers = $teachers;
-         $this->view->title = "Teachers";
+         $this->view->title = "School";
     }
     
     /**
@@ -2903,10 +2903,10 @@ class ManageController extends Controller
         $images = $this->getChapterImages($id);
         $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
         
-        $this->view->message = "The chapter <i>$chapterTitle</i> was successful inserted";
+        $this->view->message = "The chapter <i>{$chapter->title}</i> was successful inserted";
         $this->view->message_type = 'success';
         $this->view->chapter = $chapter;
-        $this->view->title = "Chapter #{$chapter->xorder} <i>$chapterTitle</i>";
+        $this->view->title = ($chapter->xtype=='CAPITULO'? "Chapter" : "Test") . ": {$chapter->title}";
         $this->view->breadcrumb = array(
             "admin" => "Admin",
             "school" => "School's courses",
@@ -3025,6 +3025,14 @@ class ManageController extends Controller
 
             }
         }
+        
+         $this->view->breadcrumb = array(
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolChapters?course={$chapter->course}" => "Chapters",
+            "schoolChapter/{$chapter->id}" => "Test",
+            "schoolQuestions?chapter={$chapter->id}" => "Questions"
+        );
     }
     
     public function testAction()

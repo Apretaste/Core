@@ -4,23 +4,18 @@
         <?php if ($message !== false): ?>
             <div class="alert alert-<?php echo $message_type; ?>" role="alert"><?php echo $message; ?></div>
         <?php endif; ?>
-        <br/>
-        <p align="right"><a class="btn btn-default" href="/manage/schoolTeachers"><i class="fa fa-user-secret fa-2x" aria-hidden="true"></i><br/>Teachers</a></p>
-        <br/>
+        
         <div class="panel">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    <h5>Teachers</h5>
+                    <h5>Courses (<?php echo count($courses); ?>)</h5>
                     <div class="ibox-tools">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             <i class="fa fa-wrench"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-user">
                             <li>
-                                <a href="/manage/schoolNewChapter?type=CAPITULO&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New chapter</a>
-                            </li>
-                            <li>
-                                <a href="/manage/schoolNewChapter?type=PRUEBA&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New test</a>                
+                                <a href="#" onclick="newCourse();"><span class="glyphicon glyphicon-plus"></span> New course</a>
                             </li>
                         </ul>
                         <a class="close-link">
@@ -30,12 +25,21 @@
                 </div>
                 <div class="ibox float-e-margins">
                     <div class="ibox-content">
+                        <div class="" style="text-align:right">
+                            <button type="button" class="btn btn-primary" onclick="newCourse();">
+                                <span class="glyphicon glyphicon-plus"></span> New course
+                            </button>
+                        </div>
                         <table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
                             <thead>
                                 <tr>
                                     <th>#</th>
                                     <th>Name</th>
                                     <th>Teacher</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -43,15 +47,16 @@
                                     <tr>
                                 <form action="/manage/school?option=set&id=<?php echo $course->id; ?>" method="post">
                                     <td width="50"><?php echo $course->id; ?></td>
-                                    <td><input class="form-control" name="courseTitle" placeholder="Course title" value ="<?php echo $course->title; ?>"></td>
+                                    <td><input id = "courseTitle-<?php echo $course->id; ?>" class="form-control" name="courseTitle" placeholder="Course title" value ="<?php echo $course->title; ?>"></td>
                                     <td>
-                                        <select class="form-control" name="courseTeacher">
+                                        <select id = "courseTeacher-<?php echo $course->id; ?>" class="form-control" name="courseTeacher">
                                             <?php foreach ($teachers as $teacher): ?>
                                                 <option value ="<?php echo $teacher->id; ?>" <?php echo $course->teacher == $teacher->id ? 'selected' : ''; ?>><?php echo $teacher->name . ', ' . $teacher->title; ?></options>
-                                                <?php endforeach; ?>
+                                            <?php endforeach; ?>
                                         </select>
                                     </td>
                                     <td><button class="btn btn-default" type="submit" name="courseSubmit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button></td>
+                                    <textarea id = "courseContent-<?php echo $course->id; ?>" style="display:none;"><?php echo $course->content;?></textarea>
                                 </form>
 
                                 <td><a href="/manage/schoolChapters?course=<?php echo $course->id; ?>" class="btn btn-default" >Chapters</a></td>
@@ -62,15 +67,16 @@
                                         <a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/school?option=enable&id=<?php echo $course->id; ?>">Enable</a>
                                     <?php endif; ?>
                                 </td>
-                                <td><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/school?option=del&id=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                <td>
+                                    <button class="btn btn-success" onclick="editCourse(<?php echo $course->id;?>);"><span class="glyphicon glyphicon-edit"></span></button>
+                                    <a class="btn btn-danger" onclick ="return confirm('Are you sure?');" href="/manage/school?option=del&id=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-trash"></span></a>
+                                </td>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="$('#newCourseForm-modal').modal('show');">
-                        <span class="glyphicon glyphicon-plus"></span> New course
-                    </button>
+
 
                     <!-- New course modal form -->
                     <div class="modal fade tooltips" id="newCourseForm-modal" tabindex="-1" role="dialog" aria-labelledby="newCourseForm-label" aria-hidden="true"> 
@@ -78,7 +84,7 @@
                             <div class="modal-content"> 
                                 <div class="modal-header"> 
                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true"> &times; </button> 
-                                    <h4 class="modal-title" id="newCourseForm-label"><i class="fa fa-book fa-1x" aria-hidden="true"></i> New course</h4>
+                                    <h4 class="modal-title" id="newCourseForm-label"><i class="fa fa-book fa-1x" aria-hidden="true"></i> <span id ="form-caption"</h4>
                                 </div>
                                 <div class="modal-body"> 
                                     <form role="form" action = "/manage/school?option=add" method = "post" id="newCourseForm" enctype="multipart" data-toggle="validator">
@@ -101,7 +107,7 @@
                                             <textarea class="form-control" name="courseContent" id="courseContent"></textarea>
                                         </div>
                                         <div class="modal-footer"> 
-                                            <button type="submit" name="btnInsert" class="btn btn-success">Insert</button>
+                                            <button type="submit" name="btnInsert" class="btn btn-success">Ok</button>
                                             <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button> 
                                         </div> 
                                     </form>
@@ -136,5 +142,24 @@
             ]
         });
     });
+    
+    function newCourse()
+    {
+        $('#newCourseForm-modal').modal('show');
+        $('#courseTitle').val('');
+        $('#courseContent').val('');
+        $('#newCourseForm').attr('action','/manage/school?option=add')
+        $('#formCaption').html('New course');
+    }
+    
+    function editCourse(course_id)
+    {
+        $('#newCourseForm-modal').modal('show');
+        $('#courseTitle').val($('#courseTitle-' + course_id).val());
+        $('#courseContent').val($('#courseContent-' + course_id).val());
+        $('#courseTeacher').val($('#courseTeacher-' + course_id).val());
+        $('#newCourseForm').attr('action','/manage/school?option=set&id=' + course_id)
+        $('#formCaption').html('Edit course');
+    }
 </script>
 
