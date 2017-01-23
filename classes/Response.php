@@ -47,7 +47,7 @@ class Response
 	/**
 	 * Set the email of the response in the cases where is not the same as the requestor
 	 * Useful for confirmations or for programmers to track actions/errors on their services
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String $email
 	 * */
@@ -93,6 +93,7 @@ class Response
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
+		return $this;
 	}
 
 	/**
@@ -109,6 +110,7 @@ class Response
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = array();
+		return $this;
 	}
 
 	/**
@@ -129,11 +131,12 @@ class Response
 		$this->internal = false;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
+		return $this;
 	}
 
 	/**
 	 * Automatically select two ads to be displayed
-	 * 
+	 *
 	 * @author salvipascual
 	 * */
 	private function getAdsToShow()
@@ -159,8 +162,8 @@ class Response
 
 		// select the ads to show
 		$sql = "
-			SELECT * FROM ads WHERE active=1 
-			AND expiration_date > CURRENT_TIMESTAMP 
+			SELECT * FROM ads WHERE active=1
+			AND expiration_date > CURRENT_TIMESTAMP
 			AND (SELECT credit FROM person WHERE person.email = ads.owner) >= ads.price
 			AND ads.owner <> '{$this->email}' ";
 		if ( ! empty($person->age)) $sql .= " AND (from_age * 1 <= {$person->age} OR from_age = 'ALL') AND (to_age * 1 >= {$person->age} OR to_age = 'ALL') ";

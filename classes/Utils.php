@@ -171,6 +171,9 @@ class Utils
 		if (count($person)==0) return false;
 		else $person = $person[0];
 
+		// get the person's age
+		$person->age = empty($person->date_of_birth) ? 0 : date_diff(date_create($person->date_of_birth), date_create('today'))->y;
+
 		// remove the pin from the response
 		unset($person->pin);
 
@@ -243,6 +246,45 @@ class Utils
 		}
 
 		return $username;
+	}
+
+	/**
+	 * Get the email from an username
+	 *
+	 * @author salvipascual
+	 * @param String $username
+	 * @return String email or false
+	 */
+	public function getEmailFromUsername($username)
+	{
+		// remove the @ symbol
+		$username = str_replace("@", "", $username);
+
+		// get the email
+		$connection = new Connection();
+		$email = $connection->deepQuery("SELECT email FROM person WHERE username='$username'");
+
+		// return the email or false if not found
+		if(empty($email)) return false;
+		else return $email[0]->email;
+	}
+
+	/**
+	 * Get the username from an email
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String username or false
+	 */
+	public function getUsernameFromEmail($email)
+	{
+		// get the username
+		$connection = new Connection();
+		$username = $connection->deepQuery("SELECT username FROM person WHERE email='$email'");
+
+		// return the email or false if not found
+		if(empty($username)) return false;
+		else return $username[0]->username;
 	}
 
 	/**
@@ -625,7 +667,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// get the new expiration date and token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$token = md5($email.$pin.$expires.rand());
 
 		// create new entry on the authentication table
@@ -654,7 +696,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// extend the life of the token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
