@@ -3021,11 +3021,10 @@ class ManageController extends Controller
                 $this->view->title = "Test: ".$chapter->title;
                 $this->view->chapter = $chapter;
                 $this->view->questions = $questions;
-
             }
         }
         
-         $this->view->breadcrumb = array(
+        $this->view->breadcrumb = array(
             "admin" => "Admin",
             "school" => "School",
             "schoolChapters?course={$chapter->course}" => "Chapters",
