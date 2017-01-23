@@ -7,14 +7,13 @@ class ManageController extends Controller
 	private $currentUser = false;
 	private $currentPerson = null;
 
-	/**
-	 * Index for the manage system
-	 * */
-	public function indexAction()
-	{
-		$wwwroot = $this->di->get('path')['root'];
-		$connection = new Connection();
-		$utils = new Utils();
+    /**
+     * Index for the manage system
+     * */
+    public function indexAction()
+    {
+        $connection = new Connection();
+        $utils = new Utils();
 
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
@@ -1857,24 +1856,28 @@ class ManageController extends Controller
 		return base64_encode($img);
 	}
 
-	/**
-	 * Top menu
-	 *
-	 * @param string $name
-	 */
-	private function setMenu($name = 'default')
-	{
-		switch ($name)
-		{
-			case 'market':
-				$this->view->menu = array(
-					array('caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'),
-					array('caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'),
-					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
-				);
-		}
-
-	}
+    /**
+     * Top menu
+     *
+     * @param string $name
+     */
+    private function setMenu($name = 'default')
+    {
+        switch ($name)
+        {
+            case 'market':
+                $this->view->menu = [
+                       ['caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'],
+                       ['caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'],
+                       ['caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats']
+                ];
+            case 'school':
+                $this->view->menu = [
+                    ['caption' => 'Courses', 'href' => '/manage/school', 'icon' => 'book'],
+                    ['caption' => 'Teachers', 'href' => '/manage/schoolTeachers', 'icon' => 'user'],
+                ];
+        }
+    }
 
 	/**
 	 * Market
@@ -1890,15 +1893,14 @@ class ManageController extends Controller
 		if (!is_array($products))
 			$products = array();
 
-		$this->view->products = $products;
-		$this->view->title = "Market's products";
-		$this->view->breadcrumb = array(
-			"/manage" => "Home",
-			"/manage/admin" => "Admin",
-			"/manage/admin/market" => "Market"
-		);
-		$this->setMenu('market');
-	}
+            $this->view->products = $products;
+            $this->view->title = "Market's products";
+            $this->view->breadcrumb = array(
+                "admin" => "Admin",
+                "admin/market" => "Market"
+            );
+            $this->setMenu('market');
+    }
 
 	/**
 	 * New product
@@ -2039,17 +2041,16 @@ class ManageController extends Controller
 			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "market"));
 		}
 
-		$this->view->product = $product[0];
-		$this->view->wwwroot = $wwwroot;
-		$this->view->title = "Product's details";
-		$this->view->breadcrumb = array(
-			'/manage' => 'Home',
-			'/manage/admin' => 'Admin',
-			'/manage/market' => 'Market',
-			'/manage/marketDetail/'.$code => 'Product '.$code,
-		);
-		$this->setMenu('market');
-	}
+            $this->view->product = $product[0];
+            $this->view->wwwroot = $wwwroot;
+            $this->view->title = "Product's details";
+            $this->view->breadcrumb = array(
+                    'admin' => 'Admin',
+                    'market' => 'Market',
+                    'marketDetail/'.$code => 'Product '.$code,
+            );
+            $this->setMenu('market');
+    }
 
 	/**
 	 * Set product's picture
@@ -2194,15 +2195,14 @@ class ManageController extends Controller
 				$orders[$k]->ready = true;
 		}
 
-		$this->view->orders = $orders;
-		$this->view->title = "Market's orders";
-		$this->view->breadcrumb = array(
-			'/manage' => 'Home',
-			'/manage/admin' => 'Admin',
-			'/manage/market' => 'Market',
-			'/manage/marketOrders' =>'Orders'
-		);
-	}
+        $this->view->orders = $orders;
+        $this->view->title = "Market's orders";
+        $this->view->breadcrumb = array(
+                'admin' => 'Admin',
+                'market' => 'Market',
+                'marketOrders' =>'Orders'
+        );
+    }
 
 	/**
 	 * Edit product's destination data
@@ -2258,19 +2258,19 @@ class ManageController extends Controller
 				if (file_exists("$wwwroot/public/products/{$product->code}.jpg"))
 					$product->image = true;
 
-				$this->view->product = $product;
-				$this->view->order = $order;
-				$this->view->title = "Product's destination";
-				$this->view->breadcrumb = array(
-					'/manage' => 'Home',
-					'/manage/market' => 'Market',
-					'/manage/marketOrders' => 'Orders',
-					'/manage/marketDetail/' . $product->code => substr($product->name, 0, 30),
-					'/manage/marketDestination/' . $id => "Destination"
-				);
-			}
-		}
-	}
+                    $this->view->product = $product;
+                    $this->view->order = $order;
+                    $this->view->title = "Product's destination";
+                    $this->view->breadcrumb = array(
+                            'admin' => 'Admin',
+                            'market' => 'Market',
+                            'marketOrders' => 'Orders',
+                            'marketDetail/' . $product->code => substr($product->name, 0, 30),
+                            'marketDestination/' . $id => "Destination"
+                );
+            }
+        }
+    }
 
 	/**
 	 * Edit product's destination data
@@ -2503,8 +2503,534 @@ class ManageController extends Controller
 		$this->view->disable();
 	}
 
-	public function testAction()
-	{
+    /**
+     * List of school's courses
+     *
+     * @author kuma
+     */
+    public function schoolAction()
+    {
+        $this->setMenu('school');
+        $this->view->breadcrumb = array(
+                "admin" => "Admin",
+                "school" => "School"
+            );
 
-	}
+        $connection = new Connection();
+        $email = $this->getCurrentUser();
+        $teachers = $connection->deepQuery("SELECT * FROM _escuela_teacher");
+
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+        $option = $this->request->get('option');
+        $sql = false;
+
+        if($this->request->isPost())
+        {
+            $title = $connection->escape($this->request->getPost("courseTitle"));
+            $teacher = $connection->escape($this->request->getPost("courseTeacher"));
+
+            if ( ! empty("$teacher"))
+            {
+                $content = $connection->escape($this->request->getPost("courseContent"));
+
+                switch ($option){
+                    case 'add':
+                        $sql = "INSERT INTO _escuela_course (title, teacher, content, email, active) VALUES ('$title', '$teacher','$content','$email',0); ";
+                        $this->view->message = 'The course was inserted successfull';
+                        break;
+                    case 'set':
+                        $id = $this->request->get('id');
+
+                        $setContent = "";
+                        if (isset($_POST['courseContent']))
+                        {
+                            $setContent = ", content = '$content'";
+                        }
+
+                        $sql = "UPDATE _escuela_course SET title = '$title', teacher = '$teacher' $setContent WHERE id = '$id'; ";
+
+                        $this->view->message = "The course <b>$title</b> was updated successfull";
+                        break;
+                }
+            }
+            else
+            {
+                $this->view->message_type = 'danger';
+                $this->view->message = 'You must select a teacher';
+            }
+        }
+
+        switch ($option){
+            case "del":
+                $id = $this->request->get('id');
+                $sql = "START TRANSACTION;
+                        DELETE FROM _escuela_answer WHERE course = '$id';
+                        DELETE FROM _escuela_question WHERE course = '$id';
+                        DELETE FROM _escuela_chapter WHERE course = '$id';
+                        DELETE FROM _escuela_course WHERE id = '$id';
+                        COMMIT;";
+                $this->view->message = "The course #$id was deleted successfull";
+                break;
+
+            case "disable":
+                $id = $this->request->get('id');
+                $sql = "UPDATE _escuela_course SET active = 0 WHERE id ='$id';";
+                break;
+            case "enable":
+                $id = $this->request->get('id');
+                $sql = "UPDATE _escuela_course SET active = 1 WHERE id ='$id';";
+                break;
+        }
+
+        if ($sql !== false)
+        {
+            $connection->deepQuery($sql);
+        }
+
+        $isAdmin = Utils::haveManagePermission($email, 'manage') ? 'TRUE' : 'FALSE';
+        $queryCourses = "SELECT * FROM _escuela_course WHERE email = '$email' OR $isAdmin ORDER BY ID";
+
+        $courses = $connection->deepQuery($queryCourses);
+
+        $this->view->title = "School";
+        $this->view->courses = $courses;
+	$this->view->teachers = $teachers;
+    }
+
+    public function schoolTeachersAction()
+    {
+        $this->setMenu('school');
+        $this->view->breadcrumb = array(
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolTeachers" => "Teachers"
+        );
+        $connection = new Connection();
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+        $option = $this->request->get('option');
+        $sql = false;
+
+        if($this->request->isPost())
+        {
+           $name = $connection->escape($this->request->getPost("teacherName"));
+           $title = $connection->escape($this->request->getPost("teacherTitle"));
+           $email = $connection->escape($this->request->getPost("teacherEmail"));
+
+           switch ($option)
+           {
+            case 'add':
+                $sql = "INSERT INTO _escuela_teacher (name, title, email) VALUES ('$name', '$title', '$email'); ";
+                $this->view->message = 'The teacher was inserted successful';
+                break;
+            case 'set':
+                $id = $this->request->get('id');
+                $sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
+                $this->view->message = 'The teacher was updated successful';
+                break;
+           }
+        }
+
+        switch ($option)
+        {
+            case "del":
+                $id = $this->request->get('id');
+                $sql = "START TRANSACTION;
+                        DELETE FROM _escuela_teacher WHERE id = '$id';
+                        UPDATE _escuela_course SET teacher = null WHERE teacher = '$id';
+                        COMMIT;";
+                $this->view->message = "The teacher #$id was deleted successful";
+                break;
+        }
+
+        if ($sql !== false)
+        {
+            $connection->deepQuery($sql);
+        }
+
+         $teachers = $connection->deepQuery("SELECT * FROM _escuela_teacher;");
+
+         if (!is_array($teachers))
+         {
+             $teachers = [];
+         }
+
+         $this->view->teachers = $teachers;
+         $this->view->title = "School";
+    }
+
+    /**
+     * List of chapters
+     *
+     * @author kuma
+     */
+    public function schoolChaptersAction()
+    {
+        $this->setMenu('school');
+
+        $wwwroot = $this->di->get('path')['root'];
+        $connection = new Connection();
+        $utils = new Utils();
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+
+        $course_id = intval($this->request->get('course'));
+        $option = $this->request->get('option');
+
+        switch ($option)
+        {
+            case "up":
+                $id = $this->request->get('id');
+                $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+                if ($r !== false && isset($r[0]))
+                {
+                    $chapter = $r[0];
+                    $connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder - 1));
+                    $connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE id = $id AND xorder > 1;");
+                }
+                break;
+            case "down":
+                $id = $this->request->get('id');
+                $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+                if ($r !== false && isset($r[0]))
+                {
+                    $chapter = $r[0];
+                    $max = $connection->deepQuery("SELECT max(xorder) as m FROM _escuela_chapter WHERE course = {$chapter->course};");
+                    $max = $max[0]->m;
+                    $connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder + 1));
+                    $connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE id = $id AND xorder < $max;");
+
+                }
+                break;
+
+            case "del":
+                $id = $this->request->get('id');
+
+                $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+                if ($r !== false && isset($r[0]))
+                {
+                    $chapter = $r[0];
+
+                    // remove images
+                    $utils->rmdir("$wwwroot/public/courses/{$chapter->course}/$id");
+
+                    $sql =
+                    "START TRANSACTION;" .
+                    "UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE xorder > {$chapter->xorder} AND course = {$chapter->course};" .
+                    "DELETE FROM _escuela_chapter WHERE id = '$id';" .
+                    "DELETE FROM _escuela_question WHERE chapter = '$id';" .
+                    "DELETE FROM _escuela_images WHERE chapter = '$id';" .
+                    "COMMIT;";
+
+                    $connection->deepQuery($sql);
+                    $this->view->message = "The chapter #$id was deleted successful";
+                }
+                break;
+        }
+
+        $chapters = $connection->deepQuery("SELECT *, (SELECT count(*) FROM _escuela_question WHERE chapter = s1.id) as questions FROM _escuela_chapter s1 WHERE course = '$course_id' ORDER BY xorder;");
+        $r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
+        $course = $r[0];
+
+        if (!is_array($chapters))
+        {
+            $chapters = [];
+        }
+
+        $this->view->course = $course;
+        $this->view->chapters = $chapters;
+        $this->view->title = 'Course: <i>' . $course->title . '</i>';
+        $this->view->breadcrumb = array(
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolChapters?course={$course->id}" => "Chapters"
+        );
+    }
+
+    /**
+     * New chapter page
+     *
+     * @author kuma
+     */
+    public function schoolNewChapterAction()
+    {
+        $this->setMenu('school');
+
+        $connection = new Connection();
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+
+        $course_id = intval($this->request->get('course'));
+        $type = $this->request->get('type');
+
+        if ($type !== 'CAPITULO' && $type !== 'PRUEBA')
+        {
+            $type = 'CAPITULO';
+        }
+        $r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
+        $course = $r[0];
+
+        $this->view->course = $course;
+        $this->view->type = $type;
+        $this->view->course_id = $course_id;
+        $this->view->title = $type == 'CAPITULO'?
+                                'New chapter for course <i>' . $course->title . '</i>':
+                                'New test for course <i>' . $course->title . '</i>';
+    }
+
+    public function schoolNewChapterPostAction()
+    {
+        $this->setMenu('school');
+        $wwwroot = $this->di->get('path')['root'];
+        if ($this->request->isPost())
+        {
+            $connection = new Connection();
+            $utils = new Utils();
+
+            $chapterTitle = $connection->escape($this->request->getPost('title'));
+            $chapterContent = $this->request->getPost('content');
+            $images  = $utils->getInlineImagesFromHTML($chapterContent);
+            $chapterContent = $connection->escape($chapterContent);
+            $chapterType = $this->request->getPost('type');
+            $course_id = intval($this->request->get('course'));
+            $coursesFolder = $wwwroot."/public/courses";
+
+            if ( ! file_exists($coursesFolder))
+            {
+                @mkdir($coursesFolder);
+            }
+
+            if ( ! file_exists("$coursesFolder/$course_id"))
+            {
+                @mkdir("$coursesFolder/$course_id");
+            }
+
+            $r = $connection->deepQuery("SELECT count(*) as total FROM _escuela_chapter WHERE course = '$course_id';");
+            $order = intval($r[0]->total) + 1;
+
+            if (isset($_GET['id']))
+            {
+                $id = $this->request->get('id');
+                $sql = "UPDATE _escuela_chapter SET title = '$chapterTitle', content = '$chapterContent', xtype = '$chapterType' WHERE id = '$id';";
+                $connection->deepQuery($sql);
+
+                // clear old images
+                $utils->rmdir("$wwwroot/public/courses/{$course_id}/$id");
+            }
+            else
+            {
+                $r = $connection->deepQuery("SELECT max(id) as m FROM _escuela_chapter;");
+                $id = $r[0]->m + 1;
+                $sql = "INSERT INTO _escuela_chapter (id, title, content, course, xtype, xorder) VALUES ($id, '$chapterTitle', '$chapterContent', '$course_id', '$chapterType', $order);";
+                $connection->deepQuery($sql);
+                //$r = $connection->deepQuery("SELECT LAST_INSERT_ID();");
+                //$id = $id[0]->id;
+            }
+
+            // save images
+            $chapterFolder = $coursesFolder."/$course_id/$id";
+            if (!file_exists($chapterFolder))
+                @mkdir($chapterFolder);
+
+            if (file_exists($chapterFolder))
+            {
+                foreach($images as $idimg => $img)
+                {
+                    file_put_contents($chapterFolder."/$idimg", base64_decode($img['content']));
+                    $connection->deepQuery("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
+                }
+            }
+
+            $this->view->chapter_id = $id;
+            return $this->dispatcher->forward(array("controller"=> "manage", "action" => "schoolChapter"));
+        }
+    }
+
+    public function schoolEditChapterAction()
+    {
+        $this->setMenu('school');
+
+        $url = $_GET['_url'];
+        $id =  explode("/", $url);
+        $id = $id[count($id) - 1];
+
+        $connection = new Connection();
+        $utils = new Utils();
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+        $this->view->title = "Edit chapter";
+
+        $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+
+        if (isset($r[0]))
+        {
+            $chapter = $r[0];
+            $images = $this->getChapterImages($id);
+            $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+            $this->view->chapter = $chapter;
+        }
+        else
+            $this->dispatcher->forward(array("controller"=> "manage", "action" => "pageNotFound"));
+    }
+
+    public function schoolChapterAction()
+    {
+        $this->setMenu('school');
+
+        if (isset($this->view->chapter_id))
+        {
+            $id =  $this->view->chapter_id;
+        }
+        else
+        {
+            $url = $_GET['_url'];
+            $id =  explode("/",$url);
+            $id = $id[count($id)-1];
+        }
+
+        $connection = new Connection();
+        $utils = new Utils();
+
+        $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+        $chapter = $r[0];
+
+        $images = $this->getChapterImages($id);
+        $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+
+        $this->view->message = "The chapter <i>{$chapter->title}</i> was successful inserted";
+        $this->view->message_type = 'success';
+        $this->view->chapter = $chapter;
+        $this->view->title = ($chapter->xtype=='CAPITULO'? "Chapter" : "Test") . ": {$chapter->title}";
+        $this->view->breadcrumb = array(
+            "admin" => "Admin",
+            "school" => "School's courses",
+            "schoolChapters?course={$chapter->course}" => "Course",
+            "schoolChapter?id={$chapter->id}" => "Chapter"
+        );
+    }
+
+    private function getChapterImages($chapter_id)
+    {
+        $connection = new Connection();
+        $r = $connection->deepQuery("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
+        $wwwroot = $this->di->get('path')['root'];
+        $images = [];
+        if ($r !== false)
+        {
+            foreach ($r as $row)
+            {   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}");
+                $images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
+            }
+        }
+        return $images;
+    }
+    /**
+     * Manage test's questions and answers
+     *
+     * @author kuma
+     */
+    public function schoolQuestionsAction()
+    {
+        $this->setMenu('school');
+        $connection = new Connection();
+        $this->view->message = false;
+        $this->view->message_type = 'success';
+
+        $chapter = intval($this->request->get('chapter'));
+        $r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE _escuela_course.id = (SELECT course FROM _escuela_chapter WHERE _escuela_chapter.id = '$chapter');");
+        $course = $r[0];
+        $course_id = $course->id;
+
+        $this->view->course = $course;
+        $option = $this->request->get('option');
+        $sql = false;
+
+        if ($this->request->isPost()){
+
+            switch($option){
+                case "addQuestion":
+                        $chapter = $this->request->getPost('chapter');
+                        $title = $this->request->getPost('chapterQuestionTitle');
+                        $r = $connection->deepQuery("SELECT max(xorder) as m FROM _escuela_question WHERE chapter = '$chapter';");
+                        $order = $r[0]->m + 1;
+                        $sql ="INSERT INTO _escuela_question (course, chapter, title, xorder) VALUES ('$course_id', '$chapter', '$title', '$order');";
+                        $this->view->message = "Question <b>$title</b> was inserted successfull";
+                break;
+                case "setQuestion":
+                        $question_id = $this->request->get('id');
+                        $title = $this->request->getPost('chapterQuestionTitle');
+                        $answer = $this->request->getPost('answer');
+                        $sql = "UPDATE _escuela_question SET title = '$title', answer = $answer WHERE id = '$question_id';";
+                        $this->view->message = "Question <b>$title</b> was updated successfull";
+                        break;
+                case "addAnswer":
+                        $question_id = $this->request->get('question');
+                        $title = $this->request->getPost('chapterAnswerTitle');
+                        $sql ="INSERT INTO _escuela_answer (course, chapter, question, title) VALUES ('$course_id', '$chapter', '$question_id', '$title');";
+                        $this->view->message = "Answer <b>$title</b> was inserted successfull";
+                break;
+                case "setAnswer":
+                        $answer_id = $this->request->get('id');
+                        $title = $this->request->getPost('chapterAnswerTitle');
+                        $sql = "UPDATE _escuela_answer SET title = '$title' WHERE id = '$answer_id';";
+                        $this->view->message = "The answer was updated successfull";
+                break;
+            }
+        }
+
+        switch($option)
+        {
+            case "delAnswer":
+                $answer_id = $this->request->get('id');
+                $sql = "DELETE FROM _escuela_answer WHERE id ='{$answer_id}'";
+                $this->view->message = "The answer was deleted successfull";
+            break;
+
+            case "delQuestion":
+                $question_id = $this->request->get('id');
+                $sql = "START TRANSACTION;
+                        DELETE FROM _escuela_question WHERE id = '{$question_id}';
+                        DELETE FROM _escuela_answer WHERE question ='{$question_id}';
+                        COMMIT;";
+                $this->view->message = "The question was deleted successfull";
+            break;
+        }
+
+        if ($sql!=false) $connection->deepQuery($sql);
+
+        $chapter = $this->request->get('chapter');
+
+        $r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '{$chapter};'");
+        if ($r !== false) {
+            $sql = "SELECT * FROM _escuela_question WHERE chapter = '$chapter' order by xorder;";
+            $chapter = $r[0];
+            $questions = $connection->deepQuery($sql);
+            if ($questions !== false) {
+
+                foreach ($questions as $k=>$q){
+                    $answers = $connection->deepQuery("SELECT * FROM _escuela_answer WHERE question = '{$q->id}';");
+                    if ($answers==false) $answers = array();
+                    $questions[$k]->answers=$answers;
+                }
+
+                $this->view->title = "Test: ".$chapter->title;
+                $this->view->chapter = $chapter;
+                $this->view->questions = $questions;
+            }
+        }
+
+        $this->view->breadcrumb = array(
+            "admin" => "Admin",
+            "school" => "School",
+            "schoolChapters?course={$chapter->course}" => "Chapters",
+            "schoolChapter/{$chapter->id}" => "Test",
+            "schoolQuestions?chapter={$chapter->id}" => "Questions"
+        );
+    }
+
+    public function testAction()
+    {
+
+    }
 }
