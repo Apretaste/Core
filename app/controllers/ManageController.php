@@ -204,8 +204,10 @@ class ManageController extends Controller
 
 
 		// START current number of Users
-		$queryCurrentNoUsers = "SELECT COUNT(email) as CountUsers FROM person WHERE active=1";
-		$currentNoUsers = $connection->deepQuery($queryCurrentNoUsers);
+		$queryCurrentActiveUsers = "SELECT COUNT(email) as CountUsers FROM person WHERE active=1";
+		$queryCurrentTotalUsers = "SELECT COUNT(email) as CountUsers FROM person";
+		$currentActiveUsers = $connection->deepQuery($queryCurrentActiveUsers);
+		$currentTotalUsers = $connection->deepQuery($queryCurrentTotalUsers);
 		// END Current number of Users
 
 
@@ -283,7 +285,8 @@ class ManageController extends Controller
 		$this->view->visitorsWeecly = $visitorsWeecly;
 		$this->view->visitorsMonthly = $visitorsMonthly;
 		$this->view->newUsers = $newUsers;
-		$this->view->currentNumberOfActiveUsers = $currentNoUsers[0]->CountUsers;
+		$this->view->currentNumberOfActiveUsers = $currentActiveUsers[0]->CountUsers;
+		$this->view->currentNumberOfTotalUsers = $currentTotalUsers[0]->CountUsers;
 		$this->view->servicesUsageMonthly = $servicesUsageMonthly;
 		$this->view->activeDomainsMonthly = $activeDomainsMonthly;
 		$this->view->bounceRateMonthly = $bounceRateMonthly;

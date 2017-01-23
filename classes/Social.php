@@ -168,7 +168,7 @@ class Social
 		$message = "Hola";
 		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
 		if ( ! empty($age)) $message .= ", tengo $age a&ntilde;os";
-		if ( ! empty($gender)) $message .= ", I am $gender";
+		if ( ! empty($gender)) $message .= ", soy $gender";
 		if ( ! empty($religion)) $message .= ", soy $religion";
 		if ( ! empty($skin)) $message .= ", soy $skin";
 		if ( ! empty($eyes)) $message .= ", de ojos $eyesTone (color $eyes)";
