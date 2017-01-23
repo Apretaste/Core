@@ -12,7 +12,6 @@ class ManageController extends Controller
      * */
     public function indexAction()
     {
-            $wwwroot = $this->di->get('path')['root'];
             $connection = new Connection();
             $utils = new Utils();
 
