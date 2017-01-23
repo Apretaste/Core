@@ -61,8 +61,14 @@ class Email
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		if($di->get('environment') != "sandbox")
 		{
+			// get the API key and start MailGun client
 			$mailgunKey = $di->get('config')['mailgun']['key'];
 			$mgClient = new Mailgun($mailgunKey);
+
+			// clear the email from the bounce list. We take will care of bad emails
+			try {$mgClient->delete("{$this->domain}/bounces/$to");} catch (Exception $e){}
+
+			// send the email
 			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
 			// @TODO return false when negative $result
 		}

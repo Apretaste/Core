@@ -171,6 +171,9 @@ class Utils
 		if (count($person)==0) return false;
 		else $person = $person[0];
 
+		// get the person's age
+		$person->age = empty($person->date_of_birth) ? 0 : date_diff(date_create($person->date_of_birth), date_create('today'))->y;
+
 		// remove the pin from the response
 		unset($person->pin);
 
@@ -243,6 +246,45 @@ class Utils
 		}
 
 		return $username;
+	}
+
+	/**
+	 * Get the email from an username
+	 *
+	 * @author salvipascual
+	 * @param String $username
+	 * @return String email or false
+	 */
+	public function getEmailFromUsername($username)
+	{
+		// remove the @ symbol
+		$username = str_replace("@", "", $username);
+
+		// get the email
+		$connection = new Connection();
+		$email = $connection->deepQuery("SELECT email FROM person WHERE username='$username'");
+
+		// return the email or false if not found
+		if(empty($email)) return false;
+		else return $email[0]->email;
+	}
+
+	/**
+	 * Get the username from an email
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String username or false
+	 */
+	public function getUsernameFromEmail($email)
+	{
+		// get the username
+		$connection = new Connection();
+		$username = $connection->deepQuery("SELECT username FROM person WHERE email='$email'");
+
+		// return the email or false if not found
+		if(empty($username)) return false;
+		else return $username[0]->username;
 	}
 
 	/**
@@ -457,6 +499,16 @@ class Utils
 			stripos($to,"noresponder")!==false)
 		) $msg = 'no-reply';
 
+		// if the person received from Apretaste before, and he/she reaches again, unblock
+		if(empty($msg) && $direction=="in")
+		{
+			$times = $connection->deepQuery("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
+			if($times[0]->times > 0)
+			{
+				$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$to'");
+			}
+		}
+
 		// do not send any email that hardfailed before
 		if(empty($msg))
 		{
@@ -464,10 +516,10 @@ class Utils
 			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
 		}
 
-		// block any previouly dropped email that had already failed for 5 times
+		// block any previouly dropped email that had already failed for 3 times
 		if(empty($msg))
 		{
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'dismissed' AND reason <> 'loop' AND reason <> 'spam' AND email='$to'");
+			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 
@@ -615,7 +667,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// get the new expiration date and token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$token = md5($email.$pin.$expires.rand());
 
 		// create new entry on the authentication table
@@ -644,7 +696,7 @@ class Utils
 		if(empty($auth)) return false;
 
 		// extend the life of the token
-		$expires = date("Y-m-d", strtotime("+3 days"));
+		$expires = date("Y-m-d", strtotime("+1 month"));
 		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
