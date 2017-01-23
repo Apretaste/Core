@@ -2838,6 +2838,8 @@ class ManageController extends Controller
 
             if (file_exists($chapterFolder))
             {
+				$connection->deepQuery("DELETE FROM _escuela_images WHERE chapter = '$id';");
+				
                 foreach($images as $idimg => $img)
                 {
                     file_put_contents($chapterFolder."/$idimg{$imgExt}", base64_decode($img['content']));
