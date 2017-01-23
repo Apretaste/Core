@@ -1386,7 +1386,7 @@ class Utils
      * @param string $prefix
      * @return array
      */
-    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:')
+    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
     {
         $imageList = [];
         $tidy = new tidy();
@@ -1421,7 +1421,7 @@ class Utils
                     
                     $filename = str_replace(['"','\\'], '', $filename);
                     $imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
-                    $image->setAttribute('src', $prefix.$id);
+                    $image->setAttribute('src', $prefix.$id.$suffix);
                 }
             }  
         }
