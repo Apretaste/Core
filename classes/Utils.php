@@ -1436,7 +1436,7 @@ class Utils
      * @param string $html
      * @return array
      */
-    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
+    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
     {
         $tidy = new tidy();
         $body = $tidy->repairString($html, array(
@@ -1451,6 +1451,7 @@ class Utils
             foreach ($images as $image) {
                 $src = $image->getAttribute('src');
                 $src = substr($src, strlen($prefix));
+				$src = substr($src, 0, strlen($src) - strlen($suffix));
                 if (isset($imageList[$src]))
                 {
                     $image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);

@@ -2867,7 +2867,7 @@ class ManageController extends Controller
         {
             $chapter = $r[0];
             $images = $this->getChapterImages($id);
-            $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+            $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
             $this->view->chapter = $chapter;
         }
         else
@@ -2896,7 +2896,7 @@ class ManageController extends Controller
         $chapter = $r[0];
 
         $images = $this->getChapterImages($id);
-        $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images);
+        $chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
 
         $this->view->message = "The chapter <i>{$chapter->title}</i> was successful inserted";
         $this->view->message_type = 'success';
