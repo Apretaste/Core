@@ -2787,10 +2787,10 @@ class ManageController extends Controller
         {
             $connection = new Connection();
             $utils = new Utils();
-
+            $imgExt = '.jpg';
             $chapterTitle = $connection->escape($this->request->getPost('title'));
             $chapterContent = $this->request->getPost('content');
-            $images  = $utils->getInlineImagesFromHTML($chapterContent);
+            $images  = $utils->getInlineImagesFromHTML($chapterContent, 'cid:', $imgExt);
             $chapterContent = $connection->escape($chapterContent);
             $chapterType = $this->request->getPost('type');
             $course_id = intval($this->request->get('course'));
@@ -2837,7 +2837,7 @@ class ManageController extends Controller
             {
                 foreach($images as $idimg => $img)
                 {
-                    file_put_contents($chapterFolder."/$idimg", base64_decode($img['content']));
+                    file_put_contents($chapterFolder."/$idimg{$imgExt}", base64_decode($img['content']));
                     $connection->deepQuery("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
                 }
             }
