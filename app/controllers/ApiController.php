@@ -78,7 +78,7 @@ class ApiController extends Controller
 		$pin = "unset";
 		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
 
-		die('{"exist":"'.$exist.'", "pin":"'.$pin.'"}');
+		die('{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}');
 	}
 
 	/**
