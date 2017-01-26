@@ -407,37 +407,37 @@ class RunController extends Controller
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 
-            // check if is first request of the day
-            $requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
-            $stars = 0;
-            if ($requestsToday == 0)
-            {
-                // run the tickets's game
+			// check if is first request of the day
+			$requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
+			$stars = 0;
+			if ($requestsToday == 0)
+			{
+				// run the tickets's game
 
-                // @note: este chequeo se hace despues de verificar si es el primer
-                // correo del dia, para no preguntar chequear mas veces
-                // innecesariamente en el resto del dia
+				// @note: este chequeo se hace despues de verificar si es el primer
+				// correo del dia, para no preguntar chequear mas veces
+				// innecesariamente en el resto del dia
 
-                $stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
+				$stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
 
-                if ($stars === 4) /* today is the star number five*/
-                {
-                    // insert 10 tickets for user
-                    $sqlValues = "('$email', 'GAME')";
-                    $sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
-                    $connection->deepQuery($sql);
+				if ($stars === 4) /* today is the star number five*/
+				{
+					// insert 10 tickets for user
+					$sqlValues = "('$email', 'GAME')";
+					$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+					$connection->deepQuery($sql);
 
-                    // add notification to user
-                    $utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
-                }
+					// add notification to user
+					$utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
+				}
 
-                $stars++;
-            }
+				$stars++;
+			}
 
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-            $rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
-            $rs->content['raffle_stars'] = $stars;
-            $rs->content['requests_today'] = $requestsToday;
+			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
+			$rs->content['raffle_stars'] = $stars;
+			$rs->content['requests_today'] = $requestsToday;
 		}
 
 		// create a new render
@@ -467,7 +467,8 @@ class RunController extends Controller
 		// echo the json on the screen
 		if($format == "json")
 		{
-			return $render->renderJSON($response);
+			if($response->render) return $render->renderJSON($response);
+			else return '{"code":"ok"}';
 		}
 
 		// render the template email it to the user
