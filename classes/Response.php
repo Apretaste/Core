@@ -89,7 +89,7 @@ class Response
 	public function createFromText($text)
 	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>$text);
+		$this->content = array("code"=>"ok","text"=>$text);
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
@@ -124,6 +124,8 @@ class Response
 	 */
 	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
 	{
+		$content['code'] = "ok"; // for the API
+
 		$this->template = $template;
 		$this->content = $content;
 		$this->images = $images;
