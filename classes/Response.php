@@ -120,7 +120,7 @@ class Response
 	 * @param String $template, name of the file in the template folder
 	 * @param String[] $content, in the way ["key"=>"var"]
 	 * @param String[] $images, paths to the images to embeb
-	 * @param String[] $attachments, paths to the files to attach 
+	 * @param String[] $attachments, paths to the files to attach
 	 */
 	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
 	{
