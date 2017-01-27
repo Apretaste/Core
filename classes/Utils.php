@@ -1313,10 +1313,10 @@ class Utils
 	 */
 	public function getTotalRequestsTodayOf($email)
 	{
-		$sql = "SELECT count(*) as total FROM utilization
+		$sql = "SELECT count(usage_id) as total FROM utilization
 				WHERE date(request_time) = current_date
-				  and requestor = '$email'
-				  and service <> 'rememberme';";
+				and requestor = '$email'
+				and service <> 'rememberme';";
 
 		$connection = new Connection();
 		$r = $connection->deepQuery($sql);
