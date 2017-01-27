@@ -26,7 +26,7 @@ class ApiController extends Controller
 		if( ! $token) die('{"code":"error","message":"invalid email or pin"}');
 
 		// return ok response
-		die('{"code":"ok","token","'.$token.'"}');
+		die('{"code":"ok","token":"'.$token.'"}');
 	}
 
 	/**
