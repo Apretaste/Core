@@ -978,22 +978,20 @@ class Utils
 	 */
 	public function getNumberOfNotifications($email)
 	{
-		$connection = new Connection();
-
 		// temporal mechanism?
-		$r = $connection->deepQuery("SELECT notifications FROM person WHERE notifications is null AND email = '{$email}';");
-
-		if (!isset($r[0])) {
+		$connection = new Connection();
+		$r = $connection->deepQuery("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
+		if ( ! isset($r[0]))
+		{
 			$r[0] = new stdClass();
 			$r[0]->notifications = '';
 		}
 
 		$notifications = $r[0]->notifications;
-
-		if (trim($notifications) == ''){
-
+		if (trim($notifications) == '')
+		{
 			// calculate notifications
-			$r = $connection->deepQuery("SELECT count(*) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
+			$r = $connection->deepQuery("SELECT count(id) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
 
 			// update person
@@ -1269,16 +1267,16 @@ class Utils
 		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
-  /**
-   * Return data of raffle's stars
-   *
-   * @author kuma
-   * @param $email string
-   * @param $from_today boolean
-   * @return integer
-   */
+	/**
+	 * Return data of raffle's stars
+	 *
+	 * @author kuma
+	 * @param $email string
+	 * @param $from_today boolean
+	 * @return integer
+	 */
 	public function getRaffleStarsOf($email, $from_today = true)
-  {
+	{
 		$connection = new Connection();
 		$stars = 0;
 
@@ -1286,7 +1284,7 @@ class Utils
 		{
 			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
 			{
-				$r = $connection->deepQuery("SELECT count(*) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
+				$r = $connection->deepQuery("SELECT count(usage_id) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
 				if ($r[0]->uses < 1)
 					break;
 			}
