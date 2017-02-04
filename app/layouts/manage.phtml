@@ -53,21 +53,8 @@
 							</div>
 						</li>
 						<li>
-							<a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span> <span class="fa arrow"></span></a>
+							<a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span></a>
 						</li>
-						<?php if (isset($menu)): ?>
-						<li>
-							<a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Context</span> <span class="fa arrow"></span></a>
-							<ul class="nav nav-second-level collapse in">
-									<?php foreach($menu as $item):?>
-										<li><a href="<?php echo $item['href'];?>">
-											<?php if (isset($item['icon'])): ?><span class="glyphicon glyphicon-<?php echo $item['icon']; ?>"></span>
-											<?php endif;?><?php echo $item['caption'];?>
-										</a></li>
-									<?php endforeach;?>
-							</ul>
-						</li>
-						<?php endif;?>
 						<li>
 							<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -89,8 +76,17 @@
 								<li><a href="/manage/createraffle">Create raffle</a></li>
 								<li><a href="/manage/addcredit">Add credit</a></li>
 								<li><a href="/manage/jumper">Jumper</a></li>
-								<li><a href="/manage/surveys">Surveys</a></li>
-								<li><a href="/manage/market">Market<span class="label label-primary pull-right">NEW</span></a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="/manage/surveys"><i class="fa fa-pie-chart"></i> <span class="nav-label">Surveys</span></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Market</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/market">Products</a></li>
+								<li><a href="/manage/marketOrders">Orders</a></li>
+								<li><a href="/manage/marketStats">Stats</a></li>
 							</ul>
 						</li>
 						<li>

@@ -1861,25 +1861,6 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * Top menu
-	 *
-	 * @param string $name
-	 */
-	private function setMenu($name = 'default')
-	{
-		switch ($name)
-		{
-			case 'market':
-				$this->view->menu = array(
-					array('caption' => 'Market', 'href' => '/manage/market', 'icon' => 'shopping-cart'),
-					array('caption' => 'Orders', 'href' => '/manage/marketOrders', 'icon' => 'bell'),
-					array('caption' => 'Stats', 'href' => '/manage/marketStats', 'icon' => 'stats')
-				);
-		}
-
-	}
-
-	/**
 	 * Market
 	 *
 	 * @author kuma
@@ -1900,7 +1881,6 @@ class ManageController extends Controller
 			"/manage/admin" => "Admin",
 			"/manage/admin/market" => "Market"
 		);
-		$this->setMenu('market');
 	}
 
 	/**
@@ -2051,7 +2031,6 @@ class ManageController extends Controller
 			'/manage/market' => 'Market',
 			'/manage/marketDetail/'.$code => 'Product '.$code,
 		);
-		$this->setMenu('market');
 	}
 
 	/**
@@ -2181,7 +2160,6 @@ class ManageController extends Controller
 	 */
 	public function marketOrdersAction()
 	{
-		$this->setMenu('market');
 		$this->updateMarketOrders();
 		$connection = new Connection();
 		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = 0;";
@@ -2214,8 +2192,6 @@ class ManageController extends Controller
 	 */
 	public function marketDestinationAction()
 	{
-		$this->setMenu('market');
-
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
@@ -2282,8 +2258,6 @@ class ManageController extends Controller
 	 */
 	public function marketOrderReceivedAction()
 	{
-		$this->setMenu('market');
-
 		// getting ad's id
 		// @TODO: improve this!
 		$url = $_GET['_url'];
