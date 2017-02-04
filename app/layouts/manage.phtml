@@ -124,26 +124,25 @@
 			</nav>
 
 			<div id="page-wrapper" class="gray-bg dashbard-1">
+				<?php if(isset($title)): ?>
+					<div class="row wrapper border-bottom white-bg page-heading">
+						<h2><?php  echo $title; ?></h2>
 
-			<?php if(isset($title)): ?>
-				<div class="row wrapper border-bottom white-bg page-heading">
-					<h2><?php  echo $title; ?></h2>
-
-					<ol class="breadcrumb">
-						<li><a href="/manage">Home</a></li>
-						<?php if (isset($breadcrumb)): ?>
-							<?php foreach ($breadcrumb as $path => $caption): ?>
-							<?php $active = false;?>
-							<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
-							<li <?php if ($active) echo 'class="active"';?>>
-									<a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
-							</li>
-							<?php endforeach;?>
-						<?php endif;?>
-					</ol>
-				</div>
-			<?php endif;?>
-			<?php echo $this->getContent(); ?>
+						<ol class="breadcrumb">
+							<li><a href="/manage">Home</a></li>
+							<?php if (isset($breadcrumb)): ?>
+								<?php foreach ($breadcrumb as $path => $caption): ?>
+								<?php $active = false;?>
+								<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
+								<li <?php if ($active) echo 'class="active"';?>>
+										<a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
+								</li>
+								<?php endforeach;?>
+							<?php endif;?>
+						</ol>
+					</div>
+				<?php endif;?>
+				<?php echo $this->getContent(); ?>
 			</div>
 		</div>
 
