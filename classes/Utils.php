@@ -990,12 +990,10 @@ class Utils
 		$notifications = $r[0]->notifications;
 		if (trim($notifications) == '')
 		{
-			// calculate notifications
-			$r = $connection->deepQuery("SELECT count(id) as total FROM notifications WHERE email ='{$email}' AND viewed = 0;");
+			// calculate notifications and update the number
+			$r = $connection->deepQuery("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
-
-			// update person
-			$r = $connection->deepQuery("UPDATE person SET notifications = $notifications;");
+			$connection->deepQuery("UPDATE person SET notifications = $notifications WHERE email ='$email'");
 		}
 
 		return $notifications * 1;

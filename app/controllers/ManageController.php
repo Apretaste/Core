@@ -236,7 +236,7 @@ class ManageController extends Controller
 		}
 		// END active domains last 4 months
 
-
+/*
 		// START bounce rate
 		$query = "SELECT B.* FROM (";
 		for($i=0; $i<12; $i++)
@@ -253,7 +253,7 @@ class ManageController extends Controller
 			$bounceRateMonthly[] = ["date"=>$visit->date, "bounced"=>$visit->bounced];
 		}
 		//End bounce rate
-
+*/
 
 		// START updated profiles
 		$query =
@@ -288,7 +288,7 @@ class ManageController extends Controller
 		$this->view->currentNumberOfTotalUsers = $currentTotalUsers[0]->CountUsers;
 		$this->view->servicesUsageMonthly = $servicesUsageMonthly;
 		$this->view->activeDomainsMonthly = $activeDomainsMonthly;
-		$this->view->bounceRateMonthly = $bounceRateMonthly;
+//		$this->view->bounceRateMonthly = $bounceRateMonthly;
 		$this->view->updatedProfilesMonthly = $updatedProfilesMonthly;
 		$this->view->currentNumberOfRunningaAds = $runningAds[0]->CountAds;
 	}
