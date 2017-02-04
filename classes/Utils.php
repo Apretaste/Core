@@ -364,30 +364,23 @@ class Utils
 	 * @param string $format Convert to format
 	 * @return boolean
 	 */
-
 	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
-		if ( ! class_exists('SimpleImage'))
-			include_once "../lib/SimpleImage.php";
+		// include SimpleImage class
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		include_once "$wwwroot/lib/SimpleImage.php";
 
+		// optimize image
 		try
 		{
 			$img = new SimpleImage();
 			$img->load($imagePath);
-
-			if ( ! empty($width))
-				$img->fit_to_width($width);
-
-			if ( ! empty($height))
-				$img->fit_to_height($height);
-
+			if ( ! empty($width)) $img->fit_to_width($width);
+			if ( ! empty($height)) $img->fit_to_height($height);
 			$img->save($imagePath, $quality, $format);
 		}
-		catch (Exception $e)
-		{
-			return false;
-		}
-
+		catch (Exception $e) { return false; }
 		return true;
 	}
 
