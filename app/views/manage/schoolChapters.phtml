@@ -1,0 +1,108 @@
+<div class="row">
+    <div class="col-xs-12">
+        <?php if ($message !== false): ?>
+            <div class="alert alert-<?php echo $message_type; ?>" role="alert"><?php echo $message; ?></div>
+        <?php endif; ?>
+        <br/>
+        <p align="right"><a href="/manage/school" class="btn btn-default">Courses</a></p>
+        <br/>
+        <div class="panel">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Chapters</h5>
+                    <div class="ibox-tools">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li>
+                                <a href="/manage/schoolNewChapter?type=CAPITULO&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New chapter</a>
+                            </li>
+                            <li>
+                                <a href="/manage/schoolNewChapter?type=PRUEBA&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New test</a>                
+                            </li>
+                        </ul>
+                        <a class="close-link">
+                            &nbsp;
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content">
+                        <!-- New product -->
+                        <div class="" style="text-align:right">
+                            <a class="btn btn-primary" href="/manage/schoolNewChapter?type=CAPITULO&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New chapter</a>
+                            <a class="btn btn-primary" href="/manage/schoolNewChapter?type=PRUEBA&course=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-plus"></span> New test</a>                
+                        </div>
+                        <div class="table-responsive">
+                            <table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>#</th>
+                                        <th>Title</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($chapters as $chapter): ?>
+                                        <tr>    
+                                            <td width="50" align="center">
+                                                <?php if ($chapter->xtype == 'CAPITULO'): ?>
+                                                <i class="fa fa-newspaper-o fa-2x" title="<?php echo $chapter->xtype; ?>"></i> 
+                                                <?php else: ?>
+                                                <i class="fa fa-question-circle fa-2x" title="<?php echo $chapter->xtype; ?>"></i> 
+                                                <?php endif; ?>
+                                            </td>
+                                            
+                                            <td width="62"><?php echo $chapter->xorder; ?></td>
+                                            
+                                            <td><?php echo $chapter->title; ?></td>
+                                            
+                                            
+                                            <td width="50">
+                                                <?php if ($chapter->xtype == 'PRUEBA'): ?>
+                                                    <a class="btn btn-default" href="/manage/schoolQuestions?chapter=<?php echo $chapter->id; ?>">Questions <span class="label label-info"><?php echo $chapter->questions; ?></span></a>
+                                                </td>
+                                            <?php endif; ?>
+                                            <td width="32"><a class="btn btn-default" href="/manage/schoolEditChapter/<?php echo $chapter->id; ?>"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td width="32"><a class="btn btn-default" href="/manage/schoolChapters?option=up&course=<?php echo $chapter->course;?>&id=<?php echo $chapter->id;?>"><span class="glyphicon glyphicon-arrow-up"></span></a></td>
+                                            <td width="32"><a class="btn btn-default" href="/manage/schoolChapters?option=down&course=<?php echo $chapter->course;?>&id=<?php echo $chapter->id;?>"><span class="glyphicon glyphicon-arrow-down"></span></a></td>                                            
+                                            <td width="32"><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/schoolChapters?option=del&course=<?php echo $chapter->course; ?>&id=<?php echo $chapter->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('.dataTables-example').DataTable({
+            dom: '<"html5buttons"B>lTfgitp',
+            buttons: [
+                {extend: 'copy'},
+                {extend: 'csv'},
+                {extend: 'excel', title: 'ApretasteSchoolChapters'},
+                {extend: 'pdf', title: 'ApretasteSchoolChapters'},
+                {extend: 'print',
+                    customize: function (win) {
+                        $(win.document.body).addClass('white-bg');
+                        $(win.document.body).css('font-size', '10px');
+                        $(win.document.body).find('table')
+                                .addClass('compact')
+                                .css('font-size', 'inherit');
+                    }
+                }
+            ]
+        });
+    });
+</script>

@@ -19,8 +19,8 @@ public/tienda/*
 public/w/*
 public/download/*
 public/products/*
-public/courses/*
 migration/*
 services/*
 app/controllers/TestController.php
 .idea/*
+public/courses/*

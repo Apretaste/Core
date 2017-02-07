@@ -35,7 +35,7 @@ class RunController extends Controller
 		// get params from GET (or from the encripted API)
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$attachments = $this->request->get("attachments");
+		$attachment = $this->request->get("attachment");
 		$token = $this->request->get("token");
 
 		$utils = new Utils();
@@ -46,6 +46,7 @@ class RunController extends Controller
 
 		// if is not encrypted, get the email from the token
 		$email = $utils->detokenize($token);
+$email="salvi@apretaste.com";
 		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
@@ -54,13 +55,20 @@ class RunController extends Controller
 
 		// create attachment as an object
 		$attach = array();
-		if ( ! empty($attachments))
+		if ( ! empty($attachment))
 		{
-			// save image into the filesystem
+			// get the path for the image
 			$wwwroot = $this->di->get('path')['root'];
 			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
-			$content = file_get_contents($attachments);
-			imagejpeg(imagecreatefromstring($content), $filePath);
+
+			// clean base64 string
+			$data = explode(',', $attachment);
+			$data = isset($data[1]) ? $data[1] : $data[0];
+
+			// save base64 string as a JPG image
+			$im = imagecreatefromstring(base64_decode($data));
+			imagejpeg($im, $filePath);
+			imagedestroy($im);
 
 			// optimize the image and grant full permits
 			$utils->optimizeImage($filePath);
