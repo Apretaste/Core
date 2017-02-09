@@ -17,7 +17,7 @@ class ManageController extends Controller
 
 		// START delivery status widget
 		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-		$dropped = $connection->deepQuery("SELECT COUNT(*) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
+		$dropped = $connection->deepQuery("SELECT COUNT(id) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
 		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
@@ -153,8 +153,8 @@ class ManageController extends Controller
 		// START weekly visitors
 		$query =
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(*) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
-			LEFT JOIN (SELECT count(*) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
+			FROM (SELECT count(usage_id) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
+			LEFT JOIN (SELECT count(id) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($query);
 		$visitorsWeecly = array();
@@ -171,8 +171,8 @@ class ManageController extends Controller
 		// START monthly visitors
 		$query =
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(*) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
-			LEFT JOIN (SELECT count(*) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
+			FROM (SELECT count(usage_id) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->deepQuery($query);
 		$visitorsMonthly = array();
@@ -1303,7 +1303,7 @@ class ManageController extends Controller
 				and YEAR(request_time) = YEAR(CURRENT_DATE)";
 
 			// usage by age
-			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(*) as t FROM ($jsql) AS subq GROUP BY a;";
+			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(subq.usage_id) as t FROM ($jsql) AS subq GROUP BY a;";
 			$r = $db->deepQuery($sql);
 
 			$usage_by_age = array(
@@ -1336,7 +1336,7 @@ class ManageController extends Controller
 			foreach($X as $xx)
 			{
 				$usage = array();
-				$r = $db->deepQuery("SELECT subq.$xx as a, COUNT(*) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
+				$r = $db->deepQuery("SELECT subq.$xx as a, COUNT(subq.usage_id) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
 
 				if ($r != false)
 				{
@@ -1686,7 +1686,7 @@ class ManageController extends Controller
 		if ($survey!==false){
 			$survey = $survey[0];
 
-			$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(*)
+			$sql = "SELECT * FROM (SELECT email, survey, (SELECT count(_survey_question.id)
 					  FROM _survey_question
 					  WHERE _survey_question.survey = _survey_answer_choosen.survey) as total,
 					count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
@@ -1734,7 +1734,7 @@ class ManageController extends Controller
 		foreach($questions as $question)
 		{
 			//$html .= "<h2>". $question->title . "</h2>";
-			$answers = $db->deepQuery("SELECT *, (SELECT count(*) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
+			$answers = $db->deepQuery("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 
 			$values = '';
 			foreach($answers as $ans){
@@ -2702,7 +2702,7 @@ class ManageController extends Controller
 				break;
 		}
 
-		$chapters = $connection->deepQuery("SELECT *, (SELECT count(*) FROM _escuela_question WHERE chapter = s1.id) as questions FROM _escuela_chapter s1 WHERE course = '$course_id' ORDER BY xorder;");
+		$chapters = $connection->deepQuery("SELECT *, (SELECT count(_escuela_question.id) FROM _escuela_question WHERE chapter = s1.id) as questions FROM _escuela_chapter s1 WHERE course = '$course_id' ORDER BY xorder;");
 		$r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
 		$course = $r[0];
 
@@ -2779,7 +2779,7 @@ class ManageController extends Controller
 				@mkdir("$coursesFolder/$course_id");
 			}
 
-			$r = $connection->deepQuery("SELECT count(*) as total FROM _escuela_chapter WHERE course = '$course_id';");
+			$r = $connection->deepQuery("SELECT count(id) as total FROM _escuela_chapter WHERE course = '$course_id';");
 			$order = intval($r[0]->total) + 1;
 
 			if (isset($_GET['id']))

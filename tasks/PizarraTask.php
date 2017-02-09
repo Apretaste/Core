@@ -58,7 +58,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 				$note = substr($note, 0, 140);
 
 				// check if that nota already exist
-				$notescount = $connection->deepQuery("SELECT COUNT(*) as total FROM _pizarra_notes WHERE text='$note'");
+				$notescount = $connection->deepQuery("SELECT COUNT(id) as total FROM _pizarra_notes WHERE text='$note'");
 				if($notescount[0]->total > 0) continue;
 
 				// save note into the database
