@@ -150,7 +150,7 @@ class Utils
 	public function getNumberOfTickets($email)
 	{
 		$connection = new Connection();
-		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+		$tickets = $connection->deepQuery("SELECT count(ticket_id) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
 		$tickets = $tickets[0]->tickets;
 		return $tickets;
 	}
@@ -323,7 +323,7 @@ class Utils
 		else $raffle = $raffle[0];
 
 		// get number of tickets opened
-		$openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = $connection->deepQuery("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
@@ -1022,15 +1022,15 @@ class Utils
 
 		// prepare query templates...
 		$sqls = array(
-			'person.count' => "SELECT count(*) as c FROM person;",
+			'person.count' => "SELECT count(email) as c FROM person;",
 			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
 			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
 			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
 			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.count' => "SELECT count(*) as c FROM person where credit > 0;",
-			'market.sells.monthly' => "SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
-			'utilization.count' => "SELECT count(*) FROM utilization;",
-			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(*) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
+			'person.credit.count' => "SELECT count(email) as c FROM person where credit > 0;",
+			'market.sells.monthly' => "SELECT count(subq.id) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
+			'utilization.count' => "SELECT count(usage_id) FROM utilization;",
+			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(_tienda_orders.id) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
 		);
 
 		if (!isset($sqls[$statName]))
@@ -1271,26 +1271,38 @@ class Utils
 		$connection = new Connection();
 		$stars = 0;
 
-		for ($d = 0; $d < 5; $d++)
-		{
-			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-			{
-				$r = $connection->deepQuery("SELECT count(usage_id) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
-				if ($r[0]->uses < 1)
-					break;
-			}
+		// last win
+        $sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
+        $r = $connection->deepQuery($sql);
+        $dt = $r[0]->dt * 1;
 
-			// check tickets from GAME (include today)
-			$r = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE email = '{$email}' AND DATE(creation_time) = CURRENT_DATE - $d AND origin = 'GAME';");
+        if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
 
-			if ($r[0]->tickets > 0)
-				break;
+        // last usages
+        $first = true;
+        $sql = "";
+        for ($d = 0; $d < 5; $d++)
+        {
+            if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
+            {
+                $sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
+                $first = false;
+            }
+        }
+        $last_usage = $connection->deepQuery($sql);
 
-			if ($from_today === true || ($from_today === false && $d > 0))
-				$stars++;
-		}
+        // count stars
+        $d = $from_today ? 0 : 1;
+        foreach ($last_usage as $lu)
+        {
+            // if use current day and not win...
+            if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
+            else
+                break; // not daily used
+            $d++;
+        }
 
-		return $stars;
+        return $stars;
 	}
 
 	/**
@@ -1311,5 +1323,177 @@ class Utils
 		$r = $connection->deepQuery($sql);
 
 		return $r[0]->total * 1;
+	}
+
+    /**
+     * Check if a manage user have a permission
+     *
+     * @author kuma
+     * @param $email
+     * @param mixed $permission
+     * @return bool
+     */
+	public static function haveManagePermission($email, $permission)
+    {
+        if (is_string($permission))
+        {
+            $permission = explode(' ', trim(str_replace(',', ' ',$permission)));
+        }
+
+        $sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
+        $permissions = '';
+
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
+
+        if (isset($r[0]))
+        {
+            $permissions = $r[0]->permissions;
+        }
+
+        $permissions = ' '.str_replace(',', ' ',$permissions).' ';
+
+        $found = 0;
+        foreach($permission as $p)
+        {
+            $required = false;
+            if ($p[0] == '*')
+            {
+                $required = true;
+                $p = substr($p, 1);
+            }
+
+            $pos = stripos($permissions, ' ' . $p . ' ');
+
+            if ($pos === false || $required)
+            {
+                return false;
+            }
+
+            if ($pos !== false)
+            {
+                $found++;
+            }
+        }
+
+        return $found > 0;
+
+    }
+
+    /**
+     * Parsing all line images encoded as base64
+     *
+     * @param string $html
+     * @param string $prefix
+     * @return array
+     */
+    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
+    {
+        $imageList = [];
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
+
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
+
+        $images = $doc->getElementsByTagName('img');
+          if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $id = "img".uniqid();
+
+                // ex: src = data:image/png;base64,...
+                $p = strpos($src, ';base64,');
+
+                if ($p!==false)
+                {
+                    $type = str_replace("data:", "", substr($src, 0, $p));
+                    $src = substr($src, $p + 8);
+                    $ext = str_replace('image/', '', $type);
+                    $this->clearStr($ext);
+                    $filename =  $id.$ext;
+
+                    if ($image->hasAttribute("data-filename"))
+                    {
+                        $filename = $image->getAttribute("data-filename");
+                    }
+
+                    $filename = str_replace(['"','\\'], '', $filename);
+                    $imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
+                    $image->setAttribute('src', $prefix.$id.$suffix);
+                }
+            }
+        }
+
+        $html = $doc->saveHTML();
+        return $imageList;
+    }
+
+    /**
+     * Put images as encoded as base64 to html
+     *
+     * @param string $html
+     * @return array
+     */
+    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
+    {
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
+
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
+
+        $images = $doc->getElementsByTagName('img');
+        if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $src = substr($src, strlen($prefix));
+				$src = substr($src, 0, strlen($src) - strlen($suffix));
+                if (isset($imageList[$src]))
+                {
+                    $image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
+                }
+            }
+        }
+
+        $html = $doc->saveHTML();
+        return $html;
+    }
+
+    /**
+    * Recursive rmdir
+    *
+    * @param string $path
+    */
+    public function rmdir($path){
+        if (is_dir($path)) {
+            $dir = scandir($path);
+            foreach ( $dir as $d )
+            {
+                if ($d != "." && $d != "..") {
+                    if (is_dir("$path/$d"))
+                    {
+                        self::rmdir("$path/$d");
+                    }
+                    else
+                    {
+                        unlink("$path/$d");
+                    }
+                }
+            }
+            rmdir($path);
+        }
+   }
+
+	public function addEvent($origin, $type, $email, $data)
+	{
+		$strData = serialize($data);
+		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
+		$connection = new Connection();
+		$connection->deepQuery($sql);
 	}
 }
