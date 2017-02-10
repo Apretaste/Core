@@ -1276,26 +1276,38 @@ class Utils
 		$connection = new Connection();
 		$stars = 0;
 
-		for ($d = 0; $d < 5; $d++)
-		{
-			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-			{
-				$r = $connection->deepQuery("SELECT count(usage_id) as uses FROM utilization WHERE requestor = '{$email}' AND DATE(request_time) = CURRENT_DATE - $d;");
-				if ($r[0]->uses < 1)
-					break;
-			}
+		// last win
+        $sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
+        $r = $connection->deepQuery($sql);
+        $dt = $r[0]->dt * 1;
 
-			// check tickets from GAME (include today)
-			$r = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE email = '{$email}' AND DATE(creation_time) = CURRENT_DATE - $d AND origin = 'GAME';");
+        if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
 
-			if ($r[0]->tickets > 0)
-				break;
+        // last usages
+        $first = true;
+        $sql = "";
+        for ($d = 0; $d < 5; $d++)
+        {
+            if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
+            {
+                $sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
+                $first = false;
+            }
+        }
+        $last_usage = $connection->deepQuery($sql);
 
-			if ($from_today === true || ($from_today === false && $d > 0))
-				$stars++;
-		}
+        // count stars
+        $d = $from_today ? 0 : 1;
+        foreach ($last_usage as $lu)
+        {
+            // if use current day and not win...
+            if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
+            else
+                break; // not daily used
+            $d++;
+        }
 
-		return $stars;
+        return $stars;
 	}
 
 	/**

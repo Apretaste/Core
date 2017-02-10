@@ -427,13 +427,16 @@ $email="salvi@apretaste.com";
 				// innecesariamente en el resto del dia
 
 				$stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
-
 				if ($stars === 4) /* today is the star number five*/
 				{
 					// insert 10 tickets for user
-					$sqlValues = "('$email', 'GAME')";
-					$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+					//$sqlValues = "('$email', 'GAME')";
+					//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+
+                    $sql = "UPDATE person SET credit = credit + 1 WHERE email = '{$rs->email}';";
 					$connection->deepQuery($sql);
+
+					$utils->addEvent("stars-game", "win-credit", $rs->email,  []);
 
 					// add notification to user
 					$utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
