@@ -58,7 +58,11 @@
 				<!--notifications-->
 				{if $num_notifications > 0}
 				<tr>
-					<td align="right" valign="middle" style="padding:10px 30px;">
+					<td width="50"></td>
+					<td align="center" valign="middle">
+						<span style="font-size:100px; color:#5DBB48; margin:0px;">&hearts;</span>
+					</td>
+					<td width="50" align="left" valign="top" style="padding-top:10px">
 						{link href="NOTIFICACIONES" caption="&#9888;{$num_notifications}"}
 					</td>
 				</tr>
@@ -66,14 +70,11 @@
 
 				<!--logo-->
 				<tr>
-					<td align="center" valign="middle">
-						<div style="font-size:100px; color:#5DBB48;">&#x2764;</div>
-					</td>
 				</tr>
 
 				<!--main section-->
 				<tr>
-					<td style="padding: 5px 10px 0px 10px;">
+					<td style="padding: 5px 10px 0px 10px;" colspan="3">
 						<div class="rounded">
 							{include file="$APRETASTE_USER_TEMPLATE"}
 						</div>
@@ -82,7 +83,7 @@
 
 				<!--footer-->
 				<tr>
-					<td align="center" bgcolor="#F2F2F2" style="padding: 20px 0px;">
+					<td align="center" colspan="3" bgcolor="#F2F2F2" style="padding: 20px 0px;">
 						<small>Piropazo @2017. All right reserved.</small>
 					</td>
 				</tr>
