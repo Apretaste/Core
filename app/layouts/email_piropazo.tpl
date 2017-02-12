@@ -45,6 +45,11 @@
 				margin-top: 30px;
 				font-weight: normal;
 			}
+			.rounded{
+				border-radius: 10px;
+				background: white;
+				padding: 10px;
+			}
 		</style>
 	</head>
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
