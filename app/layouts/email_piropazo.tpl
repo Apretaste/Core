@@ -45,31 +45,23 @@
 				margin-top: 30px;
 				font-weight: normal;
 			}
-			.rounded{
-				border-radius: 10px;
-				background: white;
-				padding: 10px;
-			}
 		</style>
 	</head>
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
 		<center>
 			<table id="container" bgcolor="#F2F2F2" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
-				<!--notifications-->
-				{if $num_notifications > 0}
 				<tr>
 					<td width="50"></td>
+					<!--logo-->
 					<td align="center" valign="middle">
-						<span style="font-size:100px; color:#5DBB48; margin:0px;">&hearts;</span>
+						<font size="12" color="#5DBB48;">&hearts;</font>
 					</td>
+					<!--notifications-->
 					<td width="50" align="left" valign="top" style="padding-top:10px">
-						{link href="NOTIFICACIONES" caption="&#9888;{$num_notifications}"}
+						{if $num_notifications > 0}
+							{link href="NOTIFICACIONES" caption="&#9888;{$num_notifications}"}
+						{/if}
 					</td>
-				</tr>
-				{/if}
-
-				<!--logo-->
-				<tr>
 				</tr>
 
 				<!--main section-->
