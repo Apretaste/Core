@@ -14,8 +14,8 @@ function smarty_function_button($params, $template)
 	$caption = $params["caption"];
 	$color = isset($params["color"]) ? $params["color"] : "green";
 	$size = isset($params["size"]) ? $params["size"] : "medium";
-    $style = isset($params["style"]) ? $params["style"] : "";
-    $icon = isset($params["icon"]) ? "<b style='font-size: 25px;'>{$params["icon"]}</b><br/>": "";
+	$style = isset($params["style"]) ? $params["style"] : "";
+	$icon = isset($params["icon"]) ? "<b style='font-size: 25px;'>{$params["icon"]}</b><br/>": "";
 
 	// get the body if exist
 	if (isset($params["body"])) $body = $params["body"];
@@ -48,6 +48,11 @@ function smarty_function_button($params, $template)
 	// get the size of the button
 	switch ($size)
 	{
+		case "icon":
+			$width = 30;
+			$fontsize = 12;
+			$height = 20;
+			break;
 		case "small":
 			$width = 80;
 			$fontsize = 12;
