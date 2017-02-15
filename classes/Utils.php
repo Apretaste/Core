@@ -150,7 +150,7 @@ class Utils
 	public function getNumberOfTickets($email)
 	{
 		$connection = new Connection();
-		$tickets = $connection->deepQuery("SELECT count(*) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
+		$tickets = $connection->deepQuery("SELECT count(ticket_id) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
 		$tickets = $tickets[0]->tickets;
 		return $tickets;
 	}
@@ -328,7 +328,7 @@ class Utils
 		else $raffle = $raffle[0];
 
 		// get number of tickets opened
-		$openedTickets = $connection->deepQuery("SELECT count(*) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = $connection->deepQuery("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
@@ -1027,15 +1027,15 @@ class Utils
 
 		// prepare query templates...
 		$sqls = array(
-			'person.count' => "SELECT count(*) as c FROM person;",
+			'person.count' => "SELECT count(email) as c FROM person;",
 			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
 			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
 			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
 			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.count' => "SELECT count(*) as c FROM person where credit > 0;",
-			'market.sells.monthly' => "SELECT count(*) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
-			'utilization.count' => "SELECT count(*) FROM utilization;",
-			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(*) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
+			'person.credit.count' => "SELECT count(email) as c FROM person where credit > 0;",
+			'market.sells.monthly' => "SELECT count(subq.id) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
+			'utilization.count' => "SELECT count(usage_id) FROM utilization;",
+			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(_tienda_orders.id) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
 		);
 
 		if (!isset($sqls[$statName]))
@@ -1330,164 +1330,175 @@ class Utils
 		return $r[0]->total * 1;
 	}
 
-	/**
-	 * Check if a manage user have a permission
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @param mixed $permission
-	 * @return bool
-	 */
+    /**
+     * Check if a manage user have a permission
+     *
+     * @author kuma
+     * @param $email
+     * @param mixed $permission
+     * @return bool
+     */
 	public static function haveManagePermission($email, $permission)
-	{
-		if (is_string($permission))
-		{
-			$permission = explode(' ', trim(str_replace(',', ' ',$permission)));
-		}
+    {
+        if (is_string($permission))
+        {
+            $permission = explode(' ', trim(str_replace(',', ' ',$permission)));
+        }
 
-		$sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
-		$permissions = '';
+        $sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
+        $permissions = '';
 
-		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
+        $connection = new Connection();
+        $r = $connection->deepQuery($sql);
 
-		if (isset($r[0]))
-		{
-			$permissions = $r[0]->permissions;
-		}
+        if (isset($r[0]))
+        {
+            $permissions = $r[0]->permissions;
+        }
 
-		$permissions = ' '.str_replace(',', ' ',$permissions).' ';
+        $permissions = ' '.str_replace(',', ' ',$permissions).' ';
 
-		$found = 0;
-		foreach($permission as $p)
-		{
-			$required = false;
-			if ($p[0] == '*')
-			{
-				$required = true;
-				$p = substr($p, 1);
-			}
+        $found = 0;
+        foreach($permission as $p)
+        {
+            $required = false;
+            if ($p[0] == '*')
+            {
+                $required = true;
+                $p = substr($p, 1);
+            }
 
-			$pos = stripos($permissions, ' ' . $p . ' ');
+            $pos = stripos($permissions, ' ' . $p . ' ');
 
-			if ($pos === false || $required)
-			{
-				return false;
-			}
+            if ($pos === false || $required)
+            {
+                return false;
+            }
 
-			if ($pos !== false)
-			{
-				$found++;
-			}
-		}
+            if ($pos !== false)
+            {
+                $found++;
+            }
+        }
 
-		return $found > 0;
+        return $found > 0;
 
-	}
+    }
 
-	/**
-	 * Parsing all line images encoded as base64
-	 *
-	 * @param string $html
-	 * @param string $prefix
-	 * @return array
-	 */
-	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
-	{
-		$imageList = [];
-		$tidy = new tidy();
-		$body = $tidy->repairString($html, array(
-				'output-xhtml' => true
-		), 'utf8');
+    /**
+     * Parsing all line images encoded as base64
+     *
+     * @param string $html
+     * @param string $prefix
+     * @return array
+     */
+    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
+    {
+        $imageList = [];
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
 
-		$doc = new DOMDocument();
-		@$doc->loadHTML($body);
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
 
-		$images = $doc->getElementsByTagName('img');
-		  if ($images->length > 0) {
-			foreach ($images as $image) {
-				$src = $image->getAttribute('src');
-				$id = "img".uniqid();
+        $images = $doc->getElementsByTagName('img');
+          if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $id = "img".uniqid();
 
-				// ex: src = data:image/png;base64,...
-				$p = strpos($src, ';base64,');
+                // ex: src = data:image/png;base64,...
+                $p = strpos($src, ';base64,');
 
-				if ($p!==false)
-				{
-					$type = str_replace("data:", "", substr($src, 0, $p));
-					$src = substr($src, $p + 8);
-					$ext = str_replace('image/', '', $type);
-					$this->clearStr($ext);
-					$filename =  $id.$ext;
+                if ($p!==false)
+                {
+                    $type = str_replace("data:", "", substr($src, 0, $p));
+                    $src = substr($src, $p + 8);
+                    $ext = str_replace('image/', '', $type);
+                    $this->clearStr($ext);
+                    $filename =  $id.$ext;
 
-					if ($image->hasAttribute("data-filename"))
-					{
-						$filename = $image->getAttribute("data-filename");
-					}
+                    if ($image->hasAttribute("data-filename"))
+                    {
+                        $filename = $image->getAttribute("data-filename");
+                    }
 
-					$filename = str_replace(['"','\\'], '', $filename);
-					$imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
-					$image->setAttribute('src', $prefix.$id.$suffix);
-				}
-			}
-		}
+                    $filename = str_replace(['"','\\'], '', $filename);
+                    $imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
+                    $image->setAttribute('src', $prefix.$id.$suffix);
+                }
+            }
+        }
 
-		$html = $doc->saveHTML();
-		return $imageList;
-	}
+        $html = $doc->saveHTML();
+        return $imageList;
+    }
 
-	/**
-	 * Put images as encoded as base64 to html
-	 *
-	 * @param string $html
-	 * @return array
-	 */
-	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
-	{
-		$tidy = new tidy();
-		$body = $tidy->repairString($html, array(
-				'output-xhtml' => true
-		), 'utf8');
+    /**
+     * Put images as encoded as base64 to html
+     *
+     * @param string $html
+     * @return array
+     */
+    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
+    {
+        $tidy = new tidy();
+        $body = $tidy->repairString($html, array(
+                'output-xhtml' => true
+        ), 'utf8');
 
-		$doc = new DOMDocument();
-		@$doc->loadHTML($body);
+        $doc = new DOMDocument();
+        @$doc->loadHTML($body);
 
-		$images = $doc->getElementsByTagName('img');
-		if ($images->length > 0) {
-			foreach ($images as $image) {
-				$src = $image->getAttribute('src');
-				$src = substr($src, strlen($prefix));
+        $images = $doc->getElementsByTagName('img');
+        if ($images->length > 0) {
+            foreach ($images as $image) {
+                $src = $image->getAttribute('src');
+                $src = substr($src, strlen($prefix));
 				$src = substr($src, 0, strlen($src) - strlen($suffix));
-				if (isset($imageList[$src]))
-				{
-					$image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
-				}
-			}
-		}
+                if (isset($imageList[$src]))
+                {
+                    $image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
+                }
+            }
+        }
 
-		$html = $doc->saveHTML();
-		return $html;
-	}
+        $html = $doc->saveHTML();
+        return $html;
+    }
 
-	/**
-	* Recursive rmdir
-	*
-	* @param string $path
-	*/
-	public function rmdir($path)
+    /**
+    * Recursive rmdir
+    *
+    * @param string $path
+    */
+    public function rmdir($path){
+        if (is_dir($path)) {
+            $dir = scandir($path);
+            foreach ( $dir as $d )
+            {
+                if ($d != "." && $d != "..") {
+                    if (is_dir("$path/$d"))
+                    {
+                        self::rmdir("$path/$d");
+                    }
+                    else
+                    {
+                        unlink("$path/$d");
+                    }
+                }
+            }
+            rmdir($path);
+        }
+   }
+
+	public function addEvent($origin, $type, $email, $data)
 	{
-		if (is_dir($path))
-		{
-			$dir = scandir($path);
-			foreach ( $dir as $d )
-			{
-				if ($d != "." && $d != "..")
-				{
-					if (is_dir("$path/$d")) self::rmdir("$path/$d");
-					else unlink("$path/$d");
-				}
-			}
-			rmdir($path);
-		}
+		$strData = serialize($data);
+		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
+		$connection = new Connection();
+		$connection->deepQuery($sql);
 	}
 }
