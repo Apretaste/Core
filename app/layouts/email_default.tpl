@@ -109,20 +109,20 @@
 								{/if}
 								{for $i=1 to 5}
 									{if $i <= $raffle_stars}
-										<font color="#000000" size="5"><b>&hearts;</b></font>
+										<font color="#000000" size="5"><b>&#9733;</b></font>
 									{else}
-										<font color="#eeeeee" size="5">&hearts;</font>
+										<font color="#eeeeee" size="5">&#9734;</font>
 									{/if}
 								{/for} <br/>
 							</big>
 							<small>
 								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para la {link href="RIFA" caption="Rifa"}
+									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal
 									<br/>
 									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
 								{else}
-									Haz ganado 10 tickets para la {link href="RIFA" caption="Rifa"}<br/>
-									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s tickets
+									Haz ganado <b>&sect;1</b> de cr&eacute;dito personal<br/>
+									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s cr&eacute;dito
 								{/if}
 							</small>
 						</td>
