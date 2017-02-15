@@ -117,7 +117,7 @@ class ApiController extends Controller
 		// create response to email the new code
 		$subject = "Code: $pin";
 		$response = new Response();
-		$response->setEmailLayout("email_simple.tpl");
+		$response->setEmailLayout('email_piropazo.tpl');
 		$response->setResponseSubject($subject);
 		$response->createFromTemplate("pinrecover_$lang.tpl", array("pin"=>$pin));
 		$response->internal = true;

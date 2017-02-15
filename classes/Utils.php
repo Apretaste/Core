@@ -185,21 +185,24 @@ class Utils
 		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
 
 		// get the image of the person
-		$image = NULL;
-		$thumbnail = NULL;
+		$image = NULL; $imageHTTP = NULL;
+		$thumbnail = NULL; $thumbnailHTTP = NULL;
 		if($person->picture)
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
 
 			if(file_exists("$wwwroot/public/profile/$email.jpg"))
 			{
 				$image = "$wwwroot/public/profile/$email.jpg";
+				$imageHTTP = "$wwwhttp/profile/$email.jpg";
 			}
 
 			if(file_exists("$wwwroot/public/profile/thumbnail/$email.jpg"))
 			{
 				$thumbnail = "$wwwroot/public/profile/thumbnail/$email.jpg";
+				$thumbnailHTTP = "$wwwhttp/profile/thumbnail/$email.jpg";
 			}
 		}
 
@@ -215,7 +218,9 @@ class Utils
 		// add elements to the response
 		$person->full_name = $fullName;
 		$person->picture = $image;
+		$person->pictureHTTP = $imageHTTP;
 		$person->thumbnail = $thumbnail;
+		$person->thumbnailHTTP = $thumbnailHTTP;
 		$person->raffle_tickets = $tickets;
 		return $person;
 	}
@@ -743,7 +748,7 @@ class Utils
 		return $subject;
 	}
 
-   /**
+	/**
 	 * Extract emails from text
 	 *
 	 * @param string $text

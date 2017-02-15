@@ -46,7 +46,6 @@ class RunController extends Controller
 
 		// if is not encrypted, get the email from the token
 		$email = $utils->detokenize($token);
-$email="salvi@apretaste.com";
 		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
