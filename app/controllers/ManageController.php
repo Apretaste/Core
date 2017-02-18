@@ -2483,11 +2483,10 @@ class ManageController extends Controller
 	 */
 	public function schoolAction()
 	{
-		$this->setMenu('school');
 		$this->view->breadcrumb = array(
-				"admin" => "Admin",
-				"school" => "School"
-			);
+			"admin" => "Admin",
+			"school" => "School"
+		);
 
 		$connection = new Connection();
 		$email = $this->getCurrentUser();
@@ -2573,12 +2572,12 @@ class ManageController extends Controller
 
 	public function schoolTeachersAction()
 	{
-		$this->setMenu('school');
 		$this->view->breadcrumb = array(
 			"admin" => "Admin",
 			"school" => "School",
 			"schoolTeachers" => "Teachers"
 		);
+
 		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';
@@ -2640,8 +2639,6 @@ class ManageController extends Controller
 	 */
 	public function schoolChaptersAction()
 	{
-		$this->setMenu('school');
-
 		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
 		$utils = new Utils();
@@ -2728,8 +2725,6 @@ class ManageController extends Controller
 	 */
 	public function schoolNewChapterAction()
 	{
-		$this->setMenu('school');
-
 		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';
@@ -2754,7 +2749,6 @@ class ManageController extends Controller
 
 	public function schoolNewChapterPostAction()
 	{
-		$this->setMenu('school');
 		$wwwroot = $this->di->get('path')['root'];
 		if ($this->request->isPost())
 		{
@@ -2824,8 +2818,6 @@ class ManageController extends Controller
 
 	public function schoolEditChapterAction()
 	{
-		$this->setMenu('school');
-
 		$url = $_GET['_url'];
 		$id =  explode("/", $url);
 		$id = $id[count($id) - 1];
@@ -2851,8 +2843,6 @@ class ManageController extends Controller
 
 	public function schoolChapterAction()
 	{
-		$this->setMenu('school');
-
 		if (isset($this->view->chapter_id))
 		{
 			$id =  $this->view->chapter_id;
@@ -2907,7 +2897,6 @@ class ManageController extends Controller
 	 */
 	public function schoolQuestionsAction()
 	{
-		$this->setMenu('school');
 		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';

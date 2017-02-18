@@ -5,6 +5,7 @@ logs/*
 nbproject/*
 vendor/*
 cert/*
+attic/*
 .settings/*
 .buildpath
 .project
