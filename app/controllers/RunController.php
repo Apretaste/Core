@@ -120,6 +120,10 @@ class RunController extends Controller
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
 
+		// clean incoming emails
+		$fromEmail = str_replace("'", "", $fromEmail);
+		$toEmail = str_replace("'", "", $toEmail);
+
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
 		foreach($_POST as $k => $v)
