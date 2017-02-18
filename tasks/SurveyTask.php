@@ -27,7 +27,7 @@ class SurveyTask extends \Phalcon\Cli\Task
 				SELECT email, survey,  
 				DATEDIFF(CURRENT_DATE, MAX(date_choosen)) as days_since,
 				(
-					SELECT COUNT(*) 
+					SELECT COUNT(id) 
 					FROM _survey_question 
 					WHERE _survey_question.survey = _survey_answer_choosen.survey
 				) as total, 
