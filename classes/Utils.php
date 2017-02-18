@@ -142,20 +142,6 @@ class Utils
 	}
 
 	/**
-	 * Get number of tickets for the raffle adquired by the user
-	 *
-	 * @param string $email
-	 * @return integer
-	 */
-	public function getNumberOfTickets($email)
-	{
-		$connection = new Connection();
-		$tickets = $connection->deepQuery("SELECT count(ticket_id) as tickets FROM ticket WHERE raffle_id is NULL AND email = '$email'");
-		$tickets = $tickets[0]->tickets;
-		return $tickets;
-	}
-
-	/**
 	 * Get a person's profile
 	 *
 	 * @author salvipascual
@@ -167,61 +153,14 @@ class Utils
 		$connection = new Connection();
 		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
 
-		// return false if there is no person with that email
-		if (count($person)==0) return false;
+		// return false if person cannot be found
+		if (empty($person)) return false;
 		else $person = $person[0];
 
-		// get the person's age
-		$person->age = empty($person->date_of_birth) ? 0 : date_diff(date_create($person->date_of_birth), date_create('today'))->y;
+		$social = new Social();
+		$person = $social->prepareUserProfile($person);
 
-		// remove the pin from the response
-		unset($person->pin);
-
-		// get number of tickets for the raffle adquired by the user
-		$tickets = $this->getNumberOfTickets($email);
-
-		// get the person's full name
-		$fullName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
-		$fullName = trim(preg_replace("/\s+/", " ", $fullName));
-
-		// get the image of the person
-		$image = NULL; $imageHTTP = NULL;
-		$thumbnail = NULL; $thumbnailHTTP = NULL;
-		if($person->picture)
-		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$wwwroot = $di->get('path')['root'];
-			$wwwhttp = $di->get('path')['http'];
-
-			if(file_exists("$wwwroot/public/profile/$email.jpg"))
-			{
-				$image = "$wwwroot/public/profile/$email.jpg";
-				$imageHTTP = "$wwwhttp/profile/$email.jpg";
-			}
-
-			if(file_exists("$wwwroot/public/profile/thumbnail/$email.jpg"))
-			{
-				$thumbnail = "$wwwroot/public/profile/thumbnail/$email.jpg";
-				$thumbnailHTTP = "$wwwhttp/profile/thumbnail/$email.jpg";
-			}
-		}
-
-		// get the interests as an array
-		$person->interests = preg_split('@,@', $person->interests, NULL, PREG_SPLIT_NO_EMPTY);
-
-		// remove all whitespaces at the begining and ending
-		foreach ($person as $key=>$value)
-		{
-			if( ! is_array($value)) $person->$key = trim($value);
-		}
-
-		// add elements to the response
-		$person->full_name = $fullName;
-		$person->picture = $image;
-		$person->pictureHTTP = $imageHTTP;
-		$person->thumbnail = $thumbnail;
-		$person->thumbnailHTTP = $thumbnailHTTP;
-		$person->raffle_tickets = $tickets;
+		// return person
 		return $person;
 	}
 
@@ -590,49 +529,6 @@ class Utils
 		$connection->deepQuery("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
 
 		return array($reason, $code);
-	}
-
-	/**
-	 * Get the completion percentage of a profile
-	 *
-	 * @author kuma, updated by salvipascual
-	 * @param String, email of the person
-	 * @return Number, percentage of completion
-	 * */
-	public function getProfileCompletion($email)
-	{
-		$profile = $this->getPerson($email);
-		$percent = 0;
-
-		if($profile)
-		{
-			$keys = get_object_vars($profile);
-			$parts = 0;
-			$total = count($keys);
-
-			foreach($keys as $key=>$value)
-			{
-				// do not count non-required values
-				if(
-					$key == "middle_name" ||
-					$key == "mother_name" ||
-					$key == "about_me" ||
-					$key == "updated_by_user" ||
-					$key == "raffle_tickets" ||
-					$key == "last_update_date" ||
-					$key == "phone" ||
-					$key == "cellphone" ||
-					$key == "credit"
-				) {$total--; continue;}
-
-				// add non-empty values to the formula
-				if( ! empty($value)) $parts++;
-			}
-
-			// calculate percentage
-			$percent = $parts / $total * 100;
-		}
-		return $percent;
 	}
 
 	/**
@@ -1277,37 +1173,37 @@ class Utils
 		$stars = 0;
 
 		// last win
-        $sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
-        $r = $connection->deepQuery($sql);
-        $dt = $r[0]->dt * 1;
+		$sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
+		$r = $connection->deepQuery($sql);
+		$dt = $r[0]->dt * 1;
 
-        if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
+		if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
 
-        // last usages
-        $first = true;
-        $sql = "";
-        for ($d = 0; $d < 5; $d++)
-        {
-            if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-            {
-                $sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
-                $first = false;
-            }
-        }
-        $last_usage = $connection->deepQuery($sql);
+		// last usages
+		$first = true;
+		$sql = "";
+		for ($d = 0; $d < 5; $d++)
+		{
+			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
+			{
+				$sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
+				$first = false;
+			}
+		}
+		$last_usage = $connection->deepQuery($sql);
 
-        // count stars
-        $d = $from_today ? 0 : 1;
-        foreach ($last_usage as $lu)
-        {
-            // if use current day and not win...
-            if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
-            else
-                break; // not daily used
-            $d++;
-        }
+		// count stars
+		$d = $from_today ? 0 : 1;
+		foreach ($last_usage as $lu)
+		{
+			// if use current day and not win...
+			if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
+			else
+				break; // not daily used
+			$d++;
+		}
 
-        return $stars;
+		return $stars;
 	}
 
 	/**
@@ -1330,169 +1226,169 @@ class Utils
 		return $r[0]->total * 1;
 	}
 
-    /**
-     * Check if a manage user have a permission
-     *
-     * @author kuma
-     * @param $email
-     * @param mixed $permission
-     * @return bool
-     */
+	/**
+	 * Check if a manage user have a permission
+	 *
+	 * @author kuma
+	 * @param $email
+	 * @param mixed $permission
+	 * @return bool
+	 */
 	public static function haveManagePermission($email, $permission)
-    {
-        if (is_string($permission))
-        {
-            $permission = explode(' ', trim(str_replace(',', ' ',$permission)));
-        }
+	{
+		if (is_string($permission))
+		{
+			$permission = explode(' ', trim(str_replace(',', ' ',$permission)));
+		}
 
-        $sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
-        $permissions = '';
+		$sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
+		$permissions = '';
 
-        $connection = new Connection();
-        $r = $connection->deepQuery($sql);
+		$connection = new Connection();
+		$r = $connection->deepQuery($sql);
 
-        if (isset($r[0]))
-        {
-            $permissions = $r[0]->permissions;
-        }
+		if (isset($r[0]))
+		{
+			$permissions = $r[0]->permissions;
+		}
 
-        $permissions = ' '.str_replace(',', ' ',$permissions).' ';
+		$permissions = ' '.str_replace(',', ' ',$permissions).' ';
 
-        $found = 0;
-        foreach($permission as $p)
-        {
-            $required = false;
-            if ($p[0] == '*')
-            {
-                $required = true;
-                $p = substr($p, 1);
-            }
+		$found = 0;
+		foreach($permission as $p)
+		{
+			$required = false;
+			if ($p[0] == '*')
+			{
+				$required = true;
+				$p = substr($p, 1);
+			}
 
-            $pos = stripos($permissions, ' ' . $p . ' ');
+			$pos = stripos($permissions, ' ' . $p . ' ');
 
-            if ($pos === false || $required)
-            {
-                return false;
-            }
+			if ($pos === false || $required)
+			{
+				return false;
+			}
 
-            if ($pos !== false)
-            {
-                $found++;
-            }
-        }
+			if ($pos !== false)
+			{
+				$found++;
+			}
+		}
 
-        return $found > 0;
+		return $found > 0;
 
-    }
+	}
 
-    /**
-     * Parsing all line images encoded as base64
-     *
-     * @param string $html
-     * @param string $prefix
-     * @return array
-     */
-    public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
-    {
-        $imageList = [];
-        $tidy = new tidy();
-        $body = $tidy->repairString($html, array(
-                'output-xhtml' => true
-        ), 'utf8');
+	/**
+	 * Parsing all line images encoded as base64
+	 *
+	 * @param string $html
+	 * @param string $prefix
+	 * @return array
+	 */
+	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
+	{
+		$imageList = [];
+		$tidy = new tidy();
+		$body = $tidy->repairString($html, array(
+				'output-xhtml' => true
+		), 'utf8');
 
-        $doc = new DOMDocument();
-        @$doc->loadHTML($body);
+		$doc = new DOMDocument();
+		@$doc->loadHTML($body);
 
-        $images = $doc->getElementsByTagName('img');
-          if ($images->length > 0) {
-            foreach ($images as $image) {
-                $src = $image->getAttribute('src');
-                $id = "img".uniqid();
+		$images = $doc->getElementsByTagName('img');
+		  if ($images->length > 0) {
+			foreach ($images as $image) {
+				$src = $image->getAttribute('src');
+				$id = "img".uniqid();
 
-                // ex: src = data:image/png;base64,...
-                $p = strpos($src, ';base64,');
+				// ex: src = data:image/png;base64,...
+				$p = strpos($src, ';base64,');
 
-                if ($p!==false)
-                {
-                    $type = str_replace("data:", "", substr($src, 0, $p));
-                    $src = substr($src, $p + 8);
-                    $ext = str_replace('image/', '', $type);
-                    $this->clearStr($ext);
-                    $filename =  $id.$ext;
+				if ($p!==false)
+				{
+					$type = str_replace("data:", "", substr($src, 0, $p));
+					$src = substr($src, $p + 8);
+					$ext = str_replace('image/', '', $type);
+					$this->clearStr($ext);
+					$filename =  $id.$ext;
 
-                    if ($image->hasAttribute("data-filename"))
-                    {
-                        $filename = $image->getAttribute("data-filename");
-                    }
+					if ($image->hasAttribute("data-filename"))
+					{
+						$filename = $image->getAttribute("data-filename");
+					}
 
-                    $filename = str_replace(['"','\\'], '', $filename);
-                    $imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
-                    $image->setAttribute('src', $prefix.$id.$suffix);
-                }
-            }
-        }
+					$filename = str_replace(['"','\\'], '', $filename);
+					$imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
+					$image->setAttribute('src', $prefix.$id.$suffix);
+				}
+			}
+		}
 
-        $html = $doc->saveHTML();
-        return $imageList;
-    }
+		$html = $doc->saveHTML();
+		return $imageList;
+	}
 
-    /**
-     * Put images as encoded as base64 to html
-     *
-     * @param string $html
-     * @return array
-     */
-    public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
-    {
-        $tidy = new tidy();
-        $body = $tidy->repairString($html, array(
-                'output-xhtml' => true
-        ), 'utf8');
+	/**
+	 * Put images as encoded as base64 to html
+	 *
+	 * @param string $html
+	 * @return array
+	 */
+	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
+	{
+		$tidy = new tidy();
+		$body = $tidy->repairString($html, array(
+				'output-xhtml' => true
+		), 'utf8');
 
-        $doc = new DOMDocument();
-        @$doc->loadHTML($body);
+		$doc = new DOMDocument();
+		@$doc->loadHTML($body);
 
-        $images = $doc->getElementsByTagName('img');
-        if ($images->length > 0) {
-            foreach ($images as $image) {
-                $src = $image->getAttribute('src');
-                $src = substr($src, strlen($prefix));
+		$images = $doc->getElementsByTagName('img');
+		if ($images->length > 0) {
+			foreach ($images as $image) {
+				$src = $image->getAttribute('src');
+				$src = substr($src, strlen($prefix));
 				$src = substr($src, 0, strlen($src) - strlen($suffix));
-                if (isset($imageList[$src]))
-                {
-                    $image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
-                }
-            }
-        }
+				if (isset($imageList[$src]))
+				{
+					$image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
+				}
+			}
+		}
 
-        $html = $doc->saveHTML();
-        return $html;
-    }
+		$html = $doc->saveHTML();
+		return $html;
+	}
 
-    /**
-    * Recursive rmdir
-    *
-    * @param string $path
-    */
-    public function rmdir($path){
-        if (is_dir($path)) {
-            $dir = scandir($path);
-            foreach ( $dir as $d )
-            {
-                if ($d != "." && $d != "..") {
-                    if (is_dir("$path/$d"))
-                    {
-                        self::rmdir("$path/$d");
-                    }
-                    else
-                    {
-                        unlink("$path/$d");
-                    }
-                }
-            }
-            rmdir($path);
-        }
-   }
+	/**
+	* Recursive rmdir
+	*
+	* @param string $path
+	*/
+	public function rmdir($path){
+		if (is_dir($path)) {
+			$dir = scandir($path);
+			foreach ( $dir as $d )
+			{
+				if ($d != "." && $d != "..") {
+					if (is_dir("$path/$d"))
+					{
+						self::rmdir("$path/$d");
+					}
+					else
+					{
+						unlink("$path/$d");
+					}
+				}
+			}
+			rmdir($path);
+		}
+	}
 
 	public function addEvent($origin, $type, $email, $data)
 	{
@@ -1500,5 +1396,19 @@ class Utils
 		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
 		$connection = new Connection();
 		$connection->deepQuery($sql);
+	}
+
+	/**
+	 * Get the completion percentage of a profile
+	 *
+	 * @REMOVE delete from the system and remove
+	 * @author salvipascual
+	 * @param String $email
+	 * @return Number, percentage of completion
+	 * */
+	public function getProfileCompletion($email)
+	{
+		$profile = $this->getPerson($email);
+		return $profile->completion;
 	}
 }
