@@ -26,7 +26,7 @@ class ApiController extends Controller
 		if( ! $token) die('{"code":"error","message":"invalid email or pin"}');
 
 		// return ok response
-		die('{"code":"ok","token","'.$token.'"}');
+		die('{"code":"ok","token":"'.$token.'"}');
 	}
 
 	/**
@@ -68,9 +68,8 @@ class ApiController extends Controller
 	{
 		$email = trim($this->request->get('email'));
 
-		$connection = new Connection();
-
 		// check if the user exist
+		$connection = new Connection();
 		$res = $connection->deepQuery("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
 		$exist = empty($res) ? 'false' : 'true';
 
@@ -78,48 +77,47 @@ class ApiController extends Controller
 		$pin = "unset";
 		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
 
-		die('{"exist":"'.$exist.'", "pin":"'.$pin.'"}');
+		die('{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}');
 	}
 
 	/**
-	 * Recovers a pin and create a pin for users with blank pins
+	 * Creates a new user if it does not exist and email the code
 	 *
 	 * @author salvipascual
 	 * @param GET email
-	 * @param GET template, piropazo.tpl | email_simple.tpl
+	 * @param GET lang, two digits languge code, IE: en, es
 	 * @return JSON
 	 * */
-	public function recoverAction()
+	public function startAction()
 	{
+		// params from GEt and default options
 		$email = trim($this->request->get('email'));
-		$template = trim($this->request->get('template'));
+		$lang = trim($this->request->get('lang'));
+		if(empty($lang)) $lang = "es";
+
+		// check if the email is valid
+		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) die('{"code":"error","message":"invalid email"}');
 
 		$utils = new Utils();
 		$connection = new Connection();
 
-		// check if the email exist
-		if( ! $utils->personExist($email)) die('{"code":"error","message":"invalid user"}');
-
-		// get pin from the user
-		$pin = $connection->deepQuery("SELECT pin FROM person WHERE email='$email'");
-		$pin = $pin[0]->pin;
-
-		// if pin is blank, create it
-		if(empty($pin))
+		// if user does not exist, create it
+		$newUser = "false";
+		if( ! $utils->personExist($email))
 		{
-			$pin = mt_rand(1000, 9999);
-			$connection->deepQuery("UPDATE person SET pin='$pin' WHERE email='$email'");
+			$newUser = "true";
+			$username = $utils->usernameFromEmail($email);
+			$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 		}
 
-		// get the language of the user
-		$wwwroot = $this->di->get('path')['root'];
-		$lang = $connection->deepQuery("SELECT lang FROM person WHERE email='$email'")[0]->lang;
-		$lang = file_exists("$wwwroot/app/templates/pinrecover_$lang.tpl") ? $lang : "es";
+		// create a new pin for the user
+		$pin = mt_rand(1000, 9999);
+		$connection->deepQuery("UPDATE person SET pin='$pin' WHERE email='$email'");
 
 		// create response to email the new code
 		$subject = "Code: $pin";
 		$response = new Response();
-		$response->setEmailLayout("email_simple.tpl");
+		$response->setEmailLayout('email_piropazo.tpl');
 		$response->setResponseSubject($subject);
 		$response->createFromTemplate("pinrecover_$lang.tpl", array("pin"=>$pin));
 		$response->internal = true;
@@ -129,10 +127,11 @@ class ApiController extends Controller
 		$body = $render->renderHTML(new Service(), $response);
 
 		// email the code to the user
-		$emailSender = new Email();
-		$emailSender->sendEmail($email, $subject, $body);
+		$sender = new Email();
+		$sender->sendEmail($email, $subject, $body);
 
 		// return ok response
-		die('{"code":"ok"}');
+		die('{"code":"ok", "newuser":"'.$newUser.'"}');
 	}
+
 }

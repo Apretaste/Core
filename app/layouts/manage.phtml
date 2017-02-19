@@ -6,178 +6,174 @@
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title><?= isset($title) ? $title : "Manage"; ?></title>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Conectando miles de cubanos a la Web por vias efectivas, accesibles y legales">
-        <meta name="author" content="Salvi Pascual">
-        <link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
+	<head>
+		<title><?= isset($title) ? $title : "Manage"; ?></title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Conectando miles de cubanos a la Web por vias efectivas, accesibles y legales">
+		<meta name="author" content="Salvi Pascual">
+		<link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
 
-        <!-- jQuery -->
-        <script src="<?= $wwwhttp; ?>/js/jquery-2.1.1.js"></script>
-        <link href="<?= $wwwhttp; ?>/css/jquery-ui.min.css" rel="stylesheet">
+		<!-- jQuery -->
+		<script src="<?= $wwwhttp; ?>/js/jquery-2.1.1.js"></script>
+		<link href="<?= $wwwhttp; ?>/css/jquery-ui.min.css" rel="stylesheet">
 
-        <!-- Bootstrap Core CSS -->
-        <link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
-        <script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
+		<!-- Bootstrap Core CSS -->
+		<link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
+		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
 
-        <!-- Bootstrap plugins -->
-        <link href="<?= $wwwhttp; ?>/css/fileinput.min.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/animate.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
-        <link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/toastr.min.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/css/iCheck/custom.css" rel="stylesheet">
-        <link href="<?= $wwwhttp; ?>/js/summernote/summernote.css" rel="stylesheet">
-    </head>
+		<!-- Bootstrap plugins -->
+		<link href="<?= $wwwhttp; ?>/css/fileinput.min.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/animate.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
+		<link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/toastr.min.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/css/iCheck/custom.css" rel="stylesheet">
+		<link href="<?= $wwwhttp; ?>/js/summernote/summernote.css" rel="stylesheet">
+	</head>
 
-    <body>
-        <div id="wrapper">
-            <nav class="navbar-default navbar-static-side" role="navigation">
-                    <div class="sidebar-collapse">
-                            <ul class="nav metismenu" id="side-menu">
-                                    <li class="nav-header">
-                                            <div class="dropdown profile-element">
-                                            <span>
-                                                    <img alt="image" src="/images/apretaste.logo.big.transp.png" width="100"/>
-                                            </span>
-                                            </div>
-                                            <div class="logo-element">
-                                                    A!
-                                            </div>
-                                    </li>
-                                    <li>
-                                            <a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span> <span class="fa arrow"></span></a>
-                                    </li>
-                                    <?php if (isset($menu)): ?>
-                                    <li>
-                                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Context</span> <span class="fa arrow"></span></a>
-                                            <ul class="nav nav-second-level collapse in">
-                                                            <?php foreach($menu as $item):?>
-                                                                <li><a href="<?php echo $item['href'];?>">
-                                                                        <?php if (isset($item['icon'])): ?><span class="glyphicon glyphicon-<?php echo $item['icon']; ?>"></span>
-                                                                        <?php endif;?><?php echo $item['caption'];?>
-                                                                </a></li>
-                                                            <?php endforeach;?>
-                                            </ul>
-                                    </li>
-                                    <?php endif;?>
-                                    <li>
-                                            <a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
-                                            <ul class="nav nav-second-level">
-                                                    <li><a href="/manage/audience">Audience</a></li>
-                                                    <li><a href="/manage/profile">Profile</a></li>
-                                                    <li><a href="/manage/profilesearch">Profile search</a></li>
-                                                    <li><a href="/manage/remarketing">Remarketing</a></li>
-                                                    <li><a href="/manage/raffles">Raffles</a></li>
-                                                    <li><a href="/manage/services">List of services</a></li>
-                                                    <li><a href="/manage/ads">List of ads</a></li>
-                                                    <li><a href="/manage/delivery">Delivery</a></li>
-                                                    <li><a href="/manage/dropped">Dropped emails</a></li>
-                                            </ul>
-                                    </li>
-                                    <li>
-                                            <a href="#"><i class="fa fa-wrench"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
-                                            <ul class="nav nav-second-level">
-                                                    <li><a href="/manage/createad">Create ad</a></li>
-                                                    <li><a href="/manage/createraffle">Create raffle</a></li>
-                                                    <li><a href="/manage/addcredit">Add credit</a></li>
-                                                    <li><a href="/manage/jumper">Jumper</a></li>
-                                                    <li><a href="/manage/surveys">Surveys</a></li>
-                                                    <li><a href="/manage/market">Market</a></li>
-                                                    <li><a href="/manage/school">School<span class="label label-primary pull-right">NEW</span></a></li>
-                                            </ul>
-                                    </li>
-                                    <li>
-                                            <a href="#"><i class="fa fa-envelope-o"></i> <span class="nav-label">Campaigns</span> <span class="fa arrow"></span></a>
-                                            <ul class="nav nav-second-level">
-                                                    <li><a href="/manage/campaigns">All campaigns</a></li>
-                                                    <li><a href="/manage/newCampaign">New campaign</a></li>
-                                                    <li><a href="/manage/campaignReports">Reports</a></li>
-                                            </ul>
-                                    </li>
-                                    <li>
-                                            <a href="#"><i class="fa fa-laptop"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
-                                            <ul class="nav nav-second-level">
-                                                    <li><a href="/manage/deploy">Deploy</a></li>
-                                                    <li><a href="/manage/errors">Errors log</a></li>
-                                                    <li><a href="/manage/sandbox">Test a service</a></li>
-                                                    <li><a target="_blank" href="/data">phpMyAdmin</a></li>
-                                                    <li><a target="_blank" href="https://app.mailerlite.com/" target = "_blank">Mailer Lite</a></li>
-                                                    <li><a target="_blank" href="https://admin.google.com/pragres.com">Google Admin Console</a></li>
-                                                    <li><a target="_blank" href="https://apretaste.zendesk.com/">Zendesk</a></li>
-                                                    <li><a target="_blank" href="https://www.email-validator.net/dashboard/index.html">Email Validator</a></li>
-                                                    <li><a target="_blank" href="https://block.io/">Bitcoin API</a></li>
-                                            </ul>
-                                    </li>
-                                    <li><a href="/manage/logout">Logout</a></li>
-                            </ul>
-                    </div>
-            </nav>
+	<body>
+		<div id="wrapper">
+			<nav class="navbar-default navbar-static-side" role="navigation">
+				<div class="sidebar-collapse">
+					<ul class="nav metismenu" id="side-menu">
+						<li class="nav-header">
+							<div class="dropdown profile-element">
+							<span>
+								<img alt="image" src="/images/apretaste.logo.big.transp.png" width="100"/>
+							</span>
+							</div>
+							<div class="logo-element">
+								A!
+							</div>
+						</li>
+						<li>
+							<a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/audience">Audience</a></li>
+								<li><a href="/manage/profile">Profile</a></li>
+								<li><a href="/manage/profilesearch">Profile search</a></li>
+								<li><a href="/manage/remarketing">Remarketing</a></li>
+								<li><a href="/manage/raffles">Raffles</a></li>
+								<li><a href="/manage/services">List of services</a></li>
+								<li><a href="/manage/ads">List of ads</a></li>
+								<li><a href="/manage/delivery">Delivery</a></li>
+								<li><a href="/manage/dropped">Dropped emails</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-wrench"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/createad">Create ad</a></li>
+								<li><a href="/manage/createraffle">Create raffle</a></li>
+								<li><a href="/manage/addcredit">Add credit</a></li>
+								<li><a href="/manage/jumper">Jumper</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="/manage/surveys"><i class="fa fa-pie-chart"></i> <span class="nav-label">Surveys</span></a>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Market</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/market">Products</a></li>
+								<li><a href="/manage/marketOrders">Orders</a></li>
+								<li><a href="/manage/marketStats">Stats</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-book"></i> <span class="nav-label">School</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/school">Courses</a></li>
+								<li><a href="/manage/schoolTeachers">Teachers</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-envelope-o"></i> <span class="nav-label">Campaigns</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/campaigns">All campaigns</a></li>
+								<li><a href="/manage/newCampaign">New campaign</a></li>
+								<li><a href="/manage/campaignReports">Reports</a></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#"><i class="fa fa-laptop"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/manage/deploy">Deploy</a></li>
+								<li><a href="/manage/errors">Errors log</a></li>
+								<li><a href="/manage/sandbox">Test a service</a></li>
+								<li><a target="_blank" href="/data">phpMyAdmin</a></li>
+								<li><a target="_blank" href="https://app.mailerlite.com/" target = "_blank">Mailer Lite</a></li>
+								<li><a target="_blank" href="https://admin.google.com/pragres.com">Google Admin Console</a></li>
+								<li><a target="_blank" href="https://apretaste.zendesk.com/">Zendesk</a></li>
+								<li><a target="_blank" href="https://www.email-validator.net/dashboard/index.html">Email Validator</a></li>
+								<li><a target="_blank" href="https://block.io/">Bitcoin API</a></li>
+							</ul>
+						</li>
+						<li><a href="/manage/logout">Logout</a></li>
+					</ul>
+				</div>
+			</nav>
 
-            <div id="page-wrapper" class="gray-bg dashbard-1">
+			<div id="page-wrapper" class="gray-bg dashbard-1">
+				<?php if(isset($title)): ?>
+					<div class="row wrapper border-bottom white-bg page-heading">
+						<h2><?php  echo $title; ?></h2>
 
-            <?php if(isset($title)): ?>
-                <div class="row wrapper border-bottom white-bg page-heading">
-                    <h2><?php  echo $title; ?></h2>
+						<ol class="breadcrumb">
+							<li><a href="/manage">Home</a></li>
+							<?php if (isset($breadcrumb)): ?>
+								<?php foreach ($breadcrumb as $path => $caption): ?>
+								<?php $active = false;?>
+								<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
+								<li <?php if ($active) echo 'class="active"';?>>
+										<a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
+								</li>
+								<?php endforeach;?>
+							<?php endif;?>
+						</ol>
+					</div>
+				<?php endif;?>
+				<?php echo $this->getContent(); ?>
+			</div>
+		</div>
 
-                    <ol class="breadcrumb">
-                        <li><a href="/manage">Home</a></li>
-                        <?php if (isset($breadcrumb)): ?>
-                            <?php foreach ($breadcrumb as $path => $caption): ?>
-                            <?php $active = false;?>
-                            <?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
-                            <li <?php if ($active) echo 'class="active"';?>>
-                                    <a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
-                            </li>
-                            <?php endforeach;?>
-                        <?php endif;?>
-                    </ol>
-                </div>
-            <?php endif;?>
-            <?php echo $this->getContent(); ?>
-            </div>
-        </div>
+		<script src="<?= $wwwhttp; ?>/js/jquery.metisMenu.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/jquery.slimscroll.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/jquery.peity.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/manage.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/pace.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/jquery.gritter.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/jquery.sparkline.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/toastr.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/datatables.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/jasny-bootstrap.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/icheck.min.js"></script>
+		<script src="<?= $wwwhttp; ?>/js/summernote/summernote.js"></script>
 
-    <script src="<?= $wwwhttp; ?>/js/jquery.metisMenu.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/jquery.slimscroll.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/jquery.peity.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/manage.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/pace.min.js"></script>
-    <!-- <script src="<?= $wwwhttp; ?>/js/jquery-ui-1.10.4.min.js"></script> -->
-    <script src="<?= $wwwhttp; ?>/js/jquery.gritter.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/jquery.sparkline.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/toastr.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/datatables.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/jasny-bootstrap.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/icheck.min.js"></script>
-    <script src="<?= $wwwhttp; ?>/js/summernote/summernote.js"></script>
-    <!-- <script src="<?= $wwwhttp; ?>/js/demo/sparkline-demo.js"></script>  -->
-    <!-- <script src="<?= $wwwhttp; ?>/js/plugins/chartJs/Chart.min.js"></script>  -->
-    <!--  <script src="js/demo/peity-demo.js"></script>  -->
-
-    <?php if (isset($loginSuccess)) if ($loginSuccess): ?>
-      $(document).ready(function() {
-             setTimeout(function() {
-                     toastr.options = {
-                             closeButton: true,
-                             progressBar: true,
-                             showMethod: 'slideDown',
-                             timeOut: 4000
-                     };
-                     toastr.success('Login successfull', 'Welcome to Apretaste!');
-
-             }, 1300);
-     });
-    <?php endif;?>
-    </body>
+		<?php if (isset($loginSuccess)) if ($loginSuccess): ?>
+			$(document).ready(function() {
+				 setTimeout(function() {
+					 toastr.options = {
+						 closeButton: true,
+						 progressBar: true,
+						 showMethod: 'slideDown',
+						 timeOut: 4000
+					 };
+					 toastr.success('Login successfull', 'Welcome to Apretaste!');
+				 }, 1300);
+		 	});
+		<?php endif;?>
+	</body>
 </html>

@@ -1,6 +1,7 @@
-<?php 
+<?php
 
-class Service {
+class Service
+{
 	public $serviceName;
 	public $serviceDescription;
 	public $creatorEmail;
@@ -11,7 +12,8 @@ class Service {
 	public $showAds;
 	public $utils; // Instance of the Utils class
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->utils = new Utils($this->serviceName);
 	}
 }

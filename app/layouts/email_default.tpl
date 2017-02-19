@@ -54,14 +54,14 @@
 							{link href="SERVICIOS" caption="Servicios"}{separator}
 							{link href="NOTIFICACIONES" caption="Notificaciones"}
 							{if $num_notifications > 0}
-							<!--[if mso]>
-							<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' style='v-text-anchor:middle;' arcsize='5%' strokecolor='$stroke' fillcolor='#FF0000'>
-							<w:anchorlock/>
-							<center style='color:#FFFFFF;font-family:Helvetica, Arial,sans-serif;font-size:9px;'><strong>{$num_notifications}</strong></center>
-							</v:roundrect>
-							<![endif]-->
-							<a style='background-color:#FF0000;border-radius:3px;color:#FFFFFF;display:inline-block;font-family:sans-serif;font-size:9px;text-align:center;text-decoration:none;line-height:20px;padding-left:2px;padding-right:2px;-webkit-text-size-adjust:none;mso-hide:all;'><b>{$num_notifications}</b></a>
-								{/if}
+								<!--[if mso]>
+								<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' style='v-text-anchor:middle;' arcsize='5%' strokecolor='$stroke' fillcolor='#FF0000'>
+								<w:anchorlock/>
+								<center style='color:#FFFFFF;font-family:Helvetica, Arial,sans-serif;font-size:9px;'><strong>{$num_notifications}</strong></center>
+								</v:roundrect>
+								<![endif]-->
+								<a style='background-color:#FF0000;border-radius:3px;color:#FFFFFF;display:inline-block;font-family:sans-serif;font-size:9px;text-align:center;text-decoration:none;line-height:20px;padding-left:2px;padding-right:2px;-webkit-text-size-adjust:none;mso-hide:all;'><b>{$num_notifications}</b></a>
+							{/if}
 						</small>
 					</td>
 				</tr>
@@ -109,20 +109,20 @@
 								{/if}
 								{for $i=1 to 5}
 									{if $i <= $raffle_stars}
-										<font color="#000000" size="5"><b>&hearts;</b></font>
+										<font color="#000000" size="5"><b>&#9733;</b></font>
 									{else}
-										<font color="#eeeeee" size="5">&hearts;</font>
+										<font color="#eeeeee" size="5">&#9734;</font>
 									{/if}
 								{/for} <br/>
 							</big>
 							<small>
 								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s 10 tickets para la {link href="RIFA" caption="Rifa"}
+									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal
 									<br/>
 									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
 								{else}
-									Haz ganado 10 tickets para la {link href="RIFA" caption="Rifa"}<br/>
-									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s tickets
+									Haz ganado <b>&sect;1</b> de cr&eacute;dito personal<br/>
+									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s cr&eacute;dito
 								{/if}
 							</small>
 						</td>

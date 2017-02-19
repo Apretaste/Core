@@ -89,7 +89,7 @@ class Response
 	public function createFromText($text)
 	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>$text);
+		$this->content = array("code"=>"ok", "text"=>$text);
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
@@ -120,10 +120,12 @@ class Response
 	 * @param String $template, name of the file in the template folder
 	 * @param String[] $content, in the way ["key"=>"var"]
 	 * @param String[] $images, paths to the images to embeb
-	 * @param String[] $attachments, paths to the files to attach 
+	 * @param String[] $attachments, paths to the files to attach
 	 */
 	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
 	{
+		if(empty($content['code'])) $content['code'] = "ok"; // for the API
+
 		$this->template = $template;
 		$this->content = $content;
 		$this->images = $images;

@@ -16,8 +16,7 @@ class Social
 		// load the list of countries
 		$connection = new Connection();
 		$countries = $connection->deepQuery("SELECT * FROM countries");
-		foreach ($countries as $country)
-			$this->countries[$country->code] = array("es"=>$country->es, "en"=>$country->en);
+		foreach ($countries as $country) $this->countries[$country->code] = array("es"=>$country->es, "en"=>$country->en);
 	}
 
 	/**
@@ -30,12 +29,12 @@ class Social
 	 */
 	 public function profileToText($profile, $lang="es")
 	 {
-		 switch ($lang)
-		 {
-		 	case 'es': return $this->profileToTextSpanish($profile);
+		switch ($lang)
+		{
+			case 'es': return $this->profileToTextSpanish($profile);
 			case 'en': return $this->profileToTextEnglish($profile);
-		 	default: return $this->profileToTextSpanish($profile);
-		 }
+			default: return $this->profileToTextSpanish($profile);
+		}
 	 }
 
 	/**
@@ -45,7 +44,7 @@ class Social
 	 * @param Object $profile
 	 * @return String
 	 */
-	private function profileToTextSpanish ($profile)
+	private function profileToTextSpanish($profile)
 	{
 		// get the age
 		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
@@ -168,7 +167,7 @@ class Social
 		$message = "Hola";
 		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
 		if ( ! empty($age)) $message .= ", tengo $age a&ntilde;os";
-		if ( ! empty($gender)) $message .= ", I am $gender";
+		if ( ! empty($gender)) $message .= ", soy $gender";
 		if ( ! empty($religion)) $message .= ", soy $religion";
 		if ( ! empty($skin)) $message .= ", soy $skin";
 		if ( ! empty($eyes)) $message .= ", de ojos $eyesTone (color $eyes)";
@@ -193,7 +192,7 @@ class Social
 	 * @param Object $profile
 	 * @return String
 	 */
-	private function profileToTextEnglish ($profile)
+	private function profileToTextEnglish($profile)
 	{
 		// get the age
 		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
@@ -328,5 +327,87 @@ class Social
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 		return ucfirst($message);
+	}
+
+	/**
+	 * Get the completion percentage of a profile
+	 *
+	 * @author salvipascual
+	 * @param Object $profile
+	 * @return Number, percentage of completion
+	 * */
+	public function getProfileCompletion($profile)
+	{
+		// get an array of the valid profile fields
+		$keys = array("first_name","last_name","date_of_birth","gender","eyes","skin","body_type","hair","city","highest_school_level","occupation","marital_status","interests","picture","sexual_orientation","religion","country");
+
+		// count how much filled is the profile
+		$counter = 0;
+		if( ! empty($profile->usstate) ||  ! empty($profile->province)) $counter++;
+		foreach ($keys as $key)
+		{
+			if( ! empty($profile->$key)) $counter++;
+		}
+
+		// calculate and return the completion percentage
+		$total = count($keys) + 1;
+		return ($counter  * 100) / $total;
+	}
+
+	/**
+	 * Prepare a user profile to be displayed properly
+	 *
+	 * @author salvipascual
+	 * @param Object $profile
+	 * @return Number, percentage of completion
+	 * */
+	public function prepareUserProfile($profile)
+	{
+		// get the person's age
+		$profile->age = empty($profile->date_of_birth) ? 0 : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+
+		// try to guest the location based on the domain
+		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
+		if(empty($profile->country) && $inCuba) $profile->country = "CU";
+
+		// get the most accurate location as possible
+		$location = $profile->country;
+		if($profile->city) $location = $profile->city;
+		if($profile->usstate) $location = $profile->usstate;
+		if($profile->province) $location = $profile->province;
+		$location = str_replace("_", " ", $location);
+		$profile->location = ucwords(strtolower($location));
+
+		// get the person's full name
+		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
+		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
+
+		// get the image of the person
+		if($profile->picture)
+		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
+			$profile->picture_internal = "$wwwroot/public/profile/{$profile->picture}.jpg";
+			$profile->picture_public = "$wwwhttp/profile/{$profile->picture}.jpg";
+			$profile->picture = true;
+		}
+
+		// get the interests as an array
+		$profile->interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
+
+		// remove whitespaces at the begining and ending of string fields
+		foreach ($profile as $key=>$value) if( ! is_array($value)) $profile->$key = trim($value);
+
+		// get the completion percentage of your profile
+		$profile->completion = $this->getProfileCompletion($profile);
+
+		// get the about me section
+		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile);
+
+		// remove dangerous attributes from the response
+		unset($profile->pin,$profile->insertion_date,$profile->last_access,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
+
+		return $profile;
 	}
 }

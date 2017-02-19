@@ -10,7 +10,7 @@ class BienvenidoController extends Controller
 		$connection = new Connection();
 		$visits = $connection->deepQuery("
 			SELECT
-				count(*) as received, 
+				count(usage_id) as received, 
 				DATE_FORMAT(request_time,'%Y-%m') as inserted 
 			FROM utilization
 			GROUP BY DATE_FORMAT(request_time,'%Y-%m')

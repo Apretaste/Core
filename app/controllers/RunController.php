@@ -35,7 +35,7 @@ class RunController extends Controller
 		// get params from GET (or from the encripted API)
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
-		$attachments = $this->request->get("attachments");
+		$attachment = $this->request->get("attachment");
 		$token = $this->request->get("token");
 
 		$utils = new Utils();
@@ -54,13 +54,20 @@ class RunController extends Controller
 
 		// create attachment as an object
 		$attach = array();
-		if ( ! empty($attachments))
+		if ( ! empty($attachment))
 		{
-			// save image into the filesystem
+			// get the path for the image
 			$wwwroot = $this->di->get('path')['root'];
 			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
-			$content = file_get_contents($attachments);
-			imagejpeg(imagecreatefromstring($content), $filePath);
+
+			// clean base64 string
+			$data = explode(',', $attachment);
+			$data = isset($data[1]) ? $data[1] : $data[0];
+
+			// save base64 string as a JPG image
+			$im = imagecreatefromstring(base64_decode($data));
+			imagejpeg($im, $filePath);
+			imagedestroy($im);
 
 			// optimize the image and grant full permits
 			$utils->optimizeImage($filePath);
@@ -112,6 +119,10 @@ class RunController extends Controller
 		$subject = $_POST['subject'];
 		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
 		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
+
+		// clean incoming emails
+		$fromEmail = str_replace("'", "", $fromEmail);
+		$toEmail = str_replace("'", "", $toEmail);
 
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
@@ -407,37 +418,40 @@ class RunController extends Controller
 		{
 			$rs->email = empty($rs->email) ? $email : $rs->email;
 
-            // check if is first request of the day
-            $requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
-            $stars = 0;
-            if ($requestsToday == 0)
-            {
-                // run the tickets's game
+			// check if is first request of the day
+			$requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
+			$stars = 0;
+			if ($requestsToday == 0)
+			{
+				// run the tickets's game
 
-                // @note: este chequeo se hace despues de verificar si es el primer
-                // correo del dia, para no preguntar chequear mas veces
-                // innecesariamente en el resto del dia
+				// @note: este chequeo se hace despues de verificar si es el primer
+				// correo del dia, para no preguntar chequear mas veces
+				// innecesariamente en el resto del dia
 
-                $stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
+				$stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
+				if ($stars === 4) /* today is the star number five*/
+				{
+					// insert 10 tickets for user
+					//$sqlValues = "('$email', 'GAME')";
+					//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
 
-                if ($stars === 4) /* today is the star number five*/
-                {
-                    // insert 10 tickets for user
-                    $sqlValues = "('$email', 'GAME')";
-                    $sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
-                    $connection->deepQuery($sql);
+                    $sql = "UPDATE person SET credit = credit + 1 WHERE email = '{$rs->email}';";
+					$connection->deepQuery($sql);
 
-                    // add notification to user
-                    $utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
-                }
+					$utils->addEvent("stars-game", "win-credit", $rs->email,  []);
 
-                $stars++;
-            }
+					// add notification to user
+					$utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
+				}
+
+				$stars++;
+			}
 
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-            $rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
-            $rs->content['raffle_stars'] = $stars;
-            $rs->content['requests_today'] = $requestsToday;
+			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
+			$rs->content['raffle_stars'] = $stars;
+			$rs->content['requests_today'] = $requestsToday;
 		}
 
 		// create a new render
@@ -467,7 +481,8 @@ class RunController extends Controller
 		// echo the json on the screen
 		if($format == "json")
 		{
-			return $render->renderJSON($response);
+			if($response->render) return $render->renderJSON($response);
+			else return '{"code":"ok"}';
 		}
 
 		// render the template email it to the user
