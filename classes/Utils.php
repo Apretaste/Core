@@ -1411,4 +1411,25 @@ class Utils
 		$profile = $this->getPerson($email);
 		return $profile->completion;
 	}
+
+	/**
+	 * Get the country name based on a code
+	 *
+	 * @author salvipascual
+	 * @param String $countryCode
+	 * @param String $lang
+	 * @return String
+	 */
+	function getCountryNameByCode($countryCode, $lang='es')
+	{
+		// always code in uppercase
+		$countryCode = strtoupper($countryCode);
+
+		// get the country
+		$connection = new Connection();
+		$country = $connection->deepQuery("SELECT $lang FROM countries WHERE code = '$countryCode'");
+
+		// return the country name or empty string
+		return isset($country[0]->$lang) ? $country[0]->$lang : '';
+	}
 }
