@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<title>Piropazo</title>
+		<title>Diario De Cuba</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<style type="text/css">
@@ -32,21 +32,19 @@
 				font-family: Arial;
 			}
 			h1{
-				color: #5DBB48;
+				color: #C11414;
 				text-transform: uppercase;
 				font-size: 22px;
-				text-align: center;
 				font-weight: normal;
 			}
 			h2{
-				color: #5DBB48;
+				color: #C11414;
 				text-transform: uppercase;
 				font-size: 16px;
 				margin-top: 30px;
 				font-weight: normal;
 			}
-			.rounded{
-				border-radius: 10px;
+			.background{
 				background: white;
 				padding: 10px;
 			}
@@ -55,24 +53,19 @@
 	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
 		<center>
 			<table id="container" bgcolor="#F2F2F2" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
+				<!--logo-->
 				<tr>
-					<td width="50"></td>
-					<!--logo-->
 					<td align="center" valign="middle">
-						<font size="12" color="#5DBB48;">&hearts;</font>
-					</td>
-					<!--notifications-->
-					<td width="50" align="left" valign="top" style="padding-top:10px">
-						{if $num_notifications > 0}
-							{link href="NOTIFICACIONES" caption="&#9888;{$num_notifications}"}
-						{/if}
+						<div style="font-family:Times; font-size:42px; font-weight:bold; margin:15px 0px; color:black;">
+							DIARIO <span style="color:white; background-color:#C11414; padding:3px;">DE</span> CUBA
+						</div>
 					</td>
 				</tr>
 
 				<!--main section-->
 				<tr>
-					<td style="padding: 5px 10px 0px 10px;" colspan="3">
-						<div class="rounded">
+					<td style="padding: 5px 10px 0px 10px;">
+						<div class="background">
 							{include file="$APRETASTE_USER_TEMPLATE"}
 						</div>
 					</td>
@@ -80,8 +73,8 @@
 
 				<!--footer-->
 				<tr>
-					<td align="center" colspan="3" bgcolor="#F2F2F2" style="padding: 20px 0px;">
-						<small>Piropazo @2017. All rights reserved.</small>
+					<td align="center" bgcolor="#F2F2F2" style="padding: 20px 0px;">
+						<small>&iquest;Tienes internet? Revisa <a href="http://diariodecuba.com">diariodecuba.com</a></small>
 					</td>
 				</tr>
 			</table>
