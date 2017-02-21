@@ -10,13 +10,16 @@ class Social
 	 * Load resources needed for the class to work
 	 *
 	 * @author salvipascual
+     * @author kuma
 	 */
 	public function __construct()
 	{
 		// load the list of countries
 		$connection = new Connection();
-		$countries = $connection->deepQuery("SELECT * FROM countries");
-		foreach ($countries as $country) $this->countries[$country->code] = array("es"=>$country->es, "en"=>$country->en);
+		$countries = $connection->deepQuery("SELECT * FROM countries;");
+		foreach ($countries as $c)
+		    if (isset($c->code) && isset($c->es) && isset($c->en))
+		        $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
 	}
 
 	/**
@@ -114,8 +117,8 @@ class Social
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : $this->countries[$countryCode]['es'];
-		$usstate = empty(trim($profile->usstate)) ? false : $profile->usstate;
+		$country = empty(trim($profile->country)) ? false : (isset($this->countries[$countryCode]) ? $this->countries[$countryCode]['es'] : false);
+		$usstate = isset($profile->usstate) ? (empty(trim($profile->usstate)) ? false : $profile->usstate) : false;
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
@@ -373,7 +376,7 @@ class Social
 		// get the most accurate location as possible
 		$location = $profile->country;
 		if($profile->city) $location = $profile->city;
-		if($profile->usstate) $location = $profile->usstate;
+		if(isset($profile->usstate)) $location = $profile->usstate;
 		if($profile->province) $location = $profile->province;
 		$location = str_replace("_", " ", $location);
 		$profile->location = ucwords(strtolower($location));
