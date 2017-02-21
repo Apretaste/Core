@@ -69,6 +69,9 @@ class CampaignTask extends \Phalcon\Cli\Task
 
             $response->createFromTemplate($content, $data);
             $content = $render->renderHTML($service, $response);
+            $response->setEmailLayout("email_text.tpl");
+            $response->createFromTemplate($campaign->subject, $data);
+            $campaign->subject = $render->renderHTML($service, $response);
 
 			// send test email
 			$sender->trackCampaign = $campaign->id;
