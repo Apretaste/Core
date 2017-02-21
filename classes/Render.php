@@ -6,6 +6,7 @@ class Render
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
+     * @author kuma
 	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
 	 * @return String, template in HTML
@@ -25,9 +26,14 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
 
+        $tempTemp = false;
 		// check for volatile template
 		if ( ! file_exists($userTemplateFile))
-            $userTemplateFile = $response->template;
+		{
+		    $tempTemp = "$wwwroot/temp/temporal-template-".uniqid().".tpl";
+		    file_put_contents($tempTemp, $response->template);
+            $userTemplateFile = $tempTemp;
+        }
 
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
@@ -65,8 +71,14 @@ class Render
 		$templateVariables = array_merge($systemVariables, $response->content);
 		$smarty->assign($templateVariables);
 
-		// renderig and removing tabs, double spaces and break lines
+		// rendering and removing tabs, double spaces and break lines
 		$renderedTemplate = $smarty->fetch($response->layout);
+
+		// remove temporal template
+		if ($tempTemp !== false)
+		    if (file_exists($tempTemp))
+		        unlink($tempTemp);
+
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 
