@@ -57,7 +57,7 @@ class CampaignTask extends \Phalcon\Cli\Task
             // parse campaign content
 			$render = new Render();
 			$service = new Service('campaign');
-            $response = new Reseponse();
+            $response = new Response();
 
             // TODO: add more data
             $data = [
