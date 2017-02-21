@@ -25,6 +25,10 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
 
+		// check for volatile template
+		if ( ! file_exists($userTemplateFile))
+            $userTemplateFile = $response->template;
+
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
 		$smarty->addPluginsDir("$wwwroot/app/plugins/");
