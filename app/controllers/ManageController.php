@@ -2538,7 +2538,10 @@ class ManageController extends Controller
             'campaign' => new stdClass(),
             'user' => $utils->getPerson($email),
             'counter' => 1,
-            'total' => 1000
+            'total' => 1000,
+            'num_notifications' => $utils->getNumberOfNotifications($email),
+            'requests_today' => $utils->getTotalRequestsTodayOf($email),
+            'raffle_stars' => 0
         ];
 
         $response->createFromTemplate($content, $data);
