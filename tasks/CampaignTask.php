@@ -64,7 +64,10 @@ class CampaignTask extends \Phalcon\Cli\Task
                 'campaign' => $campaign,
                 'user' => $person,
                 'counter' => $counter,
-                'total' => $total
+                'total' => $total,
+                'num_notifications' => $utils->getNumberOfNotifications($person->email),
+                'requests_today' => $utils->getTotalRequestsTodayOf($person->email),
+                'raffle_stars' => 0
             ];
 
             $response->createFromTemplate($content, $data);
