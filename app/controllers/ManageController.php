@@ -2529,6 +2529,24 @@ class ManageController extends Controller
 		$utils = new Utils();
 		$content = $utils->campaignReplaceTemplateVariables($email, $content);
 
+        // parse campaign content
+        $render = new Render();
+        $service = new Service('campaign');
+        $response = new Response();
+
+        $data = [
+            'campaign' => new stdClass(),
+            'user' => $utils->getPerson($email),
+            'counter' => 1,
+            'total' => 1000
+        ];
+
+        $response->createFromTemplate($content, $data);
+        $content = $render->renderHTML($service, $response);
+        $response->setEmailLayout("email_text.tpl");
+        $response->createFromTemplate($subject, $data);
+        $subject = $render->renderHTML($service, $response);
+
 		// send test email
 		$sender = new Email();
 		$sender->sendEmail($email, $subject, $content);
