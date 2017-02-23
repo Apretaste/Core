@@ -2543,10 +2543,10 @@ class ManageController extends Controller
             'requests_today' => $utils->getTotalRequestsTodayOf($email),
             'raffle_stars' => 0
         ];
-
+        $response->setEmailLayout("email_campaign.tpl");
         $response->createFromTemplate($content, $data);
         $content = $render->renderHTML($service, $response);
-        $response->setEmailLayout("email_campaign.tpl");
+        $response->setEmailLayout("email_text.tpl");
         $response->createFromTemplate($subject, $data);
         $subject = $render->renderHTML($service, $response);
 
