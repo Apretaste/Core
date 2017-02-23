@@ -54,6 +54,9 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// replace the template variables
 			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content, $campaign->id);
 
+            // restore some chars/tags
+            $content = str_replace('-&gt;', '->', $content);
+
             // parse campaign content
 			$render = new Render();
 			$service = new Service('campaign');
