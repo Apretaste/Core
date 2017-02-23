@@ -2529,14 +2529,18 @@ class ManageController extends Controller
 		$utils = new Utils();
 		$content = $utils->campaignReplaceTemplateVariables($email, $content);
 
+		// restore some chars/tags
+        $content = str_replace('-&gt;', '->', $content);
+
         // parse campaign content
         $render = new Render();
         $service = new Service('campaign');
         $response = new Response();
 
+        $person = $utils->getPerson($email);
         $data = [
             'campaign' => new stdClass(),
-            'user' => $utils->getPerson($email),
+            'user' => $person,
             'counter' => 1,
             'total' => 1000,
             'num_notifications' => $utils->getNumberOfNotifications($email),
@@ -2546,6 +2550,7 @@ class ManageController extends Controller
         $response->setEmailLayout("email_campaign.tpl");
         $response->createFromTemplate($content, $data);
         $content = $render->renderHTML($service, $response);
+
         $response->setEmailLayout("email_text.tpl");
         $response->createFromTemplate($subject, $data);
         $subject = $render->renderHTML($service, $response);
