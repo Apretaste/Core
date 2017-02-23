@@ -2394,7 +2394,7 @@ class ManageController extends Controller
 	{
 		// get the email campaign layout
 		$wwwroot = $this->di->get('path')['root'];
-		$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
+		//$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
 
 		// send variables to the view
 		$this->view->title = "New campaign";
@@ -2403,7 +2403,7 @@ class ManageController extends Controller
 		$this->view->id = "";
 		$this->view->subject = "";
 		$this->view->date = date("Y-m-d\T23:00");
-		$this->view->layout = $layout;
+		$this->view->layout = '';
 	}
 
 	/**
@@ -2546,7 +2546,7 @@ class ManageController extends Controller
 
         $response->createFromTemplate($content, $data);
         $content = $render->renderHTML($service, $response);
-        $response->setEmailLayout("email_text.tpl");
+        $response->setEmailLayout("email_campaign.tpl");
         $response->createFromTemplate($subject, $data);
         $subject = $render->renderHTML($service, $response);
 
