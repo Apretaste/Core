@@ -9,7 +9,7 @@ class ApiController extends Controller
 	 * Authenticate an user and return the token
 	 *
 	 * @author salvipascual
-	 * @version 1.0
+	 * @version 1.1
 	 * @param POST email
 	 * @param POST pin
 	 * @return JSON with token
@@ -19,14 +19,50 @@ class ApiController extends Controller
 		// get the values from the post
 		$email = trim($this->request->get('email'));
 		$pin = trim($this->request->get('pin'));
+		$appid = trim($this->request->get('appid'));
+		$appname = trim($this->request->get('appname'));
 
-		// authenticate and create a new token
-		$utils = new Utils();
-		$token = $utils->tokenize($email, $pin);
-		if( ! $token) die('{"code":"error","message":"invalid email or pin"}');
+		// check if user/pass is correct
+		$connection = new Connection();
+		$auth = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
+		if(empty($auth)) die('{"code":"error","message":"invalid email or pin"}');
+
+		// get the new expiration date and token
+		$expires = date("Y-m-d", strtotime("+1 month"));
+		$token = md5($email.$pin.$expires.rand());
+
+		// create new entry on the authentication table
+		// and delete all previos entries for this token
+		$connection->deepQuery("
+			START TRANSACTION;
+			DELETE FROM authentication WHERE email='$email' AND appname = '$appname';
+			INSERT INTO authentication (token,email,appid,appname,expires) VALUES ('$token','$email','$appid','$appname','$expires');
+			COMMIT");
 
 		// return ok response
 		die('{"code":"ok","token":"'.$token.'"}');
+	}
+
+	/**
+	 * Authenticate an user and return the token
+	 *
+	 * @author salvipascual
+	 * @version 1.1
+	 * @param POST email
+	 * @param POST pin
+	 * @return JSON with token
+	 * */
+	public function logoutAction()
+	{
+		// get the values from the post
+		$token = trim($this->request->get('token'));
+
+		// delete the row for the token
+		$connection = new Connection();
+		$connection->deepQuery("DELETE FROM authentication WHERE token='$token'");
+
+		// return ok response
+		die('{"code":"ok"}');
 	}
 
 	/**

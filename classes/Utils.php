@@ -545,36 +545,6 @@ class Utils
 	}
 
 	/**
-	 * Authenticates a user and returns the token associated with the account
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * @param String pin
-	 * @return String or false
-	 */
-	public function tokenize($email, $pin)
-	{
-		$connection = new Connection();
-
-		// check if user/pass is correct
-		$auth = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
-		if(empty($auth)) return false;
-
-		// get the new expiration date and token
-		$expires = date("Y-m-d", strtotime("+1 month"));
-		$token = md5($email.$pin.$expires.rand());
-
-		// create new entry on the authentication table
-		// and delete all previos entries for this token
-		$connection->deepQuery("
-			START TRANSACTION;
-			DELETE FROM authentication WHERE email='$email';
-			INSERT INTO authentication (token,email,expires) VALUES ('$token','$email','$expires');
-			COMMIT");
-		return $token;
-	}
-
-	/**
 	 * Check token and retrieve the user that is logged
 	 *
 	 * @author salvipascual
