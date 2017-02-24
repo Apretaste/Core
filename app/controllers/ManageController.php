@@ -2552,6 +2552,7 @@ class ManageController extends Controller
         $content = $render->renderHTML($service, $response);
 
         $response->setEmailLayout("email_text.tpl");
+		$subject = str_replace('-&gt;', '->', $subject);
         $response->createFromTemplate($subject, $data);
         $subject = $render->renderHTML($service, $response);
 
