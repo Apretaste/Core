@@ -364,7 +364,7 @@ class Social
 	public function prepareUserProfile($profile)
 	{
 		// get the person's age
-		$profile->age = empty($profile->date_of_birth) ? 0 : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$profile->age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
 
 		// try to guest the location based on the domain
 		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
