@@ -383,6 +383,8 @@ class Social
 		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
 
 		// get the image of the person
+		$profile->picture_internal = "";
+		$profile->picture_public = "";
 		if($profile->picture)
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
