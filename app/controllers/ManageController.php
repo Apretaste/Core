@@ -236,25 +236,6 @@ class ManageController extends Controller
 		}
 		// END active domains last 4 months
 
-/*
-		// START bounce rate
-		$query = "SELECT B.* FROM (";
-		for($i=0; $i<12; $i++)
-		{
-			$date = date("Y-m", strtotime("-$i months"));
-			$query .= "SELECT COUNT(A.b) as bounced, '$date' as date FROM (SELECT COUNT(requestor) as b FROM utilization WHERE DATE_FORMAT(request_time,'%Y-%m') = '$date' GROUP BY requestor HAVING b = 1) A";
-			if($i!=11) $query .= " UNION ";
-		}
-		$query .= ") B WHERE bounced > 0 ORDER BY date";
-		$visits = $connection->deepQuery($query);
-		$bounceRateMonthly = array();
-		foreach($visits as $visit)
-		{
-			$bounceRateMonthly[] = ["date"=>$visit->date, "bounced"=>$visit->bounced];
-		}
-		//End bounce rate
-*/
-
 		// START updated profiles
 		$query =
 		"SELECT count(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
@@ -288,7 +269,6 @@ class ManageController extends Controller
 		$this->view->currentNumberOfTotalUsers = $currentTotalUsers[0]->CountUsers;
 		$this->view->servicesUsageMonthly = $servicesUsageMonthly;
 		$this->view->activeDomainsMonthly = $activeDomainsMonthly;
-//		$this->view->bounceRateMonthly = $bounceRateMonthly;
 		$this->view->updatedProfilesMonthly = $updatedProfilesMonthly;
 		$this->view->currentNumberOfRunningaAds = $runningAds[0]->CountAds;
 	}
