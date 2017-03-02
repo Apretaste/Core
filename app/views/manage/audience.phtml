@@ -21,12 +21,6 @@
 		<h2>Active domains (last 4 months)</h2>
 		<div id="lastFourMonthActiveDomains" style="width: 300px; height: 300px;"></div>
 
-<!--
-		<h2>Monthly bounce rate</h2>
-		<p class="small">Emails received only once a month</p>
-		<div id="monthlyBounceRate" style="width:900px; height:300px;"></div>
--->
-
 		<h2>Updated Profiles</h2>
 		<div id="updatedProfiles" style="width:900px; height:300px;"></div>
 
@@ -105,21 +99,7 @@
 		var chart = new google.visualization.PieChart(document.getElementById('lastFourMonthActiveDomains'));
 		chart.draw(data, options);
 	}
-/*
-	// Monthly Bounce Rate
-	google.setOnLoadCallback(monthlyBounceRate);
-	function monthlyBounceRate() {
-		var data = google.visualization.arrayToDataTable([
-			['Year and Month', 'Bounce Rate'],
-			<?php foreach ($bounceRateMonthly as $data) { ?>
-				['<?php echo $data['date']; ?>',<?php echo $data['bounced']; ?>],
-			<?php } ?>
-		]);
-		var options = {legend: 'none', orientation: 'horizontal'};
-		var chart = new google.visualization.BarChart(document.getElementById('monthlyBounceRate'));
-		chart.draw(data, options);
-	}
-*/
+
 	// Updated Profiles
 	google.setOnLoadCallback(updatedProfiles);
 	function updatedProfiles() {
