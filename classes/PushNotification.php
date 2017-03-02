@@ -34,14 +34,130 @@ class PushNotification
 	}
 
 	/**
+	 * Send a text only push notification
+	 *
+	 * @author salvipascual
+	 * @param String $title
+	 * @param String $body
+	 * @return JSON Response
+	 */
+	public function sendTextPush($appids, $title, $body)
+	{
+		// prepare de data structure
+		$data = array (
+			'title' => $title,
+			'body' => $body,
+			'subtitle' => '',
+			'tickerText' => '',
+			'vibrate' => 1,
+			'sound'  => 1,
+			'largeIcon' => 'large_icon',
+			'smallIcon' => 'small_icon',
+			'notification_type' => '');
+
+		// call the general push
+		$this->sendGeneralPush($appids, $data);
+	}
+
+	/**
+	 * Send a push notification for chat in piropazo
+	 *
+	 * @author salvipascual
+	 * @param String|Array $appid
+	 * @param Person $person
+	 * @param String $message
+	 * @return JSON Response
+	 */
+	public function piropazoChatPush($appids, $person, $message)
+	{
+		// prepare de data structure
+		$data = array(
+			"title" => $person->full_name,
+			"body" => $message,
+			"notification_type" => "chat_notification",
+			"message_data" => array(
+				"from_username" => $person->username,
+				"from_user_fullname" => $person->full_name,
+				"from_user_image" => $person->picture_public,
+				"message" => $message
+			)
+		);
+
+		// call the general push
+		return $this->sendGeneralPush($appids, $data);
+	}
+
+	/**
+	 * Send a push notification for like in piropazo
+	 *
+	 * @author salvipascual
+	 * @param String|Array $appid
+	 * @param Person $person
+	 * @return JSON Response
+	 */
+	public function piropazoLikePush($appids, $person)
+	{
+		// translate message
+		if($person->lang == "en") $body = "@{$person->username} likes your profile";
+		else $body = "A @{$person->username} le ha gustado su perfil";
+
+		// prepare de data structure
+		$data = array (
+			"title" => $person->full_name,
+			"body" => $body,
+			"notification_type" => "like_notification",
+			"like_data" => array(
+				"from_username" => $person->username,
+				"from_user_fullname" => $person->full_name,
+				"from_user_image" => $person->picture_public,
+				"from_user_description" => $person->about_me
+			)
+		);
+
+		// call the general push
+		return $this->sendGeneralPush($appids, $data);
+	}
+
+	/**
+	 * Send a push notification for flower in piropazo
+	 *
+	 * @author salvipascual
+	 * @param String|Array $appid
+	 * @param Person $person
+	 * @return JSON Response
+	 */
+	public function piropazoFlowerPush($appids, $person)
+	{
+		// translate message
+		if($person->lang == "en") $body = "Hurray, @{$person->username} sent you a flower. Act now, this means he/she really likes you.";
+		else $body = "Enhorabuena, @{$person->username} le ha mandado una flor. Este es un sintoma inequivoco de le gustas.";
+
+		// prepare de data structure
+		$data = array (
+			"title" => $person->full_name,
+			"body" => $body,
+			"notification_type" => "flower_notification",
+			"flower_data" => array(
+				"from_username" => $person->username,
+				"from_user_fullname" => $person->full_name,
+				"from_user_image" => $person->picture_public,
+				"from_user_description" => $person->about_me
+			)
+		);
+
+		// call the general push
+		return $this->sendGeneralPush($appids, $data);
+	}
+
+	/**
 	 * Send a push notification
 	 *
 	 * @author salvipascual
-	 * @param String
-	 * @param String
-	 * @return String
+	 * @param Array|String $appids, IDs to push
+	 * @param Array $data, structure to send
+	 * @return JSON Response
 	 */
-	public function sendPush($appids, $title, $body)
+	private function sendGeneralPush($appids, $data)
 	{
 		// appids must be a array
 		$appids = explode(",", $appids);
@@ -53,16 +169,7 @@ class PushNotification
 		// prepare de message
 		$fields = array(
 			'registration_ids' => $appids,
-			'data' => array (
-				'title' => $title,
-				'body' => $body,
-				'subtitle' => '',
-				'tickerText' => '',
-				'vibrate' => 1,
-				'sound'  => 1,
-				'largeIcon' => 'large_icon',
-				'smallIcon' => 'small_icon'
-			)
+			'data' => $data
 		);
 
 		// prepare the server auth
