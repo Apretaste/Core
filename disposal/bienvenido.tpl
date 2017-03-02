@@ -182,7 +182,7 @@
 					<p class="lead">Proveer con formas alternativas de informaci&oacute;n a aquellos que solo tienen acceso a las escogidas por el gobierno</p>
 				</div>
 			</div>
-			
+
 			<hr class="small">
 
 			<div class="row">
@@ -287,7 +287,7 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="blank-space-divider"></div>
 
 			<div class="row">
@@ -311,7 +311,7 @@
 			</div>
 		</div>
 	</section>
-	
+
 	<!-- Users -->
 	<section id="users" style="background-color:#C1C1C1;">
 		<div class="container">
@@ -429,7 +429,7 @@
 	<section id="donate" class="call-to-action bg-customized">
 		<div class="container">
 			<div class="row">
-				<div class="col-lg-12 text-center">					
+				<div class="col-lg-12 text-center">
 					<h1>&Uacute;nete a nuestra causa</h1>
 					<hr class="small">
 					<p class="lead">Su donaci&oacute;n cambia la vida de aquellos que nunca han accedido a la Web; por favor ay&uacute;danos a mantener este servicio activo</p>
@@ -488,14 +488,14 @@
 							<a href="https://twitter.com/apretaste" target="_blank"><i class="fa fa-twitter fa-fw fa-3x"></i></a>
 						</li>
 					</ul>
-					
+
 					<br/>
 					<p class="small">A COPY OF THE OFFICIAL REGISTRATION AND FINANCIAL INFORMATION MAY BE OBTAINED FROM THE DIVISION OF CONSUMER SERVICES BY CALLING TOLL-FREE WITHIN THE STATE 1-800-HELPFLA, OR VIA THE INTERNET AT WWW.800HELPFLA.COM. REGISTRATION DOES NOT IMPLY ENDORSEMENT, APPROVAL, OR RECOMMENDATION BY THE STATE.</p>
 				</div>
 			</div>
 		</div>
 	</footer>
-	
+
 	<form id="stripePaymentInfo" action="stripeReceivePayment" method="post">
 		<input type="hidden" id="stripeAmountInput" name="amount" value="10000" />
 		<input type="hidden" id="stripeEmailInput" name="email" value="" />
@@ -507,9 +507,6 @@
 
 	<!-- Bootstrap Core JavaScript -->
 	<script src="<?php echo $wwwhttp; ?>/static/js/bootstrap.min.js"></script>
-
-	<!-- Stripe -->
-	<script src="https://checkout.stripe.com/checkout.js"></script>
 
 	<!-- Custom Theme JavaScript -->
 	<script>
