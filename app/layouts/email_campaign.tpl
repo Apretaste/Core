@@ -21,8 +21,9 @@
 	<!--CONTENT-->
 	<tr>
 		<td align="left" style="padding: 0px 5px;">
-			<p>Hola {{APRETASTE_NAME}},</p>
-			<p>TYPE YOUR EMAIL HERE</p>
+            {space10}
+            {include file="$APRETASTE_USER_TEMPLATE"}
+            {space10}
 		</td>
 	</tr>
 	<tr><td><br/></td></tr>

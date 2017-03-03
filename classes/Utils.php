@@ -1284,7 +1284,7 @@ class Utils
 					$src = substr($src, $p + 8);
 					$ext = str_replace('image/', '', $type);
 					$this->clearStr($ext);
-					$filename =  $id.$ext;
+					$filename =  $id.".".$ext;
 
 					if ($image->hasAttribute("data-filename"))
 					{

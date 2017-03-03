@@ -2355,6 +2355,12 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$connection->deepQuery("DELETE FROM campaign WHERE id = $id");
 
+		// remove images
+		$utils = new Utils();
+        $wwwroot = $this->di->get('path')['root'];
+        $campaignsFolder = "$wwwroot/public/campaigns";
+        $utils->rmdir("$campaignsFolder/$id");
+
 		// go back to the list of campaigns
 		$this->response->redirect('manage/campaigns');
 	}
@@ -2368,7 +2374,7 @@ class ManageController extends Controller
 	{
 		// get the email campaign layout
 		$wwwroot = $this->di->get('path')['root'];
-		$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
+		//$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
 
 		// send variables to the view
 		$this->view->title = "New campaign";
@@ -2377,7 +2383,7 @@ class ManageController extends Controller
 		$this->view->id = "";
 		$this->view->subject = "";
 		$this->view->date = date("Y-m-d\T23:00");
-		$this->view->layout = $layout;
+		$this->view->layout = '';
 	}
 
 	/**
@@ -2389,7 +2395,7 @@ class ManageController extends Controller
 	{
 		$id = $this->request->get("id");
 
-		// insert the new campaignin the database
+		// insert the new campaign in the database
 		$connection = new Connection();
 		$campaign = $connection->deepQuery("SELECT * FROM campaign WHERE id=$id");
 		$campaign = $campaign[0];
@@ -2400,6 +2406,25 @@ class ManageController extends Controller
 		$this->view->email = $_SESSION['user'];
 		$this->view->id = $campaign->id;
 		$this->view->subject = $campaign->subject;
+
+		$utils = new Utils();
+        $wwwroot = $this->di->get('path')['root'];
+        $campaignsFolder = "$wwwroot/public/campaigns";
+        $listPath = "$campaignsFolder/$id/images.list";
+
+        if (file_exists($listPath))
+        {
+            $imagesList = unserialize(file_get_contents($listPath));
+            $newImageList = [];
+            foreach ($imagesList as $idImg => $img)
+            {
+                $img['content'] = base64_encode(file_get_contents("$campaignsFolder/$id/{$img['filename']}"));
+                $newImageList[$idImg] = $img;
+            }
+        }
+
+        $campaign->content = $utils->putInlineImagesToHTML($campaign->content, $newImageList);
+
 		$this->view->layout = $campaign->content;
 		$this->view->date = date("Y-m-d\TH:i", strtotime($campaign->sending_date));
 		$this->view->pick("manage/newCampaign");
@@ -2419,15 +2444,52 @@ class ManageController extends Controller
 		$date = $this->request->getPost("date");
 
 		// minify the html and remove dangerous characters
+        $utils = new Utils();
+        $images  = $utils->getInlineImagesFromHTML($content);
+        $wwwroot = $this->di->get('path')['root'];
+        $campaignsFolder = "$wwwroot/public/campaigns";
+
 		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 
 		// insert or update the campaign
 		$connection = new Connection();
-		if(empty($id)) $connection->deepQuery("INSERT INTO campaign (subject, content, sending_date) VALUES ('$subject', '$content', '$date')");
-		else $connection->deepQuery("UPDATE campaign SET subject='$subject', content='$content', sending_date='$date' WHERE id=$id");
+		if(empty($id))
+        {
+            $r = $connection->deepQuery("SELECT max(id) as m FROM campaign;");
+            $id = $r[0]->m + 1;
+            $connection->deepQuery("INSERT INTO campaign (id, subject, content, sending_date) VALUES ('$id','$subject', '$content', '$date')");
+        }
+		else
+        {
+		    $connection->deepQuery("UPDATE campaign SET subject='$subject', content='$content', sending_date='$date' WHERE id=$id");
 
-		// go to the list of campaigns
+		    // clear old images
+            $utils->rmdir("$campaignsFolder/$id");
+        }
+
+        // save images
+        if ( ! file_exists($campaignsFolder))
+            @mkdir($campaignsFolder);
+
+        if ( ! file_exists("$campaignsFolder/$id"))
+            @mkdir("$campaignsFolder/$id");
+
+        if (file_exists("$campaignsFolder/$id"))
+        {
+            $imagesList = [];
+            foreach($images as $idimg => $img)
+            {
+                file_put_contents($campaignsFolder."/$id/{$img['filename']}", base64_decode($img['content']));
+                $itemImg = $img;
+                unset($itemImg['content']);
+                $imagesList[$idimg] = $itemImg;
+            }
+
+            file_put_contents("$campaignsFolder/$id/images.list", serialize($imagesList));
+        }
+
+        // go to the list of campaigns
 		$this->response->redirect('manage/campaigns');
 	}
 
@@ -2446,6 +2508,33 @@ class ManageController extends Controller
 		// replace the template variables
 		$utils = new Utils();
 		$content = $utils->campaignReplaceTemplateVariables($email, $content);
+
+		// restore some chars/tags
+        $content = str_replace('-&gt;', '->', $content);
+
+        // parse campaign content
+        $render = new Render();
+        $service = new Service('campaign');
+        $response = new Response();
+
+        $person = $utils->getPerson($email);
+        $data = [
+            'campaign' => new stdClass(),
+            'user' => $person,
+            'counter' => 1,
+            'total' => 1000,
+            'num_notifications' => $utils->getNumberOfNotifications($email),
+            'requests_today' => $utils->getTotalRequestsTodayOf($email),
+            'raffle_stars' => 0
+        ];
+        $response->setEmailLayout("email_campaign.tpl");
+        $response->createFromTemplate($content, $data);
+        $content = $render->renderHTML($service, $response);
+
+        $response->setEmailLayout("email_text.tpl");
+		$subject = str_replace('-&gt;', '->', $subject);
+        $response->createFromTemplate($subject, $data);
+        $subject = $render->renderHTML($service, $response);
 
 		// send test email
 		$sender = new Email();

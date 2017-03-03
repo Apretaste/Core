@@ -54,6 +54,32 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// replace the template variables
 			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content, $campaign->id);
 
+            // restore some chars/tags
+            $content = str_replace('-&gt;', '->', $content);
+
+            // parse campaign content
+			$render = new Render();
+			$service = new Service('campaign');
+            $response = new Response();
+
+            // TODO: add more data
+            $data = [
+                'campaign' => $campaign,
+                'user' => $person,
+                'counter' => $counter,
+                'total' => $total,
+                'num_notifications' => $utils->getNumberOfNotifications($person->email),
+                'requests_today' => $utils->getTotalRequestsTodayOf($person->email),
+                'raffle_stars' => 0
+            ];
+            $response->setEmailLayout("email_campaign.tpl");
+            $response->createFromTemplate($content, $data);
+            $content = $render->renderHTML($service, $response);
+            $response->setEmailLayout("email_text.tpl");
+            $campaign->subject = str_replace('-&gt;', '->', $campaign->subject);
+            $response->createFromTemplate($campaign->subject, $data);
+            $campaign->subject = $render->renderHTML($service, $response);
+
 			// send test email
 			$sender->trackCampaign = $campaign->id;
 			$result = $sender->sendEmail($person->email, $campaign->subject, $content);
