@@ -64,21 +64,26 @@ class PushNotification
 	 *
 	 * @author salvipascual
 	 * @param String|Array $appid
-	 * @param Person $person
+	 * @param Person $from
+	 * @param Person $to
 	 * @param String $message
 	 * @return JSON Response
 	 */
-	public function piropazoChatPush($appids, $person, $message)
+	public function piropazoChatPush($appids, $from, $to, $message)
 	{
 		// prepare de data structure
 		$data = array(
-			"title" => $person->full_name,
+			"title" => $from->full_name,
 			"body" => $message,
 			"notification_type" => "chat_notification",
 			"message_data" => array(
-				"from_username" => $person->username,
-				"from_user_fullname" => $person->full_name,
-				"from_user_image" => $person->picture_public,
+				"from_username" => $from->username,
+				"from_user_fullname" => $from->full_name,
+				"from_user_image" => $from->picture_public,
+				"from_user_gender" => $from->gender,
+				"to_user_fullname" => $to->full_name,
+				"to_user_image" => $to->picture_public,
+				"to_user_gender" => $to->gender,
 				"message" => $message
 			)
 		);
