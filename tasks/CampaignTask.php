@@ -61,23 +61,13 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$render = new Render();
 			$service = new Service('campaign');
             $response = new Response();
-
-            // TODO: add more data
-            $data = [
-                'campaign' => $campaign,
-                'user' => $person,
-                'counter' => $counter,
-                'total' => $total,
-                'num_notifications' => $utils->getNumberOfNotifications($person->email),
-                'requests_today' => $utils->getTotalRequestsTodayOf($person->email),
-                'raffle_stars' => 0
-            ];
+            $response->setResponseEmail($person->email);
             $response->setEmailLayout("email_campaign.tpl");
-            $response->createFromTemplate($content, $data);
+            $response->createFromTemplate($content, []);
             $content = $render->renderHTML($service, $response);
             $response->setEmailLayout("email_text.tpl");
             $campaign->subject = str_replace('-&gt;', '->', $campaign->subject);
-            $response->createFromTemplate($campaign->subject, $data);
+            $response->createFromTemplate($campaign->subject, []);
             $campaign->subject = $render->renderHTML($service, $response);
 
 			// send test email
