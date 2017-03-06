@@ -73,7 +73,7 @@ class Render
 			"APRETASTE_EMAIL_LIST" => $onEmailList,
 			"WWWROOT" => $wwwroot,
             'USER_NAME' => isset($person->username) ? $person->username: "",
-            'USER_FULL_NAME' => isset($person->fullname) ? $person->fullname: "",
+            'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name: "",
             'USER_EMAIL' => isset($person->email) ? $person->email: "",
             'CURRENT_USER' => isset($person->email) ? $person: false
 		);
