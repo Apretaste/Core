@@ -2452,6 +2452,10 @@ class ManageController extends Controller
 		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 
+        $content = $utils->clearHtml($content);
+        //$p = strpos($content, '<body>');
+        //$content = substr($content,str)
+
 		// insert or update the campaign
 		$connection = new Connection();
 		if(empty($id))
@@ -2517,23 +2521,14 @@ class ManageController extends Controller
         $service = new Service('campaign');
         $response = new Response();
 
-        $person = $utils->getPerson($email);
-        $data = [
-            'campaign' => new stdClass(),
-            'user' => $person,
-            'counter' => 1,
-            'total' => 1000,
-            'num_notifications' => $utils->getNumberOfNotifications($email),
-            'requests_today' => $utils->getTotalRequestsTodayOf($email),
-            'raffle_stars' => 0
-        ];
         $response->setEmailLayout("email_campaign.tpl");
-        $response->createFromTemplate($content, $data);
+        $response->createFromTemplate($content, []);
+        $response->setResponseEmail($email);
         $content = $render->renderHTML($service, $response);
 
         $response->setEmailLayout("email_text.tpl");
 		$subject = str_replace('-&gt;', '->', $subject);
-        $response->createFromTemplate($subject, $data);
+        $response->createFromTemplate($subject, []);
         $subject = $render->renderHTML($service, $response);
 
 		// send test email

@@ -1298,7 +1298,7 @@ class Utils
 			}
 		}
 
-		$html = $doc->saveHTML();
+		$html = $doc->getElementsByTagName("body")->saveHTML();
 		return $imageList;
 	}
 
@@ -1402,4 +1402,21 @@ class Utils
 		// return the country name or empty string
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
 	}
+
+    /**
+     * Clear double spaces and other stuffs from HTML content
+     *
+     * @param string $html
+     * @return mixed
+     */
+    public function clearHtml($html) {
+        $html = str_replace('&nbsp;',' ',$html);
+
+        do {
+            $tmp = $html;
+            $html = preg_replace('#<([^ >]+)[^>]*>[[:space:]]*</\1>#', '', $html );
+        } while ( $html !== $tmp );
+
+        return $html;
+    }
 }

@@ -56,6 +56,13 @@ class Render
 		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email='{$response->email}'");
 		$onEmailList = empty($status) ? false : $status[0]->mail_list == 1;
 
+		$utils = new Utils();
+        if ( ! empty ($response->email))
+            $person = $utils->getPerson($response->email);
+
+        if ( ! is_object($person))
+            $person = new stdClass();
+
 		// list the system variables
 		$systemVariables = array(
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
@@ -64,7 +71,11 @@ class Render
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL_LIST" => $onEmailList,
-			"WWWROOT" => $wwwroot
+			"WWWROOT" => $wwwroot,
+            'USER_NAME' => isset($person->username) ? $person->username: "",
+            'USER_FULL_NAME' => isset($person->fullname) ? $person->fullname: "",
+            'USER_EMAIL' => isset($person->email) ? $person->email: "",
+            'CURRENT_USER' => isset($person->email) ? $person: false
 		);
 
 		// merge all variable sets and assign them to Smarty
