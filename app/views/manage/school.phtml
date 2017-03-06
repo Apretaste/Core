@@ -51,12 +51,13 @@
                                     <td>
                                         <select id = "courseTeacher-<?php echo $course->id; ?>" class="form-control" name="courseTeacher">
                                             <?php foreach ($teachers as $teacher): ?>
-                                                <option value ="<?php echo $teacher->id; ?>" <?php echo $course->teacher == $teacher->id ? 'selected' : ''; ?>><?php echo $teacher->name . ', ' . $teacher->title; ?></options>
+                                                <option value ="<?php echo $teacher->id; ?>" <?php echo $course->teacher == $teacher->id ? 'selected' : ''; ?>><?php echo $teacher->name . ', ' . $teacher->title; ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </td>
                                     <td><button class="btn btn-default" type="submit" name="courseSubmit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button></td>
-                                    <textarea id = "courseContent-<?php echo $course->id; ?>" style="display:none;"><?php echo $course->content;?></textarea>
+                                    <textarea id = "courseContent-<?php echo $course->id; ?>" style="display:none;" name="courseContent"><?php echo $course->content;?></textarea>
+                                    <input type="hidden" id = "courseCategory-<?php echo $course->id; ?>" value = "<?php echo $course->category; ?>" name="courseCategory">
                                 </form>
 
                                 <td><a href="/manage/schoolChapters?course=<?php echo $course->id; ?>" class="btn btn-default" >Chapters</a></td>
@@ -84,7 +85,7 @@
                             <div class="modal-content"> 
                                 <div class="modal-header"> 
                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true"> &times; </button> 
-                                    <h4 class="modal-title" id="newCourseForm-label"><i class="fa fa-book fa-1x" aria-hidden="true"></i> <span id ="form-caption"</h4>
+                                    <h4 class="modal-title" id="newCourseForm-label"><i class="fa fa-book fa-1x" aria-hidden="true"></i> <span id ="formCaption">New course</span></h4>
                                 </div>
                                 <div class="modal-body"> 
                                     <form role="form" action = "/manage/school?option=add" method = "post" id="newCourseForm" enctype="multipart" data-toggle="validator">
@@ -97,13 +98,22 @@
                                             <label for="courseTeacher">Teacher</label>
                                             <select required class="form-control" name="courseTeacher" id ="courseTeacher">
                                                 <?php foreach ($teachers as $teacher): ?>
-                                                    <option value ="<?php echo $teacher->id; ?>"><?php echo $teacher->name . ', ' . $teacher->title; ?></options>
+                                                    <option value ="<?php echo $teacher->id; ?>"><?php echo $teacher->name . ', ' . $teacher->title; ?></option>
                                                     <?php endforeach; ?>
                                             </select>
-                                        </div>     
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="courseCategory">Category</label>
+                                            <select required class="form-control" name="courseCategory" id ="courseCategory">
+                                                <?php foreach (array('SOCIEDAD','NEGOCIOS','MEDICINA','INFORMATICA','INGENIERIA','LETRAS','ARTES','FILOSOFIA','SALUD','POLITICA','TECNICA','OTRO') as $category): ?>
+                                                    <option value ="<?php echo $category; ?>"><?php echo ucfirst(strtolower($category)); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
 
                                         <div class="form-group">								
-                                            <label for="courseContent">Resume</label>
+                                            <label for="courseContent">Summary</label>
                                             <textarea class="form-control" name="courseContent" id="courseContent"></textarea>
                                         </div>
                                         <div class="modal-footer"> 
@@ -148,7 +158,8 @@
         $('#newCourseForm-modal').modal('show');
         $('#courseTitle').val('');
         $('#courseContent').val('');
-        $('#newCourseForm').attr('action','/manage/school?option=add')
+        $('#newCourseForm').attr('action','/manage/school?option=add');
+        $('#courseCategory').val('');
         $('#formCaption').html('New course');
     }
     
@@ -158,6 +169,7 @@
         $('#courseTitle').val($('#courseTitle-' + course_id).val());
         $('#courseContent').val($('#courseContent-' + course_id).val());
         $('#courseTeacher').val($('#courseTeacher-' + course_id).val());
+        $('#courseCategory').val($('#courseCategory-' + course_id).val());
         $('#newCourseForm').attr('action','/manage/school?option=set&id=' + course_id)
         $('#formCaption').html('Edit course');
     }

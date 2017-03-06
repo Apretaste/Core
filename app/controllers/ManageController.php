@@ -2589,10 +2589,10 @@ class ManageController extends Controller
 			if ( ! empty("$teacher"))
 			{
 				$content = $connection->escape($this->request->getPost("courseContent"));
-
+                $category = $this->request->getPost('courseCategory');
 				switch ($option){
 					case 'add':
-						$sql = "INSERT INTO _escuela_course (title, teacher, content, email, active) VALUES ('$title', '$teacher','$content','$email',0); ";
+						$sql = "INSERT INTO _escuela_course (title, teacher, content, email, active, category) VALUES ('$title', '$teacher','$content','$email',0,'$category'); ";
 						$this->view->message = 'The course was inserted successfull';
 						break;
 					case 'set':
@@ -2604,7 +2604,7 @@ class ManageController extends Controller
 							$setContent = ", content = '$content'";
 						}
 
-						$sql = "UPDATE _escuela_course SET title = '$title', teacher = '$teacher' $setContent WHERE id = '$id'; ";
+						$sql = "UPDATE _escuela_course SET title = '$title', category = '$category', teacher = '$teacher' $setContent WHERE id = '$id'; ";
 
 						$this->view->message = "The course <b>$title</b> was updated successfull";
 						break;
