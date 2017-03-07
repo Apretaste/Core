@@ -38,6 +38,13 @@
         selector: '#content',
         height: 500,
         theme: 'modern',
+        setup : function(ed) {
+            ed.on('keydown',function(ed, evt) {
+                if ( tinymce.get('content').getContent().length + 1 > 100 * 1024){ // > 100 Kb
+                    return false;
+                }
+            });
+        },
         plugins: [
                 'advlist autolink lists link image charmap print preview hr anchor pagebreak',
                 'searchreplace wordcount visualblocks visualchars code fullscreen',
