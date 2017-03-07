@@ -1298,7 +1298,7 @@ class Utils
 			}
 		}
 
-		$html = $doc->getElementsByTagName("body")->saveHTML();
+        $html = $doc->getElementsByTagName("body")->item(0)->saveHTML();
 		return $imageList;
 	}
 
