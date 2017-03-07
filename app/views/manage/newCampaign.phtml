@@ -22,7 +22,6 @@
 			<!-- Create the editor container -->
 			<div class="form-group">
 				<label for="content">Content of the email</label>
-				<p>Available tags: {{APRETASTE_EMAIL}} {{APRETASTE_USER_EMAIL}} {{APRETASTE_NAME}}</p>
 				<textarea id="content" name="content"><?=$layout?></textarea>
 			</div>
 
@@ -50,17 +49,45 @@
 <!-- Initialize the editor -->
 <script src="/js/tinymce/tinymce.min.js"></script>
 <script>
-	tinymce.init({
+
+    tinymce.PluginManager.add('example', function(editor, url) {
+
+        editor.addButton('apretaste', {
+            text: '[Apretaste tags]',
+            icon: false,
+            onclick: function() {
+                // Open window
+                editor.windowManager.open({
+                    title: 'Insert an Apretaste\'s tag',
+                    body: [
+                        {type: 'listbox', name: 'tag', label: 'Available tags', values: [
+                            {value: "{{APRETASTE_EMAIL}}", text: "Email address of Apretaste!"},
+                            {value: "{$USER_EMAIL}", text: "Email of the user"},
+                            {value: "{$USER_NAME}", text: "Name of the user"},
+                            {value: "{$USER_FULL_NAME}", text: "Full name of the user"}
+                        ]}
+                    ],
+                    onsubmit: function(e) {
+                        // Insert content when the window form is submitted
+                        editor.insertContent(e.data.tag);
+                    }
+                });
+
+            }
+        });
+    });
+
+    tinymce.init({
 		selector: '#content',
 		height: 500,
 		theme: 'modern',
 		plugins: [
-			'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+			'example advlist autolink lists link image charmap print preview hr anchor pagebreak',
 			'searchreplace wordcount visualblocks visualchars code fullscreen',
 			'insertdatetime media nonbreaking save table contextmenu directionality',
 			'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
 		],
-		toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+		toolbar1: 'apretaste | undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
 	});
 
 	function testEmail(){
