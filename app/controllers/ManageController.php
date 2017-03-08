@@ -2453,6 +2453,10 @@ class ManageController extends Controller
 		$content = preg_replace('/\s+/S', " ", $content);
 
         $content = $utils->clearHtml($content);
+
+
+
+
         //$p = strpos($content, '<body>');
         //$content = substr($content,str)
 
