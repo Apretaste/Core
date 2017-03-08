@@ -1298,7 +1298,7 @@ class Utils
 			}
 		}
 
-        $html = $doc->getElementsByTagName("body")->item(0)->saveHTML();
+        $html = $doc->saveHTML();
 		return $imageList;
 	}
 
@@ -1332,6 +1332,15 @@ class Utils
 		}
 
 		$html = $doc->saveHTML();
+
+        $pbody = stripos($html, '<body>');
+        if ($pbody !== false)
+            $html = substr($html, $pbody + 6);
+
+        $pbody = stripos($html, '</body');
+        if ($pbody !== false)
+            $html = substr($html, 0, $pbody);
+
 		return $html;
 	}
 
