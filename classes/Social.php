@@ -336,12 +336,14 @@ class Social
 	 *
 	 * @author salvipascual
 	 * @param Object $profile
+	 * @param String $lang, language to return the profile text
 	 * @return Number, percentage of completion
 	 * */
-	public function prepareUserProfile($profile)
+	public function prepareUserProfile($profile, $lang=false)
 	{
 		// ensure only use known languages and Spanish is default
-		if( ! in_array($profile->lang, ["en","es"])) $profile->lang = "es";
+		if( ! $lang && $profile->lang) $lang = $profile->lang;
+		if( ! in_array($lang, ["en","es"])) $lang = "es";
 
 		// get the person's age
 		$profile->age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
@@ -355,7 +357,7 @@ class Social
 		if($profile->city) $location = ucwords(strtolower($profile->city));
 		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
-		else $location = $this->countries[$profile->country][$profile->lang];
+		else $location = $this->countries[$profile->country][$lang];
 		$profile->location = $location;
 
 		// get the person's full name
@@ -387,7 +389,7 @@ class Social
 		$profile->completion = $this->getProfileCompletion($profile);
 
 		// get the about me section
-		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile, $profile->lang);
+		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
 		unset($profile->pin,$profile->insertion_date,$profile->last_access,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);

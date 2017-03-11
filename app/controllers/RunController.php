@@ -344,6 +344,10 @@ class RunController extends Controller
 			}
 		}
 
+		// get the language of the user
+		$lang = $connection->deepQuery("SELECT lang FROM person WHERE email = '$email'")[0]->lang;
+		if( ! in_array($lang, ["en","es"])) $lang = "es";
+
 		// get the service query
 		$query = implode(" ", $subjectPieces);
 
@@ -357,6 +361,7 @@ class RunController extends Controller
 		$request->service = $serviceName;
 		$request->subservice = trim($subServiceName);
 		$request->query = trim($query);
+		$request->lang = $lang;
 
 		// get the path to the service
 		$servicePath = $utils->getPathToService($serviceName);
@@ -442,7 +447,7 @@ class RunController extends Controller
 					//$sqlValues = "('$email', 'GAME')";
 					//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
 
-                    $sql = "UPDATE person SET credit = credit + 1 WHERE email = '{$rs->email}';";
+					$sql = "UPDATE person SET credit = credit + 1 WHERE email = '{$rs->email}';";
 					$connection->deepQuery($sql);
 
 					$utils->addEvent("stars-game", "win-credit", $rs->email,  []);
