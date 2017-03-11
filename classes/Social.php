@@ -96,24 +96,8 @@ class Social
 		if ($profile->hair == "ROJO") $hair = "rojizo";
 		if ($profile->hair == "BLANCO") $hair = "canoso";
 
-		// get the place where the person live
-		$province = false;
-		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del Rio";
-		if ($profile->province == "LA_HABANA") $province = "La Habana";
-		if ($profile->province == "ARTEMISA") $province = "Artemisa";
-		if ($profile->province == "MAYABEQUE") $province = "Mayabeque";
-		if ($profile->province == "MATANZAS") $province = "Matanzas";
-		if ($profile->province == "VILLA_CLARA") $province = "Villa Clara";
-		if ($profile->province == "CIENFUEGOS") $province = "Cienfuegos";
-		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Spiritus";
-		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de avila";
-		if ($profile->province == "CAMAGUEY") $province = "Camaguey";
-		if ($profile->province == "LAS_TUNAS") $province = "Las Tunas";
-		if ($profile->province == "HOLGUIN") $province = "Holguin";
-		if ($profile->province == "GRANMA") $province = "Granma";
-		if ($profile->province == "SANTIAGO_DE_CUBA") $province = "Santiago de Cuba";
-		if ($profile->province == "GUANTANAMO") $province = "Guantanamo";
-		if ($profile->province == "ISLA_DE_LA_JUVENTUD") $province = "Isla de la Juventud";
+		// get the place where the person lives
+		$province = ($profile->province) ? $this->getProvinceNameFromCode($profile->province) : false;
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
@@ -243,24 +227,8 @@ class Social
 		if ($profile->hair == "NEGRO") $hair = "black";
 		if ($profile->hair == "BLANCO") $hair = "white";
 
-		// get the place where the person live
-		$province = false;
-		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del Rio";
-		if ($profile->province == "LA_HABANA") $province = "La Habana";
-		if ($profile->province == "ARTEMISA") $province = "Artemisa";
-		if ($profile->province == "MAYABEQUE") $province = "Mayabeque";
-		if ($profile->province == "MATANZAS") $province = "Matanzas";
-		if ($profile->province == "VILLA_CLARA") $province = "Villa Clara";
-		if ($profile->province == "CIENFUEGOS") $province = "Cienfuegos";
-		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Spiritus";
-		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de avila";
-		if ($profile->province == "CAMAGUEY") $province = "Camaguey";
-		if ($profile->province == "LAS_TUNAS") $province = "Las Tunas";
-		if ($profile->province == "HOLGUIN") $province = "Holguin";
-		if ($profile->province == "GRANMA") $province = "Granma";
-		if ($profile->province == "SANTIAGO_DE_CUBA") $province = "Santiago de Cuba";
-		if ($profile->province == "GUANTANAMO") $province = "Guantanamo";
-		if ($profile->province == "ISLA_DE_LA_JUVENTUD") $province = "Isla de la Juventud";
+		// get the place where the person lives
+		$province = ($profile->province) ? $this->getProvinceNameFromCode($profile->province) : false;
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
@@ -372,6 +340,9 @@ class Social
 	 * */
 	public function prepareUserProfile($profile)
 	{
+		// ensure only use known languages and Spanish is default
+		if( ! in_array($profile->lang, ["en","es"])) $profile->lang = "es";
+
 		// get the person's age
 		$profile->age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
 
@@ -379,13 +350,13 @@ class Social
 		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
 		if(empty($profile->country) && $inCuba) $profile->country = "CU";
 
-		// get the most accurate location as possible
-		$location = $profile->country;
+		// get the most accurate location possible
+		$location = "";
 		if($profile->city) $location = $profile->city;
-		if(isset($profile->usstate)) $location = $profile->usstate;
-		if($profile->province) $location = $profile->province;
-		$location = str_replace("_", " ", $location);
-		$profile->location = ucwords(strtolower($location));
+		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
+		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
+		else $location = $this->countries[$profile->country][$profile->lang];
+		$profile->location = $location;
 
 		// get the person's full name
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
@@ -404,8 +375,10 @@ class Social
 			$profile->picture = true;
 		}
 
-		// get the interests as an array
-		$profile->interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
+		// get the interests as a lowercase array
+		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
+		for($i=0;$i<count($interests);$i++) $interests[$i]=strtolower($interests[$i]);
+		$profile->interests = $interests;
 
 		// remove whitespaces at the begining and ending of string fields
 		foreach ($profile as $key=>$value) if( ! is_array($value)) $profile->$key = trim($value);
@@ -414,7 +387,7 @@ class Social
 		$profile->completion = $this->getProfileCompletion($profile);
 
 		// get the about me section
-		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile);
+		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile, $profile->lang);
 
 		// remove dangerous attributes from the response
 		unset($profile->pin,$profile->insertion_date,$profile->last_access,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
@@ -433,5 +406,19 @@ class Social
 	{
 		$states = array("AL" => "Alabama","AK" => "Alaska","AS" => "American Samoa","AZ" => "Arizona","AR" => "Arkansas","CA" => "California","CO" => "Colorado","CT" => "Connecticut","DE" => "Delaware","DC" => "Dist. of Columbia","FL" => "Florida","GA" => "Georgia","GU" => "Guam","HI" => "Hawaii","ID" => "Idaho","IL" => "Illinois","IN" => "Indiana","IA" => "Iowa","KS" => "Kansas","KY" => "Kentucky","LA" => "Louisiana","ME" => "Maine","MD" => "Maryland","MH" => "Marshall Islands","MA" => "Massachusetts","MI" => "Michigan","FM" => "Micronesia","MN" => "Minnesota","MS" => "Mississippi","MO" => "Missouri","MT" => "Montana","NE" => "Nebraska","NV" => "Nevada","NH" => "New Hampshire","NJ" => "New Jersey","NM" => "New Mexico","NY" => "New York","NC" => "North Carolina","ND" => "North Dakota","MP" => "Northern Marianas","OH" => "Ohio","OK" => "Oklahoma","OR" => "Oregon","PW" => "Palau","PA" => "Pennsylvania","PR" => "Puerto Rico","RI" => "Rhode Island","SC" => "South Carolina","SD" => "South Dakota","TN" => "Tennessee","TX" => "Texas","UT" => "Utah","VT" => "Vermont","VA" => "Virginia","VI" => "Virgin Islands","WA" => "Washington","WV" => "West Virginia","WI" => "Wisconsin","WY" => "Wyoming");
 		return $states[strtoupper($stateCode)];
+	}
+
+	/**
+	 * Get a Cuban province code and return its name
+	 *
+	 * @author salvipascual
+	 * @param String $provinceCode
+	 * @return String
+	 */
+	function getProvinceNameFromCode($provinceCode)
+	{
+		$province = str_replace("_", " ", $provinceCode);
+		$province = ucwords(strtolower($province));
+		return $province;
 	}
 }
