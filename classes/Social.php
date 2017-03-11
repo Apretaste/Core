@@ -352,7 +352,7 @@ class Social
 
 		// get the most accurate location possible
 		$location = "";
-		if($profile->city) $location = $profile->city;
+		if($profile->city) $location = ucwords(strtolower($profile->city));
 		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
 		else $location = $this->countries[$profile->country][$profile->lang];
@@ -377,7 +377,7 @@ class Social
 
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
-		for($i=0;$i<count($interests);$i++) $interests[$i]=strtolower($interests[$i]);
+		for($i=0;$i<count($interests);$i++) $interests[$i]=trim(strtolower($interests[$i]));
 		$profile->interests = $interests;
 
 		// remove whitespaces at the begining and ending of string fields
