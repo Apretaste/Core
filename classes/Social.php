@@ -5,21 +5,21 @@
 class Social
 {
 	private $countries = array();
+	private $states = array();
 
 	/**
 	 * Load resources needed for the class to work
 	 *
 	 * @author salvipascual
-     * @author kuma
+	 * @author kuma
 	 */
 	public function __construct()
 	{
-		// load the list of countries
 		$connection = new Connection();
+
+		// load the list of countries
 		$countries = $connection->deepQuery("SELECT * FROM countries;");
-		foreach ($countries as $c)
-		    if (isset($c->code) && isset($c->es) && isset($c->en))
-		        $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
+		foreach ($countries as $c) $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
 	}
 
 	/**
@@ -84,13 +84,13 @@ class Social
 		$bodyType = "";
 		if ($profile->body_type == "DELGADO") $bodyType = "soy flac$genderFinalVowel";
 		if ($profile->body_type == "MEDIO") $bodyType = "no soy ni flac$genderFinalVowel ni grues$genderFinalVowel";
-		if ($profile->body_type == "EXTRA") $bodyType = "tengo unas libritas de m&aacute;s";
-		if ($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atl&eacute;tico";
+		if ($profile->body_type == "EXTRA") $bodyType = "tengo unas libritas de mas";
+		if ($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atlético";
 
 		// get the hair color
 		$hair = "";
-		if ($profile->hair == "TRIGUENO") $hair = "trigue&ntilde;o";
-		if ($profile->hair == "CASTANO") $hair = "casta&ntilde;o";
+		if ($profile->hair == "TRIGUENO") $hair = "trigueño";
+		if ($profile->hair == "CASTANO") $hair = "castaño";
 		if ($profile->hair == "RUBIO") $hair = "rubio";
 		if ($profile->hair == "NEGRO") $hair = "negro";
 		if ($profile->hair == "ROJO") $hair = "rojizo";
@@ -98,42 +98,41 @@ class Social
 
 		// get the place where the person live
 		$province = false;
-		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del R&iacute;o";
+		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del Rio";
 		if ($profile->province == "LA_HABANA") $province = "La Habana";
 		if ($profile->province == "ARTEMISA") $province = "Artemisa";
 		if ($profile->province == "MAYABEQUE") $province = "Mayabeque";
 		if ($profile->province == "MATANZAS") $province = "Matanzas";
 		if ($profile->province == "VILLA_CLARA") $province = "Villa Clara";
 		if ($profile->province == "CIENFUEGOS") $province = "Cienfuegos";
-		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Sp&iacute;ritus";
-		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de &Aacute;vila";
+		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Spiritus";
+		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de avila";
 		if ($profile->province == "CAMAGUEY") $province = "Camaguey";
 		if ($profile->province == "LAS_TUNAS") $province = "Las Tunas";
-		if ($profile->province == "HOLGUIN") $province = "Holgu&iacute;n";
+		if ($profile->province == "HOLGUIN") $province = "Holguin";
 		if ($profile->province == "GRANMA") $province = "Granma";
 		if ($profile->province == "SANTIAGO_DE_CUBA") $province = "Santiago de Cuba";
-		if ($profile->province == "GUANTANAMO") $province = "Guant&aacute;namo";
+		if ($profile->province == "GUANTANAMO") $province = "Guantanamo";
 		if ($profile->province == "ISLA_DE_LA_JUVENTUD") $province = "Isla de la Juventud";
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : (isset($this->countries[$countryCode]) ? $this->countries[$countryCode]['es'] : false);
-		$usstate = isset($profile->usstate) ? (empty(trim($profile->usstate)) ? false : $profile->usstate) : false;
+		$country = empty(trim($profile->country)) ? false : $this->countries[$countryCode]['en'];
+		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
-		$location = "Vivo en ";
-		if ($city) $location .= "la ciudad de $city, ";
-		if ($countryCode == "US" && $usstate) $location .= strtoupper($usstate) . ", ";
-		if ($countryCode == "CU" && $province) $location .= "provincia $province, ";
-		if ($country) $location .= $country;
-		if($location == "Vivo en ") $location = "Aunque prefiero no decir donde vivo, ";
+		if ($city && $country) $location = "Vivo en $country, en la ciudad de $city";
+		elseif ($countryCode=="US" && $usstate) $location = "Vivo en $usstate, $country";
+		elseif ($countryCode == "CU" && $province) $location = "Vivo en la provincia de $province";
+		elseif ($country) $location = "Vivo en $country";
+		else $location = "Aunque prefiero no decir donde vivo";
 
 		// get highest educational level
 		$education = "";
 		if ($profile->highest_school_level == "PRIMARIO") $education = "tengo sexto grado";
 		if ($profile->highest_school_level == "SECUNDARIO") $education = "soy graduad$genderFinalVowel de la secundaria";
-		if ($profile->highest_school_level == "TECNICO") $education = "soy t&acute;cnico medio";
+		if ($profile->highest_school_level == "TECNICO") $education = "soy tecnico medio";
 		if ($profile->highest_school_level == "UNIVERSITARIO") $education = "soy universitari$genderFinalVowel";
 		if ($profile->highest_school_level == "POSTGRADUADO") $education = "tengo estudios de postgrado";
 		if ($profile->highest_school_level == "DOCTORADO") $education = "tengo un doctorado";
@@ -153,14 +152,14 @@ class Social
 		$religions = array(
 			'ATEISMO' => "soy ate$genderFinalVowel",
 			'SECULARISMO' => 'no tengo creencia religiosa',
-			'AGNOSTICISMO' => "soy agn&oacute;stic$genderFinalVowel",
-			'ISLAM' => 'soy musulm&aacute;n',
-			'JUDAISTA' => "soy jud&iacute;o$genderFinalVowel",
-			'ABAKUA' => 'soy abaku&aacute;',
+			'AGNOSTICISMO' => "soy agnostic$genderFinalVowel",
+			'ISLAM' => 'soy musulman',
+			'JUDAISTA' => "soy judio$genderFinalVowel",
+			'ABAKUA' => 'soy abakua',
 			'SANTERO' => "soy santer$genderFinalVowel",
-			'YORUBA' => 'profeso la religi&oacute;n yoruba',
+			'YORUBA' => 'profeso la religion yoruba',
 			'BUDISMO' => 'soy budista',
-			'CATOLICISMO' => "soy cat&oacute;lic$genderFinalVowel",
+			'CATOLICISMO' => "soy catolic$genderFinalVowel",
 			'OTRA' => '',
 			'CRISTIANISMO' => "soy cristian$genderFinalVowel"
 		);
@@ -169,7 +168,7 @@ class Social
 		// create the message
 		$message = "Hola";
 		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
-		if ( ! empty($age)) $message .= ", tengo $age a&ntilde;os";
+		if ( ! empty($age)) $message .= ", tengo $age annos";
 		if ( ! empty($gender)) $message .= ", soy $gender";
 		if ( ! empty($religion)) $message .= ", soy $religion";
 		if ( ! empty($skin)) $message .= ", soy $skin";
@@ -246,36 +245,35 @@ class Social
 
 		// get the place where the person live
 		$province = false;
-		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del R&iacute;o";
+		if ($profile->province == "PINAR_DEL_RIO") $province = "Pinar del Rio";
 		if ($profile->province == "LA_HABANA") $province = "La Habana";
 		if ($profile->province == "ARTEMISA") $province = "Artemisa";
 		if ($profile->province == "MAYABEQUE") $province = "Mayabeque";
 		if ($profile->province == "MATANZAS") $province = "Matanzas";
 		if ($profile->province == "VILLA_CLARA") $province = "Villa Clara";
 		if ($profile->province == "CIENFUEGOS") $province = "Cienfuegos";
-		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Sp&iacute;ritus";
-		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de &Aacute;vila";
+		if ($profile->province == "SANCTI_SPIRITUS") $province = "Sancti Spiritus";
+		if ($profile->province == "CIEGO_DE_AVILA") $province = "Ciego de avila";
 		if ($profile->province == "CAMAGUEY") $province = "Camaguey";
 		if ($profile->province == "LAS_TUNAS") $province = "Las Tunas";
-		if ($profile->province == "HOLGUIN") $province = "Holgu&iacute;n";
+		if ($profile->province == "HOLGUIN") $province = "Holguin";
 		if ($profile->province == "GRANMA") $province = "Granma";
 		if ($profile->province == "SANTIAGO_DE_CUBA") $province = "Santiago de Cuba";
-		if ($profile->province == "GUANTANAMO") $province = "Guant&aacute;namo";
+		if ($profile->province == "GUANTANAMO") $province = "Guantanamo";
 		if ($profile->province == "ISLA_DE_LA_JUVENTUD") $province = "Isla de la Juventud";
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
 		$country = empty(trim($profile->country)) ? false : $this->countries[$countryCode]['en'];
-		$usstate = empty(trim($profile->usstate)) ? false : $profile->usstate;
+		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
-		$location = "I live in ";
-		if ($city) $location .= "$city city, ";
-		if ($countryCode == "US" && $usstate) $location .= strtoupper($usstate) . ", ";
-		if ($countryCode == "CU" && $province) $location .= "province $province, ";
-		if ($country) $location .= $country;
-		if($location == "I live in ") $location = "Although I prefer not to say where I live, ";
+		if ($city && $country) $location = "I live in $country, in $city city";
+		elseif ($countryCode=="US" && $usstate) $location = "My home is $usstate, $country";
+		elseif ($countryCode == "CU" && $province) $location = "I live in the province of $province, in $country";
+		elseif ($country) $location = "My country is $country";
+		else $location = "Although I prefer not to say where I live";
 
 		// get highest educational level
 		$education = "";
@@ -304,8 +302,8 @@ class Social
 			'AGNOSTICISMO' => "I am agnostic",
 			'ISLAM' => 'I am a Muslim',
 			'JUDAISTA' => "I am Jewish",
-			'ABAKUA' => 'I am an abaku&aacute;',
-			'SANTERO' => "I practice Santer&iacute;a",
+			'ABAKUA' => 'I am an abakua',
+			'SANTERO' => "I practice Santeria",
 			'YORUBA' => 'I like Yoruba',
 			'BUDISMO' => 'I am Buddhist',
 			'CATOLICISMO' => "I am Catholic",
@@ -422,5 +420,18 @@ class Social
 		unset($profile->pin,$profile->insertion_date,$profile->last_access,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
 
 		return $profile;
+	}
+
+	/**
+	 * Get a US state code and return the name
+	 *
+	 * @author salvipascual
+	 * @param String $stateCode
+	 * @return String
+	 */
+	function getStateNameFromCode($stateCode)
+	{
+		$states = array("AL" => "Alabama","AK" => "Alaska","AS" => "American Samoa","AZ" => "Arizona","AR" => "Arkansas","CA" => "California","CO" => "Colorado","CT" => "Connecticut","DE" => "Delaware","DC" => "Dist. of Columbia","FL" => "Florida","GA" => "Georgia","GU" => "Guam","HI" => "Hawaii","ID" => "Idaho","IL" => "Illinois","IN" => "Indiana","IA" => "Iowa","KS" => "Kansas","KY" => "Kentucky","LA" => "Louisiana","ME" => "Maine","MD" => "Maryland","MH" => "Marshall Islands","MA" => "Massachusetts","MI" => "Michigan","FM" => "Micronesia","MN" => "Minnesota","MS" => "Mississippi","MO" => "Missouri","MT" => "Montana","NE" => "Nebraska","NV" => "Nevada","NH" => "New Hampshire","NJ" => "New Jersey","NM" => "New Mexico","NY" => "New York","NC" => "North Carolina","ND" => "North Dakota","MP" => "Northern Marianas","OH" => "Ohio","OK" => "Oklahoma","OR" => "Oregon","PW" => "Palau","PA" => "Pennsylvania","PR" => "Puerto Rico","RI" => "Rhode Island","SC" => "South Carolina","SD" => "South Dakota","TN" => "Tennessee","TX" => "Texas","UT" => "Utah","VT" => "Vermont","VA" => "Virginia","VI" => "Virgin Islands","WA" => "Washington","WV" => "West Virginia","WI" => "Wisconsin","WY" => "Wyoming");
+		return $states[strtoupper($stateCode)];
 	}
 }

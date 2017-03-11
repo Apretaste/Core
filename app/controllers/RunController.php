@@ -91,6 +91,12 @@ class RunController extends Controller
 		$service = strtoupper(explode(" ", $subject)[0]);
 		if ($service == 'EXCLUYEME') die('{"code":"error","message":"service not accesible"}');
 
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("User:$email, Subject:$subject");
+		$logger->close();
+
 		// get the resulting json
 		$result = $this->renderResponse($email, "", $subject, "API", $body, $attach, "json");
 		die($result);
