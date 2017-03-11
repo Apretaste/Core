@@ -89,8 +89,8 @@ class Social
 
 		// get the hair color
 		$hair = "";
-		if ($profile->hair == "TRIGUENO") $hair = "trigueño";
-		if ($profile->hair == "CASTANO") $hair = "castaño";
+		if ($profile->hair == "TRIGUENO") $hair = "triguenno";
+		if ($profile->hair == "CASTANO") $hair = "castanno";
 		if ($profile->hair == "RUBIO") $hair = "rubio";
 		if ($profile->hair == "NEGRO") $hair = "negro";
 		if ($profile->hair == "ROJO") $hair = "rojizo";
