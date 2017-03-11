@@ -85,7 +85,7 @@ class Social
 		if ($profile->body_type == "DELGADO") $bodyType = "soy flac$genderFinalVowel";
 		if ($profile->body_type == "MEDIO") $bodyType = "no soy ni flac$genderFinalVowel ni grues$genderFinalVowel";
 		if ($profile->body_type == "EXTRA") $bodyType = "tengo unas libritas de mas";
-		if ($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atlético";
+		if ($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atletico";
 
 		// get the hair color
 		$hair = "";
