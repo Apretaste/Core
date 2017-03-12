@@ -5,22 +5,6 @@
 class Social
 {
 	private $countries = array();
-	private $states = array();
-
-	/**
-	 * Load resources needed for the class to work
-	 *
-	 * @author salvipascual
-	 * @author kuma
-	 */
-	public function __construct()
-	{
-		$connection = new Connection();
-
-		// load the list of countries
-		$countries = $connection->deepQuery("SELECT * FROM countries;");
-		foreach ($countries as $c) $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
-	}
 
 	/**
 	 * Return description of profile as a paragraph, used for social services
@@ -101,7 +85,7 @@ class Social
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : $this->countries[$countryCode]['en'];
+		$country = empty(trim($profile->country)) ? false : $this->getCountryNameFromCode($countryCode);
 		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
@@ -232,7 +216,7 @@ class Social
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : $this->countries[$countryCode]['en'];
+		$country = empty(trim($profile->country)) ? false : $this->getCountryNameFromCode($countryCode, 'en');
 		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
@@ -357,7 +341,7 @@ class Social
 		if($profile->city) $location = ucwords(strtolower($profile->city));
 		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
-		else $location = $this->countries[$profile->country][$lang];
+		else $location = $this->getCountryNameFromCode($profile->country, $lang);
 		$profile->location = $location;
 
 		// get the person's full name
@@ -404,7 +388,7 @@ class Social
 	 * @param String $stateCode
 	 * @return String
 	 */
-	function getStateNameFromCode($stateCode)
+	public function getStateNameFromCode($stateCode)
 	{
 		$states = array("AL" => "Alabama","AK" => "Alaska","AS" => "American Samoa","AZ" => "Arizona","AR" => "Arkansas","CA" => "California","CO" => "Colorado","CT" => "Connecticut","DE" => "Delaware","DC" => "Dist. of Columbia","FL" => "Florida","GA" => "Georgia","GU" => "Guam","HI" => "Hawaii","ID" => "Idaho","IL" => "Illinois","IN" => "Indiana","IA" => "Iowa","KS" => "Kansas","KY" => "Kentucky","LA" => "Louisiana","ME" => "Maine","MD" => "Maryland","MH" => "Marshall Islands","MA" => "Massachusetts","MI" => "Michigan","FM" => "Micronesia","MN" => "Minnesota","MS" => "Mississippi","MO" => "Missouri","MT" => "Montana","NE" => "Nebraska","NV" => "Nevada","NH" => "New Hampshire","NJ" => "New Jersey","NM" => "New Mexico","NY" => "New York","NC" => "North Carolina","ND" => "North Dakota","MP" => "Northern Marianas","OH" => "Ohio","OK" => "Oklahoma","OR" => "Oregon","PW" => "Palau","PA" => "Pennsylvania","PR" => "Puerto Rico","RI" => "Rhode Island","SC" => "South Carolina","SD" => "South Dakota","TN" => "Tennessee","TX" => "Texas","UT" => "Utah","VT" => "Vermont","VA" => "Virginia","VI" => "Virgin Islands","WA" => "Washington","WV" => "West Virginia","WI" => "Wisconsin","WY" => "Wyoming");
 		return $states[strtoupper($stateCode)];
@@ -417,10 +401,34 @@ class Social
 	 * @param String $provinceCode
 	 * @return String
 	 */
-	function getProvinceNameFromCode($provinceCode)
+	public function getProvinceNameFromCode($provinceCode)
 	{
 		$province = str_replace("_", " ", $provinceCode);
 		$province = ucwords(strtolower($province));
 		return $province;
+	}
+
+	/**
+	 * Get a country name by its code and language
+	 *
+	 * @author salvipascual
+	 * @param String $provinceCode
+	 * @return String
+	 */
+	public function getCountryNameFromCode($countryCode, $lang="es")
+	{
+		// load the list of countries on a cache if not loaded yet
+		if(empty($this->countries))
+		{
+			$connection = new Connection();
+			$countries = $connection->deepQuery("SELECT * FROM countries;");
+			foreach ($countries as $c) $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
+		}
+
+		// return based on the language
+		$countryCode = strtoupper($countryCode);
+		if(isset($this->countries[$countryCode][$lang])) return $this->countries[$countryCode][$lang];
+		elseif(isset($this->countries[$countryCode]['es'])) return $this->countries[$countryCode]['es'];
+		else return $countryCode;
 	}
 }
