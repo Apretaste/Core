@@ -14,9 +14,7 @@ class Service
 
 	public function __construct($serviceName = null)
 	{
-        if ( ! is_null($serviceName))
-            $this->serviceName = $serviceName;
-
+		if ( ! is_null($serviceName)) $this->serviceName = $serviceName;
 		$this->utils = new Utils($this->serviceName);
 	}
 }

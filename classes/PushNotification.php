@@ -74,7 +74,8 @@ class PushNotification
 		// prepare de data structure
 		$data = array(
 			"title" => $from->full_name,
-			"body" => $message,
+			"body" => "@{$from->username}: $message",
+
 			"notification_type" => "chat_notification",
 			"message_data" => array(
 				"from_username" => $from->username,
@@ -133,20 +134,28 @@ class PushNotification
 	 */
 	public function piropazoFlowerPush($appids, $person)
 	{
-		// translate message
-		if($person->lang == "en") $body = "Hurray, @{$person->username} sent you a flower. Act now, this means he/she really likes you.";
-		else $body = "Enhorabuena, @{$person->username} le ha mandado una flor. Este es un sintoma inequivoco de le gustas.";
+		// translate messages
+		if($person->lang == "en")
+		{
+			$header = "Hurray, @{$person->username} sent you a flower";
+			$text = "@{$person->username} has seen something different in you, and this flower it is a call to chat and get to know each other better. Would you accept?";
+		}
+		else
+		{
+			$header = "Enhorabuena, @{$person->username} le ha mandado una flor";
+			$text = "@{$person->username} ha visto algo diferente en tí, y con esta flor te deja saber que le encantaría chatear contigo y conocerse mejor. ¿Aceptarías?";
+		}
 
 		// prepare de data structure
 		$data = array (
 			"title" => $person->full_name,
-			"body" => $body,
-			"notification_type" => "flower_notification",
+			"body" => $header,
+      "notification_type" => "flower_notification",
 			"flower_data" => array(
 				"from_username" => $person->username,
 				"from_user_fullname" => $person->full_name,
 				"from_user_image" => $person->picture_public,
-				"from_user_description" => $person->about_me
+				"from_user_description" => $text
 			)
 		);
 
@@ -164,7 +173,7 @@ class PushNotification
 	 */
 	private function sendGeneralPush($appids, $data)
 	{
-		// appids must be a array
+		// appids must be an array
 		$appids = explode(",", $appids);
 
 		// get the server key
@@ -198,6 +207,13 @@ class PushNotification
 		// handle errors sending push and close connection
 		if ($result === false) error_log('Error Pushing Notification: ' . curl_error($ch));
 		curl_close($ch);
+
+		// save the API log
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("NEW PUSH: ".json_encode($data));
+		$logger->close();
 
 		// return the result
 		return $result;
