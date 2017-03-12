@@ -85,11 +85,13 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @param String, $text
+	 * @param String, $code, error code if exist
+	 * @param String, $message, error message if exist
 	 */
-	public function createFromText($text)
+	public function createFromText($text, $code="OK", $message="")
 	{
 		$this->template = "message.tpl";
-		$this->content = array("code"=>"ok", "text"=>$text);
+		$this->content = array("code"=>$code, "message"=>$message, "text"=>$text);
 		$this->internal = true;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
