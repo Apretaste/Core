@@ -60,6 +60,9 @@ class Render
 		$utils = new Utils();
 		$person = $utils->getPerson($response->email);
 
+		// get the number of notifications for a user
+		$notificationsCount = $utils->getNumberOfNotifications($response->email);
+
 		// list the system variables
 		$systemVariables = array(
 			// system variables
@@ -72,6 +75,7 @@ class Render
 			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL_LIST" => $onEmailList,
 			// user variables
+			"num_notifications" => $notificationsCount,
 			'USER_ID' => isset($person->username) ? $person->username : "",
 			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? $person->username : ""),
 			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
@@ -154,8 +158,10 @@ class Render
 		// get the number of requests today
 		$requestsToday = $utils->getTotalRequestsTodayOf($response->email);
 
+		// create the array to return
+		$returnArray = array("raffle_stars" => 0, "requests_today" => $requestsToday);
+
 		// run the stars game
-		$stars = 0;
 		if ($requestsToday == 0)
 		{
 			$stars = $utils->getRaffleStarsOf($response->email, false);
@@ -172,13 +178,11 @@ class Render
 				// add notification to user
 				$utils->addNotification($response->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
 			}
-			$stars++;
+
+			// update number of stars for the template
+			$returnArray["raffle_stars"] = $stars+1;
 		}
 
-		// return array
-		return array(
-			"num_notifications" => $utils->getNumberOfNotifications($response->email),
-			"raffle_stars" => $stars,
-			"requests_today" => $requestsToday);
+		return $returnArray;
 	}
 }
