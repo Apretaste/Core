@@ -75,6 +75,7 @@ class PushNotification
 		$data = array(
 			"title" => $from->full_name,
 			"body" => "@{$from->username}: $message",
+
 			"notification_type" => "chat_notification",
 			"message_data" => array(
 				"from_username" => $from->username,
@@ -149,7 +150,7 @@ class PushNotification
 		$data = array (
 			"title" => $person->full_name,
 			"body" => $header,
-			"notification_type" => "flower_notification",
+      "notification_type" => "flower_notification",
 			"flower_data" => array(
 				"from_username" => $person->username,
 				"from_user_fullname" => $person->full_name,
