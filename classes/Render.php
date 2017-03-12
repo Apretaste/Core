@@ -6,13 +6,13 @@ class Render
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
-     * @author kuma
+	 * @author kuma
 	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
 	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public function renderHTML($service, $response)
+	public function renderHTML($service, Response $response)
 	{
 		// if the response includes json, don't render HTML
 		// this is used mainly to build email APIs
@@ -26,14 +26,14 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
 
-        $tempTemp = false;
+		$tempTemp = false;
 		// check for volatile template
 		if ( ! file_exists($userTemplateFile))
 		{
-		    $tempTemp = "$wwwroot/temp/temporal-template-".uniqid().".tpl";
-		    file_put_contents($tempTemp, $response->template);
-            $userTemplateFile = $tempTemp;
-        }
+			$tempTemp = "$wwwroot/temp/temporal-template-".uniqid().".tpl";
+			file_put_contents($tempTemp, $response->template);
+			$userTemplateFile = $tempTemp;
+		}
 
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
@@ -56,40 +56,45 @@ class Render
 		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email='{$response->email}'");
 		$onEmailList = empty($status) ? false : $status[0]->mail_list == 1;
 
+		// get the person
 		$utils = new Utils();
-        if ( ! empty ($response->email))
-            $person = $utils->getPerson($response->email);
+		$person = $utils->getPerson($response->email);
 
-        if ( ! is_object($person))
-            $person = new stdClass();
+		// get the number of notifications for a user
+		$notificationsCount = $utils->getNumberOfNotifications($response->email);
 
 		// list the system variables
 		$systemVariables = array(
+			// system variables
+			"WWWROOT" => $wwwroot,
+			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL_LIST" => $onEmailList,
-			"WWWROOT" => $wwwroot,
-            'USER_ID' => isset($person->username) ? $person->username: "",
-            'USER_NAME' => isset($person->first_name) && ! empty($person->first_name) ? $person->first_name: (isset($person->username)? $person->username: ""),
-            'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name: "",
-            'USER_EMAIL' => isset($person->email) ? $person->email: "",
-            'CURRENT_USER' => isset($person->email) ? $person: false
+			// user variables
+			"num_notifications" => $notificationsCount,
+			'USER_ID' => isset($person->username) ? $person->username : "",
+			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? $person->username : ""),
+			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
+			'USER_EMAIL' => isset($person->email) ? $person->email : "",
+			'CURRENT_USER' => isset($person->email) ? $person : false
 		);
 
+		// play the stars game
+		$starsGame = $this->startsGame($response);
+
 		// merge all variable sets and assign them to Smarty
-		$templateVariables = array_merge($systemVariables, $response->content);
+		$templateVariables = array_merge($systemVariables, $response->content, $starsGame);
 		$smarty->assign($templateVariables);
 
 		// rendering and removing tabs, double spaces and break lines
 		$renderedTemplate = $smarty->fetch($response->layout);
 
 		// remove temporal template
-		if ($tempTemp !== false)
-		    if (file_exists($tempTemp))
-		        unlink($tempTemp);
+		if ($tempTemp !== false && file_exists($tempTemp)) unlink($tempTemp);
 
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
@@ -137,5 +142,47 @@ class Render
 
 		// return the array
 		return $servicesRelates;
+	}
+
+	/**
+	 * Run the starts game and return the template variables
+	 *
+	 * @author Kuma/salvipascual
+	 * @return Array
+	 */
+	private function startsGame(Response $response)
+	{
+		$utils = new Utils();
+		$connection = new Connection();
+
+		// get the number of requests today
+		$requestsToday = $utils->getTotalRequestsTodayOf($response->email);
+
+		// create the array to return
+		$returnArray = array("raffle_stars" => 0, "requests_today" => $requestsToday);
+
+		// run the stars game
+		if ($requestsToday == 0)
+		{
+			$stars = $utils->getRaffleStarsOf($response->email, false);
+			if ($stars === 4) // today is the star number five
+			{
+				// insert 10 tickets for user
+				//$sqlValues = "('$email', 'GAME')";
+				//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
+
+				// insert $1 in credits
+				$connection->deepQuery("UPDATE person SET credit = credit + 1 WHERE email = '{$response->email}'");
+				$utils->addEvent("stars-game", "win-credit", $response->email,  []);
+
+				// add notification to user
+				$utils->addNotification($response->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
+			}
+
+			// update number of stars for the template
+			$returnArray["raffle_stars"] = $stars+1;
+		}
+
+		return $returnArray;
 	}
 }
