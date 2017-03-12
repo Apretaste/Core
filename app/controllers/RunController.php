@@ -98,7 +98,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// get the resulting json
-		$result = $this->renderResponse($email, "", $subject, "API", $body, $attach, "json");
+		$result = $this->renderResponse($email, $email, $subject, "API", $body, $attach, "json");
 		die($result);
 	}
 
@@ -425,45 +425,15 @@ class RunController extends Controller
 		$responses = array_merge($responses, $extraResponses);
 		Utils::clearExtraResponses();
 
-		// clean the empty fields in the response
+		// configure the response
 		foreach($responses as $rs)
 		{
+			// if you are sending emails from the API
+			if($rs->email && $format=="json") $format = "api-email";
+
+			// clean the empty fields in the response
 			$rs->email = empty($rs->email) ? $email : $rs->email;
-
-			// check if is first request of the day
-			$requestsToday = $utils->getTotalRequestsTodayOf($rs->email);
-			$stars = 0;
-			if ($requestsToday == 0)
-			{
-				// run the tickets's game
-
-				// @note: este chequeo se hace despues de verificar si es el primer
-				// correo del dia, para no preguntar chequear mas veces
-				// innecesariamente en el resto del dia
-
-				$stars = $utils->getRaffleStarsOf($rs->email, false /* from yesterday, because today is the first email */);
-				if ($stars === 4) /* today is the star number five*/
-				{
-					// insert 10 tickets for user
-					//$sqlValues = "('$email', 'GAME')";
-					//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
-
-					$sql = "UPDATE person SET credit = credit + 1 WHERE email = '{$rs->email}';";
-					$connection->deepQuery($sql);
-
-					$utils->addEvent("stars-game", "win-credit", $rs->email,  []);
-
-					// add notification to user
-					$utils->addNotification($rs->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
-				}
-
-				$stars++;
-			}
-
 			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-			$rs->content['num_notifications'] = $utils->getNumberOfNotifications($rs->email);
-			$rs->content['raffle_stars'] = $stars;
-			$rs->content['requests_today'] = $requestsToday;
 		}
 
 		// create a new render
@@ -497,15 +467,39 @@ class RunController extends Controller
 			else return '{"code":"ok"}';
 		}
 
+		// send an email from the API
+		if($format == "api-email")
+		{
+			// create and configure to send email
+			$emailSender = new Email();
+			$emailSender->setEmailGroup($fromEmail);
+
+			// prepare the email variable
+			if($response->render)
+			{
+				$emailTo = $response->email;
+				$subject = $response->subject;
+				$images = $response->images;
+				$attachments = $response->attachments;
+				$body = $render->renderHTML($userService, $response);
+
+				// send the response email
+				$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
+
+				// respond to the API
+				return $render->renderJSON($response);
+			}
+			// if it is an empty response
+			else return '{"code":"ok"}';
+		}
+
 		// render the template email it to the user
 		// only save stadistics for email requests
 		if($format == "email")
 		{
-			// get the person, false if the person does not exist
-			$person = $utils->getPerson($email);
-
 			// if the person exist in Apretaste
-			if ($person !== false)
+			$personExist = $utils->personExist($email);
+			if ($personExist)
 			{
 				// update last access time to current and make person active
 				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
@@ -595,7 +589,7 @@ class RunController extends Controller
 				$welcome = new Response();
 				$welcome->setResponseEmail($email);
 				$welcome->setEmailLayout("email_simple.tpl");
-				$welcome->setResponseSubject("Bienvenido a Apretaste!");
+				$welcome->setResponseSubject("Bienvenido a Apretaste");
 				$welcome->createFromTemplate("welcome.tpl", array("email"=>$email, "prize"=>$prize, "source"=>$fromEmail));
 				$welcome->internal = true;
 				$responses[] = $welcome;
@@ -609,6 +603,7 @@ class RunController extends Controller
 			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
+				// render the email
 				if($rs->render) // ommit default Response()
 				{
 					// save impressions in the database

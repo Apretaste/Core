@@ -172,7 +172,7 @@ class PushNotification
 	 */
 	private function sendGeneralPush($appids, $data)
 	{
-		// appids must be a array
+		// appids must be an array
 		$appids = explode(",", $appids);
 
 		// get the server key
@@ -206,6 +206,13 @@ class PushNotification
 		// handle errors sending push and close connection
 		if ($result === false) error_log('Error Pushing Notification: ' . curl_error($ch));
 		curl_close($ch);
+
+		// save the API log
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("NEW PUSH: ".json_encode($data));
+		$logger->close();
 
 		// return the result
 		return $result;

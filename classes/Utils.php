@@ -116,13 +116,13 @@ class Utils
 	 * Check if the Person exists in the database
 	 *
 	 * @author salvipascual
-	 * @param String $personEmail, email of the person
+	 * @param String $email
 	 * @return Boolean, true if Person exist
-	 * */
-	public function personExist($personEmail)
+	 */
+	public function personExist($email)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$personEmail')");
+		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
 		return count($res) > 0;
 	}
 
