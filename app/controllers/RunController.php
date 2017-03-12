@@ -345,8 +345,9 @@ class RunController extends Controller
 		}
 
 		// get the language of the user
-		$lang = $connection->deepQuery("SELECT lang FROM person WHERE email = '$email'")[0]->lang;
-		if( ! in_array($lang, ["en","es"])) $lang = "es";
+		$result = $connection->deepQuery("SELECT lang FROM person WHERE email = '$email'");
+		if(isset($result[0]->lang)) $lang = $result[0]->lang;
+		else $lang = "es";
 
 		// get the service query
 		$query = implode(" ", $subjectPieces);
