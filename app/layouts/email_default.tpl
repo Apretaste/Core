@@ -95,8 +95,8 @@
 				</tr></table></td></tr>
 				{/if}
 
-				<!--component to show first time of the day-->
-                {if $requests_today == 0}
+				<!--the stars game-->
+				{if $requests_today == 0}
 					{if $raffle_stars > 0}
 					<tr>
 						<td align="center">
@@ -109,27 +109,26 @@
 								{/if}
 								{for $i=1 to 5}
 									{if $i <= $raffle_stars}
-										<font color="#000000" size="5"><b>&#9733;</b></font>
+										<font color="black" size="5"><b>&#9733;</b></font>
 									{else}
-										<font color="#eeeeee" size="5">&#9734;</font>
+										<font color="black" size="5">&#9734;</font>
 									{/if}
-								{/for} <br/>
+								{/for}
+								<br/>
 							</big>
 							<small>
 								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal
-									<br/>
-									{if $raffle_stars > 0} <i>Ya vas por {$raffle_stars}, emb&uacute;llate !</i> {/if}
+									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal<br/>
+									{if $raffle_stars > 0}<i>Ya vas por {$raffle_stars}. &iexcl;Emb&uacute;llate!</i>{/if}
 								{else}
 									Haz ganado <b>&sect;1</b> de cr&eacute;dito personal<br/>
-									Vuelve a intentar ma&ntilde;ana y gane m&aacute;s cr&eacute;dito
+									Entra ma&ntilde;ana y gana incluso m&aacute;s cr&eacute;dito
 								{/if}
 							</small>
 						</td>
 					</tr>
 					{/if}
 				{/if}
-
 
 				<!--main section to load the user template-->
 				<tr>
