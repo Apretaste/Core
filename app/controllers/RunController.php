@@ -425,17 +425,6 @@ class RunController extends Controller
 		$responses = array_merge($responses, $extraResponses);
 		Utils::clearExtraResponses();
 
-		// configure the response
-		foreach($responses as $rs)
-		{
-			// if you are sending emails from the API
-			if($rs->email && $format=="json") $format = "api-email";
-
-			// clean the empty fields in the response
-			$rs->email = empty($rs->email) ? $email : $rs->email;
-			$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
-		}
-
 		// create a new render
 		$render = new Render();
 
@@ -445,7 +434,11 @@ class RunController extends Controller
 			$html = "";
 			for ($i=0; $i<count($responses); $i++)
 			{
-				$html .= "<br/><center><small><b>To:</b> " . $responses[$i]->email . ". <b>Subject:</b> " . $responses[$i]->subject . "</small></center><br/>";
+				// clean the empty fields in the response
+				$rightEmail = empty($responses[$i]->email) ? $email : $responses[$i]->email;
+				$subject = empty($responses[$i]->subject) ? "Respuesta del servicio $serviceName" : $responses[$i]->subject;
+
+				$html .= "<br/><center><small><b>To:</b> " . $rightEmail . ". <b>Subject:</b> " . $subject . "</small></center><br/>";
 				$html .= $render->renderHTML($userService, $responses[$i]);
 				if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
 			}
@@ -463,33 +456,23 @@ class RunController extends Controller
 		// echo the json on the screen
 		if($format == "json")
 		{
-			if($response->render) return $render->renderJSON($response);
-			else return '{"code":"ok"}';
-		}
-
-		// send an email from the API
-		if($format == "api-email")
-		{
-			// create and configure to send email
-			$emailSender = new Email();
-			$emailSender->setEmailGroup($fromEmail);
-
-			// prepare the email variable
-			if($response->render)
+			// respond by email, if there is an email to send
+			if($response->email && $response->render)
 			{
-				$emailTo = $response->email;
-				$subject = $response->subject;
-				$images = $response->images;
-				$attachments = $response->attachments;
+				// create and configure to send email
+				$emailSender = new Email();
+				$emailSender->setEmailGroup($fromEmail);
+
+				// render email and body
+				$subject = empty($response->subject) ? "Respuesta de $serviceName" : $response->subject;
 				$body = $render->renderHTML($userService, $response);
 
-				// send the response email
-				$emailSender->sendEmail($emailTo, $subject, $body, $images, $attachments);
-
-				// respond to the API
-				return $render->renderJSON($response);
+				// send the email
+				$emailSender->sendEmail($response->email, $subject, $body, $response->images, $attachments = $response->attachments);
 			}
-			// if it is an empty response
+
+			// respond to the API
+			if($response->render) return $render->renderJSON($response);
 			else return '{"code":"ok"}';
 		}
 
@@ -603,6 +586,10 @@ class RunController extends Controller
 			// get params for the email and send the response emails
 			foreach($responses as $rs)
 			{
+				// clean the empty fields in the response
+				$rs->email = empty($rs->email) ? $email : $rs->email;
+				$rs->subject = empty($rs->subject) ? "Respuesta del servicio $serviceName" : $rs->subject;
+
 				// render the email
 				if($rs->render) // ommit default Response()
 				{
