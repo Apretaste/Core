@@ -187,7 +187,7 @@
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
 						<small>
-							Escriba dudas e ideas a <a href="mailto:{apretaste_support_email}">{apretaste_support_email}</a><br/>
+							Escriba dudas e ideas a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
 							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
 							Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
 						</small>
