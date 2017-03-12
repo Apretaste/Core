@@ -63,6 +63,9 @@ class Render
 		// get the number of notifications for a user
 		$notificationsCount = $utils->getNumberOfNotifications($response->email);
 
+		// get the email for customer support
+		$customerSupport = $di->get('config')['contact']['support'];
+
 		// list the system variables
 		$systemVariables = array(
 			// system variables
@@ -74,6 +77,7 @@ class Render
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL_LIST" => $onEmailList,
+			"APRETASTE_SUPPORT_EMAIL" => $customerSupport,
 			// user variables
 			"num_notifications" => $notificationsCount,
 			'USER_ID' => isset($person->username) ? $person->username : "",
