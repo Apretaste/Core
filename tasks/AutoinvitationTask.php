@@ -25,8 +25,11 @@ class autoinvitationTask extends \Phalcon\Cli\Task
 			AND email LIKE '%@nauta.cu'
 			LIMIT 500");
 
-		// send the first remarketing
+		// introduction message
+		echo "\nAUTOMATIC INVITATIONS (".count($people).")\n";
 		$log .= "\nAUTOMATIC INVITATIONS (".count($people).")\n";
+
+		// iterate and send invitations
 		foreach ($people as $person)
 		{
 			// prepare variables
@@ -48,6 +51,7 @@ class autoinvitationTask extends \Phalcon\Cli\Task
 			$connection->deepQuery("UPDATE autoinvitations SET processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
 
 			// display notifications
+			echo "\t{$person->email}\n";
 			$log .= "\t{$person->email}\n";
 		}
 
@@ -56,8 +60,8 @@ class autoinvitationTask extends \Phalcon\Cli\Task
 		$timeDiff = $timeEnd - $timeStart;
 
 		// printing log
+		echo "EXECUTION TIME: $timeDiff seconds\n\n";
 		$log .= "EXECUTION TIME: $timeDiff seconds\n\n";
-		echo $log;
 
 		// saving the log
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/remarketing_autoinvitation.log");
