@@ -50,6 +50,9 @@ class autoinvitationTask extends \Phalcon\Cli\Task
 			// mark as sent
 			$connection->deepQuery("UPDATE autoinvitations SET processed=CURRENT_TIMESTAMP WHERE email='{$person->email}'");
 
+			// save into the remarketing platform
+			$connection->deepQuery("INSERT INTO `remarketing`(`email`, `type`) VALUES ('{$person->email}', 'AUTOINVITE')");
+
 			// display notifications
 			echo "\t{$person->email}\n";
 			$log .= "\t{$person->email}\n";
