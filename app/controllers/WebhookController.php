@@ -40,6 +40,14 @@ class WebhookController extends Controller
 			$utils->unsubscribeFromEmailList($email);
 		}
 
+		// blacklist the user domain if it was censored
+		if($code == "554")
+		{
+			$userDomain = explode("@", $email)[1];
+			$sql = "UPDATE domain SET blacklist = CONCAT(blacklist,',$userDomain') WHERE domain='$domain'";
+			$connection->deepQuery($sql);
+		}
+
 		// save into the database
 		$sql = "INSERT INTO delivery_dropped(email,sender,reason,code,description) VALUES ('$email','$domain','$reason','$code','$desc')";
 		$connection->deepQuery($sql);
