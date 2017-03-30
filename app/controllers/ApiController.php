@@ -32,12 +32,15 @@ class ApiController extends Controller
 		$token = md5($email.$pin.$expires.rand());
 
 		// create new entry on the authentication table
-		// and delete all previos entries for this token
+		// and delete all previous entries for this token
 		$connection->deepQuery("
 			START TRANSACTION;
 			DELETE FROM authentication WHERE email='$email' AND appname = '$appname';
 			INSERT INTO authentication (token,email,appid,appname,expires) VALUES ('$token','$email','$appid','$appname','$expires');
 			COMMIT");
+
+        // allow JS clients to use the API
+        header("Access-Control-Allow-Origin: *");
 
 		// return ok response
 		die('{"code":"ok","token":"'.$token.'"}');
@@ -60,6 +63,9 @@ class ApiController extends Controller
 		// delete the row for the token
 		$connection = new Connection();
 		$connection->deepQuery("DELETE FROM authentication WHERE token='$token'");
+
+        // allow JS clients to use the API
+        header("Access-Control-Allow-Origin: *");
 
 		// return ok response
 		die('{"code":"ok"}');
@@ -89,6 +95,9 @@ class ApiController extends Controller
 		$username = $utils->usernameFromEmail($email);
 		$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
+        // allow JS clients to use the API
+        header("Access-Control-Allow-Origin: *");
+
 		// return ok response
 		die('{"code":"ok","username":"'.$username.'"}');
 	}
@@ -112,6 +121,9 @@ class ApiController extends Controller
 		// check if the user already created a pin
 		$pin = "unset";
 		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
+
+        // allow JS clients to use the API
+        header("Access-Control-Allow-Origin: *");
 
 		die('{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}');
 	}
@@ -165,6 +177,9 @@ class ApiController extends Controller
 		// email the code to the user
 		$sender = new Email();
 		$sender->sendEmail($email, $subject, $body);
+
+        // allow JS clients to use the API
+        header("Access-Control-Allow-Origin: *");
 
 		// return ok response
 		die('{"code":"ok", "newuser":"'.$newUser.'"}');
