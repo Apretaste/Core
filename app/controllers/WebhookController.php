@@ -41,7 +41,7 @@ class WebhookController extends Controller
 		}
 
 		// blacklist the user domain if it was censored
-		if($code == "554")
+		if(in_array($code, array("554,499"))
 		{
 			$userDomain = explode("@", $email)[1];
 			$sql = "UPDATE domain SET blacklist = CONCAT(blacklist,',$userDomain') WHERE domain='$domain'";

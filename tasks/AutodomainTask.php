@@ -12,6 +12,17 @@ class autodomainTask extends \Phalcon\Cli\Task
 	{
 		$timeStart  = time();
 
+		// get the number of active domains
+		$connection = new Connection();
+		$activeDomains = $connection->deepQuery("
+			SELECT COUNT(domain) AS count
+			FROM domain
+			WHERE blacklist = ''
+			AND active=1")[0]->count;
+
+		// add more domains only if the number of active domains is less than 10
+		if($activeDomains >= 10) goto finalize;
+
 		// get the API key and start MailGun client
 		$mailgunKey = $this->di->get('config')['mailgun']['key'];
 		$mgClient = new Mailgun($mailgunKey);
@@ -23,7 +34,6 @@ class autodomainTask extends \Phalcon\Cli\Task
 		//
 		// get the list of domains to add
 		//
-		$connection = new Connection();
 		$autoDomains = $connection->deepQuery("SELECT domain, `group`, default_service FROM autodomains");
 
 		// loop the list of domains and add each one
@@ -72,7 +82,7 @@ class autodomainTask extends \Phalcon\Cli\Task
 				}
 
 				// add CNAME records
-				if($record->record_type == "CNAME")
+				if($record->recordfinalize_type == "CNAME")
 				{
 					$GodaddyRecords[] = array(
 						"type" => "CNAME",
@@ -139,6 +149,9 @@ class autodomainTask extends \Phalcon\Cli\Task
 			$logger->log($log);
 			$logger->close();
 		}
+
+		// goto here is there are enough domains
+		finalize:
 
 		// get final delay
 		$timeEnd = time();
