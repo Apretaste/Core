@@ -82,7 +82,7 @@ class autodomainTask extends \Phalcon\Cli\Task
 				}
 
 				// add CNAME records
-				if($record->recordfinalize_type == "CNAME")
+				if($record->record_type == "CNAME")
 				{
 					$GodaddyRecords[] = array(
 						"type" => "CNAME",
