@@ -133,14 +133,14 @@ class Email
 
 		// create the array send
 		$message = array(
-			"from" => "Apretaste <$from>",
+			"from" => $from,
 			"to" => $to,
 			"subject" => $subject,
 			"html" => $body,
+			"o:native-send" => true,
 			"o:tracking" => false,
 			"o:tracking-clicks" => false,
-			"o:tracking-opens" => false,
-			"h:X-service" => "Apretaste"
+			"o:tracking-opens" => false
 		);
 
 		// adding In-Reply-To header (creating conversation with the user)
