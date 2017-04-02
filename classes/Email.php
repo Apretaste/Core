@@ -1,6 +1,7 @@
 <?php
 
 use Mailgun\Mailgun;
+use Nette\Mail\Message;
 
 class Email
 {
@@ -34,49 +35,35 @@ class Email
 		$status = $utils->deliveryStatus($to);
 		if($status != 'ok') return false;
 
-		// select the right email to use as From
-		$from = $this->nextEmail($to);
-
-		// create the list of images and attachments
-		$embedded = array();
-		if( ! empty($images)) $embedded['inline'] = $images;
-		if( ! empty($attachments)) $embedded['attachment'] = $attachments;
-
-		// create the array send
-		$message = array(
-			"from" => "Apretaste <$from>",
-			"to" => $to,
-			"subject" => $subject,
-			"html" => $body,
-			"o:tracking" => false,
-			"o:tracking-clicks" => false,
-			"o:tracking-opens" => false,
-			"h:X-service" => "Apretaste"
-		);
-
-		// adding In-Reply-To header (creating conversation with the user)
-		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
-
-		// send the email via MailGun. Never send emails from the sandbox
+		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') != "sandbox")
+		if($di->get('environment') == "sandbox") return true;
+
+		// get the domain for the email to send
+		$emailDomain = explode("@", $to)[1];
+		$return = false;
+
+		// redirect Nauta by gmail
+		if($emailDomain == "nauta.cu")
 		{
-			// get the API key and start MailGun client
-			$mailgunKey = $di->get('config')['mailgun']['key'];
-			$mgClient = new Mailgun($mailgunKey);
+			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+		}
 
-			// clear the email from the bounce list. We take will care of bad emails
-			try {$mgClient->delete("{$this->domain}/bounces/$to");} catch (Exception $e){}
-
-			// send the email
-			$result = $mgClient->sendMessage($this->domain, $message, $embedded);
-			// @TODO return false when negative $result
+		// all others OR if Nauta fails by Mailgun
+		if( ! $return)
+		{
+			$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
 		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
 		$haveAttachments = empty($attachments) ? 0 : 1;
-		$this->conn->deepQuery("INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain) VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}')");
+		$type = $return->type;
+		$from = $return->from;
+		$domain = $return->domain;
+		$this->conn->deepQuery("
+			INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain,type)
+			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain','$type')");
 
 		return true;
 	}
@@ -106,38 +93,17 @@ class Email
 	}
 
 	/**
-	 * Brings the next email to be used by Apretaste using an even distribution
+	 * Sends an email using Mailgun
 	 *
 	 * @author salvipascual
-	 * @param String $email, user's email
-	 * @return String, email to use
-	 * */
-	private function nextEmail($email)
+	 * @return Boolean
+	 */
+	private function sendEmailViaMailgun($to, $subject, $body, $images, $attachments)
 	{
-		// get the domain to generate the email
-		if (empty($this->domain)) $this->nextDomain($email);
-
-		// get the username part of the email and clean bad characters
-		$user = explode("@", $email)[0];
-		$user = str_replace(array(".", "+", "-"), "", $user);
-
-		// generate a two digits number that looks like a year
-		$seed = rand(80, 98);
-
-		// create and return the email
-		return "{$user}{$seed}@{$this->domain}";
-	}
-
-	/**
-	 * Select the next domain using an even distribution
-	 *
-	 * @author salvipascual
-	 * @param String $email, user's email
-	 * */
-	private function nextDomain($email)
-	{
-		// get the domain from the user's email
-		$userDomain = explode("@", $email)[1];
+		// get the name and domain from the email
+		$emailParts = explode("@", $to);
+		$emailName = $emailParts[0];
+		$emailDomain = $emailParts[1];
 
 		// get the domain with less usage
 		$result = $this->conn->deepQuery("
@@ -145,7 +111,7 @@ class Email
 			FROM domain
 			WHERE active = 1
 			AND `group` = '{$this->group}'
-			AND blacklist NOT LIKE '%$userDomain%'
+			AND blacklist NOT LIKE '%$emailDomain%'
 			ORDER BY last_usage ASC LIMIT 1");
 
 		// increase the send counter
@@ -155,7 +121,106 @@ class Email
 			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
 			WHERE domain='$domain'");
 
-		// choose the domain
-		$this->domain = $domain;
+		// create the new from email
+		$user = str_replace(array(".", "+", "-"), "", $emailName);
+		$seed = rand(80, 98);
+		$from = "{$user}{$seed}@{$domain}";
+
+		// create the list of images and attachments
+		$embedded = array();
+		if( ! empty($images)) $embedded['inline'] = $images;
+		if( ! empty($attachments)) $embedded['attachment'] = $attachments;
+
+		// create the array send
+		$message = array(
+			"from" => "Apretaste <$from>",
+			"to" => $to,
+			"subject" => $subject,
+			"html" => $body,
+			"o:tracking" => false,
+			"o:tracking-clicks" => false,
+			"o:tracking-opens" => false,
+			"h:X-service" => "Apretaste"
+		);
+
+		// adding In-Reply-To header (creating conversation with the user)
+		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
+
+		// get the API key and start MailGun client
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$mailgunKey = $di->get('config')['mailgun']['key'];
+		$mgClient = new Mailgun($mailgunKey);
+
+		// clear the email from the bounce list. We take will care of bad emails
+		try {$mgClient->delete("$domain/bounces/$to");} catch (Exception $e){}
+
+		// send the email
+		$result = $mgClient->sendMessage($domain, $message, $embedded);
+		// @TODO return false when negative $result
+
+		// create the returning structure
+		$return = new stdClass();
+		$return->type = "mailgun";
+		$return->from = $from;
+		$return->domain = $domain;
+		return $return;
+	}
+
+	/**
+	 * Sends an email using Gmail
+	 *
+	 * @author salvipascual
+	 * @return Boolean
+	 */
+	private function sendEmailViaGmail($to, $subject, $body, $images, $attachments)
+	{
+		// get next domain
+		$connection = new Connection();
+		$gmail = $connection->deepQuery("
+			SELECT * FROM delivery_gmail
+			WHERE active=1
+			AND daily < 100
+			AND TIMESTAMPDIFF(MINUTE,last_usage,NOW()) > 1
+			ORDER BY last_usage ASC
+			LIMIT 1");
+
+		// do not continue for empty responses
+		if(empty($gmail)) return false;
+
+		// create mailer
+		$from = "{$gmail[0]->name}@gmail.com";
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => 'smtp.gmail.com',
+			'username' => $from,
+			'password' => $gmail[0]->password,
+			'secure' => 'ssl'
+		]);
+
+		// create message
+		$mail = new Message;
+		$mail->setFrom($from);
+		$mail->addTo($to);
+		$mail->setSubject($subject);
+		$mail->setHtmlBody($body);
+//		$mail->setBody($body);
+
+		// send email
+		$mailer->send($mail);
+
+		// update the daily record
+		$lastDate = date("Y-m-d", strtotime($gmail[0]->last_usage));
+		$currentDate = date("Y-m-d");
+		$daily = $lastDate == $currentDate ? "daily=daily+1," : "";
+		$connection->deepQuery("
+			UPDATE delivery_gmail
+			SET sent=sent+1, $daily last_usage=CURRENT_TIMESTAMP
+			WHERE name='{$gmail[0]->name}'");
+
+		// create the returning structure
+		$return = new stdClass();
+		$return->type = "gmail";
+		$return->from = $from;
+		$return->domain = $gmail[0]->name;
+		return $return;
 	}
 }
