@@ -44,7 +44,7 @@ class Email
 		$return = false;
 
 		// redirect Nauta by gmail
-		if($emailDomain == "nauta.cu")
+		if($emailDomain == "nauta.cu" && empty($images) && empty($attach))
 		{
 			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
@@ -151,12 +151,18 @@ class Email
 		$mailgunKey = $di->get('config')['mailgun']['key'];
 		$mgClient = new Mailgun($mailgunKey);
 
-		// clear the email from the bounce list. We take will care of bad emails
-		try {$mgClient->delete("$domain/bounces/$to");} catch (Exception $e){}
+		// send email
+		try{
+			// clear the email from the bounce list. We take will care of bad emails
+			$mgClient->delete("$domain/bounces/$to");
 
-		// send the email
-		$result = $mgClient->sendMessage($domain, $message, $embedded);
-		// @TODO return false when negative $result
+			// send email
+			$mgClient->sendMessage($domain, $message, $embedded);
+		} catch (Exception $e) {
+			// log error and try email another way
+			error_log("MAIGUN: Error sending from: $from to $to with subject $subject");
+			return $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+		}
 
 		// create the returning structure
 		$return = new stdClass();
@@ -179,8 +185,8 @@ class Email
 		$gmail = $connection->deepQuery("
 			SELECT * FROM delivery_gmail
 			WHERE active=1
-			AND daily < 100
-			AND TIMESTAMPDIFF(MINUTE,last_usage,NOW()) > 1
+			AND daily < 30
+			AND TIMESTAMPDIFF(MINUTE,last_usage,NOW()) > 10
 			ORDER BY last_usage ASC
 			LIMIT 1");
 
@@ -205,7 +211,13 @@ class Email
 //		$mail->setBody($body);
 
 		// send email
-		$mailer->send($mail);
+		try{
+			$mailer->send($mail);
+		} catch (Exception $e) {
+			// log error and try email another way
+			error_log("GMAIL Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
+			return $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
+		}
 
 		// update the daily record
 		$lastDate = date("Y-m-d", strtotime($gmail[0]->last_usage));
