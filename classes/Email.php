@@ -151,16 +151,15 @@ class Email
 		$mailgunKey = $di->get('config')['mailgun']['key'];
 		$mgClient = new Mailgun($mailgunKey);
 
+		// clear the email from the bounce list. We take will care of bad emails
+		try{$mgClient->delete("$domain/bounces/$to")} catch(Exception $e){}
+
 		// send email
 		try{
-			// clear the email from the bounce list. We take will care of bad emails
-			$mgClient->delete("$domain/bounces/$to");
-
-			// send email
 			$mgClient->sendMessage($domain, $message, $embedded);
 		} catch (Exception $e) {
 			// log error and try email another way
-			error_log("MAIGUN: Error sending from: $from to $to with subject $subject");
+			error_log("MAIGUN: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
 			return $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
 
