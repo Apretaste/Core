@@ -152,7 +152,7 @@ class Email
 		$mgClient = new Mailgun($mailgunKey);
 
 		// clear the email from the bounce list. We take will care of bad emails
-		try{$mgClient->delete("$domain/bounces/$to")} catch(Exception $e){}
+		try{$mgClient->delete("$domain/bounces/$to");} catch(Exception $e){}
 
 		// send email
 		try{
