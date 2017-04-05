@@ -1,0 +1,33 @@
+<div class="row">
+	<div class="col-xs-12 text-right">
+		<a class="btn btn-small btn-default" href="campaignNewList"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Subscriber</a>
+		<br/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Email</th>
+					<th class="text-center">Name</th>
+					<th class="text-center">Inserted</th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($suscriptors as $suscriptor) { ?>
+				<tr>
+					<td class="text-center"><?=$suscriptor->email?></td>
+					<td class="text-center"><?=$suscriptor->name?></td>
+					<td class="text-center"><?=$suscriptor->inserted?></td>
+					<td class="text-center"><?=$suscriptor->status?></td>
+					<td class="text-center">
+						<a class="btn btn-xs btn-default" href="campaignDeleteSubscriptor?id=<?=$suscriptor->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

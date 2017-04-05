@@ -44,7 +44,7 @@ class Email
 		$return = false;
 
 		// redirect Nauta by gmail
-		if($emailDomain == "nauta.cu" && empty($images) && empty($attach))
+		if($emailDomain == "nauta.cu")
 		{
 			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
@@ -184,7 +184,7 @@ class Email
 		$gmail = $connection->deepQuery("
 			SELECT * FROM delivery_gmail
 			WHERE active=1
-			AND daily < 30
+			AND (daily < 30 || date(last_usage) < curdate())
 			AND TIMESTAMPDIFF(MINUTE,last_usage,NOW()) > 10
 			ORDER BY last_usage ASC
 			LIMIT 1");
@@ -207,11 +207,20 @@ class Email
 		$mail->addTo($to);
 		$mail->setSubject($subject);
 		$mail->setHtmlBody($body);
-//		$mail->setBody($body);
+
+		// add images to the template
+		foreach ($images as $image) {
+			$mail->addEmbeddedFile($image);
+		}
+
+		// add attachments
+		foreach ($attachments as $attachment) {
+			$mail->addAttachment($attachment);
+		}
 
 		// send email
 		try{
-			$mailer->send($mail);
+			$mailer->send($mail, false);
 		} catch (Exception $e) {
 			// log error and try email another way
 			error_log("GMAIL Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
