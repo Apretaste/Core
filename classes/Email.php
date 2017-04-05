@@ -212,12 +212,12 @@ class Email
 		foreach ($images as $image) {
 			$mail->addEmbeddedFile($image);
 		}
-
+/*
 		// add attachments
 		foreach ($attachments as $attachment) {
 			$mail->addAttachment($attachment);
 		}
-
+*/
 		// send email
 		try{
 			$mailer->send($mail, false);
