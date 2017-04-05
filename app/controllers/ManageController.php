@@ -114,24 +114,20 @@ class ManageController extends Controller
 		if ($this->request->isPost())
 		{
 			$email = $this->request->getPost('email');
+			$pass = sha1($this->request->getPost('password'));
 
 			if ( ! is_null($email) && ! empty($email))
 			{
-				$pass = sha1($this->request->getPost('password'));
-
-				$sql = "SELECT * FROM manage_users WHERE email = '$email' and password = '$pass';";
 				$connection = new Connection();
-				$r = $connection->deepQuery($sql);
+				$r = $connection->deepQuery("SELECT * FROM manage_users WHERE email = '$email' and password = '$pass'");
 
-				if (is_array($r))
-					if (isset($r[0]))
-						if ($r[0]->email == $email)
-						{
-							$this->startSession();
-							$_SESSION['user'] = $email;
-							return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
-						}
-					$this->view->loginFail = true;
+				if (is_array($r) && isset($r[0]) && $r[0]->email == $email)
+				{
+					$this->startSession();
+					$_SESSION['user'] = $email;
+					return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
+				}
+				$this->view->loginFail = true;
 			}
 		}
 		$this->view->setLayout('login');
@@ -2285,6 +2281,47 @@ class ManageController extends Controller
 		// send variables to the view
 		$this->view->title = "List of campaigns";
 		$this->view->campaigns = $campaigns;
+	}
+
+	/**
+	 * Show all email list for a campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignListsAction()
+	{
+		// get the list of campaigns
+		$connection = new Connection();
+		$lists = $connection->deepQuery("SELECT * FROM campaign_list");
+
+		// calculate number of subscribers for all lists
+		foreach ($lists as $list)
+		{
+			if($list->id == 1) $list->subscribers = 1000;
+			if($list->id == 2) $list->subscribers = 3000;
+		}
+
+		// send variables to the view
+		$this->view->title = "Campaign lists";
+		$this->view->lists = $lists;
+	}
+
+	/**
+	 * Show all suscribers for a campaign
+	 *
+	 * @author salvipascual
+	 */
+	public function campaignSuscibersAction()
+	{
+		$campaignId = $this->request->get("id");
+
+		// get the list of campaigns
+		$connection = new Connection();
+		$suscriptors = $connection->deepQuery("SELECT * FROM campaign_suscribers WHERE campaign = $campaignId");
+
+		// send variables to the view
+		$this->view->title = "Campaign subscriptors";
+		$this->view->suscriptors = $suscriptors;
 	}
 
 	/**

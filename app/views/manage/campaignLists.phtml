@@ -1,0 +1,35 @@
+<div class="row">
+	<div class="col-xs-12 text-right">
+		<a class="btn btn-small btn-default" href="campaignNewList"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New List</a>
+		<a class="btn btn-small btn-default" href="campaignReports">Reports</a>
+		<br/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Name</th>
+					<th class="text-center">Subscribers</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($lists as $list) { ?>
+				<tr>
+					<td class="text-center"><?=$list->name?></td>
+					<td class="text-center"><?=$list->subscribers?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" target="_blank" href="campaignOpenList?id=<?=$list->id?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+<!--
+							<a class="btn btn-xs btn-default" href="campaignDeleteList?id=<?=$list->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+-->
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

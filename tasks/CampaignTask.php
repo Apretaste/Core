@@ -29,8 +29,8 @@ class CampaignTask extends \Phalcon\Cli\Task
 		if (empty($campaign)) return;
 		else $campaign = $campaign[0];
 
-		// check campaign as SENDING
-		$connection->deepQuery("UPDATE campaign SET status='SENDING' WHERE id = {$campaign->id}");
+		// update campaign as SENDING
+		$connection->deepQuery("UPDATE campaign SET status='SENDING' WHERE id={$campaign->id}");
 
 		// get the list of people in the list who hsa not receive this campaign yet
 		// so in case the campaign fails when it tries again starts from the same place
@@ -54,24 +54,23 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// replace the template variables
 			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content, $campaign->id);
 
-            // restore some chars/tags
-            $content = str_replace('-&gt;', '->', $content);
+			// restore some chars/tags
+			$content = str_replace('-&gt;', '->', $content);
 
-            // parse campaign content
+			// parse campaign content
 			$render = new Render();
 			$service = new Service('campaign');
-            $response = new Response();
-            $response->setResponseEmail($person->email);
-            $response->setEmailLayout("email_campaign.tpl");
-            $response->createFromTemplate($content, []);
-            $content = $render->renderHTML($service, $response);
-            $response->setEmailLayout("email_text.tpl");
-            $campaign->subject = str_replace('-&gt;', '->', $campaign->subject);
-            $response->createFromTemplate($campaign->subject, []);
-            $campaign->subject = $render->renderHTML($service, $response);
+			$response = new Response();
+			$response->setResponseEmail($person->email);
+			$response->setEmailLayout("email_campaign.tpl");
+			$response->createFromTemplate($content, []);
+			$content = $render->renderHTML($service, $response);
+			$response->setEmailLayout("email_text.tpl");
+			$campaign->subject = str_replace('-&gt;', '->', $campaign->subject);
+			$response->createFromTemplate($campaign->subject, []);
+			$campaign->subject = $render->renderHTML($service, $response);
 
 			// send test email
-			$sender->trackCampaign = $campaign->id;
 			$result = $sender->sendEmail($person->email, $campaign->subject, $content);
 
 			// add to bounced and unsubscribe if there are issues sending
@@ -87,7 +86,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// save status before moving to the next email
 			$connection->deepQuery("
 				INSERT INTO campaign_sent (email, campaign, status) VALUES ('{$person->email}', '{$campaign->id}', '$status');
-				UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}'");
+				UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';");
 		}
 
 		// set the campaign as SENT
