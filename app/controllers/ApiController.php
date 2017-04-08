@@ -16,6 +16,9 @@ class ApiController extends Controller
 	 * */
 	public function authAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		// get the values from the post
 		$email = trim($this->request->get('email'));
 		$pin = trim($this->request->get('pin'));
@@ -39,8 +42,11 @@ class ApiController extends Controller
 			INSERT INTO authentication (token,email,appid,appname,expires) VALUES ('$token','$email','$appid','$appname','$expires');
 			COMMIT");
 
-        // allow JS clients to use the API
-        header("Access-Control-Allow-Origin: *");
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("AUTH email:$email, pin:$pin, appname:$appname");
+		$logger->close();
 
 		// return ok response
 		die('{"code":"ok","token":"'.$token.'"}');
@@ -57,6 +63,9 @@ class ApiController extends Controller
 	 * */
 	public function logoutAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		// get the values from the post
 		$token = trim($this->request->get('token'));
 
@@ -64,8 +73,11 @@ class ApiController extends Controller
 		$connection = new Connection();
 		$connection->deepQuery("DELETE FROM authentication WHERE token='$token'");
 
-        // allow JS clients to use the API
-        header("Access-Control-Allow-Origin: *");
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("LOGOUT token:$token");
+		$logger->close();
 
 		// return ok response
 		die('{"code":"ok"}');
@@ -80,6 +92,9 @@ class ApiController extends Controller
 	 */
 	public function registerAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		$email = trim($this->request->get('email'));
 
 		$utils = new Utils();
@@ -95,8 +110,11 @@ class ApiController extends Controller
 		$username = $utils->usernameFromEmail($email);
 		$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
-        // allow JS clients to use the API
-        header("Access-Control-Allow-Origin: *");
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("REGISTER email:$email");
+		$logger->close();
 
 		// return ok response
 		die('{"code":"ok","username":"'.$username.'"}');
@@ -111,6 +129,9 @@ class ApiController extends Controller
 	 * */
 	public function lookupAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		$email = trim($this->request->get('email'));
 
 		// check if the user exist
@@ -122,8 +143,11 @@ class ApiController extends Controller
 		$pin = "unset";
 		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
 
-        // allow JS clients to use the API
-        header("Access-Control-Allow-Origin: *");
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("LOOKUP user:$email, pin:$pin");
+		$logger->close();
 
 		die('{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}');
 	}
@@ -138,6 +162,9 @@ class ApiController extends Controller
 	 * */
 	public function startAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		// params from GEt and default options
 		$email = trim($this->request->get('email'));
 		$lang = trim($this->request->get('lang'));
@@ -178,11 +205,13 @@ class ApiController extends Controller
 		$sender = new Email();
 		$sender->sendEmail($email, $subject, $body);
 
-        // allow JS clients to use the API
-        header("Access-Control-Allow-Origin: *");
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("START email:$email, lang:$lang, new:$newUser");
+		$logger->close();
 
 		// return ok response
 		die('{"code":"ok", "newuser":"'.$newUser.'"}');
 	}
-
 }
