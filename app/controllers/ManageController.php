@@ -7,6 +7,12 @@ class ManageController extends Controller
 	private $currentUser = false;
 	private $currentPerson = null;
 
+	// do not let anonymous users pass
+	public function initialize(){
+		$security = new Security();
+		$security->enforceLogin();
+	}
+
 	/**
 	 * Index for the manage system
 	 * */
@@ -42,101 +48,6 @@ class ManageController extends Controller
 		$this->view->delivery = $delivery;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
-	}
-
-	public function beforeExecuteRoute($dispatcher)
-	{
-		$utils = new Utils();
-		$this->startSession();
-
-		if ($dispatcher->getActionName() !== 'login' && $dispatcher->getActionName() !== 'logout')
-		{
-			if ($this->getCurrentUser() == false)
-			{
-				return $dispatcher->forward(array("controller"=> "manage", "action" => "login"));
-			}
-		}
-
-		$this->view->currentUser = $this->getCurrentPerson();
-		$this->view->notifications = $utils->getUnreadNotifications($this->getCurrentUser(), 5);
-		$this->view->totalNotifications = $utils->getNumberOfNotifications($this->getCurrentUser());
-	}
-
-	private function startSession()
-	{
-		if ( ! isset($_SESSION)) {
-			@session_start();
-			@session_name("apretaste.manage");
-		}
-	}
-
-	/**
-	 * Return current user email
-	 *
-	 * @author kuma
-	 * @return mixed
-	 */
-	private function getCurrentUser()
-	{
-		$this->startSession();
-
-		if (isset($_SESSION['user']))
-			return $_SESSION['user'];
-
-		return false;
-	}
-
-	/**
-	 * Return current person logged
-	 *
-	 * @author kuma
-	 * @return object
-	 */
-	private function getCurrentPerson()
-	{
-		$this->startSession();
-		$utils = new Utils();
-		$email = $this->getCurrentUser();
-		if (is_null($this->currentPerson))
-			$this->currentPerson =  $utils->getPerson($email);
-
-		return $this->currentPerson;
-	}
-
-	/**
-	 * Login in manage
-	 *
-	 * @author kuma
-	 */
-	public function loginAction()
-	{
-		$this->view->loginFail = false;
-		if ($this->request->isPost())
-		{
-			$email = $this->request->getPost('email');
-			$pass = sha1($this->request->getPost('password'));
-
-			if ( ! is_null($email) && ! empty($email))
-			{
-				$connection = new Connection();
-				$r = $connection->deepQuery("SELECT * FROM manage_users WHERE email = '$email' and password = '$pass'");
-
-				if (is_array($r) && isset($r[0]) && $r[0]->email == $email)
-				{
-					$this->startSession();
-					$_SESSION['user'] = $email;
-					return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
-				}
-				$this->view->loginFail = true;
-			}
-		}
-		$this->view->setLayout('login');
-	}
-
-	public function logoutAction()
-	{
-		unset($_SESSION['user']);
-		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "index"));
 	}
 
 	/**
@@ -2265,323 +2176,6 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * List all campaigns
-	 *
-	 * @author salvipascual
-	 */
-	public function campaignsAction()
-	{
-		// get the list of campaigns
-		$connection = new Connection();
-		$campaigns = $connection->deepQuery("
-			SELECT id, subject, sending_date, status, sent, opened, bounced
-			FROM campaign
-			ORDER BY sending_date DESC");
-
-		// send variables to the view
-		$this->view->title = "List of campaigns";
-		$this->view->campaigns = $campaigns;
-	}
-
-	/**
-	 * Show all email list for a campaign
-	 *
-	 * @author salvipascual
-	 */
-	public function campaignListsAction()
-	{
-		// get the list of campaigns
-		$connection = new Connection();
-		$lists = $connection->deepQuery("SELECT * FROM campaign_list");
-
-		// calculate number of subscribers for all lists
-		foreach ($lists as $list)
-		{
-			if($list->id == 1) $list->subscribers = 1000;
-			if($list->id == 2) $list->subscribers = 3000;
-		}
-
-		// send variables to the view
-		$this->view->title = "Campaign lists";
-		$this->view->lists = $lists;
-	}
-
-	/**
-	 * Show all suscribers for a campaign
-	 *
-	 * @author salvipascual
-	 */
-	public function campaignSuscibersAction()
-	{
-		$campaignId = $this->request->get("id");
-
-		// get the list of campaigns
-		$connection = new Connection();
-		$suscriptors = $connection->deepQuery("SELECT * FROM campaign_suscribers WHERE campaign = $campaignId");
-
-		// send variables to the view
-		$this->view->title = "Campaign subscriptors";
-		$this->view->suscriptors = $suscriptors;
-	}
-
-	/**
-	 * Show campaign reports
-	 *
-	 * @author salvipascual
-	 */
-	public function campaignReportsAction()
-	{
-		$connection = new Connection();
-
-		// get the list of current suscribers
-		$suscribers = $connection->deepQuery("SELECT COUNT(email) AS suscribers FROM person WHERE active=1 AND mail_list=1");
-		$suscribers = $suscribers[0]->suscribers;
-
-		// get the last 10 campaigns
-		$campaigns = $connection->deepQuery("
-			SELECT id, subject, sending_date, status, sent, opened, bounced
-			FROM campaign
-			WHERE status = 'SENT'
-			ORDER BY sending_date ASC
-			LIMIT 10");
-
-		// send variables to the view
-		$this->view->title = "Campaign reports";
-		$this->view->suscribers = $suscribers;
-		$this->view->campaigns = $campaigns;
-	}
-
-	/**
-	 * Show the html for one campaign
-	 *
-	 * @author salvipascual
-	 */
-	public function viewCampaignAction()
-	{
-		$id = $this->request->get("id");
-
-		// get the list of campaigns
-		$connection = new Connection();
-		$campaign = $connection->deepQuery("
-			SELECT subject, content, sending_date, status, sent, opened, bounced
-			FROM campaign
-			WHERE id = $id");
-
-		// replace the template variables
-		$email = $_SESSION['user'];
-		$utils = new Utils();
-		$campaign[0]->content = $utils->campaignReplaceTemplateVariables($email, $campaign[0]->content);
-
-		// send variables to the view
-		$this->view->title = "View campaign";
-		$this->view->email = $email;
-		$this->view->campaign = $campaign[0];
-		$this->view->setLayout('empty');
-	}
-
-	/**
-	 * Creates a new campaign to send bulk email
-	 *
-	 * @author salvipascual
-	 */
-	public function removeCampaignAction()
-	{
-		$id = $this->request->get("id");
-
-		// remove the campaign
-		$connection = new Connection();
-		$connection->deepQuery("DELETE FROM campaign WHERE id = $id");
-
-		// remove images
-		$utils = new Utils();
-        $wwwroot = $this->di->get('path')['root'];
-        $campaignsFolder = "$wwwroot/public/campaigns";
-        $utils->rmdir("$campaignsFolder/$id");
-
-		// go back to the list of campaigns
-		$this->response->redirect('manage/campaigns');
-	}
-
-	/**
-	 * Creates a new campaign to send bulk email
-	 *
-	 * @author salvipascual
-	 */
-	public function newCampaignAction()
-	{
-		// get the email campaign layout
-		$wwwroot = $this->di->get('path')['root'];
-		//$layout = file_get_contents("$wwwroot/app/layouts/email_campaign.tpl");
-
-		// send variables to the view
-		$this->view->title = "New campaign";
-		$this->view->intent = "create";
-		$this->view->email = $_SESSION['user'];
-		$this->view->id = "";
-		$this->view->subject = "";
-		$this->view->date = date("Y-m-d\T23:00");
-		$this->view->layout = '';
-	}
-
-	/**
-	 * Updates a campaign in the database
-	 *
-	 * @author salvipascual
-	 */
-	public function updateCampaignAction()
-	{
-		$id = $this->request->get("id");
-
-		// insert the new campaign in the database
-		$connection = new Connection();
-		$campaign = $connection->deepQuery("SELECT * FROM campaign WHERE id=$id");
-		$campaign = $campaign[0];
-
-		// send variables to the view
-		$this->view->title = "Edit campaign";
-		$this->view->intent = "update";
-		$this->view->email = $_SESSION['user'];
-		$this->view->id = $campaign->id;
-		$this->view->subject = $campaign->subject;
-
-		$utils = new Utils();
-        $wwwroot = $this->di->get('path')['root'];
-        $campaignsFolder = "$wwwroot/public/campaigns";
-        $listPath = "$campaignsFolder/$id/images.list";
-
-        if (file_exists($listPath))
-        {
-            $imagesList = unserialize(file_get_contents($listPath));
-            $newImageList = [];
-            foreach ($imagesList as $idImg => $img)
-            {
-                $img['content'] = base64_encode(file_get_contents("$campaignsFolder/$id/{$img['filename']}"));
-                $newImageList[$idImg] = $img;
-            }
-        }
-
-        $campaign->content = $utils->putInlineImagesToHTML($campaign->content, $newImageList);
-
-		$this->view->layout = $campaign->content;
-		$this->view->date = date("Y-m-d\TH:i", strtotime($campaign->sending_date));
-		$this->view->pick("manage/newCampaign");
-	}
-
-	/**
-	 * Creates save a new the campaign in the database
-	 *
-	 * @author salvipascual
-	 */
-	public function newCampaignSubmitAction()
-	{
-		// get variales from POST
-		$id = $this->request->getPost("id"); // for when is updating
-		$subject = $this->request->getPost("subject");
-		$content = $this->request->getPost("content");
-		$date = $this->request->getPost("date");
-
-		// minify the html and remove dangerous characters
-        $utils = new Utils();
-        $images  = $utils->getInlineImagesFromHTML($content);
-        $wwwroot = $this->di->get('path')['root'];
-        $campaignsFolder = "$wwwroot/public/campaigns";
-
-		$content = str_replace("'", "&#39;", $content);
-		$content = preg_replace('/\s+/S', " ", $content);
-
-        $content = $utils->clearHtml($content);
-
-
-
-
-        //$p = strpos($content, '<body>');
-        //$content = substr($content,str)
-
-		// insert or update the campaign
-		$connection = new Connection();
-		if(empty($id))
-        {
-            $r = $connection->deepQuery("SELECT max(id) as m FROM campaign;");
-            $id = $r[0]->m + 1;
-            $connection->deepQuery("INSERT INTO campaign (id, subject, content, sending_date) VALUES ('$id','$subject', '$content', '$date')");
-        }
-		else
-        {
-		    $connection->deepQuery("UPDATE campaign SET subject='$subject', content='$content', sending_date='$date' WHERE id=$id");
-
-		    // clear old images
-            $utils->rmdir("$campaignsFolder/$id");
-        }
-
-        // save images
-        if ( ! file_exists($campaignsFolder))
-            @mkdir($campaignsFolder);
-
-        if ( ! file_exists("$campaignsFolder/$id"))
-            @mkdir("$campaignsFolder/$id");
-
-        if (file_exists("$campaignsFolder/$id"))
-        {
-            $imagesList = [];
-            foreach($images as $idimg => $img)
-            {
-                file_put_contents($campaignsFolder."/$id/{$img['filename']}", base64_decode($img['content']));
-                $itemImg = $img;
-                unset($itemImg['content']);
-                $imagesList[$idimg] = $itemImg;
-            }
-
-            file_put_contents("$campaignsFolder/$id/images.list", serialize($imagesList));
-        }
-
-        // go to the list of campaigns
-		$this->response->redirect('manage/campaigns');
-	}
-
-	/**
-	 * Email a test campaign
-	 *
-	 * @author salvipascual
-	 */
-	public function testCampaignAsyncAction()
-	{
-		// get the variables from the POST
-		$email = $this->request->getPost("email");
-		$subject = $this->request->getPost("subject");
-		$content = $this->request->getPost("content");
-
-		// replace the template variables
-		$utils = new Utils();
-		$content = $utils->campaignReplaceTemplateVariables($email, $content);
-
-		// restore some chars/tags
-        $content = str_replace('-&gt;', '->', $content);
-
-        // parse campaign content
-        $render = new Render();
-        $service = new Service('campaign');
-        $response = new Response();
-
-        $response->setEmailLayout("email_campaign.tpl");
-        $response->createFromTemplate($content, []);
-        $response->setResponseEmail($email);
-        $content = $render->renderHTML($service, $response);
-
-        $response->setEmailLayout("email_text.tpl");
-		$subject = str_replace('-&gt;', '->', $subject);
-        $response->createFromTemplate($subject, []);
-        $subject = $render->renderHTML($service, $response);
-
-		// send test email
-		$sender = new Email();
-		$sender->sendEmail($email, $subject, $content);
-
-		// send the response
-		echo '{result: true}';
-		$this->view->disable();
-	}
-
-	/**
 	 * List of school's courses
 	 *
 	 * @author kuma
@@ -2593,8 +2187,12 @@ class ManageController extends Controller
 			"school" => "School"
 		);
 
+		// get the current user's email
+		$security = new Security();
+		$manager = $security->getManager();
+		$email = $manager->email;
+
 		$connection = new Connection();
-		$email = $this->getCurrentUser();
 		$teachers = $connection->deepQuery("SELECT * FROM _escuela_teacher");
 
 		$this->view->message = false;
@@ -2610,7 +2208,7 @@ class ManageController extends Controller
 			if ( ! empty("$teacher"))
 			{
 				$content = $connection->escape($this->request->getPost("courseContent"));
-                $category = $this->request->getPost('courseCategory');
+				$category = $this->request->getPost('courseCategory');
 				switch ($option){
 					case 'add':
 						$sql = "INSERT INTO _escuela_course (title, teacher, content, email, active, category) VALUES ('$title', '$teacher','$content','$email',0,'$category'); ";
@@ -2672,7 +2270,7 @@ class ManageController extends Controller
 
 		$this->view->title = "School";
 		$this->view->courses = $courses;
-	$this->view->teachers = $teachers;
+		$this->view->teachers = $teachers;
 	}
 
 	public function schoolTeachersAction()

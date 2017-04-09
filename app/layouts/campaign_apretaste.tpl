@@ -21,9 +21,9 @@
 	<!--CONTENT-->
 	<tr>
 		<td align="left" style="padding: 0px 5px;">
-            {space10}
-            {include file="$APRETASTE_USER_TEMPLATE"}
-            {space10}
+			{space10}
+			{include file="$APRETASTE_USER_TEMPLATE"}
+			{space10}
 		</td>
 	</tr>
 	<tr><td><br/></td></tr>

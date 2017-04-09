@@ -11,17 +11,17 @@
 
 <hr/>
 
-<div><?=$campaign->content?></div>
+<div><?=$html?></div>
 
 <script src="/js/jquery.js"></script>
 <script>
 	function testEmail(){
 		var email = $('#test').val();
 		var subject = '<?=$campaign->subject?>';
-		var content = '<?=$campaign->content?>';
+		var content = '<?=$html?>';
 
 		$.ajax({
-			url: "testCampaignAsync",
+			url: "testAsync",
 			method: "POST",
 			data: {"email":email, "subject":subject, "content":content},
 			async: false
