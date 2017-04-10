@@ -2263,9 +2263,7 @@ class ManageController extends Controller
 			$connection->deepQuery($sql);
 		}
 
-		$isAdmin = Utils::haveManagePermission($email, 'manage') ? 'TRUE' : 'FALSE';
-		$queryCourses = "SELECT * FROM _escuela_course WHERE email = '$email' OR $isAdmin ORDER BY ID";
-
+		$queryCourses = "SELECT * FROM _escuela_course WHERE email = '$email' ORDER BY ID";
 		$courses = $connection->deepQuery($queryCourses);
 
 		$this->view->title = "School";

@@ -4,7 +4,7 @@
  * Send email campaigns to the users
  *
  * @author salvipascual
- * @version 1.0
+ * @version 2.0
  */
 class CampaignTask extends \Phalcon\Cli\Task
 {
@@ -28,7 +28,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 		if (empty($campaign)) return;
 		else $campaign = $campaign[0];
 
-		// set the default group
+		// set the default group to send emails
 		$sender = new Email();
 		$sender->setGroup($campaign->group);
 
@@ -41,7 +41,8 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$people = $connection->query("
 				SELECT email, 'internal' as type
 				FROM person WHERE mail_list=1 AND active=1
-				AND email NOT IN (SELECT email FROM campaign_sent WHERE campaign={$campaign->id})");
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
 		}
 		// when we choosse ALL Apretaste active users
 		elseif($campaign->list == "2")
@@ -49,7 +50,8 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$people = $connection->query("
 				SELECT email, 'internal' as type
 				FROM person WHERE active=1
-				AND email NOT IN (SELECT email FROM campaign_sent WHERE campaign={$campaign->id})");
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
 		}
 		// all other lists
 		else
@@ -60,7 +62,8 @@ class CampaignTask extends \Phalcon\Cli\Task
 				FROM campaign_suscriber
 				WHERE list = '{$campaign->campaign}'
 				AND status <> 'BOUNCED' AND status <> 'DISABLED'
-				AND email NOT IN (SELECT email FROM campaign_sent WHERE campaign={$campaign->id})");
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
 		}
 
 		// show initial message

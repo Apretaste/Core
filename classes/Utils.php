@@ -1165,61 +1165,6 @@ class Utils
 	}
 
 	/**
-	 * Check if a manage user have a permission
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @param mixed $permission
-	 * @return bool
-	 */
-	public static function haveManagePermission($email, $permission)
-	{
-		if (is_string($permission))
-		{
-			$permission = explode(' ', trim(str_replace(',', ' ',$permission)));
-		}
-
-		$sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
-		$permissions = '';
-
-		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
-
-		if (isset($r[0]))
-		{
-			$permissions = $r[0]->permissions;
-		}
-
-		$permissions = ' '.str_replace(',', ' ',$permissions).' ';
-
-		$found = 0;
-		foreach($permission as $p)
-		{
-			$required = false;
-			if ($p[0] == '*')
-			{
-				$required = true;
-				$p = substr($p, 1);
-			}
-
-			$pos = stripos($permissions, ' ' . $p . ' ');
-
-			if ($pos === false || $required)
-			{
-				return false;
-			}
-
-			if ($pos !== false)
-			{
-				$found++;
-			}
-		}
-
-		return $found > 0;
-
-	}
-
-	/**
 	 * Parsing all line images encoded as base64
 	 *
 	 * @param string $html
@@ -1229,9 +1174,9 @@ class Utils
 	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
 	{
 		$imageList = [];
-//		$tidy = new tidy();
-//		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
-$body=$html;
+		$tidy = new tidy();
+		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
+
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
 
@@ -1276,9 +1221,9 @@ $body=$html;
 	 */
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
 	{
-//		$tidy = new tidy();
-//		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
-$body=$html;
+		$tidy = new tidy();
+		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
+
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
 
