@@ -461,7 +461,7 @@ class RunController extends Controller
 			{
 				// create and configure to send email
 				$emailSender = new Email();
-				$emailSender->setEmailGroup($fromEmail);
+				$emailSender->setGroupByEmail($fromEmail);
 
 				// render email and body
 				$subject = empty($response->subject) ? "Respuesta de $serviceName" : $response->subject;
@@ -581,7 +581,7 @@ class RunController extends Controller
 			// create and configure to send email
 			$emailSender = new Email();
 			$emailSender->setRespondEmailID($messageID);
-			$emailSender->setEmailGroup($fromEmail);
+			$emailSender->setGroupByEmail($fromEmail);
 
 			// get params for the email and send the response emails
 			foreach($responses as $rs)

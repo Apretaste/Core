@@ -159,8 +159,8 @@ class CampaignsController extends Controller
 		$this->view->lists = $lists;
 		$this->view->date = date("Y-m-d\TH:i", strtotime($campaign->sending_date));
 
+		$this->view->pick(['campaigns/new']);
 		$this->view->setLayout('manage');
-		$this->view->pick("campaigns/new");
 	}
 
 	/**
