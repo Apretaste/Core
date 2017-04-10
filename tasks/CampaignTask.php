@@ -59,7 +59,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// get the people
 			$people = $connection->query("
 				SELECT id, email, name, 'list' as type
-				FROM campaign_suscriber
+				FROM campaign_suscribers
 				WHERE list = '{$campaign->campaign}'
 				AND status <> 'BOUNCED' AND status <> 'DISABLED'
 				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
@@ -97,15 +97,13 @@ class CampaignTask extends \Phalcon\Cli\Task
 				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
 				$status = "BOUNCED";
-
-				// if it is a regular list, mark as bounced
-				if($person->type == "list") $connection->query("UPDATE campaign_subscribers SET status='$status' WHERE id='{$person->id}'");
 			}
 
 			// save status before moving to the next email
-			$connection->query("
-				INSERT INTO campaign_sent (email, campaign, status) VALUES ('{$person->email}', '{$campaign->id}', '$status');
-				UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';");
+			$sql = "INSERT INTO campaign_sent (email, campaign, `group`, status) VALUES ('{$person->email}', '{$campaign->id}', '{$campaign->group}', '$status');";
+			$sql .= "UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';";
+			if($person->type == "list") $sql .= "UPDATE campaign_subscribers SET sent=sent+1, status='$status' WHERE id='{$person->id}';";
+			$connection->query($sql);
 		}
 
 		// set the campaign as SENT
