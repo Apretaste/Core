@@ -80,7 +80,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 
 			// create new response
 			$response = new Response();
-			$response->createFromHTML($content);
+			$response->createFromHTML($campaign->content);
 
 			// render the HTML
 			$render = new Render();
