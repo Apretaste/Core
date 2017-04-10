@@ -97,6 +97,7 @@ class CampaignsController extends Controller
 		$this->view->manager = $manager;
 		$this->view->id = "";
 		$this->view->subject = "";
+		$this->view->selectedList = "";
 		$this->view->date = date("Y-m-d\T23:00");
 		$this->view->lists = $lists;
 		$this->view->layout = "";
@@ -147,16 +148,13 @@ class CampaignsController extends Controller
 		$utils = new Utils();
 		$campaign->content = $utils->putInlineImagesToHTML($campaign->content, $newImageList);
 
-		// get the email or the user logged
-		$security = new Security();
-		$email = $security->getManager()->email;
-
 		// send variables to the view
 		$this->view->title = "Edit campaign";
 		$this->view->intent = "update";
-		$this->view->email = $email;
+		$this->view->manager = $manager;
 		$this->view->id = $campaign->id;
 		$this->view->subject = $campaign->subject;
+		$this->view->selectedList = $campaign->list;
 		$this->view->layout = $campaign->content;
 		$this->view->lists = $lists;
 		$this->view->date = date("Y-m-d\TH:i", strtotime($campaign->sending_date));

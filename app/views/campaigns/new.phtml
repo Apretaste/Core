@@ -45,7 +45,7 @@
 					<select id="list" name="list" required>
 						<option value="">Escoger</option>
 						<?php foreach($lists as $list) { ?>
-							<option value="<?= $list->id ?>"><?= $list->name ?></option>
+							<option value="<?= $list->id ?>" <?php if($selectedList == $list) echo 'selected="selected"'?>><?= $list->name ?></option>
 						<?php } ?>
 					</select>
 				</div>
