@@ -4,9 +4,6 @@ use Phalcon\Mvc\Controller;
 
 class ManageController extends Controller
 {
-	private $currentUser = false;
-	private $currentPerson = null;
-
 	// do not let anonymous users pass
 	public function initialize(){
 		$security = new Security();
@@ -27,11 +24,9 @@ class ManageController extends Controller
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
 		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
-		// END delivery status widget
 
 		// START tasks status widget
 		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
-		// END tasks status widget
 
 		// START measure the effectiveness of each promoter
 		$promoters = $connection->deepQuery("
@@ -39,9 +34,9 @@ class ManageController extends Controller
 		FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
 		ON A.email = B.source
 		ORDER BY B.total DESC");
-		// END measure the effectiveness of each promoter
 
-		$this->view->totalUsers =  $utils->getStat('person.count');
+		// send data to the view
+		$this->view->totalUsers = $utils->getStat('person.count');
 		$this->view->sumCredit = $utils->getStat('person.credit.sum');
 		$this->view->utilization = $utils->getStat('utilization.count');
 		$this->view->promoters = $promoters;
