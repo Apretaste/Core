@@ -10,7 +10,7 @@ class Connection
 	 * @param String $sql, valid sql query
 	 * @return Array, list of rows or NULL if it is not a select
 	 */
-	public function deepQuery($sql)
+	public function query($sql)
 	{
 		// get the database connection
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -22,7 +22,7 @@ class Connection
 				// query the database
 				$result = $di->get('db')->query($sql);
 				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
-	
+
 				// convert to array of objects
 				$rows = array();
 				while ($data = $result->fetch())
@@ -34,8 +34,9 @@ class Connection
 			}
 			else
 			{
-				// execute statement in the database
-				return $di->get('db')->execute($sql);
+				// run query and return last insertd id
+				$di->get('db')->execute($sql);
+				return $di->get('db')->lastInsertId();
 			}
 		}
 		catch (PDOException $e) // log the error and rethrow it
@@ -53,8 +54,17 @@ class Connection
 	}
 
 	/**
+	 * ALIAS of $this->query() for backward compativility
+	 * @author salvipascual
+	 */
+	public function deepQuery($sql)
+	{
+		return $this->query($sql);
+	}
+
+	/**
 	 * Escape dangerous strings before passing it to mysql
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String $str, text to scape
 	 * @return String, scaped text ready to be sent to mysql

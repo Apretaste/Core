@@ -1,7 +1,6 @@
 <?php
 	$wwwhttp = $this->di->get('path')['http'];
-	$environment = $this->di->get('environment');
-	$home = isset($home) ? $home : "/manage";
+	$security = new Security();
 ?>
 
 <!DOCTYPE html>
@@ -42,19 +41,22 @@
 			<nav class="navbar-default navbar-static-side" role="navigation">
 				<div class="sidebar-collapse">
 					<ul class="nav metismenu" id="side-menu">
+						<!-- APRETASTE LOGO -->
 						<li class="nav-header">
 							<div class="dropdown profile-element">
-							<span>
 								<img alt="image" src="/images/apretaste.logo.big.transp.png" width="100"/>
-							</span>
-							</div>
-							<div class="logo-element">
-								A!
 							</div>
 						</li>
+
+						<!-- DASHBOARD -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="/manage"><i class="fa fa-th-large"></i> <span class="nav-label">Dashboard</span></a>
 						</li>
+						<?php } ?>
+
+						<!-- AUDIENCE -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -69,6 +71,10 @@
 								<li><a href="/manage/dropped">Dropped emails</a></li>
 							</ul>
 						</li>
+						<?php } ?>
+
+						<!-- ADMIN -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-wrench"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -78,9 +84,17 @@
 								<li><a href="/manage/jumper">Jumper</a></li>
 							</ul>
 						</li>
+						<?php } ?>
+
+						<!-- SURVEY -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="/manage/surveys"><i class="fa fa-pie-chart"></i> <span class="nav-label">Surveys</span></a>
 						</li>
+						<?php } ?>
+
+						<!-- MARKET -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Market</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -89,6 +103,10 @@
 								<li><a href="/manage/marketStats">Stats</a></li>
 							</ul>
 						</li>
+						<?php } ?>
+
+						<!-- SCHOOL -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-book"></i> <span class="nav-label">School</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -96,14 +114,22 @@
 								<li><a href="/manage/schoolTeachers">Teachers</a></li>
 							</ul>
 						</li>
+						<?php } ?>
+
+						<!-- CAMPAIGNS -->
+						<?php if($security->checkAccess("campaigns")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-envelope-o"></i> <span class="nav-label">Campaigns</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
-								<li><a href="/manage/campaigns">All campaigns</a></li>
-								<li><a href="/manage/newCampaign">New campaign</a></li>
-								<li><a href="/manage/campaignReports">Reports</a></li>
+								<li><a href="/campaigns">All Campaigns</a></li>
+								<li><a href="/campaigns/lists">Lists</a></li>
+								<li><a href="/campaigns/reports">Reports</a></li>
 							</ul>
 						</li>
+						<?php } ?>
+
+						<!-- DEVELOPER -->
+						<?php if($security->checkAccess("manage")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-laptop"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
@@ -119,7 +145,10 @@
 								<li><a target="_blank" href="https://block.io/">Bitcoin API</a></li>
 							</ul>
 						</li>
-						<li><a href="/manage/logout">Logout</a></li>
+						<?php } ?>
+
+						<!-- LOGOUT -->
+						<li><a href="/login/logout">Logout</a></li>
 					</ul>
 				</div>
 			</nav>
@@ -162,19 +191,5 @@
 		<script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
 		<script src="<?= $wwwhttp; ?>/js/icheck.min.js"></script>
 		<script src="<?= $wwwhttp; ?>/js/summernote/summernote.js"></script>
-
-		<?php if (isset($loginSuccess)) if ($loginSuccess): ?>
-			$(document).ready(function() {
-				 setTimeout(function() {
-					 toastr.options = {
-						 closeButton: true,
-						 progressBar: true,
-						 showMethod: 'slideDown',
-						 timeOut: 4000
-					 };
-					 toastr.success('Login successfull', 'Welcome to Apretaste!');
-				 }, 1300);
-		 	});
-		<?php endif;?>
 	</body>
 </html>

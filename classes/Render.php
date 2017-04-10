@@ -26,13 +26,12 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
 
-		$tempTemp = false;
-		// check for volatile template
-		if ( ! file_exists($userTemplateFile))
+		// if we are rendering the whole HTML
+		if ($response->html)
 		{
-			$tempTemp = "$wwwroot/temp/temporal-template-".uniqid().".tpl";
-			file_put_contents($tempTemp, $response->template);
-			$userTemplateFile = $tempTemp;
+			$tempTemp = "$wwwroot/temp/layout-".uniqid().".tpl";
+			file_put_contents($tempTemp, $response->html);
+			$response->layout = $tempTemp;
 		}
 
 		// creating and configuring a new Smarty object
@@ -51,20 +50,9 @@ class Render
 		// getting the ads
 		$ads = $service->showAds ? $response->getAds() : array();
 
-		// get the status of the mail list
-		$connection = new Connection();
-		$status = $connection->deepQuery("SELECT mail_list FROM person WHERE email='{$response->email}'");
-		$onEmailList = empty($status) ? false : $status[0]->mail_list == 1;
-
 		// get the person
 		$utils = new Utils();
 		$person = $utils->getPerson($response->email);
-
-		// get the number of notifications for a user
-		$notificationsCount = $utils->getNumberOfNotifications($response->email);
-
-		// get the email for customer support
-		$customerSupport = $di->get('config')['contact']['support'];
 
 		// list the system variables
 		$systemVariables = array(
@@ -76,19 +64,22 @@ class Render
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
-			"APRETASTE_EMAIL_LIST" => $onEmailList,
-			"APRETASTE_SUPPORT_EMAIL" => $customerSupport,
+			"APRETASTE_EMAIL" => $utils->getValidEmailAddress(),
+			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
+			"APRETASTE_SUPPORT_EMAIL" => $di->get('config')['contact']['support'],
 			// user variables
-			"num_notifications" => $notificationsCount,
-			'USER_ID' => isset($person->username) ? $person->username : "",
-			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? $person->username : ""),
+			"num_notifications" => $utils->getNumberOfNotifications($response->email),
+			'USER_USERNAME' => isset($person->username) ? "@{$person->username}" : "",
+			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
 			'USER_EMAIL' => isset($person->email) ? $person->email : "",
+			'USER_MAILBOX' => $utils->getUserPersonalAddress($response->email),
 			'CURRENT_USER' => isset($person->email) ? $person : false
 		);
 
 		// play the stars game
-		$starsGame = $this->startsGame($response);
+		if($response->html) $starsGame = array();
+		else $starsGame = $this->startsGame($response);
 
 		// merge all variable sets and assign them to Smarty
 		$templateVariables = array_merge($systemVariables, $response->content, $starsGame);
@@ -96,10 +87,6 @@ class Render
 
 		// rendering and removing tabs, double spaces and break lines
 		$renderedTemplate = $smarty->fetch($response->layout);
-
-		// remove temporal template
-		if ($tempTemp !== false && file_exists($tempTemp)) unlink($tempTemp);
-
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 

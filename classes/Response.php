@@ -6,7 +6,8 @@ class Response
 	public $subject;
 	public $template;
 	public $content;
-	public $json; // will be null unless the return is an email API
+	public $json; // NULL unless the return is an email API
+	public $html; // NULL unless passing a whole HTML
 	public $images;
 	public $attachments;
 	public $internal; // false if the user provides the template
@@ -28,6 +29,7 @@ class Response
 		$this->layout = "email_default.tpl";
 
 		$this->json = null;
+		$this->html = null;
 		$this->internal = true;
 		$this->render = false;
 		$this->ads = array();
@@ -135,6 +137,23 @@ class Response
 		$this->internal = false;
 		$this->render = true;
 		$this->ads = $this->getAdsToShow();
+		return $this;
+	}
+
+	/**
+	 * Build a response using a custom HTML instead of a template file
+	 *
+	 * @author salvipascual
+	 * @param String $html
+	 */
+	public function createFromHTML($html, $images=array(), $attachments=array())
+	{
+		if(empty($content['code'])) $content['code'] = "ok"; // for the API
+
+		$this->html = $html;
+		$this->images = $images;
+		$this->attachments = $attachments;
+		$this->render = true;
 		return $this;
 	}
 

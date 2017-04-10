@@ -41,19 +41,19 @@ class Email
 
 		// get the domain for the email to send
 		$emailDomain = explode("@", $to)[1];
-		$return = false;
-
+//		$return = false;
+/*
 		// redirect Nauta by gmail
 		if($emailDomain == "nauta.cu")
 		{
 			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
-
+*/
 		// all others OR if Nauta fails by Mailgun
-		if( ! $return)
-		{
+//		if( ! $return)
+//		{
 			$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
-		}
+//		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
@@ -81,15 +81,26 @@ class Email
 	}
 
 	/**
+	 * Set the group to respond
+	 *
+	 * @author salvipascual
+	 * @param String $group
+	 * */
+	public function setGroup($group)
+	{
+		$this->group = $group;
+	}
+
+	/**
 	 * Set the group to respond based on the user's email address
 	 *
 	 * @author salvipascual
-	 * @param String $email, user's email
+	 * @param String $mailbox
 	 * */
-	public function setEmailGroup($email)
+	public function setGroupByEmail($mailbox)
 	{
 		// @TODO find a right way to do this when needed
-		return "apretaste";
+		$this->group = "apretaste";
 	}
 
 	/**

@@ -1,0 +1,157 @@
+<style type="text/css">
+	.form-group{
+		margin-top: 20px;
+	}
+</style>
+
+<div class="row">
+	<div class="col-xs-12">
+		<form id="form" role="form" action="saveCampaignSubmit" method="POST">
+			<!-- Subject of the email -->
+			<div class="form-group">
+				<label for="subject">Subject</label>
+				<input id="subject" type="text" value="<?=$subject?>" class="form-control" name="subject" required />
+			</div>
+
+			<!-- Date to send the email -->
+			<div class="form-group">
+				<label for="date">Day and time to send the campaign</label>
+<!--			<br/>
+				<input type="radio" name="send" checked /> Later Date
+				<input type="radio" name="send"/> Now-->
+				<input id="date" type="datetime-local" value="<?=$date?>" class="form-control" name="date" required />
+			</div>
+
+			<!-- Starting template -->
+			<?php if($intent == "create") { ?>
+			<div class="form-group">
+				<label for="template">Initial template</label>
+				<select id="template" onchange="loadTemplate();">
+					<option value="">Empty</option>
+					<option value="campaign_apretaste">Apretaste</option>
+					<option value="campaign_cubanet">CubaNet</option>
+				</select>
+			</div>
+			<?php } ?>
+
+			<!-- Create the editor container -->
+			<div class="form-group">
+				<label for="content">Content of the email</label>
+				<textarea id="content" name="content"><?=$layout?></textarea>
+			</div>
+
+			<!-- Test the email before sending -->
+			<div class="form-group">
+				<label for="test">Which list to send?</label>
+				<div class="input-group">
+					<select id="list" name="list" required>
+						<option value="">Escoger</option>
+						<?php foreach($lists as $list) { ?>
+							<option value="<?= $list->id ?>" <?php if($selectedList == $list->id) echo 'selected="selected"'; ?>><?= $list->name ?></option>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+
+			<!-- List where to send the email -->
+			<div class="form-group">
+				<label for="list">Test the email before sending</label>
+				<div class="input-group">
+					<input id="test" type="email" value="<?=$manager->email?>" class="form-control" />
+					<span class="input-group-btn">
+						<button type="button" onclick="testEmail();" class="btn btn-default">Test</button>
+					</span>
+				</div>
+				<p id="sent" style="color:green; font-size:small; display:none;"></p>
+			</div>
+
+			<div class="form-group">
+				<input type="hidden" name="id" value="<?=$id?>"/>
+				<a class="btn btn-default" href="/campaigns">Cancel</a>
+				<button class="btn btn-primary" type="submit"><?=ucwords("$intent campaign")?></button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Initialize the editor -->
+<script src="/js/tinymce/tinymce.min.js"></script>
+<script>
+	tinymce.PluginManager.add('example', function(editor, url) {
+		editor.addButton('apretaste', {
+			text: '[Apretaste tags]',
+			icon: false,
+			onclick: function() {
+				// Open window
+				editor.windowManager.open({
+					title: 'Insert an Apretaste\'s tag',
+					body: [
+						{type: 'listbox', name: 'tag', label: 'Available tags', values: [
+							{value: "{$USER_USERNAME}", text: "Username of the person"},
+							{value: "{$USER_MAILBOX}", text: "User's mailbox to contact Apretaste"},
+							{value: "{$USER_EMAIL}", text: "Email of the user"},
+							{value: "{$USER_NAME}", text: "Name of the user"},
+							{value: "{$USER_FULL_NAME}", text: "Full name of the user"},
+							{value: "{$APRETASTE_SUPPORT_EMAIL}", text: "Support email for Apretaste"},
+							{value: "{space5}", text: "5px vertical space"},
+							{value: "{space10}", text: "10px vertical space"},
+							{value: "{space15}", text: "15px vertical space"},
+							{value: "{space30}", text: "30px vertical space"},
+							{value: "{separator}", text: "Horizontal text separator"},
+							{value: '{tag caption="CALIENTE" color="red"}', text: "Tag to highlight words"},
+							{value: '{noimage text="SIN FOTO" width="150" height="150"}', text: "Empty user image"},
+							{value: '{button href="RIFA" caption="Ver la Rifa" color="green"}', text: "Add a button"},
+							{value: '{link href="AYUDA" caption="Ver Ayuda"}', text: "Add a link"},
+							{value: '{emailbox title="Ejemplo de Ayuda" subject="AYUDA" from="{$USER_EMAIL}"}', text: "Add a help box"}
+						]}
+					],
+					onsubmit: function(e) {
+						// Insert content when the window form is submitted
+						editor.insertContent(e.data.tag);
+					}
+				});
+			}
+		});
+	});
+
+	tinymce.init({
+		selector: '#content',
+		height: 500,
+		theme: 'modern',
+		plugins: [
+			'example advlist autolink lists link image charmap print preview hr anchor pagebreak',
+			'searchreplace wordcount visualblocks visualchars code fullscreen',
+			'insertdatetime media nonbreaking save table contextmenu directionality',
+			'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
+		],
+		toolbar1: 'apretaste | undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+	});
+
+	function testEmail(){
+		var email = $('#test').val();
+		var subject = "TEST " + $('#subject').val();
+		var content = tinyMCE.activeEditor.getContent();
+
+		$.ajax({
+			url: "/campaigns/testAsync",
+			method: "POST",
+			data: {"email":email, "subject":subject, "content":content},
+			async: false
+		}).done(function(data) {
+			$("#sent").html('Text email sent to '+email).show();
+		});
+	}
+
+	function loadTemplate(){
+		var template = $('#template').val();
+
+		$.ajax({
+			url: "/campaigns/loadTemplate",
+			method: "POST",
+			data: {"template":template},
+			async: false
+		}).done(function(data) {
+			tinyMCE.activeEditor.setContent(data);
+		});
+	}
+</script>

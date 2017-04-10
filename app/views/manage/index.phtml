@@ -1,30 +1,30 @@
 <div class="row  border-bottom white-bg dashboard-header">
-    <div class="col-sm-3">
-        <h2>Welcome 
-            <?php if (is_object($currentUser)): ?>
-                <?php if (isset($currentUser->fullName)): ?>
-                    <?php echo $currentUser->fullName; ?>
-                <?php else: ?>
-                    <?php echo substr($currentUser->email, 0, strpos($currentUser->email,'@')); ?>
-                <?php endif; ?>
-            <?php endif; ?>
-        </h2>
-    </div>
-    <div class="col-sm-6">
-        <div class="row text-left">
-            <div class="col-xs-4">
-                <div class=" m-l-md">
-                    <span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
-                </div>
-            </div>
-            <div class="col-xs-4">
-                <span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
-            </div>
-            <div class="col-xs-4">
-                <span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
-            </div>
-        </div>
-    </div>
+	<div class="col-sm-3">
+		<h2>Welcome
+			<?php if (is_object($currentUser)): ?>
+				<?php if (isset($currentUser->fullName)): ?>
+					<?php echo $currentUser->fullName; ?>
+				<?php else: ?>
+					<?php echo substr($currentUser->email, 0, strpos($currentUser->email,'@')); ?>
+				<?php endif; ?>
+			<?php endif; ?>
+		</h2>
+	</div>
+	<div class="col-sm-6">
+		<div class="row text-left">
+			<div class="col-xs-4">
+				<div class=" m-l-md">
+					<span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
+				</div>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
+			</div>
+			<div class="col-xs-4">
+				<span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
+			</div>
+		</div>
+	</div>
 	<div class="col-sm-3">
 		<div class="statistic-box">
 
@@ -67,8 +67,8 @@
 				<h5><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></h5>
 				<?php if ($deliveryFailurePercentage > 2): ?>
 				<div class="ibox-tools">
-                     <span class="label label-danger pull-right">ALERT !!!</span>
-                </div>
+					 <span class="label label-danger pull-right">ALERT !!!</span>
+				</div>
 				<?php endif; ?>
 			</div>
 			<div class="ibox-content">

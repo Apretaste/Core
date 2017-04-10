@@ -32,6 +32,9 @@ class RunController extends Controller
 	 * */
 	public function apiAction()
 	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
 		// get params from GET (or from the encripted API)
 		$subject = $this->request->get("subject");
 		$body = $this->request->get("body");
@@ -40,9 +43,6 @@ class RunController extends Controller
 
 		$utils = new Utils();
 		$connection = new Connection();
-
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
 
 		// if is not encrypted, get the email from the token
 		$email = $utils->detokenize($token);
@@ -461,7 +461,7 @@ class RunController extends Controller
 			{
 				// create and configure to send email
 				$emailSender = new Email();
-				$emailSender->setEmailGroup($fromEmail);
+				$emailSender->setGroupByEmail($fromEmail);
 
 				// render email and body
 				$subject = empty($response->subject) ? "Respuesta de $serviceName" : $response->subject;
@@ -581,7 +581,7 @@ class RunController extends Controller
 			// create and configure to send email
 			$emailSender = new Email();
 			$emailSender->setRespondEmailID($messageID);
-			$emailSender->setEmailGroup($fromEmail);
+			$emailSender->setGroupByEmail($fromEmail);
 
 			// get params for the email and send the response emails
 			foreach($responses as $rs)

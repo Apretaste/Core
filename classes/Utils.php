@@ -40,17 +40,13 @@ class Utils
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
-	 * @param String $track, value to track campaigns
 	 * @return String, email address
 	 */
-	public function getValidEmailAddress($track="")
+	public function getValidEmailAddress()
 	{
-		// add a campaign tracking if exist
-		if($track) $track = "_t$track";
-
 		// @TODO improve this function to have personalized mailboxes insted of random
 		$half = $this->randomSentence(1);
-		return "apretaste+{$half}{$track}@gmail.com";
+		return "apretaste+{$half}@gmail.com";
 	}
 
 	/**
@@ -1056,34 +1052,6 @@ class Utils
 	}
 
 	/**
-	 * Replace the template variables to personalize an email campaign
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String $content
-	 * @param Integer $id, campaign ID for tracking
-	 * @return String
-	 */
-	public function campaignReplaceTemplateVariables($email, $content, $id="")
-	{
-		// replace all occurencies of the email
-		$mailbox = $this->getValidEmailAddress($id);
-		$content = str_replace("{{APRETASTE_EMAIL}}", $mailbox, $content);
-
-		// replace the name
-		$person = $this->getPerson($email);
-		$name = empty($person->first_name) ? "@{$person->username}" : $person->first_name;
-		$content = str_replace("{{APRETASTE_NAME}}", $name, $content);
-
-		// replace the user's personal address
-		$userMailbox = $this->getUserPersonalAddress($email);
-		$content = str_replace("{{APRETASTE_USER_EMAIL}}", $userMailbox, $content);
-
-		// return final result
-		return $content;
-	}
-
-	/**
 	 * Get the tracking handle
 	 *
 	 * @author salvipascual
@@ -1197,61 +1165,6 @@ class Utils
 	}
 
 	/**
-	 * Check if a manage user have a permission
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @param mixed $permission
-	 * @return bool
-	 */
-	public static function haveManagePermission($email, $permission)
-	{
-		if (is_string($permission))
-		{
-			$permission = explode(' ', trim(str_replace(',', ' ',$permission)));
-		}
-
-		$sql = "SELECT permissions FROM manage_users WHERE email = '$email';";
-		$permissions = '';
-
-		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
-
-		if (isset($r[0]))
-		{
-			$permissions = $r[0]->permissions;
-		}
-
-		$permissions = ' '.str_replace(',', ' ',$permissions).' ';
-
-		$found = 0;
-		foreach($permission as $p)
-		{
-			$required = false;
-			if ($p[0] == '*')
-			{
-				$required = true;
-				$p = substr($p, 1);
-			}
-
-			$pos = stripos($permissions, ' ' . $p . ' ');
-
-			if ($pos === false || $required)
-			{
-				return false;
-			}
-
-			if ($pos !== false)
-			{
-				$found++;
-			}
-		}
-
-		return $found > 0;
-
-	}
-
-	/**
 	 * Parsing all line images encoded as base64
 	 *
 	 * @param string $html
@@ -1262,9 +1175,7 @@ class Utils
 	{
 		$imageList = [];
 		$tidy = new tidy();
-		$body = $tidy->repairString($html, array(
-				'output-xhtml' => true
-		), 'utf8');
+		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
 
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
@@ -1298,7 +1209,7 @@ class Utils
 			}
 		}
 
-        $html = $doc->saveHTML();
+		$html = $doc->saveHTML();
 		return $imageList;
 	}
 
@@ -1311,9 +1222,7 @@ class Utils
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
 	{
 		$tidy = new tidy();
-		$body = $tidy->repairString($html, array(
-				'output-xhtml' => true
-		), 'utf8');
+		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
 
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
@@ -1333,13 +1242,13 @@ class Utils
 
 		$html = $doc->saveHTML();
 
-        $pbody = stripos($html, '<body>');
-        if ($pbody !== false)
-            $html = substr($html, $pbody + 6);
+		$pbody = stripos($html, '<body>');
+		if ($pbody !== false)
+			$html = substr($html, $pbody + 6);
 
-        $pbody = stripos($html, '</body');
-        if ($pbody !== false)
-            $html = substr($html, 0, $pbody);
+		$pbody = stripos($html, '</body');
+		if ($pbody !== false)
+			$html = substr($html, 0, $pbody);
 
 		return $html;
 	}
@@ -1412,20 +1321,20 @@ class Utils
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
 	}
 
-    /**
-     * Clear double spaces and other stuffs from HTML content
-     *
-     * @param string $html
-     * @return mixed
-     */
-    public function clearHtml($html) {
-        $html = str_replace('&nbsp;',' ',$html);
+	/**
+	 * Clear double spaces and other stuffs from HTML content
+	 *
+	 * @param string $html
+	 * @return mixed
+	 */
+	public function clearHtml($html) {
+		$html = str_replace('&nbsp;',' ',$html);
 
-        do {
-            $tmp = $html;
-            $html = preg_replace('#<([^ >]+)[^>]*>[[:space:]]*</\1>#', '', $html );
-        } while ( $html !== $tmp );
+		do {
+			$tmp = $html;
+			$html = preg_replace('#<([^ >]+)[^>]*>[[:space:]]*</\1>#', '', $html );
+		} while ( $html !== $tmp );
 
-        return $html;
-    }
+		return $html;
+	}
 }
