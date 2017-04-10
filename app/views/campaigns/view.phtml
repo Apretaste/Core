@@ -18,7 +18,7 @@
 	function testEmail(){
 		var email = $('#test').val();
 		var subject = '<?=$campaign->subject?>';
-		var content = '<?=$html?>';
+		var content = '<?=str_replace("'", "\'", $html)?>';
 
 		$.ajax({
 			url: "testAsync",

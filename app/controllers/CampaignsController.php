@@ -110,13 +110,24 @@ class CampaignsController extends Controller
 	{
 		$id = $this->request->get("id");
 
+		// get details of the person logged
+		$security = new Security();
+		$manager = $security->getManager();
+
 		// get the campaign from the database
 		$connection = new Connection();
-		$campaign = $connection->deepQuery("SELECT * FROM campaign WHERE id=$id");
+		$campaign = $connection->deepQuery("
+			SELECT * FROM campaign
+			WHERE id = $id
+			AND status = 'WAITING'
+			AND `group` = '{$manager->group}'");
 		$campaign = $campaign[0];
 
 		// get the lists
-		$lists = $connection->deepQuery("SELECT id, name, subscribers FROM campaign_list");
+		$lists = $connection->deepQuery("
+			SELECT id, name
+			FROM campaign_list
+			WHERE `group` = '{$manager->group}'");
 
 		$wwwroot = $this->di->get('path')['root'];
 		$campaignsFolder = "$wwwroot/public/campaign";
