@@ -4,21 +4,20 @@
  * Send email campaigns to the users
  *
  * @author salvipascual
- * @version 1.0
+ * @version 2.0
  */
 class CampaignTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
 	{
 		// inicialize supporting classes
-		$timeStart  = time();
+		$timeStart = time();
 		$utils = new Utils();
 		$connection = new Connection();
-		$sender = new Email();
 
 		// get the first campaign created that is waiting to be sent
-		$campaign = $connection->deepQuery("
-			SELECT id, subject, content
+		$campaign = $connection->query("
+			SELECT id, subject, content, list, `group`
 			FROM campaign
 			WHERE sending_date < CURRENT_TIMESTAMP
 			AND status = 'WAITING'
@@ -29,15 +28,43 @@ class CampaignTask extends \Phalcon\Cli\Task
 		if (empty($campaign)) return;
 		else $campaign = $campaign[0];
 
-		// update campaign as SENDING
-		$connection->deepQuery("UPDATE campaign SET status='SENDING' WHERE id={$campaign->id}");
+		// set the default group to send emails
+		$sender = new Email();
+		$sender->setGroup($campaign->group);
 
-		// get the list of people in the list who hsa not receive this campaign yet
-		// so in case the campaign fails when it tries again starts from the same place
-		$people = $connection->deepQuery("
-			SELECT email FROM person
-			WHERE mail_list=1 AND active=1
-			AND email NOT IN (SELECT email FROM campaign_sent WHERE campaign={$campaign->id})");
+		// update campaign as SENDING
+		$connection->query("UPDATE campaign SET status='SENDING' WHERE id={$campaign->id}");
+
+		// when we choose only mail list users
+		if($campaign->list == "1")
+		{
+			$people = $connection->query("
+				SELECT email, 'internal' as type
+				FROM person WHERE mail_list=1 AND active=1
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
+		}
+		// when we choosse ALL Apretaste active users
+		elseif($campaign->list == "2")
+		{
+			$people = $connection->query("
+				SELECT email, 'internal' as type
+				FROM person WHERE active=1
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
+		}
+		// all other lists
+		else
+		{
+			// get the people
+			$people = $connection->query("
+				SELECT id, email, name, 'list' as type
+				FROM campaign_suscriber
+				WHERE list = '{$campaign->campaign}'
+				AND status <> 'BOUNCED' AND status <> 'DISABLED'
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
+		}
 
 		// show initial message
 		$total = count($people);
@@ -51,46 +78,38 @@ class CampaignTask extends \Phalcon\Cli\Task
 			echo "$counter/$total - {$person->email}\n";
 			$counter++;
 
-			// replace the template variables
-			$content = $utils->campaignReplaceTemplateVariables($person->email, $campaign->content, $campaign->id);
+			// create new response
+			$response = new Response();
+			$response->createFromHTML($content);
 
-			// restore some chars/tags
-			$content = str_replace('-&gt;', '->', $content);
-
-			// parse campaign content
+			// render the HTML
 			$render = new Render();
 			$service = new Service('campaign');
-			$response = new Response();
-			$response->setResponseEmail($person->email);
-			$response->setEmailLayout("email_campaign.tpl");
-			$response->createFromTemplate($content, []);
-			$content = $render->renderHTML($service, $response);
-			$response->setEmailLayout("email_text.tpl");
-			$campaign->subject = str_replace('-&gt;', '->', $campaign->subject);
-			$response->createFromTemplate($campaign->subject, []);
-			$campaign->subject = $render->renderHTML($service, $response);
+			$html = $render->renderHTML($service, $response);
 
 			// send test email
-			$result = $sender->sendEmail($person->email, $campaign->subject, $content);
+			$result = $sender->sendEmail($person->email, $campaign->subject, $html);
 
 			// add to bounced and unsubscribe if there are issues sending
-			$bounced = "";
-			$status = "SENT";
+			$bounced = ""; $status = "SENT";
 			if( ! $result)
 			{
 				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
 				$status = "BOUNCED";
+
+				// if it is a regular list, mark as bounced
+				if($person->type == "list") $connection->query("UPDATE campaign_subscribers SET status='$status' WHERE id='{$person->id}'");
 			}
 
 			// save status before moving to the next email
-			$connection->deepQuery("
+			$connection->query("
 				INSERT INTO campaign_sent (email, campaign, status) VALUES ('{$person->email}', '{$campaign->id}', '$status');
 				UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';");
 		}
 
 		// set the campaign as SENT
-		$connection->deepQuery("UPDATE campaign SET status='SENT' WHERE id='{$campaign->id}'");
+		$connection->query("UPDATE campaign SET status='SENT' WHERE id='{$campaign->id}'");
 
 		// get final delay
 		$timeEnd = time();
@@ -103,6 +122,6 @@ class CampaignTask extends \Phalcon\Cli\Task
 		$logger->close();
 
 		// save the status in the database
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='campaign'");
+		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='campaign'");
 	}
 }

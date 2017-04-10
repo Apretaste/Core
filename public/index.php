@@ -1,16 +1,12 @@
 <?php
 
-/**************************************
-** Apretaste's Bootstrap			 **
-** Author: hcarras					 **
-***************************************/
-
 use Phalcon\Loader;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\Application;
 use Phalcon\DI\FactoryDefault;
 use Phalcon\Mvc\Url as UrlProvider;
 use Phalcon\Config\Adapter\Ini as ConfigIni;
+use Phalcon\Session\Adapter\Files as Session;
 
 // set the date to come in Spanish
 setlocale(LC_TIME, "es_ES");
@@ -26,7 +22,7 @@ try
 		'../classes/',
 		'../app/controllers/'
 	))->register();
-	
+
 	//Create Run DI
 	$di = new FactoryDefault();
 
@@ -34,7 +30,7 @@ try
 	$di->set('path', function () {
 		$protocol = empty($_SERVER['HTTPS']) ? "http" : "https";
 		return array(
-			"root" => dirname(__DIR__), 
+			"root" => dirname(__DIR__),
 			"http" => "$protocol://{$_SERVER['HTTP_HOST']}"
 		);
 	});
@@ -42,6 +38,13 @@ try
 	// Making the config global
 	$di->set('config', function () {
 		return new ConfigIni('../configs/config.ini');
+	});
+
+	// starts a new session
+	$di->setShared('session', function () {
+		$session = new Session();
+		$session->start();
+		return $session;
 	});
 
 	// Setup the view component for Analytics
@@ -54,14 +57,12 @@ try
 
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', function () use ($config) {
-		return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
-			"host"     => $config['database']['host'],
-			"username" => $config['database']['user'],
-			"password" => $config['database']['password'],
-			"dbname"   => $config['database']['database']
-		));
-	});
+	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql(array(
+		"host" => $config['database']['host'],
+		"username" => $config['database']['user'],
+		"password" => $config['database']['password'],
+		"dbname"   => $config['database']['database']
+	)));
 
 	// get the environment
 	$di->set('environment', function () use ($config) {
@@ -76,7 +77,7 @@ try
 }
 catch(\Phalcon\Mvc\Dispatcher\Exception $e)
 {
+	echo "PhalconException: ", $e->getMessage(); exit;
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
-//	echo "PhalconException: ", $e->getMessage();
 }
