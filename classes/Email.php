@@ -41,19 +41,19 @@ class Email
 
 		// get the domain for the email to send
 		$emailDomain = explode("@", $to)[1];
-		$return = false;
-
+//		$return = false;
+/*
 		// redirect Nauta by gmail
 		if($emailDomain == "nauta.cu")
 		{
 			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
-
+*/
 		// all others OR if Nauta fails by Mailgun
-		if( ! $return)
-		{
+//		if( ! $return)
+//		{
 			$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
-		}
+//		}
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
