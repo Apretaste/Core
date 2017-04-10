@@ -60,7 +60,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$people = $connection->query("
 				SELECT id, email, name, 'list' as type
 				FROM campaign_subscribers
-				WHERE list = '{$campaign->campaign}'
+				WHERE list = '{$campaign->list}'
 				AND status <> 'BOUNCED' AND status <> 'DISABLED'
 				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
 				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
