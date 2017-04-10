@@ -25,4 +25,4 @@ services/*
 app/controllers/TestController.php
 .idea/*
 public/courses/*
-public/campaigns/*
+public/campaign/*

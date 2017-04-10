@@ -119,7 +119,7 @@ class CampaignsController extends Controller
 		$lists = $connection->deepQuery("SELECT id, name, subscribers FROM campaign_list");
 
 		$wwwroot = $this->di->get('path')['root'];
-		$campaignsFolder = "$wwwroot/public/campaigns";
+		$campaignsFolder = "$wwwroot/public/campaign";
 		$listPath = "$campaignsFolder/$id/images.list";
 
 		$newImageList = [];
@@ -355,8 +355,9 @@ class CampaignsController extends Controller
 		$utils = new Utils();
 		$images  = $utils->getInlineImagesFromHTML($content);
 		$wwwroot = $this->di->get('path')['root'];
-		$campaignsFolder = "$wwwroot/public/campaigns";
+		$campaignsFolder = "$wwwroot/public/campaign";
 
+		// clean the HTML before saving
 		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 		$content = $utils->clearHtml($content);
@@ -418,7 +419,7 @@ class CampaignsController extends Controller
 		// remove images
 		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
-		$campaignsFolder = "$wwwroot/public/campaigns";
+		$campaignsFolder = "$wwwroot/public/campaign";
 		$utils->rmdir("$campaignsFolder/$id");
 
 		// go back to the list of campaigns
