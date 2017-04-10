@@ -23,6 +23,7 @@
 			</div>
 
 			<!-- Starting template -->
+			<?php if($intent == "create") { ?>
 			<div class="form-group">
 				<label for="template">Initial template</label>
 				<select id="template" onchange="loadTemplate();">
@@ -31,6 +32,7 @@
 					<option value="campaign_cubanet">CubaNet</option>
 				</select>
 			</div>
+			<?php } ?>
 
 			<!-- Create the editor container -->
 			<div class="form-group">
@@ -45,7 +47,7 @@
 					<select id="list" name="list" required>
 						<option value="">Escoger</option>
 						<?php foreach($lists as $list) { ?>
-							<option value="<?= $list->id ?>" <?php if($selectedList == $list) echo 'selected="selected"'?>><?= $list->name ?></option>
+							<option value="<?= $list->id ?>" <?php if($selectedList == $list->id) echo 'selected="selected"'; ?>><?= $list->name ?></option>
 						<?php } ?>
 					</select>
 				</div>
@@ -131,7 +133,7 @@
 		var content = tinyMCE.activeEditor.getContent();
 
 		$.ajax({
-			url: "testAsync",
+			url: "/campaigns/testAsync",
 			method: "POST",
 			data: {"email":email, "subject":subject, "content":content},
 			async: false
