@@ -73,6 +73,7 @@ class Security
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$manager = $di->getShared("session")->get("manager");
+		if(empty($manager->pages)) return false;
 		return (in_array("*", $manager->pages) || in_array($page, $manager->pages));
 	}
 

@@ -1,16 +1,5 @@
 <div class="row  border-bottom white-bg dashboard-header">
-	<div class="col-sm-3">
-		<h2>Welcome
-			<?php if (is_object($currentUser)): ?>
-				<?php if (isset($currentUser->fullName)): ?>
-					<?php echo $currentUser->fullName; ?>
-				<?php else: ?>
-					<?php echo substr($currentUser->email, 0, strpos($currentUser->email,'@')); ?>
-				<?php endif; ?>
-			<?php endif; ?>
-		</h2>
-	</div>
-	<div class="col-sm-6">
+	<div class="col-sm-12">
 		<div class="row text-left">
 			<div class="col-xs-4">
 				<div class=" m-l-md">
@@ -23,11 +12,6 @@
 			<div class="col-xs-4">
 				<span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
 			</div>
-		</div>
-	</div>
-	<div class="col-sm-3">
-		<div class="statistic-box">
-
 		</div>
 	</div>
 </div>
