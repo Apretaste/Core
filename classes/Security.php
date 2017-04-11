@@ -3,6 +3,31 @@
 class Security
 {
 	/**
+	 * Check if the user/pass combination is valid
+	 *
+	 * @author salvipascual
+	 * @param String $emal
+	 * @param String $password
+	 * @return Boolean
+	 */
+	public function checkUserPass($email, $password)
+	{
+		// do not allow empty values
+		if (empty($email) || empty($password)) return false;
+		$password = sha1($password);
+
+		// check if the user/pass is ok
+		$connection = new Connection();
+		$res = $connection->query("SELECT * FROM manage_users WHERE email='$email' and password='$password'");
+
+		// return true/false if user can be logged
+		$return = new stdClass();
+		$return->status = !empty($res);
+		$return->items = empty($res) ? "" : $res[0];
+		return $return;
+	}
+
+	/**
 	 * Login a user
 	 *
 	 * @author salvipascual
@@ -12,23 +37,16 @@ class Security
 	 */
 	public function login($email, $password)
 	{
-		// do not allow empty values
-		if (empty($email) || empty($password)) return false;
-
-		// try auth the user
-		$password = sha1($password);
-		$connection = new Connection();
-		$res = $connection->query("SELECT * FROM manage_users WHERE email='$email' and password='$password'");
-
-		// return false if combination not found
-		if(empty($res)) return false;
+		// check if the user can be logged
+		$res = $this->checkUserPass($email, $password);
+		if (empty($res->status)) return false;
 
 		// create the manager object in session
 		$manager = new stdClass();
-		$manager->email = $res[0]->email;
-		$manager->pages = explode(",", $res[0]->pages);
-		$manager->group = $res[0]->group;
-		$manager->startPage = $res[0]->start_page;
+		$manager->email = $res->items->email;
+		$manager->pages = explode(",", $res->items->pages);
+		$manager->group = $res->items->group;
+		$manager->startPage = $res->items->start_page;
 
 		// login the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
