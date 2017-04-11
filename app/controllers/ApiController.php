@@ -35,7 +35,7 @@ class ApiController extends Controller
 		$token = md5($email.$pin.$expires.rand());
 
 		// create new entry on the authentication table
-		// and delete all previos entries for this token
+		// and delete all previous entries for this token
 		$connection->deepQuery("
 			START TRANSACTION;
 			DELETE FROM authentication WHERE email='$email' AND appname = '$appname';
