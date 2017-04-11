@@ -22,6 +22,37 @@ class RunController extends Controller
 	}
 
 	/**
+	 * Forwards an email using the anti-censorship engine
+	 *
+	 * @author salvipascual
+	 * @param POST Multiple Values
+	 */
+	public function forwardAction()
+	{
+		// format the response when comes from mailgun
+		$response = $this->formatMailgunWebhook($_POST);
+
+		// do not allow emails from people who are not managers with access
+		$connection = new Connection();
+		$perms = $connection->deepQuery("SELECT `group` FROM manage_users WHERE email='{$response->fromEmail}' AND `pages` LIKE '%forward%'");
+		if(empty($perms)) return false;
+
+		// ensure the subject is an email and trim
+		$toEmail = trim($response->subject);
+		if ( ! filter_var($toEmail, FILTER_VALIDATE_EMAIL)) return false;
+
+		// create a random subject
+		$utils = new Utils();
+		$subject = $utils->randomSentence();
+
+		// send the email via Apretaste
+		$sender = new Email();
+		$sender->setGroup($perms[0]->group);
+		$sender->sendEmail($toEmail, $subject, $response->body);
+		return true;
+	}
+
+	/**
 	 * Executes an API request. Display the JSON on screen
 	 *
 	 * @author salvipascual
@@ -106,53 +137,12 @@ class RunController extends Controller
 	 * Receives email from the MailGun webhook and send it to be parsed
 	 *
 	 * @author salvipascual
-	 * @post Multiple Values
-	 * */
+	 * @param POST Multiple Values
+	 */
 	public function mailgunAction()
 	{
-		// do not allow fake income messages
-		if( ! isset($_POST['From'])) return;
-
-		// filter email From and To
-		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
-		preg_match_all($pattern, strtolower($_POST['From']), $emailFrom);
-		preg_match_all($pattern, strtolower($_POST['To']), $emailTo);
-
-		// get values to the variables
-		$fromEmail = $emailFrom[0][0];
-		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
-		$fromName = trim(explode("<", $_POST['From'])[0]);
-		$subject = $_POST['subject'];
-		$body = isset($_POST['body-plain']) ? $_POST['body-plain'] : "";
-		$attachmentCount = isset($_POST['attachment-count']) ? $_POST['attachment-count'] : 0;
-
-		// clean incoming emails
-		$fromEmail = str_replace("'", "", $fromEmail);
-		$toEmail = str_replace("'", "", $toEmail);
-
-		// obtain the ID of the message to make it "respond" to the email
-		$messageID = null;
-		foreach($_POST as $k => $v)
-		{
-			$k = strtolower($k);
-			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
-			{
-				$messageID = $v;
-				break;
-			}
-		}
-
-		// save the attached files and create the response array
-		$attachments = array();
-		for ($i=1; $i<=$attachmentCount; $i++)
-		{
-			$object = new stdClass();
-			$object->name = $_FILES["attachment-$i"]["name"];
-			$object->type = $_FILES["attachment-$i"]["type"];
-			$object->content = base64_encode(file_get_contents($_FILES["attachment-$i"]["tmp_name"]));
-			$object->path = "";
-			$attachments[] = $object;
-		}
+		// format the response when comes from mailgun
+		$response = $this->formatMailgunWebhook($_POST);
 
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -161,7 +151,16 @@ class RunController extends Controller
 		$logger->close();
 
 		// execute the webbook
-		$this->processEmail($fromEmail, $fromName, $toEmail, $subject, $body, $attachments, "mailgun", $messageID);
+		$this->processEmail(
+			$response->fromEmail,
+			$response->fromName,
+			$response->toEmail,
+			$response->subject,
+			$response->body,
+			$response->attachments,
+			$response->mailgun,
+			$response->messageID);
+		return true;
 	}
 
 	/**
@@ -646,5 +645,68 @@ class RunController extends Controller
 
 		// false if no action could be taken
 		return false;
+	}
+
+	/**
+	 * Get the POST from MailGun and return the array of data
+	 *
+	 */
+	 private function formatMailgunWebhook($post)
+	 {
+		 // do not allow fake income messages
+ 		if( ! isset($post['From'])) return false;
+
+ 		// filter email From and To
+ 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
+ 		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
+ 		preg_match_all($pattern, strtolower($post['To']), $emailTo);
+
+ 		// get values to the variables
+ 		$fromEmail = $emailFrom[0][0];
+ 		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
+ 		$fromName = trim(explode("<", $post['From'])[0]);
+ 		$subject = $post['subject'];
+ 		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
+ 		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
+
+ 		// clean incoming emails
+ 		$fromEmail = str_replace("'", "", $fromEmail);
+ 		$toEmail = str_replace("'", "", $toEmail);
+
+ 		// obtain the ID of the message to make it "respond" to the email
+ 		$messageID = null;
+ 		foreach($_POST as $k => $v)
+ 		{
+ 			$k = strtolower($k);
+ 			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
+ 			{
+ 				$messageID = $v;
+ 				break;
+ 			}
+ 		}
+
+ 		// save the attached files and create the response array
+ 		$attachments = array();
+ 		for ($i=1; $i<=$attachmentCount; $i++)
+ 		{
+ 			$object = new stdClass();
+ 			$object->name = $_FILES["attachment-$i"]["name"];
+ 			$object->type = $_FILES["attachment-$i"]["type"];
+ 			$object->content = base64_encode(file_get_contents($_FILES["attachment-$i"]["tmp_name"]));
+ 			$object->path = "";
+ 			$attachments[] = $object;
+ 		}
+
+		// respond with info
+		$response = new stdClass();
+		$response->fromEmail = $fromEmail;
+		$response->fromName = $fromName;
+		$response->toEmail = $toEmail;
+		$response->subject = $subject;
+		$response->body = $body;
+		$response->attachments = $attachments;
+		$response->webhook = "mailgun";
+		$response->messageId = $messageID;
+		return $response;
 	}
 }

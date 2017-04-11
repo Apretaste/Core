@@ -214,4 +214,48 @@ class ApiController extends Controller
 		// return ok response
 		die('{"code":"ok", "newuser":"'.$newUser.'"}');
 	}
+
+	/**
+	 * Sends an email using the anti-censorship engine
+	 *
+	 * @author salvipascual
+	 * @param String64 $key: Base64 of "$email:$pass"
+	 * @param String $email
+	 * @param String $subject
+	 * @param String $body
+	 */
+	public function sendEmailAction()
+	{
+		// get params from GET (or from the encripted API)
+		$key = $this->request->get("key");
+		$email = $this->request->get("email");
+		$subject = $this->request->get("subject");
+		$body = file_get_contents("php://input");
+
+		// do not allow empty emails
+		if(empty($email) || empty($subject) || empty($body))
+		{
+			die('{"status":"0", "message":"Empty email"}');
+		}
+
+		// check user pass combination
+		$loginInfo = explode(":", base64_decode($key));
+		$security = new Security();
+		$res =  $security->checkUserPass($loginInfo[0], $loginInfo[1]);
+
+		// check is the user has permissions to forward
+		$pages = explode(",", $res->items->pages);
+		if( ! (in_array("*", $pages) || in_array("forward", $pages)))
+		{
+			die('{"status":"0", "message":"No permissions"}');
+		}
+
+		// forward the email
+		$sender = new Email();
+		$sender->setGroup($res->items->group);
+		$sender->sendEmail($email, $subject, $body);
+
+		// display OK message
+		die('{"status":"1", "message":""}');
+	}
 }
