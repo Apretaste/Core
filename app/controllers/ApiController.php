@@ -233,9 +233,16 @@ class ApiController extends Controller
 		$body = file_get_contents("php://input");
 
 		// do not allow empty emails
-		if(empty($email) || empty($subject) || empty($body))
+		if(empty($email) || empty($body))
 		{
 			die('{"status":"0", "message":"Empty email"}');
+		}
+
+		// create a random subject if empty
+		if(empty($subject))
+		{
+			$utils = new Utils();
+			$subject = $utils->randomSentence();
 		}
 
 		// check user pass combination
