@@ -37,7 +37,7 @@ class Email
 
 		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') == "sandbox") return true;
+//		if($di->get('environment') == "sandbox") return true;
 
 		// get the domain for the email to send
 		$emailDomain = explode("@", $to)[1];
