@@ -7,7 +7,7 @@ class Email
 {
 	public $group = 'apretaste';
 	public $messageid = NULL; // ID of the email to create a reply
-	public $domain = NULL; // force a domain for test purposes
+	public $domain = false; // force a domain for test purposes
 
 	/**
 	 * Creates a new database connection for the class
@@ -37,23 +37,10 @@ class Email
 
 		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-//		if($di->get('environment') == "sandbox") return true;
+		if($di->get('environment') == "sandbox") return true;
 
-		// get the domain for the email to send
-		$emailDomain = explode("@", $to)[1];
-//		$return = false;
-/*
-		// redirect Nauta by gmail
-		if($emailDomain == "nauta.cu")
-		{
-			$return = $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
-		}
-*/
-		// all others OR if Nauta fails by Mailgun
-//		if( ! $return)
-//		{
-			$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
-//		}
+		// send the email using MailGun
+		$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
 
 		// save a trace that the email was sent
 		$haveImages = empty($images) ? 0 : 1;
@@ -61,9 +48,10 @@ class Email
 		$type = $return->type;
 		$from = $return->from;
 		$domain = $return->domain;
+		$group = $return->group;
 		$this->conn->deepQuery("
-			INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain,type)
-			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain','$type')");
+			INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain,`group`,type)
+			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain','$group','$type')");
 
 		return true;
 	}
@@ -77,7 +65,20 @@ class Email
 	 * */
 	public function setRespondEmailID($messageid)
 	{
+		// check the domain exist and it is active
+
 		$this->messageid = $messageid;
+	}
+
+	/**
+	 * Force to use an specific domain
+	 *
+	 * @author salvipascual
+	 * @param String $domain
+	 * */
+	public function setDomain($domain)
+	{
+		$this->domain = $domain;
 	}
 
 	/**
@@ -89,18 +90,6 @@ class Email
 	public function setGroup($group)
 	{
 		$this->group = $group;
-	}
-
-	/**
-	 * Set the group to respond based on the user's email address
-	 *
-	 * @author salvipascual
-	 * @param String $mailbox
-	 * */
-	public function setGroupByEmail($mailbox)
-	{
-		// @TODO find a right way to do this when needed
-		$this->group = "apretaste";
 	}
 
 	/**
@@ -116,26 +105,30 @@ class Email
 		$emailName = $emailParts[0];
 		$emailDomain = $emailParts[1];
 
-		// get the domain with less usage
-		$result = $this->conn->deepQuery("
-			SELECT domain
-			FROM domain
-			WHERE active = 1
-			AND `group` = '{$this->group}'
-			AND blacklist NOT LIKE '%$emailDomain%'
-			ORDER BY last_usage ASC LIMIT 1");
+		// get the domain to send if not enforced
+		if( ! $this->domain)
+		{
+			// get the domain with less usage
+			$result = $this->conn->deepQuery("
+				SELECT domain
+				FROM domain
+				WHERE active = 1
+				AND `group` = '{$this->group}'
+				AND blacklist NOT LIKE '%$emailDomain%'
+				ORDER BY last_usage ASC LIMIT 1");
+			$this->domain = $result[0]->domain;
+		}
 
-		// increase the send counter
-		$domain = $result[0]->domain;
+		// increase the send counter for the domain
 		$this->conn->deepQuery("
 			UPDATE domain
 			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
-			WHERE domain='$domain'");
+			WHERE domain='{$this->domain}'");
 
 		// create the new from email
 		$user = str_replace(array(".", "+", "-"), "", $emailName);
 		$seed = rand(80, 98);
-		$from = "{$user}{$seed}@{$domain}";
+		$from = "{$user}{$seed}@{$this->domain}";
 
 		// create the list of images and attachments
 		$embedded = array();
@@ -163,22 +156,24 @@ class Email
 		$mgClient = new Mailgun($mailgunKey);
 
 		// clear the email from the bounce list. We take will care of bad emails
-		try{$mgClient->delete("$domain/bounces/$to");} catch(Exception $e){}
+		try{$mgClient->delete("{$this->domain}/bounces/$to");} catch(Exception $e){}
 
 		// send email
 		try{
-			$mgClient->sendMessage($domain, $message, $embedded);
+			$mgClient->sendMessage($this->domain, $message, $embedded);
 		} catch (Exception $e) {
+			print_r($e); exit;
 			// log error and try email another way
 			error_log("MAIGUN: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
-			return $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+//			return $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
 		}
 
 		// create the returning structure
 		$return = new stdClass();
 		$return->type = "mailgun";
 		$return->from = $from;
-		$return->domain = $domain;
+		$return->domain = $this->domain;
+		$return->group = $this->group;
 		return $return;
 	}
 
@@ -252,6 +247,7 @@ class Email
 		$return->type = "gmail";
 		$return->from = $from;
 		$return->domain = $gmail[0]->name;
+		$return->group = $this->group;
 		return $return;
 	}
 }
