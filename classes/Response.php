@@ -40,7 +40,7 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @param String $subject
-	 * */
+	 */
 	public function setResponseSubject($subject)
 	{
 		$this->subject = $subject;
@@ -52,7 +52,7 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @param String $email
-	 * */
+	 */
 	public function setResponseEmail($email)
 	{
 		$this->email = $email;
@@ -64,7 +64,7 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @param String $layout
-	 * */
+	 */
 	public function setEmailLayout($layout)
 	{
 		$this->layout = $layout;
@@ -75,7 +75,7 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @return Object[]
-	 * */
+	 */
 	public function getAds()
 	{
 		if (is_null($this->ads) || empty($this->ads)) $this->ads = $this->getAdsToShow();
@@ -161,7 +161,7 @@ class Response
 	 * Automatically select two ads to be displayed
 	 *
 	 * @author salvipascual
-	 * */
+	 */
 	private function getAdsToShow()
 	{
 		// get the array of ads from the database
