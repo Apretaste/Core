@@ -147,7 +147,7 @@ class RunController extends Controller
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/mailgun.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
+		$logger->log("From:{$response->fromEmail}, To:{$response->toEmail}, Subject:{$response->subject}\n".print_r($_POST, true)."\n\n");
 		$logger->close();
 
 		// execute the webbook
@@ -158,8 +158,8 @@ class RunController extends Controller
 			$response->subject,
 			$response->body,
 			$response->attachments,
-			$response->mailgun,
-			$response->messageID);
+			$response->webhook,
+			$response->messageId);
 		return true;
 	}
 
