@@ -1,7 +1,6 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-use Gregwar\Captcha\CaptchaBuilder;
 
 class ApiController extends Controller
 {

@@ -147,7 +147,7 @@ class RunController extends Controller
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/mailgun.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
+		$logger->log("From:{$response->fromEmail}, To:{$response->toEmail}, Subject:{$response->subject}\n".print_r($_POST, true)."\n\n");
 		$logger->close();
 
 		// execute the webbook
@@ -158,8 +158,8 @@ class RunController extends Controller
 			$response->subject,
 			$response->body,
 			$response->attachments,
-			$response->mailgun,
-			$response->messageID);
+			$response->webhook,
+			$response->messageId);
 		return true;
 	}
 
@@ -377,6 +377,8 @@ class RunController extends Controller
 			$serviceUsageText = trim((String)$xml->serviceUsage);
 			$showAds = isset($xml->showAds) && $xml->showAds==0 ? 0 : 1;
 			$serviceInsertionDate = date("Y/m/d H:m:s");
+			$showAds = isset($xml->showAds) && $xml->showAds==0 ? 0 : 1;
+			$serviceGroup = isset($xml->group) ? $xml->group : "apretaste";
 		}
 		else
 		{
@@ -390,6 +392,7 @@ class RunController extends Controller
 			$serviceUsageText = $result[0]->usage_text;
 			$serviceInsertionDate = $result[0]->insertion_date;
 			$showAds = $result[0]->ads == 1;
+			$serviceGroup = $result[0]->group;
 		}
 
 		// create a new service Object of the user type
@@ -458,15 +461,13 @@ class RunController extends Controller
 			// respond by email, if there is an email to send
 			if($response->email && $response->render)
 			{
-				// create and configure to send email
-				$emailSender = new Email();
-				$emailSender->setGroupByEmail($fromEmail);
-
 				// render email and body
 				$subject = empty($response->subject) ? "Respuesta de $serviceName" : $response->subject;
 				$body = $render->renderHTML($userService, $response);
 
 				// send the email
+				$emailSender = new Email();
+				$emailSender->setGroup($serviceGroup);
 				$emailSender->sendEmail($response->email, $subject, $body, $response->images, $attachments = $response->attachments);
 			}
 
@@ -579,8 +580,8 @@ class RunController extends Controller
 
 			// create and configure to send email
 			$emailSender = new Email();
+			$emailSender->setGroup($serviceGroup);
 			$emailSender->setRespondEmailID($messageID);
-			$emailSender->setGroupByEmail($fromEmail);
 
 			// get params for the email and send the response emails
 			foreach($responses as $rs)
