@@ -13,9 +13,11 @@ class PublicController extends Controller
     public function sitesAction()
     {
         $response = [];
-
         $connection = new Connection();
         $www_root = "./w/";
+
+        $q = $this->request->get('q');
+        $q = $connection->escape($q);
 
         $limit = 10;
         $offset = $this->request->get("offset");
@@ -26,7 +28,7 @@ class PublicController extends Controller
         $total = $connection->deepQuery("SELECT count(domain) as t FROM _web_sites;");
         $total = $total[0]->t;
 
-        $sites = $connection->deepQuery("SELECT *, (SELECT usage_count FROM _navegar_visits WHERE site = concat(_web_sites.domain, '.apretaste.com')) as popularity FROM _web_sites order by popularity desc LIMIT $offset, $limit;");
+        $sites = $connection->deepQuery("SELECT *, (SELECT usage_count FROM _navegar_visits WHERE site = concat(_web_sites.domain, '.apretaste.com')) as popularity FROM _web_sites ".(!empty($q)?" WHERE concat(title,concat(' ', domain)) LIKE '%$q%' ":"")."order by popularity desc LIMIT $offset, $limit;");
         $offsets = intval($total / $limit) + 1;
 
         if ($offsets < 2) $offsets = 0;
