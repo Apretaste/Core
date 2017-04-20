@@ -44,6 +44,8 @@ class Security
 		// create the manager object in session
 		$manager = new stdClass();
 		$manager->email = $res->items->email;
+		$manager->name = $res->items->name;
+		$manager->position = $res->items->occupation;
 		$manager->pages = explode(",", $res->items->pages);
 		$manager->group = $res->items->group;
 		$manager->startPage = $res->items->start_page;
