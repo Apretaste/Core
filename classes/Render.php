@@ -66,7 +66,7 @@ class Render
 			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL" => $utils->getValidEmailAddress(),
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
-			"APRETASTE_SUPPORT_EMAIL" => $di->get('config')['contact']['support'],
+			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
 			'USER_USERNAME' => isset($person->username) ? "@{$person->username}" : "",

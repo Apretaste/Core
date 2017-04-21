@@ -25,15 +25,19 @@ class ManageController extends Controller
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
 		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
 
-		// START tasks status widget
+		// tasks status widget
 		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 
-		// START measure the effectiveness of each promoter
+		// measure the effectiveness of each promoter
 		$promoters = $connection->deepQuery("
-		SELECT A.email, A.active, A.last_usage, B.total
-		FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
-		ON A.email = B.source
-		ORDER BY B.total DESC");
+			SELECT A.email, A.active, A.last_usage, B.total
+			FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
+			ON A.email = B.source
+			ORDER BY B.total DESC");
+
+		// get totals for support widget
+		$supportNewCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
+		$supportPendingCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
 
 		// send data to the view
 		$this->view->totalUsers = $utils->getStat('person.count');
@@ -41,6 +45,8 @@ class ManageController extends Controller
 		$this->view->utilization = $utils->getStat('utilization.count');
 		$this->view->promoters = $promoters;
 		$this->view->delivery = $delivery;
+		$this->view->supportNewCount = $supportNewCount[0]->count;
+		$this->view->supportPendingCount = $supportPendingCount[0]->count;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
 	}

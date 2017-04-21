@@ -50,6 +50,18 @@ class Utils
 	}
 
 	/**
+	 * Returns an email address to contact the customer support
+	 *
+	 * @author salvipascual
+	 * @return String, email address
+	 */
+	public function getSupportEmailAddress()
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		return $di->get('config')['contact']['support'];
+	}
+
+	/**
 	 * Returns the personal mailbox for a user
 	 *
 	 * @author salvipascual

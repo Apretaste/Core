@@ -34,7 +34,7 @@ class RunController extends Controller
 
 		// do not allow emails from people who are not managers with access
 		$connection = new Connection();
-		$perms = $connection->deepQuery("SELECT `group` FROM manage_users WHERE email='{$response->fromEmail}' AND `pages` LIKE '%forward%'");
+		$perms = $connection->query("SELECT `group` FROM manage_users WHERE email='{$response->fromEmail}' AND `pages` LIKE '%forward%'");
 		if(empty($perms)) return false;
 
 		// ensure the subject is an email and trim
@@ -80,7 +80,7 @@ class RunController extends Controller
 		if( ! $email) die('{"code":"error","message":"bad authentication"}');
 
 		// check if the user is blocked
-		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$email' AND blocked=1");
+		$blocked = $connection->query("SELECT email FROM person WHERE email='$email' AND blocked=1");
 		if(count($blocked)>0) die('{"code":"error","message":"user blocked"}');
 
 		// create attachment as an object
@@ -112,7 +112,7 @@ class RunController extends Controller
 		}
 
 		// update last access time to current and set remarketing
-		$connection->deepQuery("
+		$connection->query("
 			START TRANSACTION;
 			UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email';
 			UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email';
@@ -182,8 +182,24 @@ class RunController extends Controller
 		$connection = new Connection();
 		$utils = new Utils();
 
+		// if the email was sent to support, just save in the table and exit
+		if($toEmail == $utils->getSupportEmailAddress())
+		{
+			// save the new ticket into the database
+			$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('$fromEmail', '$subject', '$body')");
+
+			// save the new ticket in the reports table
+			$mysqlDateToday = date('Y-m-d');
+			$connection->query("
+				INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
+				UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
+
+			// do not continue processing
+			return true;
+		}
+
 		// check if the user is blocked
-		$blocked = $connection->deepQuery("SELECT email FROM person WHERE email='$fromEmail' AND blocked=1");
+		$blocked = $connection->query("SELECT email FROM person WHERE email='$fromEmail' AND blocked=1");
 		if(count($blocked)>0)
 		{
 			// create the response for blocked email
@@ -209,7 +225,7 @@ class RunController extends Controller
 		$campaign = $utils->getCampaignTracking($toEmail);
 		if($campaign)
 		{
-			$connection->deepQuery("
+			$connection->query("
 				UPDATE campaign SET opened=opened+1 WHERE id='$campaign';
 				UPDATE campaign_sent SET status='OPENED', date_opened=CURRENT_TIMESTAMP WHERE campaign='$campaign' AND email='$fromEmail'");
 		}
@@ -223,10 +239,10 @@ class RunController extends Controller
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 
 		// save the email as received
-		$connection->deepQuery("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
+		$connection->query("INSERT INTO delivery_received(user,mailbox,subject,attachments_count,webhook) VALUES ('$fromEmail','$toEmail','$subject','".count($attachments)."','$webhook')");
 
 		// save to the webhook last usage, to alert if the web
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
+		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='$webhook'");
 
 		// if there are attachments, download them all and create the files in the temp folder
 		$wwwroot = $this->di->get('path')['root'];
@@ -304,7 +320,7 @@ class RunController extends Controller
 		else if ($serviceName !== $alias)
 		{
 			// increase the counter for alias
-			$connection->deepQuery("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
+			$connection->query("UPDATE service_alias SET used = used + 1 WHERE alias = '$alias';");
 		}
 
 		// update topics if you are contacting via the secure API
@@ -344,7 +360,7 @@ class RunController extends Controller
 		}
 
 		// get the language of the user
-		$result = $connection->deepQuery("SELECT lang FROM person WHERE email = '$email'");
+		$result = $connection->query("SELECT lang FROM person WHERE email = '$email'");
 		if(isset($result[0]->lang)) $lang = $result[0]->lang;
 		else $lang = "es";
 
@@ -384,7 +400,7 @@ class RunController extends Controller
 		{
 			// get details of the service from the database
 			$sql = "SELECT * FROM service WHERE name = '$serviceName'";
-			$result = $connection->deepQuery($sql);
+			$result = $connection->query($sql);
 
 			$serviceCreatorEmail = $result[0]->creator_email;
 			$serviceDescription = $result[0]->description;
@@ -485,7 +501,7 @@ class RunController extends Controller
 			if ($personExist)
 			{
 				// update last access time to current and make person active
-				$connection->deepQuery("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+				$connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 			}
 			else // if the person accessed for the first time, insert him/her
 			{
@@ -493,7 +509,7 @@ class RunController extends Controller
 				$sql = "START TRANSACTION;"; // start the long query
 
 				// check if the person was invited to Apretaste
-				$invites = $connection->deepQuery("SELECT * FROM invitations WHERE email_invited='$email' AND used=0 ORDER BY invitation_time DESC");
+				$invites = $connection->query("SELECT * FROM invitations WHERE email_invited='$email' AND used=0 ORDER BY invitation_time DESC");
 				if(count($invites)>0)
 				{
 					// check how this user came to know Apretaste, for stadistics
@@ -553,7 +569,7 @@ class RunController extends Controller
 				$sql .= "INSERT INTO first_timers (email, source) VALUES ('$email', '$fromEmail');";
 
 				// check list of promotor's emails
-				$promoters = $connection->deepQuery("SELECT email FROM promoters WHERE email='$fromEmail' AND active=1;");
+				$promoters = $connection->query("SELECT email FROM promoters WHERE email='$fromEmail' AND active=1;");
 				$prize = count($promoters)>0;
 				if ($prize)
 				{
@@ -566,7 +582,7 @@ class RunController extends Controller
 				}
 
 				// run the long query all at the same time
-				$connection->deepQuery($sql."COMMIT;");
+				$connection->query($sql."COMMIT;");
 
 				// send the welcome email
 				$welcome = new Response();
@@ -600,7 +616,7 @@ class RunController extends Controller
 						$sql = "";
 						if( ! empty($ads[0])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[0]->id}';";
 						if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
-						$connection->deepQuery($sql);
+						$connection->query($sql);
 					}
 
 					// prepare the email variable
@@ -619,7 +635,7 @@ class RunController extends Controller
 			}
 
 			// saves the openning date if the person comes from remarketing
-			$connection->deepQuery("UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email'");
+			$connection->query("UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$email'");
 
 			// calculate execution time when the service stopped executing
 			$currentTime = new DateTime();
@@ -638,7 +654,7 @@ class RunController extends Controller
 			// save the logs on the utilization table
 			$safeQuery = $connection->escape($query);
 			$sql = "INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom) VALUES ('$serviceName','$subServiceName','$safeQuery','$email','$execStartTime','$executionTime','$domain',$adTop,$adBottom)";
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			// return positive answer to prove the email was quequed
 			return true;

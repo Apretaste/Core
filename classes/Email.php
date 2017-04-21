@@ -65,8 +65,6 @@ class Email
 	 * */
 	public function setRespondEmailID($messageid)
 	{
-		// check the domain exist and it is active
-
 		$this->messageid = $messageid;
 	}
 
