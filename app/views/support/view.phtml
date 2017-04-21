@@ -1,0 +1,98 @@
+<div class="row">
+	<div class="col-xs-12" style="margin:20px 0px;">
+		<?php if($person->picture) { ?>
+			<img class="img-circle pull-left" style="width:80px; height:80px; margin:0px 20px;" src="<?=$person->picture_public?>" />
+		<?php } ?>
+		<b>Email:</b> <?=$person->email?> (@<?=$person->username?>)<br/>
+		<b>Name:</b> <?=$person->full_name?><br/>
+		<b>Location:</b> <?=$person->location?><br/>
+		<b>Age:</b> <?=$person->age?><br/>
+		<b>Gender:</b> <?=$person->gender?>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table table-striped">
+			<?php foreach ($chats as $chat) { ?>
+				<?php $badgeColor = $chat->status=="NEW" ? "badge-info" : ($chat->status=="PENDING" ? "badge-warning" : ($chat->status=="CLOSED" ? "badge-danger" : "")); ?>
+				<tr id="<?=$chat->id?>" class="<?php if($chat->requester!="") echo "warning";?>" style="cursor:pointer;" onclick="toggleRequestBody(<?=$chat->id?>);">
+					<td width="10" style="color:gray;"><small><nobr><?=date("m/d/Y h:i A", strtotime($chat->creation_date))?></nobr></small></td>
+					<td><?=$chat->subject?></td>
+					<td class="text-right">
+						<?php if($chat->requester!=""){ ?><small><?=$chat->from?></small><?php } ?>
+						<span class="badge <?=$badgeColor?>"><?=$chat->status?></span>
+					</td>
+				</tr>
+				<tr id="body_<?=$chat->id?>" class="body" style="display:<?=$chat->status!="NEW" ? "none" : ""?>;">
+					<td></td>
+					<td colspan="4"><?=str_replace("\r","<br/>",$chat->body)?></td>
+				</tr>
+			<?php } ?>
+		</table>
+		<br/><hr/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<form id="form" role="form" action="saveTicketSubmit" method="POST">
+			<!-- list of can responses -->
+			<div class="form-group">
+				<label for="cans">Can response</label>
+				<select id="cans" class="form-control" onchange="loadCanResponse();">
+					<?php foreach($cans as $can) { ?>
+						<option value="<?=$can->id?>"><?=$can->name?></option>
+					<?php } ?>
+				</select>
+			</div>
+
+			<!-- Subject of the email -->
+			<div class="form-group">
+				<label for="subject">Subject</label>
+				<input id="subject" type="text" value="<?=$subject?>" class="form-control" name="subject" required />
+			</div>
+
+			<!-- Create the editor container -->
+			<div class="form-group">
+				<label for="content">Response</label>
+				<textarea id="content" name="content" class="form-control" rows="15"></textarea>
+			</div>
+
+			<div class="form-group text-center">
+				<input type="hidden" name="email" value="<?=$person->email?>"/>
+				<input type="hidden" id="status" name="status" value="DONE"/>
+
+				<a class="btn btn-default" href="/support">Cancel</a>
+				<a class="btn btn-danger" href="/support/closeTicketSubmit/?email=<?=$person->email?>">Close Ticket</a>
+				<button class="btn btn-warning" onclick="$('#status').val('PENDING');" type="submit">Respond as Pending</button>
+				<button class="btn btn-primary" onclick="$('#status').val('DONE');" type="submit">Respond as Done</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script type="text/javascript">
+	// load the first can response
+	$(document).ready(function(){
+		loadCanResponse();
+	});
+
+	// load a can response async
+	function loadCanResponse(){
+		var canId = $('#cans').val();
+		var name = '<?=empty($person->first_name) ? "@{$person->username}" : $person->first_name?>';
+
+		$.ajax({
+			url: "/support/loadCanResponseAsync",
+			method: "POST",
+			data: {"id":canId, "name":name},
+			async: false
+		}).done(function(data) {
+			$('#content').html(data);
+		});
+	}
+
+	// open or close the body of a response
+	function toggleRequestBody(id){
+		$('.body').slideUp('fast', function(){
+			$('#body_'+id).slideDown();
+		});
+	}
+</script>

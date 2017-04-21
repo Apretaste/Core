@@ -32,14 +32,32 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($tasks as $task): ?>
+						<?php foreach ($tasks as $task) { ?>
 						<tr class="<?= $task->days > $task->frequency ? "danger" : "success"?>">
 							<td><?= $task->task ?></td>
 							<td class="text-center"><?= $task->days ?></td>
 							<td class="text-center"><?= $task->delay ?></td>
 						</tr>
-						<?php endforeach; ?>
+						<?php } ?>
 					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="ibox float-e-margins">
+			 <div class="ibox-title">
+				<h5><a href="/manage/remarketing">Customer Support</a></h5>
+			</div>
+			<div class="ibox-content">
+				<table class="fullscreen">
+					<tr>
+						<td>New Tickets</td>
+						<td class="text-center"><?=$supportNewCount?></td>
+					</tr>
+					<tr>
+						<td>Pending Tickets</td>
+						<td class="text-center"><?=$supportPendingCount?></td>
+					</tr>
 				</table>
 			</div>
 		</div>

@@ -1,0 +1,86 @@
+<div class="row">
+	<div class="col-xs-12 text-right">
+		<a class="btn btn-small btn-default" onclick="newCanResponse();"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Can Response</a>
+		<a class="btn btn-small btn-default" href="/support">Open Tickets</a>
+		<br/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Name</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($cans as $can) { ?>
+				<input id="body_<?=$can->id?>" type="hidden" value="<?=$can->body?>"/>
+				<tr>
+					<td class="text-center"><?=$can->name?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" href="#" onclick="editCanResponse('<?=$can->id?>','<?=$can->name?>');"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+							<a class="btn btn-xs btn-default"  onclick="return confirm('Are you sure? There is no way back');" href="/support/deleteCanResponseSubmit?id=<?=$can->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- Modal for add a new list -->
+<div id="newCanResponse" class="modal fade" role="dialog">
+	<form action="/support/updateCanResponseSubmit" method="POST">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Can Response</h4>
+				</div>
+				<div class="modal-body">
+					<!-- available tabs -->
+					<div class="form-group">
+						<label for="name">Available tabs</label>
+						<p>{USER_NAME}, {SUPPORT_EMAIL}, {MANAGER_NAME}, {MANAGER_POSITION}</p>
+					</div>
+
+					<!-- can response title -->
+					<div class="form-group">
+						<label for="name">Name of the can response</label>
+						<input id="name" type="text" name="name" class="form-control" required />
+					</div>
+
+					<!-- can response text -->
+					<div class="form-group">
+						<label for="body">Content to send to the user</label>
+						<textarea id="body" name="body" style="width:100%; height:300px;" required></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input id="id" type="hidden" name="id" value=""/>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<input type="submit" class="btn btn-primary" value="Submit"/>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<script type="text/javascript">
+	function newCanResponse(){
+		$('#id').val("");
+		$('#name').val("");
+		$('#body').val("");
+		$('#newCanResponse').modal('show');
+	}
+
+	function editCanResponse(id, name){
+		$('#id').val(id);
+		$('#name').val(name);
+		$('#body').val($('#body_'+id).val());
+		$('#newCanResponse').modal('show');
+	}
+</script>

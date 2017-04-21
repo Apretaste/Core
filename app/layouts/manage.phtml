@@ -128,6 +128,18 @@
 						</li>
 						<?php } ?>
 
+						<!-- SUPPORT -->
+						<?php if($security->checkAccess("support")) { ?>
+						<li>
+							<a href="#"><i class="fa fa-support"></i> <span class="nav-label">Support</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/support">Open tickets</a></li>
+								<li><a href="/support/cans">Can responses</a></li>
+								<li><a href="/support/reports">Reports</a></li>
+							</ul>
+						</li>
+						<?php } ?>
+
 						<!-- DEVELOPER -->
 						<?php if($security->checkAccess("manage")) { ?>
 						<li>
