@@ -152,10 +152,13 @@ class SupportController extends Controller
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET response_count = response_count+1 WHERE inserted = '$mysqlDateToday';");
 
+		// add break lines as HTML to send the email
+		$body = str_replace("\r", "<br/>", $content);
+
 		// respond back to the user
 		$sender = new Email();
-		$sender->setGroup("support");
-		$sender->sendEmail($email, $subject, $content);
+//		$sender->setGroup("support");
+		$sender->sendEmail($email, $subject, $body);
 
 		// go to the list of tickets
 		$this->response->redirect("support/index");
