@@ -45,6 +45,12 @@ class RunController extends Controller
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
 
+		// save the support log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/support.log");
+		$logger->log("From:$fromEmail, Subject:$subject");
+		$logger->close();
+
 		// do not continue processing
 		return true;
 	}
