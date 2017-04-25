@@ -196,6 +196,7 @@ class SupportController extends Controller
 	{
 		$id = $this->request->get("id");
 		$name = $this->request->get("name");
+		$username = $this->request->get("username");
 
 		// get the list of can responses
 		$connection = new Connection();
@@ -208,6 +209,8 @@ class SupportController extends Controller
 		$content = str_replace('{MANAGER_NAME}', $manager->name, $content);
 		$content = str_replace('{MANAGER_POSITION}', $manager->position, $content);
 		$content = str_replace('{USER_NAME}', $name, $content);
+		$content = str_replace('{USER_USERNAME}', "@$username", $content);
+		$content = str_replace('{USER_EMAIL}', "apretaste+{$username}@gmail.com", $content);
 
 		// get the email address of the support
 		$utils = new Utils();
