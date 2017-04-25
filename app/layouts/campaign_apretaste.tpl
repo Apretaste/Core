@@ -17,16 +17,14 @@
 			</table>
 		</td>
 	</tr>
-	<tr><td><br/></td></tr>
+	<tr><td>{space10}</td></tr>
 	<!--CONTENT-->
 	<tr>
 		<td align="left" style="padding: 0px 5px;">
-			{space10}
-			{include file="$APRETASTE_USER_TEMPLATE"}
-			{space10}
+			TYPE YOUR CONTENT HERE
 		</td>
 	</tr>
-	<tr><td><br/></td></tr>
+	<tr><td>{space10}</td></tr>
 	<!--FOOTER AND OPT-OUT-->
 	<tr>
 		<td bgcolor="#F2F2F2" align="center" valign="middle">

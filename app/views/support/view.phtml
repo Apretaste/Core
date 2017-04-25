@@ -78,11 +78,12 @@
 	function loadCanResponse(){
 		var canId = $('#cans').val();
 		var name = '<?=empty($person->first_name) ? "@{$person->username}" : $person->first_name?>';
+		var username = '<?=$person->username?>';
 
 		$.ajax({
 			url: "/support/loadCanResponseAsync",
 			method: "POST",
-			data: {"id":canId, "name":name},
+			data: {"id":canId, "name":name, "username":username},
 			async: false
 		}).done(function(data) {
 			$('#content').html(data);
