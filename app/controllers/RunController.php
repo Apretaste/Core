@@ -33,7 +33,10 @@ class RunController extends Controller
 		$response = $this->formatMailgunWebhook($_POST);
 		$fromEmail = trim($response->fromEmail);
 		$subject = str_replace("'", "", $response->subject);
-		$body = str_replace("'", "", $response->$body);
+		$body = str_replace("'", "", $response->body);
+
+		// do not allow empty queries
+		if(empty($fromEmail)) return false;
 
 		// save the new ticket into the database
 		$connection = new Connection();
