@@ -108,8 +108,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$connection->query($sql);
 
 			// stop execution if the bounced percentage > 5%
-			$failurePercent = ($bouncedCounter*100)/$total;
-			if($failurePercent > 5)
+			if(($bouncedCounter*100)/$total > 5)
 			{
 				// save as error
 				$connection->query("UPDATE campaign SET status='ERROR' WHERE id='{$campaign->id}'");
