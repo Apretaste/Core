@@ -21,7 +21,7 @@
 			</thead>
 			<tbody>
 			<?php foreach ($campaigns as $campaign) {
-				$failure = ($campaign->bounced*100)/count($campaigns); ?>
+				$failure = round(($campaign->bounced*100)/$campaign->sent, 2); ?>
 				<tr>
 					<td class="text-center"><?=date("M d h:i A", strtotime($campaign->sending_date))?></td>
 					<td class="text-center"><?=$campaign->status?></td>
