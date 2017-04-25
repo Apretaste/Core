@@ -22,6 +22,40 @@ class RunController extends Controller
 	}
 
 	/**
+	 * Send an email to the support group
+	 *
+	 * @author salvipascual
+	 * @param POST Multiple Values
+	 */
+	public function supportAction()
+	{
+		// format the response when comes from mailgun
+		$response = $this->formatMailgunWebhook($_POST);
+		$fromEmail = trim($response->fromEmail);
+		$subject = str_replace("'", "", $response->subject);
+		$body = str_replace("'", "", $response->$body);
+
+		// save the new ticket into the database
+		$connection = new Connection();
+		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('$fromEmail', '$subject', '$body')");
+
+		// save the new ticket in the reports table
+		$mysqlDateToday = date('Y-m-d');
+		$connection->query("
+			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
+			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
+
+		// save the support log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/support.log");
+		$logger->log("From:$fromEmail, Subject:$subject");
+		$logger->close();
+
+		// do not continue processing
+		return true;
+	}
+
+	/**
 	 * Forwards an email using the anti-censorship engine
 	 *
 	 * @author salvipascual
@@ -181,22 +215,6 @@ class RunController extends Controller
 	{
 		$connection = new Connection();
 		$utils = new Utils();
-
-		// if the email was sent to support, just save in the table and exit
-		if($toEmail == $utils->getSupportEmailAddress())
-		{
-			// save the new ticket into the database
-			$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('$fromEmail', '$subject', '$body')");
-
-			// save the new ticket in the reports table
-			$mysqlDateToday = date('Y-m-d');
-			$connection->query("
-				INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
-				UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
-
-			// do not continue processing
-			return true;
-		}
 
 		// check if the user is blocked
 		$blocked = $connection->query("SELECT email FROM person WHERE email='$fromEmail' AND blocked=1");
