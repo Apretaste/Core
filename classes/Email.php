@@ -28,7 +28,7 @@ class Email
 
 		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-//		if($di->get('environment') == "sandbox") return true;
+		if($di->get('environment') == "sandbox") return true;
 		$connection = new Connection();
 
 		// get the name and domain from the email
