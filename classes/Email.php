@@ -18,7 +18,7 @@ class Email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach
-	 * */
+	 */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
@@ -70,9 +70,9 @@ class Email
 		// respond to recipients outside Cuba
 		else
 		{
-			$from = "respuesta@apretaste.com";
 			$provider = "amazon";
 			$this->domain = "apretaste.com";
+			$from = 'Apretaste <noreply@apretaste.com>';
 			$this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
 		}
 
@@ -259,11 +259,16 @@ class Email
 		$m->setMessageCharset('ISO-8859-1');
 
 		// embebbed images
-		// @TODO
+		foreach ($images as $path) {
+			$fileName = basename($path);
+			$m->addAttachmentFromFile($fileName,$path,'application/octet-stream',"<$fileName>",'inline');
+		}
 
 		// add attachments
-		foreach ($attachments as $attachment) {
-			$m->addAttachmentFromData($attachment->name, $attachment->content, $attachment->type);
+		foreach ($attachments as $path) {
+			$mimeType = mime_content_type($path);
+			$fileName = basename($path);
+			$m->addAttachmentFromFile($fileName, $path, $mimeType);
 		}
 
 		// get the API key and start MailGun client
