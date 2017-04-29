@@ -692,48 +692,48 @@ class RunController extends Controller
 	 private function formatMailgunWebhook($post)
 	 {
 		 // do not allow fake income messages
- 		if( ! isset($post['From'])) return false;
+		if( ! isset($post['From'])) return false;
 
- 		// filter email From and To
- 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
- 		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
- 		preg_match_all($pattern, strtolower($post['To']), $emailTo);
+		// filter email From and To
+		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
+		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
+		preg_match_all($pattern, strtolower($post['To']), $emailTo);
 
- 		// get values to the variables
- 		$fromEmail = $emailFrom[0][0];
- 		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
- 		$fromName = trim(explode("<", $post['From'])[0]);
- 		$subject = $post['subject'];
- 		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
- 		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
+		// get values to the variables
+		$fromEmail = $emailFrom[0][0];
+		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
+		$fromName = trim(explode("<", $post['From'])[0]);
+		$subject = $post['subject'];
+		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
+		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
 
- 		// clean incoming emails
- 		$fromEmail = str_replace("'", "", $fromEmail);
- 		$toEmail = str_replace("'", "", $toEmail);
+		// clean incoming emails
+		$fromEmail = str_replace("'", "", $fromEmail);
+		$toEmail = str_replace("'", "", $toEmail);
 
- 		// obtain the ID of the message to make it "respond" to the email
- 		$messageID = null;
- 		foreach($_POST as $k => $v)
- 		{
- 			$k = strtolower($k);
- 			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
- 			{
- 				$messageID = $v;
- 				break;
- 			}
- 		}
+		// obtain the ID of the message to make it "respond" to the email
+		$messageID = null;
+		foreach($_POST as $k => $v)
+		{
+			$k = strtolower($k);
+			if ($k == 'message-id' || $k == 'messageid' || $k == 'id')
+			{
+				$messageID = $v;
+				break;
+			}
+		}
 
- 		// save the attached files and create the response array
- 		$attachments = array();
- 		for ($i=1; $i<=$attachmentCount; $i++)
- 		{
- 			$object = new stdClass();
- 			$object->name = $_FILES["attachment-$i"]["name"];
- 			$object->type = $_FILES["attachment-$i"]["type"];
- 			$object->content = base64_encode(file_get_contents($_FILES["attachment-$i"]["tmp_name"]));
- 			$object->path = "";
- 			$attachments[] = $object;
- 		}
+		// save the attached files and create the response array
+		$attachments = array();
+		for ($i=1; $i<=$attachmentCount; $i++)
+		{
+			$object = new stdClass();
+			$object->name = $_FILES["attachment-$i"]["name"];
+			$object->type = $_FILES["attachment-$i"]["type"];
+			$object->content = base64_encode(file_get_contents($_FILES["attachment-$i"]["tmp_name"]));
+			$object->path = "";
+			$attachments[] = $object;
+		}
 
 		// respond with info
 		$response = new stdClass();
