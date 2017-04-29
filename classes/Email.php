@@ -10,15 +10,6 @@ class Email
 	public $domain = false; // force a domain for test purposes
 
 	/**
-	 * Creates a new database connection for the class
-	 */
-	private $conn;
-	public function __construct()
-	{
-		$this->conn = new Connection();
-	}
-
-	/**
 	 * Sends an email using MailGun
 	 *
 	 * @author salvipascual
@@ -38,20 +29,62 @@ class Email
 		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		if($di->get('environment') == "sandbox") return true;
+		$connection = new Connection();
 
-		// send the email using MailGun
-		$return = $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
+		// get the name and domain from the email
+		$emailParts = explode("@", $to);
+		$emailName = $emailParts[0];
+		$emailDomain = $emailParts[1];
 
-		// save a trace that the email was sent
+		// if the recepient is from cuba, rotate
+		if(substr($emailDomain, -3) === ".cu")
+		{
+			// if domain is enforced, get the provider
+			if($this->domain) {
+				$result = $connection->query("SELECT sender FROM domain WHERE domain = '{$this->domain}'");
+				$provider = $result[0]->sender;
+			// if domain is not enforced, get the next domain and provider
+			} else {
+				$result = $connection->query("
+					SELECT domain, sender
+					FROM domain
+					WHERE active = 1
+					AND `group` = '{$this->group}'
+					AND blacklist NOT LIKE '%$emailDomain%'
+					ORDER BY last_usage ASC LIMIT 1");
+				$this->domain = $result[0]->domain;
+				$provider = $result[0]->sender;
+			}
+
+			// create a random email $from
+			$user = str_replace(array(".", "+", "-"), "", $emailName);
+			$seed = rand(80, 98);
+			$from = "{$user}{$seed}@{$this->domain}";
+
+			// send the email using the provider
+			if($provider == "mailgun") $this->sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments);
+			elseif($provider == "amazon") $this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
+			elseif($provider == "gmail") $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+			else return $utils->createAlert("No provider to respond to $to with subject $subject", "ERROR");
+		}
+		// respond to recipients outside Cuba
+		else
+		{
+			$from = "respuesta@apretaste.com";
+			$provider = "amazon";
+			$this->domain = "apretaste.com";
+			$this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
+		}
+
+		// save a trace that the email was sent AND increase the send counter for the domain
 		$haveImages = empty($images) ? 0 : 1;
 		$haveAttachments = empty($attachments) ? 0 : 1;
-		$type = $return->type;
-		$from = $return->from;
-		$domain = $return->domain;
-		$group = $return->group;
-		$this->conn->deepQuery("
-			INSERT INTO delivery_sent(mailbox,user,subject,images,attachments,domain,`group`,type)
-			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','$domain','$group','$type')");
+		$connection->query("
+			INSERT INTO delivery_sent (mailbox,user,subject,images,attachments,domain,`group`,type)
+			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}','{$this->group}','$provider');
+			UPDATE domain
+			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
+			WHERE domain='{$this->domain}'");
 
 		return true;
 	}
@@ -96,38 +129,8 @@ class Email
 	 * @author salvipascual
 	 * @return Boolean
 	 */
-	private function sendEmailViaMailgun($to, $subject, $body, $images, $attachments)
+	private function sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments)
 	{
-		// get the name and domain from the email
-		$emailParts = explode("@", $to);
-		$emailName = $emailParts[0];
-		$emailDomain = $emailParts[1];
-
-		// get the domain to send if not enforced
-		if( ! $this->domain)
-		{
-			// get the domain with less usage
-			$result = $this->conn->deepQuery("
-				SELECT domain
-				FROM domain
-				WHERE active = 1
-				AND `group` = '{$this->group}'
-				AND blacklist NOT LIKE '%$emailDomain%'
-				ORDER BY last_usage ASC LIMIT 1");
-			$this->domain = $result[0]->domain;
-		}
-
-		// increase the send counter for the domain
-		$this->conn->deepQuery("
-			UPDATE domain
-			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
-			WHERE domain='{$this->domain}'");
-
-		// create the new from email
-		$user = str_replace(array(".", "+", "-"), "", $emailName);
-		$seed = rand(80, 98);
-		$from = "{$user}{$seed}@{$this->domain}";
-
 		// create the list of images and attachments
 		$embedded = array();
 		if( ! empty($images)) $embedded['inline'] = $images;
@@ -160,19 +163,12 @@ class Email
 		try{
 			$mgClient->sendMessage($this->domain, $message, $embedded);
 		} catch (Exception $e) {
-			print_r($e); exit;
-			// log error and try email another way
-			error_log("MAIGUN: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
-//			return $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+			$utils = new Utils();
+			$msg = "MAIGUN: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
+			return $utils->createAlert($msg, "ERROR");
 		}
 
-		// create the returning structure
-		$return = new stdClass();
-		$return->type = "mailgun";
-		$return->from = $from;
-		$return->domain = $this->domain;
-		$return->group = $this->group;
-		return $return;
+		return true;
 	}
 
 	/**
@@ -185,7 +181,7 @@ class Email
 	{
 		// get next domain
 		$connection = new Connection();
-		$gmail = $connection->deepQuery("
+		$gmail = $connection->query("
 			SELECT * FROM delivery_gmail
 			WHERE active=1
 			AND (daily < 30 || date(last_usage) < curdate())
@@ -216,36 +212,75 @@ class Email
 		foreach ($images as $image) {
 			$mail->addEmbeddedFile($image);
 		}
-/*
+
 		// add attachments
 		foreach ($attachments as $attachment) {
 			$mail->addAttachment($attachment);
 		}
-*/
+
 		// send email
 		try{
 			$mailer->send($mail, false);
 		} catch (Exception $e) {
-			// log error and try email another way
-			error_log("GMAIL Error sending from: $from to $to with subject $subject and error: ".$e->getMessage());
-			return $this->sendEmailViaMailgun($to, $subject, $body, $images, $attachments);
+			$utils = new Utils();
+			$msg = "GMAIL: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
+			return $utils->createAlert($msg, "ERROR");
 		}
 
 		// update the daily record
 		$lastDate = date("Y-m-d", strtotime($gmail[0]->last_usage));
 		$currentDate = date("Y-m-d");
 		$daily = $lastDate == $currentDate ? "daily=daily+1," : "";
-		$connection->deepQuery("
+		$connection->query("
 			UPDATE delivery_gmail
 			SET sent=sent+1, $daily last_usage=CURRENT_TIMESTAMP
 			WHERE name='{$gmail[0]->name}'");
 
-		// create the returning structure
-		$return = new stdClass();
-		$return->type = "gmail";
-		$return->from = $from;
-		$return->domain = $gmail[0]->name;
-		$return->group = $this->group;
-		return $return;
+		return true;
+	}
+
+	/**
+	 * Sends an email using Amazon SES
+	 *
+	 * @author salvipascual
+	 * @return Boolean
+	 */
+	private function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
+	{
+		// prepare email to be sent
+		$m = new SimpleEmailServiceMessage();
+		$m->addTo($to);
+		$m->setFrom($from);
+		$m->setSubject($subject);
+		$m->setMessageFromString('Su cliente de correo no acepta HTML', $content);
+
+		// set the encoding of the subject and the body
+		$m->setSubjectCharset('ISO-8859-1');
+		$m->setMessageCharset('ISO-8859-1');
+
+		// embebbed images
+		// @TODO
+
+		// add attachments
+		foreach ($attachments as $attachment) {
+			$m->addAttachmentFromData($attachment->name, $attachment->content, $attachment->type);
+		}
+
+		// get the API key and start MailGun client
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$accessKey = $di->get('config')['amazon']['access'];
+		$secretKey = $di->get('config')['amazon']['secret'];
+
+		// send email
+		try{
+			$ses = new SimpleEmailService($accessKey, $secretKey);
+			$ses->sendEmail($m);
+		} catch (Exception $e) {
+			$utils = new Utils();
+			$msg = "AMAZON: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
+			return $utils->createAlert($msg, "ERROR");
+		}
+
+		return true;
 	}
 }
