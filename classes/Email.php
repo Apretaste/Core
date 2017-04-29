@@ -70,9 +70,9 @@ class Email
 		// respond to recipients outside Cuba
 		else
 		{
-			$from = "respuesta@apretaste.com";
 			$provider = "amazon";
 			$this->domain = "apretaste.com";
+			$from = 'Apretaste <noreply@apretaste.com>';
 			$this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
 		}
 
@@ -259,7 +259,10 @@ class Email
 		$m->setMessageCharset('ISO-8859-1');
 
 		// embebbed images
-		// @TODO
+		foreach ($images as $path) {
+			$filename = basename($path);
+			$m->addAttachmentFromFile($filename,$path,'application/octet-stream',"<$filename>",'inline');
+		}
 
 		// add attachments
 		foreach ($attachments as $attachment) {
