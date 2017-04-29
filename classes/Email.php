@@ -28,7 +28,7 @@ class Email
 
 		// never send emails from the sandbox
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') == "sandbox") return true;
+//		if($di->get('environment') == "sandbox") return true;
 		$connection = new Connection();
 
 		// get the name and domain from the email
@@ -252,7 +252,7 @@ class Email
 		$m->addTo($to);
 		$m->setFrom($from);
 		$m->setSubject($subject);
-		$m->setMessageFromString('Su cliente de correo no acepta HTML', $content);
+		$m->setMessageFromString('Su cliente de correo no acepta HTML', $body);
 
 		// set the encoding of the subject and the body
 		$m->setSubjectCharset('ISO-8859-1');

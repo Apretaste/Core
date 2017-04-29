@@ -1365,7 +1365,7 @@ class Utils
 		// get the details of the alert
 		$date = date('l jS \of F Y h:i:s A');
 		$subject = "$type: $text";
-		$body = "SEVERITY:$type<br/>TEXT:$text<br/>DATE:$date";
+		$body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: $date";
 
 		// save alert into the database
 		$connection = new Connection();
