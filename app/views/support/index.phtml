@@ -116,7 +116,7 @@
 		$.ajax({
 			url: "/support/loadCanResponseAsync",
 			method: "POST",
-			data: {"id":canId, "name":''},
+			data: {"id":canId, "name":'', "username":'username'},
 			async: false
 		}).done(function(data) {
 			$('#content').html(data);

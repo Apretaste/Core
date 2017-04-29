@@ -20,14 +20,15 @@
 				</tr>
 			</thead>
 			<tbody>
-			<?php foreach ($campaigns as $campaign) { ?>
+			<?php foreach ($campaigns as $campaign) {
+				$failure = round(($campaign->bounced*100)/$campaign->sent, 2); ?>
 				<tr>
 					<td class="text-center"><?=date("M d h:i A", strtotime($campaign->sending_date))?></td>
 					<td class="text-center"><?=$campaign->status?></td>
 					<td class="text-center"><?=$campaign->list?></td>
 					<td><?=$campaign->subject?></td>
 					<td class="text-center"><?=$campaign->sent?></td>
-					<td class="text-center"><?=$campaign->bounced?></td>
+					<td class="text-center"><?=$campaign->bounced?> (<?=$failure?>%)</td>
 					<td class="text-center">
 						<nobr>
 							<a class="btn btn-xs btn-default" target="_blank" href="/campaigns/view?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>

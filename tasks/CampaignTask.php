@@ -12,6 +12,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 	{
 		// inicialize supporting classes
 		$timeStart = time();
+		$bouncedCounter = 0;
 		$utils = new Utils();
 		$connection = new Connection();
 
@@ -97,6 +98,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
 				$status = "BOUNCED";
+				$bouncedCounter++;
 			}
 
 			// save status before moving to the next email
@@ -104,6 +106,23 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$sql .= "UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';";
 			if($person->type == "list") $sql .= "UPDATE campaign_subscribers SET sent=sent+1, status='$status' WHERE id='{$person->id}';";
 			$connection->query($sql);
+
+			// stop execution if the bounced percentage > 5%
+			if(($bouncedCounter*100)/$total > 5)
+			{
+				// save as error
+				$connection->query("UPDATE campaign SET status='ERROR' WHERE id='{$campaign->id}'");
+
+				// saving the log
+				$wwwroot = $this->di->get('path')['root'];
+				$msg = "CAMPAIGN: {$campaign->id}, MESSAGE: Error failure percent too high at $failurePercent%";
+				$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/campaigns.log");
+				$logger->log($msg);
+				$logger->close();
+
+				// stop execution
+				die($msg);
+			}
 		}
 
 		// set the campaign as SENT
