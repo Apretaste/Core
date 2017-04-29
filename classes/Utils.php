@@ -76,7 +76,6 @@ class Utils
 		else return "apretaste+{$person->username}@gmail.com";
 	}
 
-
 	/**
 	 * Format a link to be an Apretaste mailto
 	 *
@@ -1348,5 +1347,37 @@ class Utils
 		} while ( $html !== $tmp );
 
 		return $html;
+	}
+
+	/**
+	 * Create an alert and notify the alert group
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @param Enum $type: WARNING,NOTICE,ERROR
+	 */
+	public function createAlert($text, $type="WARNING")
+	{
+		// get the group from the configs file
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$email = $di->get('config')['global']['alerts'];
+
+		// get the details of the alert
+		$date = date('l jS \of F Y h:i:s A');
+		$subject = "$type: $text";
+		$body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: $date";
+
+		// save alert into the database
+		$connection = new Connection();
+		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
+
+		// send email alert to the alerts group
+		$sender = new Email();
+		$sender->sendEmail($email, $subject, $body);
+
+		// send the alert to the error log
+		error_log($subject);
+
+		return false;
 	}
 }
