@@ -252,7 +252,7 @@ class Email
 		$m->addTo($to);
 		$m->setFrom($from);
 		$m->setSubject($subject);
-		$m->setMessageFromString('Su cliente de correo no acepta HTML', $content);
+		$m->setMessageFromString('Su cliente de correo no acepta HTML', $body);
 
 		// set the encoding of the subject and the body
 		$m->setSubjectCharset('ISO-8859-1');
