@@ -18,7 +18,7 @@ class Email
 	 * @param String $body, body of the email in HTML
 	 * @param Array $images, paths to the images to embeb
 	 * @param Array $attachments, paths to the files to attach
-	 * */
+	 */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
 		// do not email if there is an error
@@ -260,13 +260,15 @@ class Email
 
 		// embebbed images
 		foreach ($images as $path) {
-			$filename = basename($path);
-			$m->addAttachmentFromFile($filename,$path,'application/octet-stream',"<$filename>",'inline');
+			$fileName = basename($path);
+			$m->addAttachmentFromFile($fileName,$path,'application/octet-stream',"<$fileName>",'inline');
 		}
 
 		// add attachments
-		foreach ($attachments as $attachment) {
-			$m->addAttachmentFromData($attachment->name, $attachment->content, $attachment->type);
+		foreach ($attachments as $path) {
+			$mimeType = mime_content_type($path);
+			$fileName = basename($path);
+			$m->addAttachmentFromFile($fileName, $path, $mimeType);
 		}
 
 		// get the API key and start MailGun client
