@@ -157,7 +157,7 @@ class SupportController extends Controller
 
 		// respond back to the user
 		$sender = new Email();
-//		$sender->setGroup("support");
+		$sender->setGroup("support");
 		$sender->sendEmail($email, $subject, $body);
 
 		// go to the list of tickets
