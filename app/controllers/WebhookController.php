@@ -1,9 +1,41 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use Aws\Sns\Message;
+use Aws\Sns\MessageValidator;
 
 class WebhookController extends Controller
 {
+	/**
+	 * To handle emails drops in Amazon
+	 */
+	public function droppedAmazonAction()
+	{
+		// get the message object
+		$message = Message::fromRawPostData();
+
+		// Validate the message
+		$validator = new MessageValidator();
+		if ($validator->isValid($message))
+		{
+			// convert string into json object
+			$json = json_decode($message['Message']);
+
+			// get the params from the message
+			$email = $json->bounce->bouncedRecipients[0]->emailAddress;
+			$domain = explode("@", $json->mail->source)[1];
+			$reason = $json->bounce->bouncedRecipients[0]->action;
+			$desc = $json->bounce->bouncedRecipients[0]->diagnosticCode;
+			$code = explode(" ", $desc)[1];
+
+			// treat the bounce
+			$this->dropped($email, $domain, $reason, $code, $desc);
+		}
+	}
+
+	/**
+	 * To handle emails drops in Mailgun
+	 */
 	public function droppedAction()
 	{
 		// do not allow empty calls
@@ -16,6 +48,15 @@ class WebhookController extends Controller
 		$code = isset($_POST['code']) ? $_POST['code'] : "";
 		$desc = isset($_POST['description']) ? str_replace("'", "", $_POST['description']) : "";
 
+		// treat the bounce
+		$this->dropped($email, $domain, $reason, $code, $desc);
+	}
+
+	/**
+	 * To handle emails drops
+	 */
+	private function dropped($email, $domain, $reason, $code, $desc)
+	{
 		// do not save Spam as hardfail
 		if (stripos($desc, 'spam') !== false) $reason = "spam";
 
