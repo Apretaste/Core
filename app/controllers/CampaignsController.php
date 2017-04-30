@@ -357,7 +357,7 @@ class CampaignsController extends Controller
 		// get variales from POST
 		$id = $this->request->getPost("id"); // for when updating
 		$subject = $this->request->getPost("subject");
-		$content = $_POST['content']; //$this->request->getPost("content");
+		$content = $this->request->getPost("content");
 		$list = $this->request->getPost("list");
 		$date = $this->request->getPost("date");
 
@@ -388,10 +388,6 @@ class CampaignsController extends Controller
 				INSERT INTO campaign (subject, list, `group`, content, sending_date)
 				VALUES ('$subject','$list','{$manager->group}','$content', '$date')";
 				
-			$f = fopen("$wwwroot/logs/queries.sql","a");
-			fputs($f, $sql."\n\n$content\n\n");
-			fputs($f, $_POST['content']);
-			fclose($f);
 			$id = $connection->query($sql);
 		}
 		else

@@ -1186,8 +1186,9 @@ class Utils
 	{
 		$imageList = [];
 		$tidy = new tidy();
-		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
-
+		//$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
+		$body = $tidy->repairString($html, array(), 'utf8');
+	
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
 
