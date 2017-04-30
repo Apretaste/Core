@@ -1233,7 +1233,7 @@ class Utils
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
 	{
 		$tidy = new tidy();
-		$body = $tidy->repairString($html, array('output-xhtml' => true), 'utf8');
+		$body = $tidy->repairString($html, array('output-xhtml' => true, 'preserve-entities' => 1), 'utf8');
 
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
