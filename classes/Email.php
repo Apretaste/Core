@@ -37,7 +37,7 @@ class Email
 		$emailDomain = $emailParts[1];
 
 		// if the recepient is from cuba, rotate
-		if(substr($emailDomain, -3) === ".cu")
+		if(substr($to, -3) === ".cu")
 		{
 			// if domain is enforced, get the provider
 			if($this->domain) {
@@ -60,6 +60,9 @@ class Email
 			$user = str_replace(array(".", "+", "-"), "", $emailName);
 			$seed = rand(80, 98);
 			$from = "{$user}{$seed}@{$this->domain}";
+
+			// clean special characters from the subject
+			$subject = preg_replace('/[^A-Za-z0-9\- ]/', '', $subject);
 
 			// send the email using the provider
 			if($provider == "mailgun") $this->sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments);
