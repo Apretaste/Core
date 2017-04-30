@@ -357,7 +357,7 @@ class CampaignsController extends Controller
 		// get variales from POST
 		$id = $this->request->getPost("id"); // for when updating
 		$subject = $this->request->getPost("subject");
-		$content = $this->request->getPost("content");
+		$content = $_POST['content']; //$this->request->getPost("content");
 		$list = $this->request->getPost("list");
 		$date = $this->request->getPost("date");
 
@@ -368,10 +368,10 @@ class CampaignsController extends Controller
 		$campaignsFolder = "$wwwroot/public/campaign";
 
 		// clean the HTML before saving
-		/*$content = str_replace("'", "&#39;", $content);
+		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 		$content = $utils->clearHtml($content);
-		*/
+		
 		//$p = strpos($content, '<body>');
 		//$content = substr($content,str)
 
