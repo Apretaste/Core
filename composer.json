@@ -10,6 +10,7 @@
 		"abeautifulsite/simpleimage": "2.6.0",
 		"phpseclib/phpseclib": "2.0.3",
 		"nette/mail": "2.2.0",
-		"daniel-zahariev/php-aws-ses": "^0.8.9"
+		"daniel-zahariev/php-aws-ses": "^0.8.9",
+		"aws/aws-php-sns-message-validator": "^1.1"
 	}
 }

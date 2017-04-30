@@ -95,7 +95,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$bounced = ""; $status = "SENT";
 			if( ! $result)
 			{
-				$utils->unsubscribeFromEmailList($person->email);
+//				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
 				$status = "BOUNCED";
 				$bouncedCounter++;
