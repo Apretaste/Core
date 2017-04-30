@@ -389,7 +389,7 @@ class CampaignsController extends Controller
 				VALUES ('$subject','$list','{$manager->group}','$content', '$date')";
 				
 			$f = fopen("$wwwroot/logs/queries.sql","a");
-			fputs($f, $sql."\n");
+			fputs($f, $sql."\n\n$content\n\n");
 			fclose($f);
 			$id = $connection->query($sql);
 		}
