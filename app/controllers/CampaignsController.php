@@ -390,6 +390,7 @@ class CampaignsController extends Controller
 				
 			$f = fopen("$wwwroot/logs/queries.sql","a");
 			fputs($f, $sql."\n\n$content\n\n");
+			fputs($f, $_POST['content']);
 			fclose($f);
 			$id = $connection->query($sql);
 		}
