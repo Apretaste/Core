@@ -384,9 +384,14 @@ class CampaignsController extends Controller
 			$manager = $security->getManager();
 
 			// save the new campaign and get its id
-			$id = $connection->query("
+			$sql = "
 				INSERT INTO campaign (subject, list, `group`, content, sending_date)
-				VALUES ('$subject','$list','{$manager->group}','$content', '$date')");
+				VALUES ('$subject','$list','{$manager->group}','$content', '$date')";
+				
+			$f = fopen("$wwwroot/logs/queries.sql","a");
+			fputs($f, $sql."\n");
+			fclose($f);
+			$id = $connection->query($sql);
 		}
 		else
 		{
