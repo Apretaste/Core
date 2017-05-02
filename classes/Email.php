@@ -46,12 +46,14 @@ class Email
 			// if domain is not enforced, get the next domain and provider
 			} else {
 				$result = $connection->query("
-					SELECT domain, sender, TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) + TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) AS tested
+					SELECT
+						domain, sender,
+						TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) - TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) AS tested
 					FROM domain
 					WHERE active = 1
 					AND `group` = '{$this->group}'
 					AND blacklist NOT LIKE '%$emailDomain%'
-					ORDER BY tested ASC LIMIT 1");
+					ORDER BY tested DESC LIMIT 1");
 				$this->domain = $result[0]->domain;
 				$provider = $result[0]->sender;
 			}
