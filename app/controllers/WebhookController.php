@@ -29,7 +29,7 @@ class WebhookController extends Controller
 			$code = explode(" ", $desc)[1];
 
 			// treat the bounce
-			$this->dropped($email, $domain, $reason, $code, $desc);
+			$this->dropped($email, $domain, 'amazon', $reason, $code, $desc);
 		}
 	}
 
@@ -49,13 +49,13 @@ class WebhookController extends Controller
 		$desc = isset($_POST['description']) ? str_replace("'", "", $_POST['description']) : "";
 
 		// treat the bounce
-		$this->dropped($email, $domain, $reason, $code, $desc);
+		$this->dropped($email, $domain, 'mailgun', $reason, $code, $desc);
 	}
 
 	/**
 	 * To handle emails drops
 	 */
-	private function dropped($email, $domain, $reason, $code, $desc)
+	private function dropped($email, $domain, $sender, $reason, $code, $desc)
 	{
 		// do not save Spam as hardfail
 		if (stripos($desc, 'spam') !== false) $reason = "spam";
@@ -90,7 +90,7 @@ class WebhookController extends Controller
 		}
 
 		// save into the database
-		$sql = "INSERT INTO delivery_dropped(email,sender,reason,code,description) VALUES ('$email','$domain','$reason','$code','$desc')";
+		$sql = "INSERT INTO delivery_dropped(email,sender,company,reason,code,description) VALUES ('$email','$domain','$sender','$reason','$code','$desc')";
 		$connection->deepQuery($sql);
 
 		// echo completion message
