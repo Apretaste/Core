@@ -98,6 +98,33 @@
 				</table>
 			</div>
 		</div>
+
+		<div class="ibox float-e-margins">
+			<div class="ibox-title">
+				<h5>Tests</h5>
+			</div>
+			<div class="ibox-content">
+				<table class="table table-condensed fullscreen">
+					<thead>
+						<tr>
+							<th>Tester</th>
+							<th class="text-center">Domains</th>
+							<th class="text-center">Date</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ($tests as $test) { ?>
+						<?php $daysElapsed = (time() - strtotime($test->inserted))/60/60/24; ?>
+						<tr <?php if($daysElapsed > 2) echo 'class="warning"'; ?> title="<?=$test->domains?>">
+							<td><?= $test->tester ?></td>
+							<td class="text-center"><?= $test->count ?></td>
+							<td class="text-center"><?= date("m/d H:i", strtotime($test->inserted)) ?></td>
+						</tr>
+						<?php } ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
 	</div>
 	<div class="col-xs-4">
 		<div class="ibox float-e-margins">
@@ -123,34 +150,6 @@
 							<td class="text-center"><?= date("m/d/y", strtotime($promoter->last_usage)) ?></td>
 						</tr>
 						<?php endforeach; ?>
-					</tbody>
-				</table>
-			</div>
-		</div>
-	</div>
-	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>Tests</h5>
-			</div>
-			<div class="ibox-content">
-				<table class="table table-condensed fullscreen">
-					<thead>
-						<tr>
-							<th>Tester</th>
-							<th class="text-center">Domains</th>
-							<th class="text-center">Date</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ($tests as $test) { ?>
-						<?php $daysElapsed = (time() - strtotime($test->inserted))/60/60/24; ?>
-						<tr <?php if($daysElapsed > 2) echo 'class="warning"'; ?> title="<?=$test->domains?>">
-							<td><?= $test->tester ?></td>
-							<td class="text-center"><?= $test->count ?></td>
-							<td class="text-center"><?= date("m/d H:i", strtotime($test->inserted)) ?></td>
-						</tr>
-						<?php } ?>
 					</tbody>
 				</table>
 			</div>
