@@ -35,6 +35,9 @@ class ManageController extends Controller
 			ON A.email = B.source
 			ORDER BY B.total DESC");
 
+		// check all tests done
+		$tests = $connection->deepQuery("SELECT * FROM test ORDER BY inserted DESC LIMIT 5");
+
 		// get totals for support widget
 		$supportNewCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
 		$supportPendingCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
@@ -44,6 +47,7 @@ class ManageController extends Controller
 		$this->view->sumCredit = $utils->getStat('person.credit.sum');
 		$this->view->utilization = $utils->getStat('utilization.count');
 		$this->view->promoters = $promoters;
+		$this->view->tests = $tests;
 		$this->view->delivery = $delivery;
 		$this->view->supportNewCount = $supportNewCount[0]->count;
 		$this->view->supportPendingCount = $supportPendingCount[0]->count;
