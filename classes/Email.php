@@ -46,12 +46,12 @@ class Email
 			// if domain is not enforced, get the next domain and provider
 			} else {
 				$result = $connection->query("
-					SELECT domain, sender
+					SELECT domain, TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) + TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) AS tested
 					FROM domain
 					WHERE active = 1
 					AND `group` = '{$this->group}'
 					AND blacklist NOT LIKE '%$emailDomain%'
-					ORDER BY last_usage ASC LIMIT 1");
+					ORDER BY tested ASC LIMIT 1");
 				$this->domain = $result[0]->domain;
 				$provider = $result[0]->sender;
 			}
@@ -61,8 +61,8 @@ class Email
 			$seed = rand(80, 98);
 			$from = "{$user}{$seed}@{$this->domain}";
 
-			// clean special characters from the subject
-			$subject = preg_replace('/[^A-Za-z0-9\- ]/', '', $subject);
+			// clean special characters from the subject and shorten to 100 characters
+			$subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $subject), 0, 100);
 
 			// send the email using the provider
 			if($provider == "mailgun") $this->sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments);
