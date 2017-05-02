@@ -113,6 +113,8 @@ class SupportController extends Controller
 		// send variables to the view
 		$this->view->title = "View ticket";
 		$this->view->chats = $chats;
+		$this->view->email = $email;
+		$this->view->name = $person ? (empty($person->first_name) ? "@{$person->username}" : $person->first_name) : "";
 		$this->view->person = $person;
 		$this->view->subject = "Re: " . $chats[count($chats)-1]->subject;
 		$this->view->cans = $cans;
