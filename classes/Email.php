@@ -46,7 +46,7 @@ class Email
 			// if domain is not enforced, get the next domain and provider
 			} else {
 				$result = $connection->query("
-					SELECT domain, TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) + TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) AS tested
+					SELECT domain, sender, TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) + TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) AS tested
 					FROM domain
 					WHERE active = 1
 					AND `group` = '{$this->group}'
