@@ -101,7 +101,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String, name of the service
 	 * @return Boolean, true if service exist
-	 * */
+	 */
 	public function serviceExist(&$serviceName)
 	{
 		// return positive if trying to invoke the secured API
@@ -109,7 +109,7 @@ class Utils
 
 		// if serviceName is an alias and not is a name
 		$db = new Connection();
-		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
+		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$serviceName';");
 
 		// then get the service name
 		if (isset($r[0]->service)) $serviceName = $r[0]->service;
@@ -129,7 +129,7 @@ class Utils
 	public function personExist($email)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
+		$res = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
 		return count($res) > 0;
 	}
 
@@ -140,11 +140,11 @@ class Utils
 	 * @param String $host, Email of the person who is inviting
 	 * @param String $guest, Email of the person invited
 	 * @return Boolean, true if the invitation is pending
-	 * */
+	 */
 	public function checkPendingInvitation($host, $guest)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
+		$res = $connection->query("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
 		return count($res) > 0;
 	}
 
@@ -153,12 +153,12 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @return Array or false
-	 * */
+	 */
 	public function getPerson($email)
 	{
 		// get the person
 		$connection = new Connection();
-		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
+		$person = $connection->query("SELECT * FROM person WHERE email = '$email'");
 
 		// return false if person cannot be found
 		if (empty($person)) return false;
@@ -178,17 +178,17 @@ class Utils
 	 * @version 3.0
 	 * @param String $email
 	 * @return String, username
-	 * */
+	 */
 	public function usernameFromEmail($email)
 	{
 		$connection = new Connection();
 		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
 		$username = substr($username, 0, 5); // get the first 5 chars
-		$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
+		$res = $connection->query("SELECT username as users FROM person WHERE username LIKE '$username%'");
 		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
 
 		// ensure the username is in reality unique
-		$res = $connection->deepQuery("SELECT username FROM person WHERE username='$username'");
+		$res = $connection->query("SELECT username FROM person WHERE username='$username'");
 		if( ! empty($res))
 		{
 			$hash = md5(uniqid().$username.$email);
@@ -213,7 +213,7 @@ class Utils
 
 		// get the email
 		$connection = new Connection();
-		$email = $connection->deepQuery("SELECT email FROM person WHERE username='$username'");
+		$email = $connection->query("SELECT email FROM person WHERE username='$username'");
 
 		// return the email or false if not found
 		if(empty($email)) return false;
@@ -231,7 +231,7 @@ class Utils
 	{
 		// get the username
 		$connection = new Connection();
-		$username = $connection->deepQuery("SELECT username FROM person WHERE email='$email'");
+		$username = $connection->query("SELECT username FROM person WHERE email='$email'");
 
 		// return the email or false if not found
 		if(empty($username)) return false;
@@ -244,7 +244,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String $serviceName, name of the service to access
 	 * @return String, path to the service, or false if the service do not exist
-	 * */
+	 */
 	public function getPathToService($serviceName)
 	{
 		// get the path to service
@@ -262,19 +262,19 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @return Array or false
-	 * */
+	 */
 	public function getCurrentRaffle()
 	{
 		// get the raffle
 		$connection = new Connection();
-		$raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+		$raffle = $connection->query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
 
 		// return false if there is no open raffle
 		if (count($raffle)==0) return false;
 		else $raffle = $raffle[0];
 
 		// get number of tickets opened
-		$openedTickets = $connection->deepQuery("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = $connection->query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
@@ -341,7 +341,7 @@ class Utils
 	 * @author hcarras
 	 * @param String $name, full name
 	 * @return Array [$firstName, $middleName, $lastName, $motherName]
-	 * */
+	 */
 	public function fullNameToNamePieces($name)
 	{
 		$namePieces = explode(" ", $name);
@@ -404,9 +404,14 @@ class Utils
 	 * @param String $to, email address of the receiver
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
-	 * */
+	 */
 	public function deliveryStatus($to, $direction="out")
 	{
+		// never block emails from the team and specially the testers
+		$connection = new Connection();
+		$managers = $connection->query("SELECT email FROM manage_users");
+		foreach ($managers as $manager) if($manager->email == $to) return "ok";
+
 		// variable to save the final response message
 		$msg = "";
 
@@ -420,8 +425,7 @@ class Utils
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
 		// block address with same requested service in last hour
-		$connection = new Connection();
-		$lastreceived = $connection->deepQuery(
+		$lastreceived = $connection->query(
 			"SELECT COUNT(id) as total
 			FROM delivery_received
 			WHERE user = '$to'
@@ -446,24 +450,24 @@ class Utils
 		// if the person received from Apretaste before, and he/she reaches again, unblock
 		if(empty($msg) && $direction=="in")
 		{
-			$times = $connection->deepQuery("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
+			$times = $connection->query("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
 			if($times[0]->times > 0)
 			{
-				$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$to'");
+				$connection->query("DELETE FROM delivery_dropped WHERE email='$to'");
 			}
 		}
 
 		// do not send any email that hardfailed before
 		if(empty($msg))
 		{
-			$hardfail = $connection->deepQuery("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
+			$hardfail = $connection->query("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
 			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
 		}
 
 		// block any previouly dropped email that had already failed for 3 times
 		if(empty($msg))
 		{
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
+			$fail = $connection->query("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 
@@ -472,14 +476,14 @@ class Utils
 		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
 		{
 			// use the cache if the email was checked before
-			$cache = $connection->deepQuery("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
+			$cache = $connection->query("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
 
 			// if the email hasen't been tested before or gave temporal errors
 			if(empty($cache) || $cache[0]->reason == "temporal")
 			{
-				 $return = $this->deepValidateEmail($to);
-				 $msg = $return[0];
-				 $code = $return[1];
+				$return = $this->deepValidateEmail($to);
+				$msg = $return[0];
+				$code = $return[1];
 			}
 			else // for emails previously tested that failed, use the cache
 			{
@@ -492,7 +496,7 @@ class Utils
 		if (empty($msg) || $msg == "ok") return "ok";
 		else
 		{
-			$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
+			$connection->query("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
 			return $msg;
 		}
 	}
@@ -505,7 +509,7 @@ class Utils
 	 * @author salvipascual
 	 * @param Email $email
 	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
-	 * */
+	 */
 	public function deepValidateEmail($email)
 	{
 		// get validation key
@@ -533,7 +537,7 @@ class Utils
 
 		// save all emails tested so we dot duplicated the check
 		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
+		$connection->query("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
 
 		return array($reason, $code);
 	}
@@ -563,12 +567,12 @@ class Utils
 		$connection = new Connection();
 
 		// get the user if there is an active token
-		$auth = $connection->deepQuery("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
+		$auth = $connection->query("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
 		if(empty($auth)) return false;
 
 		// extend the life of the token
 		$expires = date("Y-m-d", strtotime("+1 month"));
-		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
+		$connection->query("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
 	}
@@ -802,23 +806,23 @@ class Utils
 
 		// insert notification
 		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// get notification id
 		$id = false;
-		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
+		$r = $connection->query("SELECT LAST_INSERT_ID() as id;");
 		if (isset($r[0]->id)) $id = intval($r[0]->id);
 
 		// increase number of notifications
 		$sql = "UPDATE person SET notifications = notifications + 1 WHERE email = '$email';";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// If more than 50 notifications, send the notifications to the user
 		if ($notifications + 1 >= 50)
 		{
 			// getting notifications
 			$sql = "SELECT * FROM notifications WHERE email ='{$email}' AND viewed = 0 ORDER BY inserted_date DESC;";
-			$notificationsList = $connection->deepQuery($sql);
+			$notificationsList = $connection->query($sql);
 
 			if ( ! is_array($notificationsList)) $notificationsList = array();
 
@@ -832,10 +836,10 @@ class Utils
 			self::addExtraResponse($response);
 
 			// Mark as seen
-			$connection->deepQuery("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
+			$connection->query("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
 
 			// down to zero
-			$connection->deepQuery("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
+			$connection->query("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
 		}
 
 		return $id;
@@ -851,7 +855,7 @@ class Utils
 	{
 		// temporal mechanism?
 		$connection = new Connection();
-		$r = $connection->deepQuery("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
+		$r = $connection->query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
 		if ( ! isset($r[0]))
 		{
 			$r[0] = new stdClass();
@@ -862,9 +866,9 @@ class Utils
 		if (trim($notifications) == '')
 		{
 			// calculate notifications and update the number
-			$r = $connection->deepQuery("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
+			$r = $connection->query("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
-			$connection->deepQuery("UPDATE person SET notifications = $notifications WHERE email ='$email'");
+			$connection->query("UPDATE person SET notifications = $notifications WHERE email ='$email'");
 		}
 
 		return $notifications * 1;
@@ -880,7 +884,7 @@ class Utils
 	{
 		$connection = new Connection();
 		$sql = "SELECT * FROM notifications WHERE viewed = '0' AND email ='{$email}' ORDER BY inserted_date DESC LIMIT $limit;";
-		$n = $connection->deepQuery($sql);
+		$n = $connection->query($sql);
 		if ( ! is_array($n)) $n = array();
 		return $n;
 	}
@@ -921,7 +925,7 @@ class Utils
 			$sql = str_replace($param, $value, $sql);
 
 		// querying db ...
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 
 		if (!is_array($r))
 			return null;
@@ -947,12 +951,12 @@ class Utils
 	 * @param String $email
 	 * @param String64 $message
 	 * @return String
-	 * */
+	 */
 	public function decript($email, $message)
 	{
 		// get the user's private key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT privatekey FROM `keys` WHERE email='$email'");
+		$res = $connection->query("SELECT privatekey FROM `keys` WHERE email='$email'");
 		$privatekey = $res[0]->privatekey;
 
 		// create the key if it does not exist
@@ -975,12 +979,12 @@ class Utils
 	 * @param String $email
 	 * @param String $message
 	 * @return String64
-	 * */
+	 */
 	public function encript($email, $message)
 	{
 		// get the user's public key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT publickey FROM `keys` WHERE email='$email'");
+		$res = $connection->query("SELECT publickey FROM `keys` WHERE email='$email'");
 		$publickey = $res[0]->publickey;
 
 		// create the key if it does not exist
@@ -1003,7 +1007,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @return Array(privatekey, publickey)
-	 * */
+	 */
 	public function recreateRSAKeys($email)
 	{
 		// create the public and private keys
@@ -1015,7 +1019,7 @@ class Utils
 
 		// update the new keys or create a new pair
 		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
+		$connection->query("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
 
 		// return the new keys
 		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
@@ -1027,7 +1031,7 @@ class Utils
 	 * @author salvipascual
 	 * @param Integer $count, number of words selected
 	 * @return String
-	 * */
+	 */
 	public function randomSentence($count=-1)
 	{
 		// get the number of words when no param passed
@@ -1089,11 +1093,11 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String email
-	 * */
+	 */
 	public function subscribeToEmailList($email)
 	{
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET mail_list=1 WHERE email='$email'");
+		$connection->query("UPDATE person SET mail_list=1 WHERE email='$email'");
 	}
 
 	/**
@@ -1101,11 +1105,11 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String email
-	 * */
+	 */
 	public function unsubscribeFromEmailList($email)
 	{
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
+		$connection->query("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
 	/**
@@ -1123,7 +1127,7 @@ class Utils
 
 		// last win
 		$sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 		$dt = $r[0]->dt * 1;
 
 		if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
@@ -1139,7 +1143,7 @@ class Utils
 				$first = false;
 			}
 		}
-		$last_usage = $connection->deepQuery($sql);
+		$last_usage = $connection->query($sql);
 
 		// count stars
 		$d = $from_today ? 0 : 1;
@@ -1170,7 +1174,7 @@ class Utils
 				and service <> 'rememberme';";
 
 		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 
 		return $r[0]->total * 1;
 	}
@@ -1187,12 +1191,12 @@ class Utils
 		$imageList = [];
 		$tidy = new tidy();
 		$body = $tidy->repairString($html, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
-		
+
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
 
 		$images = $doc->getElementsByTagName('img');
-		  if ($images->length > 0) {
+		 if ($images->length > 0) {
 			foreach ($images as $image) {
 				$src = $image->getAttribute('src');
 				$id = "img".uniqid();
@@ -1265,10 +1269,10 @@ class Utils
 	}
 
 	/**
-	* Recursive rmdir
-	*
-	* @param string $path
-	*/
+	 * Recursive rmdir
+	 *
+	 * @param string $path
+	 */
 	public function rmdir($path){
 		if (is_dir($path)) {
 			$dir = scandir($path);
@@ -1294,7 +1298,7 @@ class Utils
 		$strData = serialize($data);
 		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
 		$connection = new Connection();
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 	}
 
 	/**
@@ -1304,7 +1308,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @return Number, percentage of completion
-	 * */
+	 */
 	public function getProfileCompletion($email)
 	{
 		$profile = $this->getPerson($email);
@@ -1326,7 +1330,7 @@ class Utils
 
 		// get the country
 		$connection = new Connection();
-		$country = $connection->deepQuery("SELECT $lang FROM countries WHERE code = '$countryCode'");
+		$country = $connection->query("SELECT $lang FROM countries WHERE code = '$countryCode'");
 
 		// return the country name or empty string
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
