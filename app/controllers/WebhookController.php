@@ -21,7 +21,7 @@ class WebhookController extends Controller
 			// save in the drops log
 			$wwwroot = $this->di->get('path')['root'];
 			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/drops.log");
-			$logger->log(print_r($message, true));
+			$logger->log("AMAZON: ".print_r($message, true));
 			$logger->close();
 
 			// convert string into json object
@@ -50,7 +50,7 @@ class WebhookController extends Controller
 		// save in the drops log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/drops.log");
-		$logger->log(print_r($_POST, true));
+		$logger->log("MAILGUN: ".print_r($_POST, true));
 		$logger->close();
 
 		// get the params from post
