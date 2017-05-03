@@ -1,30 +1,32 @@
 <div class="row">
-    <div class="col-xs-12">
-        <table id="raffleListTable" class="table">
+	<div class="col-xs-12">
+		<table class="table">
 			<thead>
 				<tr>
 					<th>Raffle description</th>
-					<th>Tickets</th>
+					<th class="text-center">Tickets</th>
 					<th class="text-center">Start Day</th>
 					<th class="text-center">End Day</th>
 				</tr>
 			</thead>
 			<tbody>
-			<?php foreach($raffleListData as $raffleListView) { ?>
+			<?php foreach($raffles as $raffle) { ?>
 				<tr>
 					<td>
-						<p><?php echo $raffleListView['itemDesc']; ?></p>
-						<?php if( ! empty($raffleListView['winner1'])) { ?>
-						<p>
-							<b>W1:</b> <?php echo $raffleListView['winner1']; ?>
-							<b>W2:</b> <?php echo $raffleListView['winner2']; ?>
-							<b>W3:</b> <?php echo $raffleListView['winner3']; ?>
-						</p>
+						<p><?=$raffle->item_desc?></p>
+						<?php if($raffle->winner_1) { ?>
+							<p>
+								<b>W1:</b> <?=$raffle->winner_1?>
+								<b>W2:</b> <?=$raffle->winner_2?>
+								<b>W3:</b> <?=$raffle->winner_3?>
+							</p>
+						<?php } else { ?>
+							<a href="/manage/getWinners?id=<?=$raffle->raffle_id?>" onclick="return confirm('Are you sure? This action is final!');">Get Raffle Winners</a>
 						<?php } ?>
 					</td>
-					<td class="text-center"><?php echo $raffleListView['tickets']; ?></td>
-					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['startDay'])); ?></td>
-					<td class="text-center"><?php echo date("Y/m/d H:i:s", strtotime($raffleListView['finishDay'])); ?></td>
+					<td class="text-center"><?=$raffle->tickets?></td>
+					<td class="text-center"><?=date("Y/m/d H:i:s", strtotime($raffle->start_date))?></td>
+					<td class="text-center"><?=date("Y/m/d H:i:s", strtotime($raffle->end_date))?></td>
 				</tr>
 			<?php } ?>
 			</tbody>
