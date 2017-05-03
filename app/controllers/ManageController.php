@@ -19,28 +19,28 @@ class ManageController extends Controller
 		$utils = new Utils();
 
 		// START delivery status widget
-		$delivered = $connection->deepQuery("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-		$dropped = $connection->deepQuery("SELECT COUNT(id) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
+		$delivered = $connection->query("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$dropped = $connection->query("SELECT COUNT(id) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
 		$delivery = array("delivered"=>$delivered[0]->sent);
 		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
 		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
 
 		// tasks status widget
-		$tasks = $connection->deepQuery("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
+		$tasks = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 
 		// measure the effectiveness of each promoter
-		$promoters = $connection->deepQuery("
+		$promoters = $connection->query("
 			SELECT A.email, A.active, A.last_usage, B.total
 			FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
 			ON A.email = B.source
 			ORDER BY B.total DESC");
 
 		// check all tests done
-		$tests = $connection->deepQuery("SELECT * FROM test ORDER BY inserted DESC LIMIT 5");
+		$tests = $connection->query("SELECT * FROM test ORDER BY inserted DESC LIMIT 5");
 
 		// get totals for support widget
-		$supportNewCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
-		$supportPendingCount = $connection->deepQuery("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
+		$supportNewCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
+		$supportPendingCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
 
 		// send data to the view
 		$this->view->totalUsers = $utils->getStat('person.count');
@@ -68,7 +68,7 @@ class ManageController extends Controller
 			FROM (SELECT count(usage_id) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
 			LEFT JOIN (SELECT count(id) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
 			ON A.inserted = B.inserted";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$visitorsWeecly = array();
 		foreach($visits as $visit)
 		{
@@ -86,7 +86,7 @@ class ManageController extends Controller
 			FROM (SELECT count(usage_id) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
 			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$visitorsMonthly = array();
 		foreach($visits as $visit)
 		{
@@ -104,7 +104,7 @@ class ManageController extends Controller
 			FROM (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
 			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$newUsers = array();
 		foreach($visits as $visit)
 		{
@@ -117,14 +117,14 @@ class ManageController extends Controller
 		// START current number of Users
 		$queryCurrentActiveUsers = "SELECT COUNT(email) as CountUsers FROM person WHERE active=1";
 		$queryCurrentTotalUsers = "SELECT COUNT(email) as CountUsers FROM person";
-		$currentActiveUsers = $connection->deepQuery($queryCurrentActiveUsers);
-		$currentTotalUsers = $connection->deepQuery($queryCurrentTotalUsers);
+		$currentActiveUsers = $connection->query($queryCurrentActiveUsers);
+		$currentTotalUsers = $connection->query($queryCurrentTotalUsers);
 		// END Current number of Users
 
 
 		// START monthly services usage
 		$query = "SELECT service, COUNT(service) as times_used FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service DESC";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$servicesUsageMonthly = array();
 		foreach($visits as $visit)
 		{
@@ -140,7 +140,7 @@ class ManageController extends Controller
 			WHERE PERIOD_DIFF(DATE_FORMAT(NOW(), '%Y%m'), DATE_FORMAT(request_time, '%Y%m')) < 4
 			GROUP BY domain
 			ORDER BY times_used DESC";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$activeDomainsMonthly = array();
 		foreach($visits as $visit)
 		{
@@ -156,7 +156,7 @@ class ManageController extends Controller
 		GROUP BY last_update
 		ORDER BY last_update DESC
 		LIMIT 30";
-		$visits = $connection->deepQuery($query);
+		$visits = $connection->query($query);
 		$updatedProfilesMonthly = array();
 		foreach($visits as $visit)
 		{
@@ -168,7 +168,7 @@ class ManageController extends Controller
 
 		// START current number of running ads
 		$queryRunningAds = "SELECT COUNT(active) AS CountAds FROM ads WHERE active=1";
-		$runningAds = $connection->deepQuery($queryRunningAds);
+		$runningAds = $connection->query($queryRunningAds);
 		// END current number of running ads
 
 
@@ -195,11 +195,11 @@ class ManageController extends Controller
 		// Users with profile vs users without profile
 		//Users with profiles
 		$queryUsersWithProfile = "SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user = 1";
-		$usersWithProfile = $connection->deepQuery($queryUsersWithProfile);
+		$usersWithProfile = $connection->query($queryUsersWithProfile);
 
 		//Users without profiles
 		$queryUsersWithOutProfile = "SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user = 0";
-		$usersWithOutProfile = $connection->deepQuery($queryUsersWithOutProfile);
+		$usersWithOutProfile = $connection->query($queryUsersWithOutProfile);
 		//End Users with profile vs users without profile
 
 		// Profile completion
@@ -219,7 +219,7 @@ class ManageController extends Controller
 			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person
 			UNION
 			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1";
-		$profileData = $connection->deepQuery($queryProfileData);
+		$profileData = $connection->query($queryProfileData);
 
 		foreach($profileData as $profilesList)
 		{
@@ -290,7 +290,7 @@ class ManageController extends Controller
 						b.province IS not NULL AND
 						b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD')
 			GROUP  BY b.province) as c";
-		$prefilesPerPravinceList = $connection->deepQuery($queryPrefilesPerPravince);
+		$prefilesPerPravinceList = $connection->query($queryPrefilesPerPravince);
 
 		foreach($prefilesPerPravinceList as $profilesList)
 		{
@@ -322,7 +322,7 @@ class ManageController extends Controller
 
 			// search for the user
 			$querryProfileSearch = "SELECT active, first_name, middle_name, last_name, mother_name, date_of_birth, TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS Age, gender, phone, eyes, skin, body_type, hair, city, province, about_me, credit, picture, email FROM person WHERE email = '$email'";
-			$profileSearch = $connection->deepQuery($querryProfileSearch);
+			$profileSearch = $connection->query($querryProfileSearch);
 
 			if($profileSearch)
 			{
@@ -377,7 +377,7 @@ class ManageController extends Controller
 
 		// mark the user inactive in the database
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET active=0 WHERE email='$email'");
+		$connection->query("UPDATE person SET active=0 WHERE email='$email'");
 
 		// email the user user letting him know
 		$email = new Email();
@@ -392,30 +392,57 @@ class ManageController extends Controller
 	 * */
 	public function rafflesAction()
 	{
-		$connection = new Connection();
-
 		// List of raffles
-		$query =
-			"SELECT A.item_desc, A.start_date, A.end_date, A.winner_1, A.winner_2, A.winner_3, count(B.raffle_id) as tickets
+		$connection = new Connection();
+		$raffles = $connection->query("
+			SELECT A.*, COUNT(B.raffle_id) as tickets
 			FROM raffle A
 			LEFT JOIN ticket B
 			ON A.raffle_id = B.raffle_id
 			GROUP BY B.raffle_id
-			ORDER BY end_date DESC";
-		$visits = $connection->deepQuery($query);
-		$raffleListCollection = array();
-		foreach($visits as $visit)
-		{
-			$raffleListCollection[] = ["itemDesc"=>$visit->item_desc, "startDay"=>$visit->start_date, "finishDay"=>$visit->end_date, "winner1"=>$visit->winner_1, "winner2"=>$visit->winner_2, "winner3"=>$visit->winner_3, "tickets"=>$visit->tickets];
-		}
+			ORDER BY end_date DESC");
 
 		// get the current number of tickets
-		$raffleCurrentTickets = $connection->deepQuery("SELECT count(ticket_id) as tickets FROM ticket WHERE raffle_id IS NULL");
-		if($raffleListCollection[0]['tickets'] == 0) $raffleListCollection[0]['tickets'] = $raffleCurrentTickets[0]->tickets;
+		$raffleCurrentTickets = $connection->query("SELECT COUNT(ticket_id) as tickets FROM ticket WHERE raffle_id IS NULL");
+		if(empty($raffles[0]->tickets)) $raffles[0]->tickets = $raffleCurrentTickets[0]->tickets;
 
 		// send values to the template
 		$this->view->title = "List of raffles";
-		$this->view->raffleListData = $raffleListCollection;
+		$this->view->raffles = $raffles;
+	}
+
+	/**
+	 * Ger raffle winners
+	 */
+	public function getWinnersAction()
+	{
+		// get the raffle id
+		$id = $this->request->get("id");
+		if(empty($id)) die("Error bad ID");
+
+		// get list of possible winners
+		$connection = new Connection();
+		$winners = $connection->query("
+			SELECT email, COUNT(email) AS cnt
+			FROM ticket
+			WHERE raffle_id IS NULL
+			AND email NOT IN (SELECT DISTINCT winner_1 FROM raffle)
+			GROUP BY email
+			ORDER BY cnt DESC
+			LIMIT 30");
+
+		// get the three winners from their tickets
+		$winner1 = $winners[rand(0, 10)]->email;
+		$winner2 = $winners[rand(11,20)]->email;
+		$winner3 = $winners[rand(21,29)]->email;
+
+		// insert the raffle winners
+		$connection->query("
+			UPDATE raffle SET winner_1='$winner1', winner_2='$winner2', winner_3='$winner3' WHERE raffle_id='$id';
+			UPDATE ticket SET raffle_id = '$id' WHERE raffle_id IS NULL;");
+
+		// go to the list of raffles
+		$this->response->redirect("manage/raffles");
 	}
 
 	/**
@@ -432,13 +459,13 @@ class ManageController extends Controller
 			//Insert the Raffle
 			$connection = new Connection();
 			$queryInsertRaffle = "INSERT INTO raffle (item_desc, start_date, end_date) VALUES ('$description','$startDate','$endDate')";
-			$insertRaffle = $connection->deepQuery($queryInsertRaffle);
+			$insertRaffle = $connection->query($queryInsertRaffle);
 
 			if($insertRaffle)
 			{
 				// get the last inserted raffle's id
 				$queryGetRaffleID = "SELECT raffle_id FROM raffle WHERE item_desc = '$description' ORDER BY raffle_id DESC LIMIT 1";
-				$getRaffleID = $connection->deepQuery($queryGetRaffleID);
+				$getRaffleID = $connection->query($queryGetRaffleID);
 
 				// get the picture name and path
 				$wwwroot = $this->di->get('path')['root'];
@@ -474,7 +501,7 @@ class ManageController extends Controller
 			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service) B
 			ON A.name = B.service
 			ORDER BY B.times_used DESC";
-		$services = $connection->deepQuery($queryServices);
+		$services = $connection->query($queryServices);
 
 		$this->view->title = "List of services (".count($services).")";
 		$this->view->services = $services;
@@ -488,7 +515,7 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		$queryAdsActive = "SELECT id, owner, time_inserted, title, clicks, impresions, paid_date, expiration_date FROM ads";
-		$ads = $connection->deepQuery($queryAdsActive);
+		$ads = $connection->query($queryAdsActive);
 
 		$this->view->title = "List of ads";
 		$this->view->ads = $ads;
@@ -515,14 +542,14 @@ class ManageController extends Controller
 			$connection = new Connection();
 			$queryInsertAds = "INSERT INTO ads (owner, title, description, expiration_date, paid_date, price)
 							   VALUES ('$adsOwner','$adsTittle','$adsDesc', '$expirationDay', '$today', '$adsPrice')";
-			$insertAd = $connection->deepQuery($queryInsertAds);
+			$insertAd = $connection->query($queryInsertAds);
 
 			if($insertAd)
 			{
 				if($_FILES["picture"]['error'] === 0)
 				{
 					$queryGetAdsID = "SELECT id FROM ads WHERE owner='$adsOwner' ORDER BY id DESC LIMIT 1";
-					$getAdID = $connection->deepQuery($queryGetAdsID);
+					$getAdID = $connection->query($queryGetAdsID);
 
 					// save the image
 					$fileName = md5($getAdID[0]->id); //Generate the picture name
@@ -558,7 +585,7 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		$queryJumper = "SELECT email, last_usage, sent_count, blocked_domains, status FROM jumper ORDER BY last_usage DESC";
-		$jumperData = $connection->deepQuery($queryJumper);
+		$jumperData = $connection->query($queryJumper);
 
 		$this->view->title = "Jumper";
 		$this->view->jumperData = $jumperData;
@@ -671,7 +698,7 @@ class ManageController extends Controller
 		}
 
 		// get the delivery status per code
-		$dropped = $connection->deepQuery($sql);
+		$dropped = $connection->query($sql);
 
 		// create the array for the view
 		$emailsDroppedChart = array();
@@ -693,11 +720,11 @@ class ManageController extends Controller
 
 		// get last 7 days of dropped emails
 		$sql = "SELECT * FROM delivery_dropped WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY inserted DESC";
-		$dropped = $connection->deepQuery($sql);
+		$dropped = $connection->query($sql);
 
 		// get last 7 days of emails received
 		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
-		$sent = $connection->deepQuery($sql)[0]->total;
+		$sent = $connection->query($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
 		$this->view->emailsDroppedChart = array_reverse($emailsDroppedChart);
@@ -720,7 +747,7 @@ class ManageController extends Controller
 		{
 			// delete the block
 			$connection = new Connection();
-			$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$userEmail'");
+			$connection->query("DELETE FROM delivery_dropped WHERE email='$userEmail'");
 
 			// email the user user letting him know
 			$email = new Email();
@@ -746,7 +773,7 @@ class ManageController extends Controller
 
 		if ( ! empty("$userEmail"))
 		{
-			$delivery = $connection->deepQuery("
+			$delivery = $connection->query("
 				SELECT * FROM (
 					(SELECT 'received' as type,
 							user,
@@ -772,7 +799,7 @@ class ManageController extends Controller
 				) AS subq1
 				ORDER BY inserted, type desc;");
 
-			$r = $connection->deepQuery("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
+			$r = $connection->query("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
 		}
 
 		$this->view->delivery = $delivery;
@@ -867,11 +894,11 @@ class ManageController extends Controller
 				break;
 		}
 
-		if ($sql!==false) $connection->deepQuery($sql);
+		if ($sql!==false) $connection->query($sql);
 
 		$querySurveys = "SELECT * FROM _survey ORDER BY ID";
 
-		$surveys = $connection->deepQuery($querySurveys);
+		$surveys = $connection->query($querySurveys);
 
 		$this->view->title = "List of surveys (".count($surveys).")";
 		$this->view->surveys = $surveys;
@@ -938,19 +965,19 @@ class ManageController extends Controller
 			break;
 		}
 
-		if ($sql!=false) $connection->deepQuery($sql);
+		if ($sql!=false) $connection->query($sql);
 
 		$survey = $this->request->get('survey');
 
-		$r = $connection->deepQuery("SELECT * FROM _survey WHERE id = '{$survey};'");
+		$r = $connection->query("SELECT * FROM _survey WHERE id = '{$survey};'");
 		if ($r !== false) {
 			$sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
 			$survey = $r[0];
-			$questions = $connection->deepQuery($sql);
+			$questions = $connection->query($sql);
 			if ($questions !== false) {
 
 				foreach ($questions as $k=>$q){
-					$answers = $connection->deepQuery("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
+					$answers = $connection->query("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
 					if ($answers==false) $answers = array();
 					$questions[$k]->answers=$answers;
 				}
@@ -1006,8 +1033,8 @@ class ManageController extends Controller
 
 		// get the delivery status per code
 		$connection = new Connection();
-		$sent = $connection->deepQuery($sqlSent);
-		$opened = $connection->deepQuery($sqlOpened);
+		$sent = $connection->query($sqlSent);
+		$opened = $connection->query($sqlOpened);
 
 		// pass info to the view
 		$this->view->title = "Remarketing";
@@ -1064,7 +1091,7 @@ class ManageController extends Controller
 					{
 						$db = new Connection();
 						$sql = "UPDATE person SET credit = credit + $credit WHERE email = '$email';";
-						$db->deepQuery($sql);
+						$db->query($sql);
 						$this->view->message = "User's credit updated successfull";
 					}
 				}
@@ -1091,7 +1118,7 @@ class ManageController extends Controller
 
 		$db = new Connection();
 
-		$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+		$ad = $db->query("SELECT * FROM ads WHERE id = $id;");
 		$this->view->ad = false;
 
 		if ($ad !== false)
@@ -1108,7 +1135,7 @@ class ManageController extends Controller
 					GROUP BY w
 					ORDER BY w";
 
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 
 			if (is_array($r))
 			{
@@ -1130,7 +1157,7 @@ class ManageController extends Controller
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY w";
 
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 			if (is_array($r))
 			{
 				foreach($r as $i)
@@ -1152,7 +1179,7 @@ class ManageController extends Controller
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY m";
 
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 
 			if (is_array($r))
 			{
@@ -1175,7 +1202,7 @@ class ManageController extends Controller
 				and YEAR(request_time) = YEAR(CURRENT_DATE)
 				GROUP BY m";
 
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 			if (is_array($r))
 			{
 				foreach($r as $i)
@@ -1196,7 +1223,7 @@ class ManageController extends Controller
 
 			// usage by age
 			$sql = "SELECT IFNULL(YEAR(CURDATE()) - YEAR(subq.date_of_birth), 0) as a, COUNT(subq.usage_id) as t FROM ($jsql) AS subq GROUP BY a;";
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 
 			$usage_by_age = array(
 				'0-16' => 0,
@@ -1228,7 +1255,7 @@ class ManageController extends Controller
 			foreach($X as $xx)
 			{
 				$usage = array();
-				$r = $db->deepQuery("SELECT subq.$xx as a, COUNT(subq.usage_id) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
+				$r = $db->query("SELECT subq.$xx as a, COUNT(subq.usage_id) as t FROM ($jsql) AS subq WHERE subq.$xx IS NOT NULL GROUP BY subq.$xx;");
 
 				if ($r != false)
 				{
@@ -1258,7 +1285,7 @@ class ManageController extends Controller
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 		$db = new Connection();
-		$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+		$ad = $db->query("SELECT * FROM ads WHERE id = $id;");
 		$this->view->ad = false;
 
 		if ($ad !== false)
@@ -1280,10 +1307,10 @@ class ManageController extends Controller
 				{
 					$sql = substr($sql,0,strlen($sql)-2);
 					$sql .= "WHERE id = $id;";
-					$db->deepQuery($sql);
+					$db->query($sql);
 				}
 
-				$ad = $db->deepQuery("SELECT * FROM ads WHERE id = $id;");
+				$ad = $db->query("SELECT * FROM ads WHERE id = $id;");
 			}
 
 			$this->view->title ="Ad targeting";
@@ -1305,7 +1332,7 @@ class ManageController extends Controller
 
 		if ($report !== false){
 			$db = new Connection();
-			$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+			$survey = $db->query("SELECT * FROM _survey WHERE id = $id;");
 			$this->view->results = $report;
 			$this->view->survey = $survey[0];
 			$this->view->title = 'Survey report';
@@ -1322,7 +1349,7 @@ class ManageController extends Controller
 	 */
 	private function getSurveyResults($id){
 		$db = new Connection();
-		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $db->query("SELECT * FROM _survey WHERE id = $id;");
 
 		$by_age = array(
 				'0-16' => 0,
@@ -1369,7 +1396,7 @@ class ManageController extends Controller
 				$field
 				ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
 
-				$r = $db->deepQuery($sql);
+				$r = $db->query($sql);
 
 				$pivots = array();
 				$totals = array();
@@ -1434,7 +1461,7 @@ class ManageController extends Controller
 				WHERE _survey.id = $id
 				ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
 
-				$survey_details = $db->deepQuery($sql);
+				$survey_details = $db->query($sql);
 
 				foreach($survey_details as $item){
 					$q = intval($item->question_id);
@@ -1501,7 +1528,7 @@ class ManageController extends Controller
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 		$db = new Connection();
-		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $db->query("SELECT * FROM _survey WHERE id = $id;");
 		$survey = $survey[0];
 		$results = $this->getSurveyResults($id);
 		$csv = array();
@@ -1574,7 +1601,7 @@ class ManageController extends Controller
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 		$db = new Connection();
-		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $db->query("SELECT * FROM _survey WHERE id = $id;");
 		if ($survey!==false){
 			$survey = $survey[0];
 
@@ -1584,7 +1611,7 @@ class ManageController extends Controller
 					count(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
 					WHERE subq.total>subq.choosen AND subq.survey = $id;";
 
-			$r = $db->deepQuery($sql);
+			$r = $db->query($sql);
 
 			$this->view->results = $r;
 			$this->view->title = "Who unfinished the survey";
@@ -1606,7 +1633,7 @@ class ManageController extends Controller
 		$id = intval($id[count($id)-1]);
 
 		$db = new Connection();
-		$survey = $db->deepQuery("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $db->query("SELECT * FROM _survey WHERE id = $id;");
 		$survey = $survey[0];
 
  		$csv = array();
@@ -1619,14 +1646,14 @@ class ManageController extends Controller
 
  		$html .= "<br/><h1>$title</h1>";
 
-		$questions = $db->deepQuery("SELECT * FROM _survey_question WHERE survey = $id;");
+		$questions = $db->query("SELECT * FROM _survey_question WHERE survey = $id;");
 
 		$i = 0;
 		$total = count($questions);
 		foreach($questions as $question)
 		{
 			//$html .= "<h2>". $question->title . "</h2>";
-			$answers = $db->deepQuery("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
+			$answers = $db->query("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 
 			$values = '';
 			foreach($answers as $ans){
@@ -1760,7 +1787,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 		$sql = "SELECT * FROM _tienda_products ORDER BY name;";
-		$products = $connection->deepQuery($sql);
+		$products = $connection->query($sql);
 
 		if (!is_array($products))
 			$products = array();
@@ -1801,13 +1828,13 @@ class ManageController extends Controller
 			$sql = "INSERT INTO _tienda_products (code, name, description, category, price, shipping_price, credits, agency, owner)
 					VALUES ('$code', '$name', '$description','$category','$price','$shipping_price','$credits','$agency','$owner');";
 
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			// add inventory
 			$sql = "INSERT INTO inventory (code, price, name, seller, service, active)
 					VALUES ('$code','$credits','$name','$owner','MERCADO',0);";
 
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			// redirect to edit product page
 			$this->view->code = $code;
@@ -1853,7 +1880,7 @@ class ManageController extends Controller
 					 owner = '$owner'
 			WHERE code = '$code';";
 
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			// update inventory
 			$sql = "
@@ -1863,7 +1890,7 @@ class ManageController extends Controller
 			  seller = '$owner'
 			WHERE code = '$code';";
 
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			$this->view->message = 'The product was updated';
 			$this->view->message_type = "success";
@@ -1903,7 +1930,7 @@ class ManageController extends Controller
 
 		$sql = "SELECT * FROM _tienda_products WHERE code = '$code';";
 
-		$product = $connection->deepQuery($sql);
+		$product = $connection->query($sql);
 
 		if ( ! is_array($product))
 		{
@@ -1981,11 +2008,11 @@ class ManageController extends Controller
 
 		// delete record from database
 		$sql = "DELETE FROM _tienda_products WHERE code = '$code';";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// delete record from inventory
 		$sql = "DELETE FROM inventory WHERE code = '$code';";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// delete related picture
 		$fn = "$wwwroot/public/products/$code";
@@ -2005,7 +2032,7 @@ class ManageController extends Controller
 	{
 		$connection = new Connection();
 		$code = $this->request->getPost('code');
-		$product = $connection->deepQuery("SELECT active FROM _tienda_products WHERE code = '$code';");
+		$product = $connection->query("SELECT active FROM _tienda_products WHERE code = '$code';");
 		if (is_array($product))
 		{
 			$product = $product[0];
@@ -2015,10 +2042,10 @@ class ManageController extends Controller
 				$toggle = '0';
 
 			$sql = "UPDATE _tienda_products SET active = '$toggle' WHERE code = '$code';";
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			$sql = "UPDATE inventory SET active = '$toggle' WHERE code = '$code';";
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 
 			echo $toggle;
 			$this->view->disable();
@@ -2039,7 +2066,7 @@ class ManageController extends Controller
 					AND NOT EXISTS (SELECT * FROM _tienda_orders WHERE _tienda_orders.id = transfer.id);";
 
 		$connection = new Connection();
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 	}
 
 	/**
@@ -2052,7 +2079,7 @@ class ManageController extends Controller
 		$this->updateMarketOrders();
 		$connection = new Connection();
 		$sql = "SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received = 0;";
-		$orders = $connection->deepQuery($sql);
+		$orders = $connection->query($sql);
 
 		if (!is_array($orders))
 			$orders = array();
@@ -2100,11 +2127,11 @@ class ManageController extends Controller
 			$sql = "UPDATE _tienda_orders SET ci = '$ci', name = '$name', address = '$address', province = '$province', phone = '$phone'
 					WHERE id = '$id';";
 
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 		}
 
 		$sql = "SELECT * FROM _tienda_orders WHERE id = '$id';";
-		$order = $connection->deepQuery($sql);
+		$order = $connection->query($sql);
 
 		if (is_array($order))
 		{
@@ -2114,7 +2141,7 @@ class ManageController extends Controller
 			$order->ready = true;
 
 			$sql = "SELECT * FROM _tienda_products WHERE code = '$order->product';";
-			$product = $connection->deepQuery($sql);
+			$product = $connection->query($sql);
 
 			if (is_array($product))
 			{
@@ -2154,7 +2181,7 @@ class ManageController extends Controller
 		$id = $id * 1;
 		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE _tienda_orders SET received = 1 WHERE id = $id;");
+		$connection->query("UPDATE _tienda_orders SET received = 1 WHERE id = $id;");
 		$this->view->message = "Order <a href=\"/manage/marketDestination/$id\">{$id}</a> was set as sent";
 		$this->view->message_type = "success";
 		return $this->dispatcher->forward(array("controller"=> "manage", "action" => "marketOrders"));
@@ -2198,7 +2225,7 @@ class ManageController extends Controller
 		$email = $manager->email;
 
 		$connection = new Connection();
-		$teachers = $connection->deepQuery("SELECT * FROM _escuela_teacher");
+		$teachers = $connection->query("SELECT * FROM _escuela_teacher");
 
 		$this->view->message = false;
 		$this->view->message_type = 'success';
@@ -2265,11 +2292,11 @@ class ManageController extends Controller
 
 		if ($sql !== false)
 		{
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 		}
 
 		$queryCourses = "SELECT * FROM _escuela_course WHERE email = '$email' ORDER BY ID";
-		$courses = $connection->deepQuery($queryCourses);
+		$courses = $connection->query($queryCourses);
 
 		$this->view->title = "School";
 		$this->view->courses = $courses;
@@ -2324,10 +2351,10 @@ class ManageController extends Controller
 
 		if ($sql !== false)
 		{
-			$connection->deepQuery($sql);
+			$connection->query($sql);
 		}
 
-		 $teachers = $connection->deepQuery("SELECT * FROM _escuela_teacher;");
+		 $teachers = $connection->query("SELECT * FROM _escuela_teacher;");
 
 		 if (!is_array($teachers))
 		 {
@@ -2358,24 +2385,24 @@ class ManageController extends Controller
 		{
 			case "up":
 				$id = $this->request->get('id');
-				$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+				$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '$id';");
 				if ($r !== false && isset($r[0]))
 				{
 					$chapter = $r[0];
-					$connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder - 1));
-					$connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE id = $id AND xorder > 1;");
+					$connection->query("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder - 1));
+					$connection->query("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE id = $id AND xorder > 1;");
 				}
 				break;
 			case "down":
 				$id = $this->request->get('id');
-				$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+				$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '$id';");
 				if ($r !== false && isset($r[0]))
 				{
 					$chapter = $r[0];
-					$max = $connection->deepQuery("SELECT max(xorder) as m FROM _escuela_chapter WHERE course = {$chapter->course};");
+					$max = $connection->query("SELECT max(xorder) as m FROM _escuela_chapter WHERE course = {$chapter->course};");
 					$max = $max[0]->m;
-					$connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder + 1));
-					$connection->deepQuery("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE id = $id AND xorder < $max;");
+					$connection->query("UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE course = {$chapter->course} AND xorder = ". ($chapter->xorder + 1));
+					$connection->query("UPDATE _escuela_chapter SET xorder = xorder + 1 WHERE id = $id AND xorder < $max;");
 
 				}
 				break;
@@ -2383,7 +2410,7 @@ class ManageController extends Controller
 			case "del":
 				$id = $this->request->get('id');
 
-				$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+				$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '$id';");
 				if ($r !== false && isset($r[0]))
 				{
 					$chapter = $r[0];
@@ -2399,14 +2426,14 @@ class ManageController extends Controller
 					"DELETE FROM _escuela_images WHERE chapter = '$id';" .
 					"COMMIT;";
 
-					$connection->deepQuery($sql);
+					$connection->query($sql);
 					$this->view->message = "The chapter #$id was deleted successful";
 				}
 				break;
 		}
 
-		$chapters = $connection->deepQuery("SELECT *, (SELECT count(_escuela_question.id) FROM _escuela_question WHERE chapter = s1.id) as questions FROM _escuela_chapter s1 WHERE course = '$course_id' ORDER BY xorder;");
-		$r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
+		$chapters = $connection->query("SELECT *, (SELECT count(_escuela_question.id) FROM _escuela_question WHERE chapter = s1.id) as questions FROM _escuela_chapter s1 WHERE course = '$course_id' ORDER BY xorder;");
+		$r = $connection->query("SELECT * FROM _escuela_course WHERE id = '$course_id';");
 		$course = $r[0];
 
 		if (!is_array($chapters))
@@ -2442,7 +2469,7 @@ class ManageController extends Controller
 		{
 			$type = 'CAPITULO';
 		}
-		$r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE id = '$course_id';");
+		$r = $connection->query("SELECT * FROM _escuela_course WHERE id = '$course_id';");
 		$course = $r[0];
 
 		$this->view->course = $course;
@@ -2479,25 +2506,25 @@ class ManageController extends Controller
 				@mkdir("$coursesFolder/$course_id");
 			}
 
-			$r = $connection->deepQuery("SELECT count(id) as total FROM _escuela_chapter WHERE course = '$course_id';");
+			$r = $connection->query("SELECT count(id) as total FROM _escuela_chapter WHERE course = '$course_id';");
 			$order = intval($r[0]->total) + 1;
 
 			if (isset($_GET['id']))
 			{
 				$id = $this->request->get('id');
 				$sql = "UPDATE _escuela_chapter SET title = '$chapterTitle', content = '$chapterContent', xtype = '$chapterType' WHERE id = '$id';";
-				$connection->deepQuery($sql);
+				$connection->query($sql);
 
 				// clear old images
 				$utils->rmdir("$wwwroot/public/courses/{$course_id}/$id");
 			}
 			else
 			{
-				$r = $connection->deepQuery("SELECT max(id) as m FROM _escuela_chapter;");
+				$r = $connection->query("SELECT max(id) as m FROM _escuela_chapter;");
 				$id = $r[0]->m + 1;
 				$sql = "INSERT INTO _escuela_chapter (id, title, content, course, xtype, xorder) VALUES ($id, '$chapterTitle', '$chapterContent', '$course_id', '$chapterType', $order);";
-				$connection->deepQuery($sql);
-				//$r = $connection->deepQuery("SELECT LAST_INSERT_ID();");
+				$connection->query($sql);
+				//$r = $connection->query("SELECT LAST_INSERT_ID();");
 				//$id = $id[0]->id;
 			}
 
@@ -2508,12 +2535,12 @@ class ManageController extends Controller
 
 			if (file_exists($chapterFolder))
 			{
-				$connection->deepQuery("DELETE FROM _escuela_images WHERE chapter = '$id';");
+				$connection->query("DELETE FROM _escuela_images WHERE chapter = '$id';");
 
 				foreach($images as $idimg => $img)
 				{
 					file_put_contents($chapterFolder."/$idimg{$imgExt}", base64_decode($img['content']));
-					$connection->deepQuery("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
+					$connection->query("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
 				}
 			}
 
@@ -2534,7 +2561,7 @@ class ManageController extends Controller
 		$this->view->message_type = 'success';
 		$this->view->title = "Edit chapter";
 
-		$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+		$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '$id';");
 
 		if (isset($r[0]))
 		{
@@ -2563,7 +2590,7 @@ class ManageController extends Controller
 		$connection = new Connection();
 		$utils = new Utils();
 
-		$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '$id';");
+		$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '$id';");
 		$chapter = $r[0];
 
 		$images = $this->getChapterImages($id);
@@ -2584,7 +2611,7 @@ class ManageController extends Controller
 	private function getChapterImages($chapter_id)
 	{
 		$connection = new Connection();
-		$r = $connection->deepQuery("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
+		$r = $connection->query("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
 		$wwwroot = $this->di->get('path')['root'];
 		$images = [];
 		if ($r !== false)
@@ -2608,7 +2635,7 @@ class ManageController extends Controller
 		$this->view->message_type = 'success';
 
 		$chapter = intval($this->request->get('chapter'));
-		$r = $connection->deepQuery("SELECT * FROM _escuela_course WHERE _escuela_course.id = (SELECT course FROM _escuela_chapter WHERE _escuela_chapter.id = '$chapter');");
+		$r = $connection->query("SELECT * FROM _escuela_course WHERE _escuela_course.id = (SELECT course FROM _escuela_chapter WHERE _escuela_chapter.id = '$chapter');");
 		$course = $r[0];
 		$course_id = $course->id;
 
@@ -2622,7 +2649,7 @@ class ManageController extends Controller
 				case "addQuestion":
 						$chapter = $this->request->getPost('chapter');
 						$title = $this->request->getPost('chapterQuestionTitle');
-						$r = $connection->deepQuery("SELECT max(xorder) as m FROM _escuela_question WHERE chapter = '$chapter';");
+						$r = $connection->query("SELECT max(xorder) as m FROM _escuela_question WHERE chapter = '$chapter';");
 						$order = $r[0]->m + 1;
 						$sql ="INSERT INTO _escuela_question (course, chapter, title, xorder) VALUES ('$course_id', '$chapter', '$title', '$order');";
 						$this->view->message = "Question <b>$title</b> was inserted successfull";
@@ -2667,19 +2694,19 @@ class ManageController extends Controller
 			break;
 		}
 
-		if ($sql!=false) $connection->deepQuery($sql);
+		if ($sql!=false) $connection->query($sql);
 
 		$chapter = $this->request->get('chapter');
 
-		$r = $connection->deepQuery("SELECT * FROM _escuela_chapter WHERE id = '{$chapter};'");
+		$r = $connection->query("SELECT * FROM _escuela_chapter WHERE id = '{$chapter};'");
 		if ($r !== false) {
 			$sql = "SELECT * FROM _escuela_question WHERE chapter = '$chapter' order by xorder;";
 			$chapter = $r[0];
-			$questions = $connection->deepQuery($sql);
+			$questions = $connection->query($sql);
 			if ($questions !== false) {
 
 				foreach ($questions as $k=>$q){
-					$answers = $connection->deepQuery("SELECT * FROM _escuela_answer WHERE question = '{$q->id}';");
+					$answers = $connection->query("SELECT * FROM _escuela_answer WHERE question = '{$q->id}';");
 					if ($answers==false) $answers = array();
 					$questions[$k]->answers=$answers;
 				}
