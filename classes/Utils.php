@@ -9,39 +9,39 @@ class Utils
 	static private $extraResponses = array();
 
 	/**
-	* Add extra response to send
-	*
-	* @param Response $response
-	*/
+	 * Add extra response to send
+	 *
+	 * @param Response $response
+	 */
 	static function addExtraResponse(Response $response)
 	{
 		self::$extraResponses[] = $response;
 	}
 
 	/**
-	* Extra responses to send
-	*
-	* @return array
-	*/
+	 * Extra responses to send
+	 *
+	 * @return array
+	 */
 	static function getExtraResponses()
 	{
 		return self::$extraResponses;
 	}
 
 	/**
-	* Clear extra responses list
-	*/
+	 * Clear extra responses list
+	 */
 	static function clearExtraResponses()
 	{
 		self::$extraResponses = array();
 	}
 
 	/**
-	* Returns a valid Apretaste email to send an email
-	*
-	* @author salvipascual
-	* @return String, email address
-	*/
+	 * Returns a valid Apretaste email to send an email
+	 *
+	 * @author salvipascual
+	 * @return String, email address
+	 */
 	public function getValidEmailAddress()
 	{
 		// @TODO improve this function to have personalized mailboxes insted of random
@@ -50,11 +50,11 @@ class Utils
 	}
 
 	/**
-	* Returns an email address to contact the customer support
-	*
-	* @author salvipascual
-	* @return String, email address
-	*/
+	 * Returns an email address to contact the customer support
+	 *
+	 * @author salvipascual
+	 * @return String, email address
+	 */
 	public function getSupportEmailAddress()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -62,12 +62,12 @@ class Utils
 	}
 
 	/**
-	* Returns the personal mailbox for a user
-	*
-	* @author salvipascual
-	* @param String $email, user's email
-	* @return String, email address
-	*/
+	 * Returns the personal mailbox for a user
+	 *
+	 * @author salvipascual
+	 * @param String $email, user's email
+	 * @return String, email address
+	 */
 	public function getUserPersonalAddress($email)
 	{
 		$person = $this->getPerson($email);
@@ -77,15 +77,15 @@ class Utils
 	}
 
 	/**
-	* Format a link to be an Apretaste mailto
-	*
-	* @author salvipascual
-	* @param String , name of the service
-	* @param String , name of the subservice, if needed
-	* @param String , pharse to search, if needed
-	* @param String , body of the email, if necessary
-	* @return String, link to add to the href section
-	*/
+	 * Format a link to be an Apretaste mailto
+	 *
+	 * @author salvipascual
+	 * @param String , name of the service
+	 * @param String , name of the subservice, if needed
+	 * @param String , pharse to search, if needed
+	 * @param String , body of the email, if necessary
+	 * @return String, link to add to the href section
+	 */
 	public function getLinkToService($service, $subservice=false, $parameter=false, $body=false)
 	{
 		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
@@ -96,12 +96,12 @@ class Utils
 	}
 
 	/**
-	* Check if the service exists
-	*
-	* @author salvipascual
-	* @param String, name of the service
-	* @return Boolean, true if service exist
-	* */
+	 * Check if the service exists
+	 *
+	 * @author salvipascual
+	 * @param String, name of the service
+	 * @return Boolean, true if service exist
+	 */
 	public function serviceExist(&$serviceName)
 	{
 		// return positive if trying to invoke the secured API
@@ -120,12 +120,12 @@ class Utils
 	}
 
 	/**
-	* Check if the Person exists in the database
-	*
-	* @author salvipascual
-	* @param String $email
-	* @return Boolean, true if Person exist
-	*/
+	 * Check if the Person exists in the database
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return Boolean, true if Person exist
+	 */
 	public function personExist($email)
 	{
 		$connection = new Connection();
@@ -134,13 +134,13 @@ class Utils
 	}
 
 	/**
-	* Check if a person was invited by the same host and it is still pending
-	*
-	* @author salvipascual
-	* @param String $host, Email of the person who is inviting
-	* @param String $guest, Email of the person invited
-	* @return Boolean, true if the invitation is pending
-	* */
+	 * Check if a person was invited by the same host and it is still pending
+	 *
+	 * @author salvipascual
+	 * @param String $host, Email of the person who is inviting
+	 * @param String $guest, Email of the person invited
+	 * @return Boolean, true if the invitation is pending
+	 */
 	public function checkPendingInvitation($host, $guest)
 	{
 		$connection = new Connection();
@@ -149,11 +149,11 @@ class Utils
 	}
 
 	/**
-	* Get a person's profile
-	*
-	* @author salvipascual
-	* @return Array or false
-	* */
+	 * Get a person's profile
+	 *
+	 * @author salvipascual
+	 * @return Array or false
+	 */
 	public function getPerson($email)
 	{
 		// get the person
@@ -172,13 +172,13 @@ class Utils
 	}
 
 	/**
-	* Create a unique username using the email
-	*
-	* @author salvipascual
-	* @version 3.0
-	* @param String $email
-	* @return String, username
-	* */
+	 * Create a unique username using the email
+	 *
+	 * @author salvipascual
+	 * @version 3.0
+	 * @param String $email
+	 * @return String, username
+	 */
 	public function usernameFromEmail($email)
 	{
 		$connection = new Connection();
@@ -200,12 +200,12 @@ class Utils
 	}
 
 	/**
-	* Get the email from an username
-	*
-	* @author salvipascual
-	* @param String $username
-	* @return String email or false
-	*/
+	 * Get the email from an username
+	 *
+	 * @author salvipascual
+	 * @param String $username
+	 * @return String email or false
+	 */
 	public function getEmailFromUsername($username)
 	{
 		// remove the @ symbol
@@ -221,12 +221,12 @@ class Utils
 	}
 
 	/**
-	* Get the username from an email
-	*
-	* @author salvipascual
-	* @param String $email
-	* @return String username or false
-	*/
+	 * Get the username from an email
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String username or false
+	 */
 	public function getUsernameFromEmail($email)
 	{
 		// get the username
@@ -239,12 +239,12 @@ class Utils
 	}
 
 	/**
-	* Get the path to a service.
-	*
-	* @author salvipascual
-	* @param String $serviceName, name of the service to access
-	* @return String, path to the service, or false if the service do not exist
-	* */
+	 * Get the path to a service.
+	 *
+	 * @author salvipascual
+	 * @param String $serviceName, name of the service to access
+	 * @return String, path to the service, or false if the service do not exist
+	 */
 	public function getPathToService($serviceName)
 	{
 		// get the path to service
@@ -258,11 +258,11 @@ class Utils
 	}
 
 	/**
-	* Return the current Raffle or false if no Raffle was found
-	*
-	* @author salvipascual
-	* @return Array or false
-	* */
+	 * Return the current Raffle or false if no Raffle was found
+	 *
+	 * @author salvipascual
+	 * @return Array or false
+	 */
 	public function getCurrentRaffle()
 	{
 		// get the raffle
@@ -290,11 +290,11 @@ class Utils
 	}
 
 	/**
-	* Generate a new random hash. Mostly to be used for temporals
-	*
-	* @author salvipascual
-	* @return String
-	*/
+	 * Generate a new random hash. Mostly to be used for temporals
+	 *
+	 * @author salvipascual
+	 * @return String
+	 */
 	public function generateRandomHash()
 	{
 		$rand = rand(0, 1000000);
@@ -303,18 +303,18 @@ class Utils
 	}
 
 	/**
-	* Reduce image size and optimize the image quality
-	*
-	* @author salvipascual
-	* @author kuma
-	* @version 2.0
-	* @param String $imagePath, path to the image
-	* @param number $width Fit to width
-	* @param number $height Fit to height
-	* @param number $quality Decrease/increase quality
-	* @param string $format Convert to format
-	* @return boolean
-	*/
+	 * Reduce image size and optimize the image quality
+	 *
+	 * @author salvipascual
+	 * @author kuma
+	 * @version 2.0
+	 * @param String $imagePath, path to the image
+	 * @param number $width Fit to width
+	 * @param number $height Fit to height
+	 * @param number $quality Decrease/increase quality
+	 * @param string $format Convert to format
+	 * @return boolean
+	 */
 	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
 		// include SimpleImage class
@@ -336,12 +336,12 @@ class Utils
 	}
 
 	/**
-	* Get the pieces of names from the full name
-	*
-	* @author hcarras
-	* @param String $name, full name
-	* @return Array [$firstName, $middleName, $lastName, $motherName]
-	* */
+	 * Get the pieces of names from the full name
+	 *
+	 * @author hcarras
+	 * @param String $name, full name
+	 * @return Array [$firstName, $middleName, $lastName, $motherName]
+	 */
 	public function fullNameToNamePieces($name)
 	{
 		$namePieces = explode(" ", $name);
@@ -398,13 +398,13 @@ class Utils
 	}
 
 	/**
-	* Checks if an email can be delivered to a certain mailbox
-	*
-	* @author salvipascual
-	* @param String $to, email address of the receiver
-	* @param Enum $direction, in or out, if we check an email received or sent
-	* @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
-	* */
+	 * Checks if an email can be delivered to a certain mailbox
+	 *
+	 * @author salvipascual
+	 * @param String $to, email address of the receiver
+	 * @param Enum $direction, in or out, if we check an email received or sent
+	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
+	 */
 	public function deliveryStatus($to, $direction="out")
 	{
 		// never block emails from the team and specially the testers
@@ -502,14 +502,14 @@ class Utils
 	}
 
 	/**
-	* Validate an email to ensure we can send it to MailGun.
-	* We pay every email validated. Please use deliveryStatus()
-	* instead, unless you are re-validating an email previously sent.
-	*
-	* @author salvipascual
-	* @param Email $email
-	* @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
-	* */
+	 * Validate an email to ensure we can send it to MailGun.
+	 * We pay every email validated. Please use deliveryStatus()
+	 * instead, unless you are re-validating an email previously sent.
+	 *
+	 * @author salvipascual
+	 * @param Email $email
+	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
+	 */
 	public function deepValidateEmail($email)
 	{
 		// get validation key
@@ -543,11 +543,11 @@ class Utils
 	}
 
 	/**
-	* Return path to the temporal folder
-	*
-	* @author Kuma
-	* @return string
-	*/
+	 * Return path to the temporal folder
+	 *
+	 * @author Kuma
+	 * @return string
+	 */
 	public function getTempDir()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -556,12 +556,12 @@ class Utils
 	}
 
 	/**
-	* Check token and retrieve the user that is logged
-	*
-	* @author salvipascual
-	* @param String token
-	* @return String email OR false
-	*/
+	 * Check token and retrieve the user that is logged
+	 *
+	 * @author salvipascual
+	 * @param String token
+	 * @return String email OR false
+	 */
 	public function detokenize($token)
 	{
 		$connection = new Connection();
@@ -578,11 +578,11 @@ class Utils
 	}
 
 	/**
-	* Clear string
-	*
-	* @param String $name
-	* @return String
-	*/
+	 * Clear string
+	 *
+	 * @param String $name
+	 * @return String
+	 */
 	public function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
 	{
 		$l = strlen($name);
@@ -601,12 +601,12 @@ class Utils
 	}
 
 	/**
-	* Recursive str replace
-	*
-	* @param mixed $search
-	* @param mixed $replace
-	* @param String $subject
-	*/
+	 * Recursive str replace
+	 *
+	 * @param mixed $search
+	 * @param mixed $replace
+	 * @param String $subject
+	 */
 	public function recursiveReplace($search, $replace, $subject)
 	{
 		$MAX = 1000;
@@ -626,11 +626,11 @@ class Utils
 	}
 
 	/**
-	* Extract emails from text
-	*
-	* @param string $text
-	* @return mixed
-	*/
+	 * Extract emails from text
+	 *
+	 * @param string $text
+	 * @return mixed
+	 */
 	public function getEmailFromText($text)
 	{
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
@@ -643,11 +643,11 @@ class Utils
 	}
 
 	/**
-	* Extract cell phone numbers from text
-	*
-	* @param string $text
-	* @return mixed
-	*/
+	 * Extract cell phone numbers from text
+	 *
+	 * @param string $text
+	 * @return mixed
+	 */
 	public function getCellFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
@@ -661,11 +661,11 @@ class Utils
 	}
 
 	/**
-	* Extact phone numbers from text
-	*
-	* @param string $text
-	* @return mixed
-	*/
+	 * Extact phone numbers from text
+	 *
+	 * @param string $text
+	 * @return mixed
+	 */
 	public function getPhoneFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
@@ -679,11 +679,11 @@ class Utils
 	}
 
 	/**
-	* Convert file size to friendly message
-	*
-	* @param integer $size
-	* @return string
-	*/
+	 * Convert file size to friendly message
+	 *
+	 * @param integer $size
+	 * @return string
+	 */
 	public function getFriendlySize($size)
 	{
 		$unit = array(
@@ -698,11 +698,11 @@ class Utils
 	}
 
 	/**
-	* Convert date from spanish to mysql
-	*
-	* @param string $spanishDate
-	* @return string
-	*/
+	 * Convert date from spanish to mysql
+	 *
+	 * @param string $spanishDate
+	 * @return string
+	 */
 	public function dateSpanishToMySQL($spanishDate)
 	{
 		$months = array(
@@ -737,11 +737,11 @@ class Utils
 	}
 
 	/**
-	* Detect province from phone number
-	*
-	* @param string $phone
-	* @return string
-	*/
+	 * Detect province from phone number
+	 *
+	 * @param string $phone
+	 * @return string
+	 */
 	public function getProvinceFromPhone($phone)
 	{
 		if (strpos($phone, "7") == 0) return 'LA_HABANA';
@@ -763,10 +763,10 @@ class Utils
 	}
 
 	/**
-	* Get today date in spanish
-	*
-	* @return string
-	*/
+	 * Get today date in spanish
+	 *
+	 * @return string
+	 */
 	public function getTodaysDateSpanishString()
 	{
 		$months = array(
@@ -789,16 +789,16 @@ class Utils
 	}
 
 	/**
-	* Insert a notification in the database
-	*
-	* @author kuma
-	* @param string $email
-	* @param string $origin
-	* @param string $text
-	* @param string $link
-	* @param string $tag
-	* @return integer
-	*/
+	 * Insert a notification in the database
+	 *
+	 * @author kuma
+	 * @param string $email
+	 * @param string $origin
+	 * @param string $text
+	 * @param string $link
+	 * @param string $tag
+	 * @return integer
+	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		$connection = new Connection();
@@ -846,11 +846,11 @@ class Utils
 	}
 
 	/**
-	* Return the number of notifications for a user
-	*
-	* @param string $email
-	* @return integer
-	*/
+	 * Return the number of notifications for a user
+	 *
+	 * @param string $email
+	 * @return integer
+	 */
 	public function getNumberOfNotifications($email)
 	{
 		// temporal mechanism?
@@ -875,11 +875,11 @@ class Utils
 	}
 
 	/**
-	* Return user's notifications
-	*
-	* @param string $email
-	* @return array
-	*/
+	 * Return user's notifications
+	 *
+	 * @param string $email
+	 * @return array
+	 */
 	public function getUnreadNotifications($email, $limit = 50)
 	{
 		$connection = new Connection();
@@ -890,13 +890,13 @@ class Utils
 	}
 
 	/**
-	* Get differents statistics
-	*
-	* @author kuma
-	* @param string $stat_name
-	* @param array $params
-	* @return mixed
-	*/
+	 * Get differents statistics
+	 *
+	 * @author kuma
+	 * @param string $stat_name
+	 * @param array $params
+	 * @return mixed
+	 */
 	public function getStat($statName = 'person.count', $params = array())
 	{
 		$sql = '';
@@ -944,14 +944,14 @@ class Utils
 	}
 
 	/**
-	* Decript a message using the user's private key.
-	* The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
-	*
-	* @author salvipascual
-	* @param String $email
-	* @param String64 $message
-	* @return String
-	* */
+	 * Decript a message using the user's private key.
+	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String64 $message
+	 * @return String
+	 */
 	public function decript($email, $message)
 	{
 		// get the user's private key
@@ -973,13 +973,13 @@ class Utils
 	}
 
 	/**
-	* Encript a message using the user's public key.
-	*
-	* @author salvipascual
-	* @param String $email
-	* @param String $message
-	* @return String64
-	* */
+	 * Encript a message using the user's public key.
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $message
+	 * @return String64
+	 */
 	public function encript($email, $message)
 	{
 		// get the user's public key
@@ -1002,12 +1002,12 @@ class Utils
 	}
 
 	/**
-	* Regenerate and return the private and public keys for a user
-	*
-	* @author salvipascual
-	* @param String $email
-	* @return Array(privatekey, publickey)
-	* */
+	 * Regenerate and return the private and public keys for a user
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return Array(privatekey, publickey)
+	 */
 	public function recreateRSAKeys($email)
 	{
 		// create the public and private keys
@@ -1026,12 +1026,12 @@ class Utils
 	}
 
 	/**
-	* Regenerate a sentense with random Spanish words
-	*
-	* @author salvipascual
-	* @param Integer $count, number of words selected
-	* @return String
-	* */
+	 * Regenerate a sentense with random Spanish words
+	 *
+	 * @author salvipascual
+	 * @param Integer $count, number of words selected
+	 * @return String
+	 */
 	public function randomSentence($count=-1)
 	{
 		// get the number of words when no param passed
@@ -1053,12 +1053,12 @@ class Utils
 	}
 
 	/**
-	* Guess the default service based on the user's email address
-	*
-	* @author salvipascual
-	* @param String $email, user's email
-	* @return string
-	**/
+	 * Guess the default service based on the user's email address
+	 *
+	 * @author salvipascual
+	 * @param String $email, user's email
+	 * @return string
+	 **/
 	public function getDefaultService($email)
 	{
 		// @TODO find a right way to do this when needed
@@ -1067,12 +1067,12 @@ class Utils
 	}
 
 	/**
-	* Get the tracking handle
-	*
-	* @author salvipascual
-	* @param String $email, in the form salvi_t{handle}@nauta.cu
-	* @return String, tracking handle
-	*/
+	 * Get the tracking handle
+	 *
+	 * @author salvipascual
+	 * @param String $email, in the form salvi_t{handle}@nauta.cu
+	 * @return String, tracking handle
+	 */
 	public function getCampaignTracking($email)
 	{
 		// if it is not a campaign, return false
@@ -1089,11 +1089,11 @@ class Utils
 	}
 
 	/**
-	* Add a new subscriber to the email list
-	*
-	* @author salvipascual
-	* @param String email
-	* */
+	 * Add a new subscriber to the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 */
 	public function subscribeToEmailList($email)
 	{
 		$connection = new Connection();
@@ -1101,11 +1101,11 @@ class Utils
 	}
 
 	/**
-	* Delete a subscriber from the email list
-	*
-	* @author salvipascual
-	* @param String email
-	* */
+	 * Delete a subscriber from the email list
+	 *
+	 * @author salvipascual
+	 * @param String email
+	 */
 	public function unsubscribeFromEmailList($email)
 	{
 		$connection = new Connection();
@@ -1113,13 +1113,13 @@ class Utils
 	}
 
 	/**
-	* Return data of raffle's stars
-	*
-	* @author kuma
-	* @param $email string
-	* @param $from_today boolean
-	* @return integer
-	*/
+	 * Return data of raffle's stars
+	 *
+	 * @author kuma
+	 * @param $email string
+	 * @param $from_today boolean
+	 * @return integer
+	 */
 	public function getRaffleStarsOf($email, $from_today = true)
 	{
 		$connection = new Connection();
@@ -1160,12 +1160,12 @@ class Utils
 	}
 
 	/**
-	* Get number of requests received from user today
-	*
-	* @author kuma
-	* @param $email
-	* @return mixed
-	*/
+	 * Get number of requests received from user today
+	 *
+	 * @author kuma
+	 * @param $email
+	 * @return mixed
+	 */
 	public function getTotalRequestsTodayOf($email)
 	{
 		$sql = "SELECT count(usage_id) as total FROM utilization
@@ -1180,12 +1180,12 @@ class Utils
 	}
 
 	/**
-	* Parsing all line images encoded as base64
-	*
-	* @param string $html
-	* @param string $prefix
-	* @return array
-	*/
+	 * Parsing all line images encoded as base64
+	 *
+	 * @param string $html
+	 * @param string $prefix
+	 * @return array
+	 */
 	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
 	{
 		$imageList = [];
@@ -1229,11 +1229,11 @@ class Utils
 	}
 
 	/**
-	* Put images as encoded as base64 to html
-	*
-	* @param string $html
-	* @return array
-	*/
+	 * Put images as encoded as base64 to html
+	 *
+	 * @param string $html
+	 * @return array
+	 */
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
 	{
 		$tidy = new tidy();
@@ -1269,10 +1269,10 @@ class Utils
 	}
 
 	/**
-	* Recursive rmdir
-	*
-	* @param string $path
-	*/
+	 * Recursive rmdir
+	 *
+	 * @param string $path
+	 */
 	public function rmdir($path){
 		if (is_dir($path)) {
 			$dir = scandir($path);
@@ -1302,13 +1302,13 @@ class Utils
 	}
 
 	/**
-	* Get the completion percentage of a profile
-	*
-	* @REMOVE delete from the system and remove
-	* @author salvipascual
-	* @param String $email
-	* @return Number, percentage of completion
-	* */
+	 * Get the completion percentage of a profile
+	 *
+	 * @REMOVE delete from the system and remove
+	 * @author salvipascual
+	 * @param String $email
+	 * @return Number, percentage of completion
+	 */
 	public function getProfileCompletion($email)
 	{
 		$profile = $this->getPerson($email);
@@ -1316,13 +1316,13 @@ class Utils
 	}
 
 	/**
-	* Get the country name based on a code
-	*
-	* @author salvipascual
-	* @param String $countryCode
-	* @param String $lang
-	* @return String
-	*/
+	 * Get the country name based on a code
+	 *
+	 * @author salvipascual
+	 * @param String $countryCode
+	 * @param String $lang
+	 * @return String
+	 */
 	function getCountryNameByCode($countryCode, $lang='es')
 	{
 		// always code in uppercase
@@ -1337,11 +1337,11 @@ class Utils
 	}
 
 	/**
-	* Clear double spaces and other stuffs from HTML content
-	*
-	* @param string $html
-	* @return mixed
-	*/
+	 * Clear double spaces and other stuffs from HTML content
+	 *
+	 * @param string $html
+	 * @return mixed
+	 */
 	public function clearHtml($html) {
 		$html = str_replace('&nbsp;',' ',$html);
 
@@ -1354,12 +1354,12 @@ class Utils
 	}
 
 	/**
-	* Create an alert and notify the alert group
-	*
-	* @author salvipascual
-	* @param String $text
-	* @param Enum $type: WARNING,NOTICE,ERROR
-	*/
+	 * Create an alert and notify the alert group
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @param Enum $type: WARNING,NOTICE,ERROR
+	 */
 	public function createAlert($text, $type="WARNING")
 	{
 		// get the group from the configs file
