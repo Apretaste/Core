@@ -25,13 +25,16 @@ class WebhookController extends Controller
 			$logger->close();
 
 			// convert string into json object
-			$json = json_decode($message['Message']);
+			$message = json_decode($message['Message']);
+
+			// accept only bounces
+			if($message->notificationType != "Bounce") die("Not a bounce");
 
 			// get the params from the message
-			$email = $json->bounce->bouncedRecipients[0]->emailAddress;
-			$domain = explode("@", $json->mail->source)[1];
-			$reason = $json->bounce->bouncedRecipients[0]->action;
-			$desc = $json->bounce->bouncedRecipients[0]->diagnosticCode;
+			$email = $message->bounce->bouncedRecipients[0]->emailAddress;
+			$domain = explode("@", $message->mail->source)[1];
+			$reason = $message->bounce->bouncedRecipients[0]->action;
+			$desc = $message->bounce->bouncedRecipients[0]->diagnosticCode;
 			$code = explode(" ", $desc)[1];
 
 			// treat the bounce
