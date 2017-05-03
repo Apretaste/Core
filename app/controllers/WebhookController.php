@@ -18,6 +18,12 @@ class WebhookController extends Controller
 		$validator = new MessageValidator();
 		if ($validator->isValid($message))
 		{
+			// save in the drops log
+			$wwwroot = $this->di->get('path')['root'];
+			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/drops.log");
+			$logger->log(print_r($message, true));
+			$logger->close();
+
 			// convert string into json object
 			$json = json_decode($message['Message']);
 
@@ -40,6 +46,12 @@ class WebhookController extends Controller
 	{
 		// do not allow empty calls
 		if(empty($_POST)) die("EMPTY CALL");
+
+		// save in the drops log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/drops.log");
+		$logger->log(print_r($_POST, true));
+		$logger->close();
 
 		// get the params from post
 		$email = $_POST['recipient'];
