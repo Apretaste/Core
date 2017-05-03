@@ -9,39 +9,39 @@ class Utils
 	static private $extraResponses = array();
 
 	/**
-	 * Add extra response to send
-	 *
-	 * @param Response $response
-	 */
+	* Add extra response to send
+	*
+	* @param Response $response
+	*/
 	static function addExtraResponse(Response $response)
 	{
 		self::$extraResponses[] = $response;
 	}
 
 	/**
-	 * Extra responses to send
-	 *
-	 * @return array
-	 */
+	* Extra responses to send
+	*
+	* @return array
+	*/
 	static function getExtraResponses()
 	{
 		return self::$extraResponses;
 	}
 
 	/**
-	 * Clear extra responses list
-	 */
+	* Clear extra responses list
+	*/
 	static function clearExtraResponses()
 	{
 		self::$extraResponses = array();
 	}
 
 	/**
-	 * Returns a valid Apretaste email to send an email
-	 *
-	 * @author salvipascual
-	 * @return String, email address
-	 */
+	* Returns a valid Apretaste email to send an email
+	*
+	* @author salvipascual
+	* @return String, email address
+	*/
 	public function getValidEmailAddress()
 	{
 		// @TODO improve this function to have personalized mailboxes insted of random
@@ -50,11 +50,11 @@ class Utils
 	}
 
 	/**
-	 * Returns an email address to contact the customer support
-	 *
-	 * @author salvipascual
-	 * @return String, email address
-	 */
+	* Returns an email address to contact the customer support
+	*
+	* @author salvipascual
+	* @return String, email address
+	*/
 	public function getSupportEmailAddress()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -62,12 +62,12 @@ class Utils
 	}
 
 	/**
-	 * Returns the personal mailbox for a user
-	 *
-	 * @author salvipascual
-	 * @param String $email, user's email
-	 * @return String, email address
-	 */
+	* Returns the personal mailbox for a user
+	*
+	* @author salvipascual
+	* @param String $email, user's email
+	* @return String, email address
+	*/
 	public function getUserPersonalAddress($email)
 	{
 		$person = $this->getPerson($email);
@@ -77,15 +77,15 @@ class Utils
 	}
 
 	/**
-	 * Format a link to be an Apretaste mailto
-	 *
-	 * @author salvipascual
-	 * @param String , name of the service
-	 * @param String , name of the subservice, if needed
-	 * @param String , pharse to search, if needed
-	 * @param String , body of the email, if necessary
-	 * @return String, link to add to the href section
-	 */
+	* Format a link to be an Apretaste mailto
+	*
+	* @author salvipascual
+	* @param String , name of the service
+	* @param String , name of the subservice, if needed
+	* @param String , pharse to search, if needed
+	* @param String , body of the email, if necessary
+	* @return String, link to add to the href section
+	*/
 	public function getLinkToService($service, $subservice=false, $parameter=false, $body=false)
 	{
 		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
@@ -96,12 +96,12 @@ class Utils
 	}
 
 	/**
-	 * Check if the service exists
-	 *
-	 * @author salvipascual
-	 * @param String, name of the service
-	 * @return Boolean, true if service exist
-	 * */
+	* Check if the service exists
+	*
+	* @author salvipascual
+	* @param String, name of the service
+	* @return Boolean, true if service exist
+	* */
 	public function serviceExist(&$serviceName)
 	{
 		// return positive if trying to invoke the secured API
@@ -109,7 +109,7 @@ class Utils
 
 		// if serviceName is an alias and not is a name
 		$db = new Connection();
-		$r = $db->deepQuery("SELECT * FROM service_alias WHERE alias = '$serviceName';");
+		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$serviceName';");
 
 		// then get the service name
 		if (isset($r[0]->service)) $serviceName = $r[0]->service;
@@ -120,45 +120,45 @@ class Utils
 	}
 
 	/**
-	 * Check if the Person exists in the database
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return Boolean, true if Person exist
-	 */
+	* Check if the Person exists in the database
+	*
+	* @author salvipascual
+	* @param String $email
+	* @return Boolean, true if Person exist
+	*/
 	public function personExist($email)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
+		$res = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
 		return count($res) > 0;
 	}
 
 	/**
-	 * Check if a person was invited by the same host and it is still pending
-	 *
-	 * @author salvipascual
-	 * @param String $host, Email of the person who is inviting
-	 * @param String $guest, Email of the person invited
-	 * @return Boolean, true if the invitation is pending
-	 * */
+	* Check if a person was invited by the same host and it is still pending
+	*
+	* @author salvipascual
+	* @param String $host, Email of the person who is inviting
+	* @param String $guest, Email of the person invited
+	* @return Boolean, true if the invitation is pending
+	* */
 	public function checkPendingInvitation($host, $guest)
 	{
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
+		$res = $connection->query("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
 		return count($res) > 0;
 	}
 
 	/**
-	 * Get a person's profile
-	 *
-	 * @author salvipascual
-	 * @return Array or false
-	 * */
+	* Get a person's profile
+	*
+	* @author salvipascual
+	* @return Array or false
+	* */
 	public function getPerson($email)
 	{
 		// get the person
 		$connection = new Connection();
-		$person = $connection->deepQuery("SELECT * FROM person WHERE email = '$email'");
+		$person = $connection->query("SELECT * FROM person WHERE email = '$email'");
 
 		// return false if person cannot be found
 		if (empty($person)) return false;
@@ -172,23 +172,23 @@ class Utils
 	}
 
 	/**
-	 * Create a unique username using the email
-	 *
-	 * @author salvipascual
-	 * @version 3.0
-	 * @param String $email
-	 * @return String, username
-	 * */
+	* Create a unique username using the email
+	*
+	* @author salvipascual
+	* @version 3.0
+	* @param String $email
+	* @return String, username
+	* */
 	public function usernameFromEmail($email)
 	{
 		$connection = new Connection();
 		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
 		$username = substr($username, 0, 5); // get the first 5 chars
-		$res = $connection->deepQuery("SELECT username as users FROM person WHERE username LIKE '$username%'");
+		$res = $connection->query("SELECT username as users FROM person WHERE username LIKE '$username%'");
 		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
 
 		// ensure the username is in reality unique
-		$res = $connection->deepQuery("SELECT username FROM person WHERE username='$username'");
+		$res = $connection->query("SELECT username FROM person WHERE username='$username'");
 		if( ! empty($res))
 		{
 			$hash = md5(uniqid().$username.$email);
@@ -200,12 +200,12 @@ class Utils
 	}
 
 	/**
-	 * Get the email from an username
-	 *
-	 * @author salvipascual
-	 * @param String $username
-	 * @return String email or false
-	 */
+	* Get the email from an username
+	*
+	* @author salvipascual
+	* @param String $username
+	* @return String email or false
+	*/
 	public function getEmailFromUsername($username)
 	{
 		// remove the @ symbol
@@ -213,7 +213,7 @@ class Utils
 
 		// get the email
 		$connection = new Connection();
-		$email = $connection->deepQuery("SELECT email FROM person WHERE username='$username'");
+		$email = $connection->query("SELECT email FROM person WHERE username='$username'");
 
 		// return the email or false if not found
 		if(empty($email)) return false;
@@ -221,17 +221,17 @@ class Utils
 	}
 
 	/**
-	 * Get the username from an email
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return String username or false
-	 */
+	* Get the username from an email
+	*
+	* @author salvipascual
+	* @param String $email
+	* @return String username or false
+	*/
 	public function getUsernameFromEmail($email)
 	{
 		// get the username
 		$connection = new Connection();
-		$username = $connection->deepQuery("SELECT username FROM person WHERE email='$email'");
+		$username = $connection->query("SELECT username FROM person WHERE email='$email'");
 
 		// return the email or false if not found
 		if(empty($username)) return false;
@@ -239,12 +239,12 @@ class Utils
 	}
 
 	/**
-	 * Get the path to a service.
-	 *
-	 * @author salvipascual
-	 * @param String $serviceName, name of the service to access
-	 * @return String, path to the service, or false if the service do not exist
-	 * */
+	* Get the path to a service.
+	*
+	* @author salvipascual
+	* @param String $serviceName, name of the service to access
+	* @return String, path to the service, or false if the service do not exist
+	* */
 	public function getPathToService($serviceName)
 	{
 		// get the path to service
@@ -258,23 +258,23 @@ class Utils
 	}
 
 	/**
-	 * Return the current Raffle or false if no Raffle was found
-	 *
-	 * @author salvipascual
-	 * @return Array or false
-	 * */
+	* Return the current Raffle or false if no Raffle was found
+	*
+	* @author salvipascual
+	* @return Array or false
+	* */
 	public function getCurrentRaffle()
 	{
 		// get the raffle
 		$connection = new Connection();
-		$raffle = $connection->deepQuery("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+		$raffle = $connection->query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
 
 		// return false if there is no open raffle
 		if (count($raffle)==0) return false;
 		else $raffle = $raffle[0];
 
 		// get number of tickets opened
-		$openedTickets = $connection->deepQuery("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = $connection->query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
@@ -290,11 +290,11 @@ class Utils
 	}
 
 	/**
-	 * Generate a new random hash. Mostly to be used for temporals
-	 *
-	 * @author salvipascual
-	 * @return String
-	 */
+	* Generate a new random hash. Mostly to be used for temporals
+	*
+	* @author salvipascual
+	* @return String
+	*/
 	public function generateRandomHash()
 	{
 		$rand = rand(0, 1000000);
@@ -303,18 +303,18 @@ class Utils
 	}
 
 	/**
-	 * Reduce image size and optimize the image quality
-	 *
-	 * @author salvipascual
-	 * @author kuma
-	 * @version 2.0
-	 * @param String $imagePath, path to the image
-	 * @param number $width Fit to width
-	 * @param number $height Fit to height
-	 * @param number $quality Decrease/increase quality
-	 * @param string $format Convert to format
-	 * @return boolean
-	 */
+	* Reduce image size and optimize the image quality
+	*
+	* @author salvipascual
+	* @author kuma
+	* @version 2.0
+	* @param String $imagePath, path to the image
+	* @param number $width Fit to width
+	* @param number $height Fit to height
+	* @param number $quality Decrease/increase quality
+	* @param string $format Convert to format
+	* @return boolean
+	*/
 	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
 		// include SimpleImage class
@@ -336,12 +336,12 @@ class Utils
 	}
 
 	/**
-	 * Get the pieces of names from the full name
-	 *
-	 * @author hcarras
-	 * @param String $name, full name
-	 * @return Array [$firstName, $middleName, $lastName, $motherName]
-	 * */
+	* Get the pieces of names from the full name
+	*
+	* @author hcarras
+	* @param String $name, full name
+	* @return Array [$firstName, $middleName, $lastName, $motherName]
+	* */
 	public function fullNameToNamePieces($name)
 	{
 		$namePieces = explode(" ", $name);
@@ -398,15 +398,20 @@ class Utils
 	}
 
 	/**
-	 * Checks if an email can be delivered to a certain mailbox
-	 *
-	 * @author salvipascual
-	 * @param String $to, email address of the receiver
-	 * @param Enum $direction, in or out, if we check an email received or sent
-	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
-	 * */
+	* Checks if an email can be delivered to a certain mailbox
+	*
+	* @author salvipascual
+	* @param String $to, email address of the receiver
+	* @param Enum $direction, in or out, if we check an email received or sent
+	* @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
+	* */
 	public function deliveryStatus($to, $direction="out")
 	{
+		// never block emails from the team and specially the testers
+		$connection = new Connection();
+		$managers = $connection->query("SELECT email FROM manage_users");
+		foreach ($managers as $manager) if($manager->email == $to) return "ok";
+
 		// variable to save the final response message
 		$msg = "";
 
@@ -420,8 +425,7 @@ class Utils
 		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
 
 		// block address with same requested service in last hour
-		$connection = new Connection();
-		$lastreceived = $connection->deepQuery(
+		$lastreceived = $connection->query(
 			"SELECT COUNT(id) as total
 			FROM delivery_received
 			WHERE user = '$to'
@@ -446,24 +450,24 @@ class Utils
 		// if the person received from Apretaste before, and he/she reaches again, unblock
 		if(empty($msg) && $direction=="in")
 		{
-			$times = $connection->deepQuery("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
+			$times = $connection->query("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
 			if($times[0]->times > 0)
 			{
-				$connection->deepQuery("DELETE FROM delivery_dropped WHERE email='$to'");
+				$connection->query("DELETE FROM delivery_dropped WHERE email='$to'");
 			}
 		}
 
 		// do not send any email that hardfailed before
 		if(empty($msg))
 		{
-			$hardfail = $connection->deepQuery("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
+			$hardfail = $connection->query("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
 			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
 		}
 
 		// block any previouly dropped email that had already failed for 3 times
 		if(empty($msg))
 		{
-			$fail = $connection->deepQuery("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
+			$fail = $connection->query("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
 			if($fail[0]->fail > 3) $msg = 'failure';
 		}
 
@@ -472,14 +476,14 @@ class Utils
 		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
 		{
 			// use the cache if the email was checked before
-			$cache = $connection->deepQuery("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
+			$cache = $connection->query("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
 
 			// if the email hasen't been tested before or gave temporal errors
 			if(empty($cache) || $cache[0]->reason == "temporal")
 			{
-				 $return = $this->deepValidateEmail($to);
-				 $msg = $return[0];
-				 $code = $return[1];
+				$return = $this->deepValidateEmail($to);
+				$msg = $return[0];
+				$code = $return[1];
 			}
 			else // for emails previously tested that failed, use the cache
 			{
@@ -492,20 +496,20 @@ class Utils
 		if (empty($msg) || $msg == "ok") return "ok";
 		else
 		{
-			$connection->deepQuery("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
+			$connection->query("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
 			return $msg;
 		}
 	}
 
 	/**
-	 * Validate an email to ensure we can send it to MailGun.
-	 * We pay every email validated. Please use deliveryStatus()
-	 * instead, unless you are re-validating an email previously sent.
-	 *
-	 * @author salvipascual
-	 * @param Email $email
-	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
-	 * */
+	* Validate an email to ensure we can send it to MailGun.
+	* We pay every email validated. Please use deliveryStatus()
+	* instead, unless you are re-validating an email previously sent.
+	*
+	* @author salvipascual
+	* @param Email $email
+	* @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
+	* */
 	public function deepValidateEmail($email)
 	{
 		// get validation key
@@ -533,17 +537,17 @@ class Utils
 
 		// save all emails tested so we dot duplicated the check
 		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
+		$connection->query("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
 
 		return array($reason, $code);
 	}
 
 	/**
-	 * Return path to the temporal folder
-	 *
-	 * @author Kuma
-	 * @return string
-	 */
+	* Return path to the temporal folder
+	*
+	* @author Kuma
+	* @return string
+	*/
 	public function getTempDir()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -552,33 +556,33 @@ class Utils
 	}
 
 	/**
-	 * Check token and retrieve the user that is logged
-	 *
-	 * @author salvipascual
-	 * @param String token
-	 * @return String email OR false
-	 */
+	* Check token and retrieve the user that is logged
+	*
+	* @author salvipascual
+	* @param String token
+	* @return String email OR false
+	*/
 	public function detokenize($token)
 	{
 		$connection = new Connection();
 
 		// get the user if there is an active token
-		$auth = $connection->deepQuery("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
+		$auth = $connection->query("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
 		if(empty($auth)) return false;
 
 		// extend the life of the token
 		$expires = date("Y-m-d", strtotime("+1 month"));
-		$connection->deepQuery("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
+		$connection->query("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
 
 		return $auth[0]->email;
 	}
 
 	/**
-	 * Clear string
-	 *
-	 * @param String $name
-	 * @return String
-	 */
+	* Clear string
+	*
+	* @param String $name
+	* @return String
+	*/
 	public function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
 	{
 		$l = strlen($name);
@@ -597,12 +601,12 @@ class Utils
 	}
 
 	/**
-	 * Recursive str replace
-	 *
-	 * @param mixed $search
-	 * @param mixed $replace
-	 * @param String $subject
-	 */
+	* Recursive str replace
+	*
+	* @param mixed $search
+	* @param mixed $replace
+	* @param String $subject
+	*/
 	public function recursiveReplace($search, $replace, $subject)
 	{
 		$MAX = 1000;
@@ -622,11 +626,11 @@ class Utils
 	}
 
 	/**
-	 * Extract emails from text
-	 *
-	 * @param string $text
-	 * @return mixed
-	 */
+	* Extract emails from text
+	*
+	* @param string $text
+	* @return mixed
+	*/
 	public function getEmailFromText($text)
 	{
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
@@ -639,11 +643,11 @@ class Utils
 	}
 
 	/**
-	 * Extract cell phone numbers from text
-	 *
-	 * @param string $text
-	 * @return mixed
-	 */
+	* Extract cell phone numbers from text
+	*
+	* @param string $text
+	* @return mixed
+	*/
 	public function getCellFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
@@ -657,11 +661,11 @@ class Utils
 	}
 
 	/**
-	 * Extact phone numbers from text
-	 *
-	 * @param string $text
-	 * @return mixed
-	 */
+	* Extact phone numbers from text
+	*
+	* @param string $text
+	* @return mixed
+	*/
 	public function getPhoneFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
@@ -675,11 +679,11 @@ class Utils
 	}
 
 	/**
-	 * Convert file size to friendly message
-	 *
-	 * @param integer $size
-	 * @return string
-	 */
+	* Convert file size to friendly message
+	*
+	* @param integer $size
+	* @return string
+	*/
 	public function getFriendlySize($size)
 	{
 		$unit = array(
@@ -694,11 +698,11 @@ class Utils
 	}
 
 	/**
-	 * Convert date from spanish to mysql
-	 *
-	 * @param string $spanishDate
-	 * @return string
-	 */
+	* Convert date from spanish to mysql
+	*
+	* @param string $spanishDate
+	* @return string
+	*/
 	public function dateSpanishToMySQL($spanishDate)
 	{
 		$months = array(
@@ -733,11 +737,11 @@ class Utils
 	}
 
 	/**
-	 * Detect province from phone number
-	 *
-	 * @param string $phone
-	 * @return string
-	 */
+	* Detect province from phone number
+	*
+	* @param string $phone
+	* @return string
+	*/
 	public function getProvinceFromPhone($phone)
 	{
 		if (strpos($phone, "7") == 0) return 'LA_HABANA';
@@ -759,10 +763,10 @@ class Utils
 	}
 
 	/**
-	 * Get today date in spanish
-	 *
-	 * @return string
-	 */
+	* Get today date in spanish
+	*
+	* @return string
+	*/
 	public function getTodaysDateSpanishString()
 	{
 		$months = array(
@@ -785,16 +789,16 @@ class Utils
 	}
 
 	/**
-	 * Insert a notification in the database
-	 *
-	 * @author kuma
-	 * @param string $email
-	 * @param string $origin
-	 * @param string $text
-	 * @param string $link
-	 * @param string $tag
-	 * @return integer
-	 */
+	* Insert a notification in the database
+	*
+	* @author kuma
+	* @param string $email
+	* @param string $origin
+	* @param string $text
+	* @param string $link
+	* @param string $tag
+	* @return integer
+	*/
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		$connection = new Connection();
@@ -802,23 +806,23 @@ class Utils
 
 		// insert notification
 		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// get notification id
 		$id = false;
-		$r = $connection->deepQuery("SELECT LAST_INSERT_ID() as id;");
+		$r = $connection->query("SELECT LAST_INSERT_ID() as id;");
 		if (isset($r[0]->id)) $id = intval($r[0]->id);
 
 		// increase number of notifications
 		$sql = "UPDATE person SET notifications = notifications + 1 WHERE email = '$email';";
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 
 		// If more than 50 notifications, send the notifications to the user
 		if ($notifications + 1 >= 50)
 		{
 			// getting notifications
 			$sql = "SELECT * FROM notifications WHERE email ='{$email}' AND viewed = 0 ORDER BY inserted_date DESC;";
-			$notificationsList = $connection->deepQuery($sql);
+			$notificationsList = $connection->query($sql);
 
 			if ( ! is_array($notificationsList)) $notificationsList = array();
 
@@ -832,26 +836,26 @@ class Utils
 			self::addExtraResponse($response);
 
 			// Mark as seen
-			$connection->deepQuery("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
+			$connection->query("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
 
 			// down to zero
-			$connection->deepQuery("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
+			$connection->query("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
 		}
 
 		return $id;
 	}
 
 	/**
-	 * Return the number of notifications for a user
-	 *
-	 * @param string $email
-	 * @return integer
-	 */
+	* Return the number of notifications for a user
+	*
+	* @param string $email
+	* @return integer
+	*/
 	public function getNumberOfNotifications($email)
 	{
 		// temporal mechanism?
 		$connection = new Connection();
-		$r = $connection->deepQuery("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
+		$r = $connection->query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
 		if ( ! isset($r[0]))
 		{
 			$r[0] = new stdClass();
@@ -862,37 +866,37 @@ class Utils
 		if (trim($notifications) == '')
 		{
 			// calculate notifications and update the number
-			$r = $connection->deepQuery("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
+			$r = $connection->query("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
-			$connection->deepQuery("UPDATE person SET notifications = $notifications WHERE email ='$email'");
+			$connection->query("UPDATE person SET notifications = $notifications WHERE email ='$email'");
 		}
 
 		return $notifications * 1;
 	}
 
 	/**
-	 * Return user's notifications
-	 *
-	 * @param string $email
-	 * @return array
-	 */
+	* Return user's notifications
+	*
+	* @param string $email
+	* @return array
+	*/
 	public function getUnreadNotifications($email, $limit = 50)
 	{
 		$connection = new Connection();
 		$sql = "SELECT * FROM notifications WHERE viewed = '0' AND email ='{$email}' ORDER BY inserted_date DESC LIMIT $limit;";
-		$n = $connection->deepQuery($sql);
+		$n = $connection->query($sql);
 		if ( ! is_array($n)) $n = array();
 		return $n;
 	}
 
 	/**
-	 * Get differents statistics
-	 *
-	 * @author kuma
-	 * @param string $stat_name
-	 * @param array $params
-	 * @return mixed
-	 */
+	* Get differents statistics
+	*
+	* @author kuma
+	* @param string $stat_name
+	* @param array $params
+	* @return mixed
+	*/
 	public function getStat($statName = 'person.count', $params = array())
 	{
 		$sql = '';
@@ -921,7 +925,7 @@ class Utils
 			$sql = str_replace($param, $value, $sql);
 
 		// querying db ...
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 
 		if (!is_array($r))
 			return null;
@@ -940,19 +944,19 @@ class Utils
 	}
 
 	/**
-	 * Decript a message using the user's private key.
-	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String64 $message
-	 * @return String
-	 * */
+	* Decript a message using the user's private key.
+	* The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
+	*
+	* @author salvipascual
+	* @param String $email
+	* @param String64 $message
+	* @return String
+	* */
 	public function decript($email, $message)
 	{
 		// get the user's private key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT privatekey FROM `keys` WHERE email='$email'");
+		$res = $connection->query("SELECT privatekey FROM `keys` WHERE email='$email'");
 		$privatekey = $res[0]->privatekey;
 
 		// create the key if it does not exist
@@ -969,18 +973,18 @@ class Utils
 	}
 
 	/**
-	 * Encript a message using the user's public key.
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String $message
-	 * @return String64
-	 * */
+	* Encript a message using the user's public key.
+	*
+	* @author salvipascual
+	* @param String $email
+	* @param String $message
+	* @return String64
+	* */
 	public function encript($email, $message)
 	{
 		// get the user's public key
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT publickey FROM `keys` WHERE email='$email'");
+		$res = $connection->query("SELECT publickey FROM `keys` WHERE email='$email'");
 		$publickey = $res[0]->publickey;
 
 		// create the key if it does not exist
@@ -998,12 +1002,12 @@ class Utils
 	}
 
 	/**
-	 * Regenerate and return the private and public keys for a user
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return Array(privatekey, publickey)
-	 * */
+	* Regenerate and return the private and public keys for a user
+	*
+	* @author salvipascual
+	* @param String $email
+	* @return Array(privatekey, publickey)
+	* */
 	public function recreateRSAKeys($email)
 	{
 		// create the public and private keys
@@ -1015,19 +1019,19 @@ class Utils
 
 		// update the new keys or create a new pair
 		$connection = new Connection();
-		$connection->deepQuery("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
+		$connection->query("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
 
 		// return the new keys
 		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
 	}
 
 	/**
-	 * Regenerate a sentense with random Spanish words
-	 *
-	 * @author salvipascual
-	 * @param Integer $count, number of words selected
-	 * @return String
-	 * */
+	* Regenerate a sentense with random Spanish words
+	*
+	* @author salvipascual
+	* @param Integer $count, number of words selected
+	* @return String
+	* */
 	public function randomSentence($count=-1)
 	{
 		// get the number of words when no param passed
@@ -1049,12 +1053,12 @@ class Utils
 	}
 
 	/**
-	 * Guess the default service based on the user's email address
-	 *
-	 * @author salvipascual
-	 * @param String $email, user's email
-	 * @return string
-	 **/
+	* Guess the default service based on the user's email address
+	*
+	* @author salvipascual
+	* @param String $email, user's email
+	* @return string
+	**/
 	public function getDefaultService($email)
 	{
 		// @TODO find a right way to do this when needed
@@ -1063,12 +1067,12 @@ class Utils
 	}
 
 	/**
-	 * Get the tracking handle
-	 *
-	 * @author salvipascual
-	 * @param String $email, in the form salvi_t{handle}@nauta.cu
-	 * @return String, tracking handle
-	 */
+	* Get the tracking handle
+	*
+	* @author salvipascual
+	* @param String $email, in the form salvi_t{handle}@nauta.cu
+	* @return String, tracking handle
+	*/
 	public function getCampaignTracking($email)
 	{
 		// if it is not a campaign, return false
@@ -1085,37 +1089,37 @@ class Utils
 	}
 
 	/**
-	 * Add a new subscriber to the email list
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
+	* Add a new subscriber to the email list
+	*
+	* @author salvipascual
+	* @param String email
+	* */
 	public function subscribeToEmailList($email)
 	{
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET mail_list=1 WHERE email='$email'");
+		$connection->query("UPDATE person SET mail_list=1 WHERE email='$email'");
 	}
 
 	/**
-	 * Delete a subscriber from the email list
-	 *
-	 * @author salvipascual
-	 * @param String email
-	 * */
+	* Delete a subscriber from the email list
+	*
+	* @author salvipascual
+	* @param String email
+	* */
 	public function unsubscribeFromEmailList($email)
 	{
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE person SET mail_list=0 WHERE email='$email'");
+		$connection->query("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
 	/**
-	 * Return data of raffle's stars
-	 *
-	 * @author kuma
-	 * @param $email string
-	 * @param $from_today boolean
-	 * @return integer
-	 */
+	* Return data of raffle's stars
+	*
+	* @author kuma
+	* @param $email string
+	* @param $from_today boolean
+	* @return integer
+	*/
 	public function getRaffleStarsOf($email, $from_today = true)
 	{
 		$connection = new Connection();
@@ -1123,7 +1127,7 @@ class Utils
 
 		// last win
 		$sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 		$dt = $r[0]->dt * 1;
 
 		if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
@@ -1139,7 +1143,7 @@ class Utils
 				$first = false;
 			}
 		}
-		$last_usage = $connection->deepQuery($sql);
+		$last_usage = $connection->query($sql);
 
 		// count stars
 		$d = $from_today ? 0 : 1;
@@ -1156,12 +1160,12 @@ class Utils
 	}
 
 	/**
-	 * Get number of requests received from user today
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @return mixed
-	 */
+	* Get number of requests received from user today
+	*
+	* @author kuma
+	* @param $email
+	* @return mixed
+	*/
 	public function getTotalRequestsTodayOf($email)
 	{
 		$sql = "SELECT count(usage_id) as total FROM utilization
@@ -1170,29 +1174,29 @@ class Utils
 				and service <> 'rememberme';";
 
 		$connection = new Connection();
-		$r = $connection->deepQuery($sql);
+		$r = $connection->query($sql);
 
 		return $r[0]->total * 1;
 	}
 
 	/**
-	 * Parsing all line images encoded as base64
-	 *
-	 * @param string $html
-	 * @param string $prefix
-	 * @return array
-	 */
+	* Parsing all line images encoded as base64
+	*
+	* @param string $html
+	* @param string $prefix
+	* @return array
+	*/
 	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
 	{
 		$imageList = [];
 		$tidy = new tidy();
 		$body = $tidy->repairString($html, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
-		
+
 		$doc = new DOMDocument();
 		@$doc->loadHTML($body);
 
 		$images = $doc->getElementsByTagName('img');
-		  if ($images->length > 0) {
+		 if ($images->length > 0) {
 			foreach ($images as $image) {
 				$src = $image->getAttribute('src');
 				$id = "img".uniqid();
@@ -1225,11 +1229,11 @@ class Utils
 	}
 
 	/**
-	 * Put images as encoded as base64 to html
-	 *
-	 * @param string $html
-	 * @return array
-	 */
+	* Put images as encoded as base64 to html
+	*
+	* @param string $html
+	* @return array
+	*/
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
 	{
 		$tidy = new tidy();
@@ -1294,17 +1298,17 @@ class Utils
 		$strData = serialize($data);
 		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
 		$connection = new Connection();
-		$connection->deepQuery($sql);
+		$connection->query($sql);
 	}
 
 	/**
-	 * Get the completion percentage of a profile
-	 *
-	 * @REMOVE delete from the system and remove
-	 * @author salvipascual
-	 * @param String $email
-	 * @return Number, percentage of completion
-	 * */
+	* Get the completion percentage of a profile
+	*
+	* @REMOVE delete from the system and remove
+	* @author salvipascual
+	* @param String $email
+	* @return Number, percentage of completion
+	* */
 	public function getProfileCompletion($email)
 	{
 		$profile = $this->getPerson($email);
@@ -1312,13 +1316,13 @@ class Utils
 	}
 
 	/**
-	 * Get the country name based on a code
-	 *
-	 * @author salvipascual
-	 * @param String $countryCode
-	 * @param String $lang
-	 * @return String
-	 */
+	* Get the country name based on a code
+	*
+	* @author salvipascual
+	* @param String $countryCode
+	* @param String $lang
+	* @return String
+	*/
 	function getCountryNameByCode($countryCode, $lang='es')
 	{
 		// always code in uppercase
@@ -1326,18 +1330,18 @@ class Utils
 
 		// get the country
 		$connection = new Connection();
-		$country = $connection->deepQuery("SELECT $lang FROM countries WHERE code = '$countryCode'");
+		$country = $connection->query("SELECT $lang FROM countries WHERE code = '$countryCode'");
 
 		// return the country name or empty string
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
 	}
 
 	/**
-	 * Clear double spaces and other stuffs from HTML content
-	 *
-	 * @param string $html
-	 * @return mixed
-	 */
+	* Clear double spaces and other stuffs from HTML content
+	*
+	* @param string $html
+	* @return mixed
+	*/
 	public function clearHtml($html) {
 		$html = str_replace('&nbsp;',' ',$html);
 
@@ -1350,12 +1354,12 @@ class Utils
 	}
 
 	/**
-	 * Create an alert and notify the alert group
-	 *
-	 * @author salvipascual
-	 * @param String $text
-	 * @param Enum $type: WARNING,NOTICE,ERROR
-	 */
+	* Create an alert and notify the alert group
+	*
+	* @author salvipascual
+	* @param String $text
+	* @param Enum $type: WARNING,NOTICE,ERROR
+	*/
 	public function createAlert($text, $type="WARNING")
 	{
 		// get the group from the configs file
