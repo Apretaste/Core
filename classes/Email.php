@@ -54,8 +54,8 @@ class Email
 					AND `group` = '{$this->group}'
 					AND blacklist NOT LIKE '%$emailDomain%'
 					ORDER BY tested DESC LIMIT 1");
-				$this->domain = $result[0]->domain;
-				$provider = $result[0]->sender;
+				if($result) $this->domain = $result[0]->domain;
+				if($result) $provider = $result[0]->sender;
 			}
 
 			// create a random email $from
