@@ -7,6 +7,7 @@ class Email
 {
 	public $group = 'apretaste';
 	public $messageid = NULL; // ID of the email to create a reply
+	public $from = NULL; // email of whom contacted Apretaste
 	public $domain = false; // force a domain for test purposes
 
 	/**
@@ -31,46 +32,43 @@ class Email
 		if($di->get('environment') == "sandbox") return true;
 		$connection = new Connection();
 
-		// get the name and domain from the email
-		$emailParts = explode("@", $to);
-		$emailName = $emailParts[0];
-		$emailDomain = $emailParts[1];
-
 		// if the recepient is from cuba, rotate
-		if(substr($to, -3) === ".cu")
+		if(substr($to, -9) === "@nauta.cu")
 		{
-			// if domain is enforced, get the provider
-			if($this->domain) {
-				$result = $connection->query("SELECT sender FROM domain WHERE domain = '{$this->domain}'");
-				$provider = $result[0]->sender;
-			// if domain is not enforced, get the next domain and provider
-			} else {
-				$result = $connection->query("
-					SELECT
-						domain, sender,
-						TIMESTAMPDIFF(SECOND, last_usage, CURRENT_TIMESTAMP) - TIMESTAMPDIFF(SECOND, last_tested, CURRENT_TIMESTAMP) AS tested
-					FROM domain
-					WHERE active = 1
-					AND `group` = '{$this->group}'
-					AND blacklist NOT LIKE '%$emailDomain%'
-					ORDER BY tested DESC LIMIT 1");
-				if($result) $this->domain = $result[0]->domain;
-				if($result) $provider = $result[0]->sender;
-			}
+			$this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
+			$provider = "gmail";
+			$from = "{$this->domain}@gmail.com";
+		}
+		// for all other non-Nauta Cuban accounts
+		elseif(substr($to, -3) === ".cu")
+		{
+			// get the name and domain from the email
+			$emailParts = explode("@", $to);
+			$emailName = $emailParts[0];
+			$emailDomain = $emailParts[1];
+
+			// get the right domain
+			$result = $connection->query("
+				SELECT domain, sender
+				FROM domain
+				WHERE active = 1
+				AND sender <> 'gmail'
+				AND blacklist NOT LIKE '%$emailDomain%'
+				ORDER BY last_usage LIMIT 1");
+
+			// error if no domain can be selected
+			if(empty($result)) return $utils->createAlert("No provider to respond to $to with subject $subject", "ERROR");
 
 			// create a random email $from
+			$this->domain = $result[0]->domain;
+			$provider = $result[0]->sender;
 			$user = str_replace(array(".", "+", "-"), "", $emailName);
 			$seed = rand(80, 98);
 			$from = "{$user}{$seed}@{$this->domain}";
 
-			// clean special characters from the subject and shorten to 100 characters
-			$subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $subject), 0, 100);
-
 			// send the email using the provider
 			if($provider == "mailgun") $this->sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments);
 			elseif($provider == "amazon") $this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
-			elseif($provider == "gmail") $this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
-			else return $utils->createAlert("No provider to respond to $to with subject $subject", "ERROR");
 		}
 		// respond to recipients outside Cuba
 		else
@@ -92,6 +90,17 @@ class Email
 			WHERE domain='{$this->domain}'");
 
 		return true;
+	}
+
+	/**
+	 * Set the email that originated the request
+	 *
+	 * @author salvipascual
+	 * @param String $id
+	 * */
+	public function setFrom($from)
+	{
+		$this->from = $from;
 	}
 
 	/**
@@ -184,25 +193,34 @@ class Email
 	 */
 	private function sendEmailViaGmail($to, $subject, $body, $images, $attachments)
 	{
-		// get next domain
+		// get all available gmail domains
 		$connection = new Connection();
-		$gmail = $connection->query("
-			SELECT * FROM delivery_gmail
-			WHERE active=1
-			AND (daily < 30 || date(last_usage) < curdate())
-			AND TIMESTAMPDIFF(MINUTE,last_usage,NOW()) > 10
-			ORDER BY last_usage ASC
-			LIMIT 1");
+		$gmails = $connection->query("SELECT domain FROM domain WHERE sender = 'gmail' AND active = '1'");
 
-		// do not continue for empty responses
-		if(empty($gmail)) return false;
+		// get the user part of the email
+		$username = str_replace(array(".","+"), "", explode("@", $to)[0]);
+
+		// get the most similar domain on the list
+		$percent = 0;
+		foreach ($gmails as $gmail) {
+			$domain = explode("+", $gmail->domain)[1];
+			similar_text ($domain, $username, $p);
+			if($p > $percent) {
+				$percent = $p;
+				$this->domain = $gmail->domain;
+			}
+		}
+
+		// get username and password
+		$username = str_replace(".", "", explode("+", $this->domain)[0]);
+		$password = $connection->query("SELECT password FROM gmail WHERE name = '$username'")[0]->password;
 
 		// create mailer
-		$from = "{$gmail[0]->name}@gmail.com";
+		$from = "{$this->domain}@gmail.com";
 		$mailer = new Nette\Mail\SmtpMailer([
 			'host' => 'smtp.gmail.com',
-			'username' => $from,
-			'password' => $gmail[0]->password,
+			'username' => $username,
+			'password' => $password,
 			'secure' => 'ssl'
 		]);
 
@@ -212,6 +230,10 @@ class Email
 		$mail->addTo($to);
 		$mail->setSubject($subject);
 		$mail->setHtmlBody($body);
+		$mail->setReturnPath($from);
+		$mail->setHeader('Sender', $from);
+		$mail->setHeader('In-Reply-To', $this->messageid);
+		$mail->setHeader('References', $this->messageid);
 
 		// add images to the template
 		foreach ($images as $image) {
@@ -232,15 +254,6 @@ class Email
 			return $utils->createAlert($msg, "ERROR");
 		}
 
-		// update the daily record
-		$lastDate = date("Y-m-d", strtotime($gmail[0]->last_usage));
-		$currentDate = date("Y-m-d");
-		$daily = $lastDate == $currentDate ? "daily=daily+1," : "";
-		$connection->query("
-			UPDATE delivery_gmail
-			SET sent=sent+1, $daily last_usage=CURRENT_TIMESTAMP
-			WHERE name='{$gmail[0]->name}'");
-
 		return true;
 	}
 
@@ -252,6 +265,9 @@ class Email
 	 */
 	private function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
 	{
+		// clean special characters from the subject and shorten to 100 characters
+		$subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $subject), 0, 100);
+
 		// prepare email to be sent
 		$m = new SimpleEmailServiceMessage();
 		$m->addTo($to);

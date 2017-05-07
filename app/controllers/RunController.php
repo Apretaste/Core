@@ -237,6 +237,7 @@ class RunController extends Controller
 
 			// let the user know that the account is blocked and stop the execution
 			$emailSender = new Email();
+			$emailSender->setFrom($fromEmail);
 			$emailSender->setRespondEmailID($messageID);
 			$emailSender->sendEmail($fromEmail, $subject, $body);
 			exit;
@@ -504,6 +505,7 @@ class RunController extends Controller
 
 				// send the email
 				$emailSender = new Email();
+				$emailSender->setFrom($fromEmail);
 				$emailSender->setGroup($serviceGroup);
 				$emailSender->sendEmail($response->email, $subject, $body, $response->images, $attachments = $response->attachments);
 			}
@@ -617,6 +619,7 @@ class RunController extends Controller
 
 			// create and configure to send email
 			$emailSender = new Email();
+			$emailSender->setFrom($fromEmail);
 			$emailSender->setGroup($serviceGroup);
 			$emailSender->setRespondEmailID($messageID);
 
