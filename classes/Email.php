@@ -35,9 +35,10 @@ class Email
 		// if the recepient is from cuba, rotate
 		if(substr($to, -9) === "@nauta.cu")
 		{
-			$this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
-			$provider = "gmail";
-			$from = "{$this->domain}@gmail.com";
+			$response = $this->sendEmailViaNode($to, $subject, $body, $images, $attachments);
+			$this->domain = $response->email->id;
+			$from = $response->email->from;
+			$provider = "node";
 		}
 		// for all other non-Nauta Cuban accounts
 		elseif(substr($to, -3) === ".cu")
@@ -90,17 +91,6 @@ class Email
 			WHERE domain='{$this->domain}'");
 
 		return true;
-	}
-
-	/**
-	 * Set the email that originated the request
-	 *
-	 * @author salvipascual
-	 * @param String $id
-	 * */
-	public function setFrom($from)
-	{
-		$this->from = $from;
 	}
 
 	/**
@@ -186,6 +176,108 @@ class Email
 	}
 
 	/**
+	 * Sends an email using our of our external nodes
+	 *
+	 * @author salvipascual
+	 * @return Boolean
+	 */
+	private function sendEmailViaNode($to, $subject, $body, $images, $attachments)
+	{
+		// get the right node to use
+		$date = date('Y-m-d');
+		$connection = new Connection();
+		$nodes = $connection->query("
+			SELECT *, (SELECT COUNT(mailbox)
+				FROM delivery_sent
+				WHERE type='node'
+				AND mailbox = nodes.`from`
+				AND DATE(inserted) = '$date'
+				GROUP BY mailbox) AS daily
+			FROM nodes
+			WHERE active = '1'");
+
+		// get the email to send the email
+		$percent = 0; $node = NULL;
+		$user = str_replace(array(".","+"), "", explode("@", $to)[0]);
+		foreach ($nodes as $n) {
+			if($n->limit <= $n->daily) continue;
+			$temp = str_replace(array(".","+"), "", explode("@", $n->from)[0]);
+			similar_text ($temp, $user, $p);
+			if($p > $percent) {
+				$percent = $p;
+				$node = $n;
+			}
+		}
+
+		// alert the team if no Node could be used
+		$utils = new Utils();
+		if(empty($node)) return $utils->createAlert("NODE: No active node to email $to", "ERROR");
+
+		// transform images to base64
+		$imagesToUpload = array();
+		foreach ($images as $image) {
+			$item = new stdClass();
+			$item->type = mime_content_type($image);
+			$item->name = basename($image);
+			$item->content = base64_encode(file_get_contents($image));
+			$imagesToUpload[] = $item;
+		}
+
+		// transform attachments to base64
+		$attachmentsToUpload = array();
+		foreach ($attachments as $attachment) {
+			$item = new stdClass();
+			$item->type = mime_content_type($attachment);
+			$item->name = basename($attachment);
+			$item->content = base64_encode(file_get_contents($attachment));
+			$attachmentsToUpload[] = $item;
+		}
+
+		// create transaction ID
+		$id = str_replace(array("+",".","@","com"), "", $node->from).date("ymd").rand();
+
+		// create the email array request
+		$params['key'] = $node->key;
+		$params['from'] = $node->from;
+		$params['host'] = $node->host;
+		$params['user'] = $node->user;
+		$params['pass'] = $node->pass;
+		$params['id'] = $id;
+		$params['messageid'] = $this->messageid;
+		$params['to'] = $to;
+		$params['subject'] = $subject;
+		$params['body'] = base64_encode($body);
+		$params['attachments'] = serialize($attachmentsToUpload);
+		$params['images'] = serialize($imagesToUpload);
+
+		// contact the Sender to send the email
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "{$node->node}/send.php");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$output = json_decode(curl_exec($ch));
+		curl_close ($ch);
+
+		// hanle errors
+		if($output->code != "200") {
+			// alert error message if an error happens
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$output->email->from} TO {$output->email->to} with ID {$output->email->id}";
+			$utils->createAlert($errMsg, "ERROR");
+
+			// insert in drops emails
+			$connection->query("
+				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
+				VALUES ('{$output->email->to}','{$output->email->from}','failed','{$output->code}','{$output->message}')");
+		}else{
+			// update delivery time
+			$connection->query("UPDATE nodes SET sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE `from`='{$node->from}'");
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Sends an email using Gmail
 	 *
 	 * @author salvipascual
@@ -263,7 +355,7 @@ class Email
 	 * @author salvipascual
 	 * @return Boolean
 	 */
-	private function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
+	public function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
 	{
 		// clean special characters from the subject and shorten to 100 characters
 		$subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $subject), 0, 100);
