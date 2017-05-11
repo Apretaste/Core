@@ -184,19 +184,15 @@ class Email
 	private function sendEmailViaNode($to, $subject, $body, $images, $attachments)
 	{
 		// get the right node to use
-		$date = date('Y-m-d');
 		$connection = new Connection();
 		$nodes = $connection->query("
-			SELECT *, (SELECT COUNT(mailbox)
-				FROM delivery_sent
-				WHERE type='node'
-				AND mailbox = nodes.`from`
-				AND DATE(inserted) = '$date'
-				GROUP BY mailbox) AS daily
-			FROM nodes
-			WHERE active = '1'");
+			UPDATE nodes SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP);
+			SELECT * FROM nodes
+			WHERE active = '1'
+			AND `limit` > daily
+			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)");
 
-		// get the email to send the email
+		// get your personal email
 		$percent = 0; $node = NULL;
 		$user = str_replace(array(".","+"), "", explode("@", $to)[0]);
 		foreach ($nodes as $n) {
@@ -260,18 +256,22 @@ class Email
 		curl_close ($ch);
 
 		// hanle errors
-		if($output->code != "200") {
+		if($output->code != "" && $output->code != "200") {
 			// alert error message if an error happens
-			$errMsg = "NODE: Sending failed: {$output->message} FROM {$output->email->from} TO {$output->email->to} with ID {$output->email->id}";
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->from} TO {$node->to} with ID $id";
 			$utils->createAlert($errMsg, "ERROR");
 
-			// insert in drops emails
+			// when error, block for 24H and add one strike
+			$blockedUntil = date("m/d/Y H:i:s", strtotime("+24 hours"));
+			$connection->query("UPDATE nodes SET blocked_until='$blockedUntil', tries=tries+1 WHERE `from` = '{$node->from}'");
+
+			// insert in drops emails and add 24h of waiting time
 			$connection->query("
 				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
-				VALUES ('{$output->email->to}','{$output->email->from}','failed','{$output->code}','{$output->message}')");
+				VALUES ('{$output->email->to}','{$output->email->from}','failed','{$output->code}','{$output->message}');");
 		}else{
 			// update delivery time
-			$connection->query("UPDATE nodes SET sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE `from`='{$node->from}'");
+			$connection->query("UPDATE nodes SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE `from`='{$node->from}'");
 		}
 
 		return $output;
