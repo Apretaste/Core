@@ -262,7 +262,7 @@ class Email
 			$utils->createAlert($errMsg, "ERROR");
 
 			// when error, block for 24H and add one strike
-			$blockedUntil = date("m/d/Y H:i:s", strtotime("+24 hours"));
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
 			$connection->query("UPDATE nodes SET blocked_until='$blockedUntil', tries=tries+1 WHERE `from` = '{$node->from}'");
 
 			// insert in drops emails and add 24h of waiting time
