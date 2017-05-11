@@ -36,8 +36,8 @@ class Email
 		if(substr($to, -9) === "@nauta.cu")
 		{
 			$response = $this->sendEmailViaNode($to, $subject, $body, $images, $attachments);
-			$this->domain = $response->email->id;
-			$from = $response->email->from;
+			$this->domain = isset($response->email->id) ? $response->email->id : "";
+			$from = isset($response->email->from) ? $response->email->from : "";
 			$provider = "node";
 		}
 		// for all other non-Nauta Cuban accounts
@@ -258,7 +258,7 @@ class Email
 		// hanle errors
 		if($output->code != "" && $output->code != "200") {
 			// alert error message if an error happens
-			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->from} TO {$node->to} with ID $id";
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->from} TO $to with ID $id";
 			$utils->createAlert($errMsg, "ERROR");
 
 			// when error, block for 24H and add one strike
@@ -268,7 +268,7 @@ class Email
 			// insert in drops emails and add 24h of waiting time
 			$connection->query("
 				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
-				VALUES ('{$output->email->to}','{$output->email->from}','failed','{$output->code}','{$output->message}');");
+				VALUES ('$to','{$node->from}','failed','{$output->code}','{$output->message}');");
 		}else{
 			// update delivery time
 			$connection->query("UPDATE nodes SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE `from`='{$node->from}'");
