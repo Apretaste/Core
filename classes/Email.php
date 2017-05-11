@@ -185,8 +185,8 @@ class Email
 	{
 		// get the right node to use
 		$connection = new Connection();
+		$connection->query("UPDATE nodes SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 		$nodes = $connection->query("
-			UPDATE nodes SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP);
 			SELECT * FROM nodes
 			WHERE active = '1'
 			AND `limit` > daily
