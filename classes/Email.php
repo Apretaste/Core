@@ -181,23 +181,24 @@ class Email
 	 * @author salvipascual
 	 * @return Boolean
 	 */
-	private function sendEmailViaNode($to, $subject, $body, $images, $attachments)
+	public function sendEmailViaNode($to, $subject, $body, $images, $attachments)
 	{
 		// get the right node to use
 		$connection = new Connection();
-		$connection->query("UPDATE nodes SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 		$nodes = $connection->query("
-			SELECT * FROM nodes
-			WHERE active = '1'
-			AND `limit` > daily
-			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)");
+			SELECT * FROM nodes_output A JOIN nodes B
+			ON A.node = B.`key`
+			WHERE A.active = '1'
+			AND A.`limit` > A.daily
+			AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
 		// get your personal email
 		$percent = 0; $node = NULL;
 		$user = str_replace(array(".","+"), "", explode("@", $to)[0]);
 		foreach ($nodes as $n) {
 			if($n->limit <= $n->daily) continue;
-			$temp = str_replace(array(".","+"), "", explode("@", $n->from)[0]);
+			$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
 			similar_text ($temp, $user, $p);
 			if($p > $percent) {
 				$percent = $p;
@@ -230,11 +231,12 @@ class Email
 		}
 
 		// create transaction ID
-		$id = str_replace(array("+",".","@","com"), "", $node->from).date("ymd").rand();
+		// @TODO should come from the ID of the table email
+		$id = str_replace(array("+",".","@","com"), "", $node->email).date("ymd").rand();
 
 		// create the email array request
 		$params['key'] = $node->key;
-		$params['from'] = $node->from;
+		$params['from'] = $node->email;
 		$params['host'] = $node->host;
 		$params['user'] = $node->user;
 		$params['pass'] = $node->pass;
@@ -248,7 +250,7 @@ class Email
 
 		// contact the Sender to send the email
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$node->node}/send.php");
+		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -258,20 +260,20 @@ class Email
 		// hanle errors
 		if($output->code != "" && $output->code != "200") {
 			// alert error message if an error happens
-			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->from} TO $to with ID $id";
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->email} TO $to with ID $id";
 			$utils->createAlert($errMsg, "ERROR");
 
 			// when error, block for 24H and add one strike
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes SET blocked_until='$blockedUntil', tries=tries+1 WHERE `from` = '{$node->from}'");
+			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil' WHERE email = '{$node->email}'");
 
 			// insert in drops emails and add 24h of waiting time
 			$connection->query("
 				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
-				VALUES ('$to','{$node->from}','failed','{$output->code}','{$output->message}');");
+				VALUES ('$to','{$node->email}','failed','{$output->code}','{$output->message}');");
 		}else{
 			// update delivery time
-			$connection->query("UPDATE nodes SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE `from`='{$node->from}'");
+			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='{$node->email}'");
 		}
 
 		return $output;
