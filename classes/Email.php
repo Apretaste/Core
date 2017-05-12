@@ -181,7 +181,7 @@ class Email
 	 * @author salvipascual
 	 * @return Boolean
 	 */
-	public function sendEmailViaNode($to, $subject, $body, $images, $attachments)
+	private function sendEmailViaNode($to, $subject, $body, $images, $attachments)
 	{
 		// get the right node to use
 		$connection = new Connection();
