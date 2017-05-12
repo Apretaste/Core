@@ -20,6 +20,38 @@
 	<div class="col-xs-4">
 		<div class="ibox float-e-margins">
 			 <div class="ibox-title">
+				<h5><a href="/nodes">Output emails</a></h5>
+			</div>
+			<div class="ibox-content">
+				<table class="table table-condensed fullscreen">
+					<tbody>
+						<tr>
+							<td>Total number of emails</td>
+							<td class="text-center"><?=$node['total']?></td>
+						</tr>
+						<tr>
+							<td><span class='glyphicon glyphicon-ok alert-success' aria-hidden='true'></span> Running emails</td>
+							<td class="text-center"><?=$node['ok']?></td>
+						</tr>
+						<tr>
+							<td><span class='glyphicon glyphicon-alert alert-info' aria-hidden='true'></span> Emails limited</td>
+							<td class="text-center"><?=$node['limit']?></td>
+						</tr>
+						<tr>
+							<td><span class='glyphicon glyphicon-time alert-warning' aria-hidden='true'></span> Emails waiting</td>
+							<td class="text-center"><?=$node['waiting']?></td>
+						</tr>
+						<tr>
+							<td><span class='glyphicon glyphicon-remove alert-danger' aria-hidden='true'></span> Emails inactive</td>
+							<td class="text-center"><?=$node['inactive']?></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="ibox float-e-margins">
+			 <div class="ibox-title">
 				<h5><a href="/manage/remarketing">Tasks status</a></h5>
 			</div>
 			<div class="ibox-content">
