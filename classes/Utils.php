@@ -46,12 +46,12 @@ class Utils
 	{
 		// get a random mailbox
 		$connection = new Connection();
-		$node = $connection->query("SELECT user FROM nodes WHERE input=1 ORDER BY RAND() LIMIT 1");
-		$name = str_replace(array(".","+"), "", explode("@", $node[0]->user)[0]);
+		$node = $connection->query("SELECT email FROM nodes_input WHERE active=1 ORDER BY RAND() LIMIT 1");
+		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
 
 		// construct the mailbox
 		$half = $this->randomSentence(1);
-		return "$name+{$half}@gmail.com";
+		return "$name+$half@gmail.com";
 	}
 
 	/**
