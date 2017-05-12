@@ -7,7 +7,7 @@ class NodesController extends Controller
 	// do not let anonymous users pass
 	public function initialize(){
 		$security = new Security();
-//		$security->enforceLogin();
+		$security->enforceLogin();
 	}
 
 	/**
