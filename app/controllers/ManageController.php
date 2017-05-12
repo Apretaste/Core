@@ -42,6 +42,16 @@ class ManageController extends Controller
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
 		$supportPendingCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
 
+		// get info for the emails widget
+		$nodes = $connection->query("SELECT * FROM nodes_output");
+		$node = array("total" => count($nodes), "limit" => 0, "waiting" => 0, "inactive" => 0);
+		foreach ($nodes as $n) {
+			if(empty($n->active)) {$node['inactive']++; continue;}
+			if(strtotime($n->blocked_until) > strtotime(date('Y-m-d H:i:s'))) {$node['waiting']++; continue;}
+			if($n->daily >= $n->limit) {$node['limit']++; continue;}
+		}
+		$node['ok'] = $node['total'] - $node['limit'] - $node['waiting'] - $node['inactive'];
+
 		// send data to the view
 		$this->view->totalUsers = $utils->getStat('person.count');
 		$this->view->sumCredit = $utils->getStat('person.credit.sum');
@@ -53,6 +63,7 @@ class ManageController extends Controller
 		$this->view->supportPendingCount = $supportPendingCount[0]->count;
 		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
+		$this->view->node = $node;
 	}
 
 	/**

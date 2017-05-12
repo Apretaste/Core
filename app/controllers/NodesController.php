@@ -11,7 +11,7 @@ class NodesController extends Controller
 	}
 
 	/**
-	 * Index of the nodes system
+	 * Show output nodes and emails
 	 * @author salvipascual
 	 */
 	public function indexAction()
@@ -19,10 +19,9 @@ class NodesController extends Controller
 		// measure the effectiveness of each promoter
 		$connection = new Connection();
 		$nodes = $connection->query("
-			SELECT *
-			FROM nodes A JOIN nodes_output B
+			SELECT * FROM nodes A JOIN nodes_output B
 			ON A.`key` = B.node
-			ORDER BY A.`key`");
+			ORDER BY A.`name`");
 
 		// format data for the view
 		foreach ($nodes as $node) {
@@ -30,9 +29,25 @@ class NodesController extends Controller
 		}
 
 		// send data to the view
-		$this->view->title = "Nodes";
+		$this->view->title = "Output emails";
 		$this->view->nodes = $nodes;
 		$this->view->currentNode = "";
+		$this->view->setLayout('manage');
+	}
+
+	/**
+	 * Show list of input emails
+	 * @author salvipascual
+	 */
+	public function inputAction()
+	{
+		// measure the effectiveness of each promoter
+		$connection = new Connection();
+		$emails = $connection->query("SELECT * FROM nodes_input");
+
+		// send data to the view
+		$this->view->title = "Input emails";
+		$this->view->emails = $emails;
 		$this->view->setLayout('manage');
 	}
 
@@ -105,6 +120,23 @@ class NodesController extends Controller
 	}
 
 	/**
+	 * Save a new input email to the list
+	 * @author salvipascual
+	 */
+	public function saveInputSubmitAction()
+	{
+		// get params from the url
+		$email = $this->request->get("email");
+
+		// get the list of nodes
+		$connection = new Connection();
+		$connection->query("INSERT INTO nodes_input (email) VALUES ('$email')");
+
+		// go to the list of nodes
+		$this->response->redirect('/nodes/input');
+	}
+
+	/**
 	 * Submit to activate an account
 	 * @author salvipascual
 	 */
@@ -137,5 +169,22 @@ class NodesController extends Controller
 
 		// go to the list of nodes
 		$this->response->redirect('/nodes');
+	}
+
+	/**
+	 * Delete an input email
+	 * @author salvipascual
+	 */
+	public function deleteInputSubmitAction()
+	{
+		// get params from the url
+		$email = $this->request->get("email");
+
+		// get the list of nodes
+		$connection = new Connection();
+		$connection->query("DELETE FROM nodes_input WHERE email='$email'");
+
+		// go to the list of nodes
+		$this->response->redirect('/nodes/input');
 	}
 }
