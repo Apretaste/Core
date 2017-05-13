@@ -86,6 +86,17 @@
 						</li>
 						<?php } ?>
 
+						<!-- NODES -->
+						<?php if($security->checkAccess("nodes")) { ?>
+						<li>
+							<a href="#"><i class="fa fa-heartbeat"></i> <span class="nav-label">Emails</span> <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level">
+								<li><a href="/nodes">Output emails</a></li>
+								<li><a href="/nodes/input">Input emails</a></li>
+							</ul>
+						</li>
+						<?php } ?>
+
 						<!-- SURVEY -->
 						<?php if($security->checkAccess("manage")) { ?>
 						<li>
@@ -150,11 +161,10 @@
 								<li><a href="/manage/sandbox">Test a service</a></li>
 								<li><a target="_blank" href="/data">phpMyAdmin</a></li>
 								<li><a target="_blank" href="https://admin.google.com/pragres.com">Google Admin Console</a></li>
+								<li><a target="_blank" href="https://lightsail.aws.amazon.com">Amazon Lightsail</a></li>
 								<li><a target="_blank" href="https://console.firebase.google.com/">Google Firebase</a></li>
 								<li><a target="_blank" href="https://app.mailerlite.com/">Mailer Lite</a></li>
-								<li><a target="_blank" href="https://apretaste.zendesk.com/">Zendesk</a></li>
 								<li><a target="_blank" href="https://www.email-validator.net/dashboard/index.html">Email Validator</a></li>
-								<li><a target="_blank" href="https://block.io/">Bitcoin API</a></li>
 							</ul>
 						</li>
 						<?php } ?>

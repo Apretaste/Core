@@ -44,9 +44,14 @@ class Utils
 	 */
 	public function getValidEmailAddress()
 	{
-		// @TODO improve this function to have personalized mailboxes insted of random
+		// get a random mailbox
+		$connection = new Connection();
+		$node = $connection->query("SELECT email FROM nodes_input WHERE active=1 ORDER BY RAND() LIMIT 1");
+		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
+
+		// construct the mailbox
 		$half = $this->randomSentence(1);
-		return "apretaste+{$half}@gmail.com";
+		return "$name+$half@gmail.com";
 	}
 
 	/**

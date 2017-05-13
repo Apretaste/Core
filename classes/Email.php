@@ -35,9 +35,10 @@ class Email
 		// if the recepient is from cuba, rotate
 		if(substr($to, -9) === "@nauta.cu")
 		{
-			$this->sendEmailViaGmail($to, $subject, $body, $images, $attachments);
-			$provider = "gmail";
-			$from = "{$this->domain}@gmail.com";
+			$response = $this->sendEmailViaNode($to, $subject, $body, $images, $attachments);
+			$this->domain = isset($response->email->id) ? $response->email->id : "";
+			$from = isset($response->email->from) ? $response->email->from : "";
+			$provider = "node";
 		}
 		// for all other non-Nauta Cuban accounts
 		elseif(substr($to, -3) === ".cu")
@@ -90,17 +91,6 @@ class Email
 			WHERE domain='{$this->domain}'");
 
 		return true;
-	}
-
-	/**
-	 * Set the email that originated the request
-	 *
-	 * @author salvipascual
-	 * @param String $id
-	 * */
-	public function setFrom($from)
-	{
-		$this->from = $from;
 	}
 
 	/**
@@ -186,6 +176,110 @@ class Email
 	}
 
 	/**
+	 * Sends an email using our of our external nodes
+	 *
+	 * @author salvipascual
+	 * @return Boolean
+	 */
+	private function sendEmailViaNode($to, $subject, $body, $images, $attachments)
+	{
+		// get the right node to use
+		$connection = new Connection();
+		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		$nodes = $connection->query("
+			SELECT * FROM nodes_output A JOIN nodes B
+			ON A.node = B.`key`
+			WHERE A.active = '1'
+			AND A.`limit` > A.daily
+			AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+
+		// get your personal email
+		$percent = 0; $node = NULL;
+		$user = str_replace(array(".","+"), "", explode("@", $to)[0]);
+		foreach ($nodes as $n) {
+			if($n->limit <= $n->daily) continue;
+			$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
+			similar_text ($temp, $user, $p);
+			if($p > $percent) {
+				$percent = $p;
+				$node = $n;
+			}
+		}
+
+		// alert the team if no Node could be used
+		$utils = new Utils();
+		if(empty($node)) return $utils->createAlert("NODE: No active node to email $to", "ERROR");
+
+		// transform images to base64
+		$imagesToUpload = array();
+		foreach ($images as $image) {
+			$item = new stdClass();
+			$item->type = mime_content_type($image);
+			$item->name = basename($image);
+			$item->content = base64_encode(file_get_contents($image));
+			$imagesToUpload[] = $item;
+		}
+
+		// transform attachments to base64
+		$attachmentsToUpload = array();
+		foreach ($attachments as $attachment) {
+			$item = new stdClass();
+			$item->type = mime_content_type($attachment);
+			$item->name = basename($attachment);
+			$item->content = base64_encode(file_get_contents($attachment));
+			$attachmentsToUpload[] = $item;
+		}
+
+		// create transaction ID
+		// @TODO should come from the ID of the table email
+		$id = str_replace(array("+",".","@","com"), "", $node->email).date("ymd").rand();
+
+		// create the email array request
+		$params['key'] = $node->key;
+		$params['from'] = $node->email;
+		$params['host'] = $node->host;
+		$params['user'] = $node->user;
+		$params['pass'] = $node->pass;
+		$params['id'] = $id;
+		$params['messageid'] = $this->messageid;
+		$params['to'] = $to;
+		$params['subject'] = $subject;
+		$params['body'] = base64_encode($body);
+		$params['attachments'] = serialize($attachmentsToUpload);
+		$params['images'] = serialize($imagesToUpload);
+
+		// contact the Sender to send the email
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$output = json_decode(curl_exec($ch));
+		curl_close ($ch);
+
+		// hanle errors
+		if($output->code != "" && $output->code != "200") {
+			// alert error message if an error happens
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->email} TO $to with ID $id";
+			$utils->createAlert($errMsg, "ERROR");
+
+			// when error, block for 24H and add one strike
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
+			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil' WHERE email = '{$node->email}'");
+
+			// insert in drops emails and add 24h of waiting time
+			$connection->query("
+				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
+				VALUES ('$to','{$node->email}','failed','{$output->code}','{$output->message}');");
+		}else{
+			// update delivery time
+			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='{$node->email}'");
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Sends an email using Gmail
 	 *
 	 * @author salvipascual
@@ -263,7 +357,7 @@ class Email
 	 * @author salvipascual
 	 * @return Boolean
 	 */
-	private function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
+	public function sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments)
 	{
 		// clean special characters from the subject and shorten to 100 characters
 		$subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $subject), 0, 100);
