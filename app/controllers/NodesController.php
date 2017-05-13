@@ -148,7 +148,8 @@ class NodesController extends Controller
 
 		// get the list of nodes
 		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET active='$status' WHERE email='$email'");
+		$blocked = $status ? "blocked_until=NULL," : "";
+		$connection->query("UPDATE nodes_output SET $blocked active='$status' WHERE email='$email'");
 
 		// go to the list of nodes
 		$this->response->redirect('/nodes');
