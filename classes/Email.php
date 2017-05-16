@@ -325,6 +325,7 @@ class Email
 		$mail->setSubject($subject);
 		$mail->setHtmlBody($body);
 		$mail->setReturnPath($from);
+		$mail->setHeader('X-Mailer', '');
 		$mail->setHeader('Sender', $from);
 		$mail->setHeader('In-Reply-To', $this->messageid);
 		$mail->setHeader('References', $this->messageid);
