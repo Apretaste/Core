@@ -1386,7 +1386,6 @@ class Utils
 
 		// send the alert to the error log
 		error_log($subject);
-
 		return false;
 	}
 }

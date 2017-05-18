@@ -5,13 +5,57 @@ use Nette\Mail\Message;
 
 class Email
 {
-	public $group = 'apretaste';
-	public $messageid = NULL; // ID of the email to create a reply
-	public $from = NULL; // email of whom contacted Apretaste
-	public $domain = false; // force a domain for test purposes
+	public $id;
+	public $from;
+	public $to;
+	public $subject;
+	public $body;
+	public $replyToMessageId; // id to reply
+	public $attachments; // array of paths
+	public $images; // array of paths
+	public $group = '%';
+	public $status = "new"; // new, sent, bounced
+	public $created; // date
+	public $sent; // date
 
 	/**
-	 * Sends an email using MailGun
+	 * Select a provider automatically and send an email
+	 * @author salvipascual
+	 */
+	public function send()
+	{
+		// validate email before sending
+		$utils = new Utils();
+		$status = $utils->deliveryStatus($this->to);
+		if($status != 'ok') return false;
+
+		// send via Nodes if the receipient is from Cuba
+		if(substr($this->to, -3) === ".cu")
+		{
+			$res = $this->sendEmailViaNode($this->to, $this->subject, $this->body, $this->images, $this->attachments);
+			$from = $res->email->from;
+		}
+		// respond via Amazon to recipients outside Cuba
+		else
+		{
+			$from = 'Apretaste <noreply@apretaste.com>';
+			$res = $this->sendEmailViaAmazon($this->from, $this->to, $this->subject, $this->body, $this->images, $this->attachments);
+		}
+
+		// save a trace that the email was sent AND increase the send counter for the domain
+		$haveImages = empty($this->images) ? 0 : 1;
+		$haveAttachments = empty($this->attachments) ? 0 : 1;
+		$status = $res ? "sent" : "error";
+		$connection->query("
+			UPDATE delivery_received SET status='$status', sent=CURRENT_TIMESTAMP WHERE id='{$this->id}';
+			INSERT INTO delivery_sent (mailbox,user,subject,images,attachments,`group`)
+			VALUES ('$this->from','$this->to','$this->subject','$haveImages','$haveAttachments','{$this->group}')");
+
+		return true;
+	}
+
+	/**
+	 * Overload of the send () function for backward compatibility
 	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
@@ -22,157 +66,12 @@ class Email
 	 */
 	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
 	{
-		// do not email if there is an error
-		$utils = new Utils();
-		$status = $utils->deliveryStatus($to);
-		if($status != 'ok') return false;
-
-		// never send emails from the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') == "sandbox") return true;
-		$connection = new Connection();
-
-		// if the recepient is from cuba, rotate
-		if(substr($to, -9) === "@nauta.cu")
-		{
-			$response = $this->sendEmailViaNode($to, $subject, $body, $images, $attachments);
-			$this->domain = isset($response->email->id) ? $response->email->id : "";
-			$from = isset($response->email->from) ? $response->email->from : "";
-			$provider = "node";
-		}
-		// for all other non-Nauta Cuban accounts
-		elseif(substr($to, -3) === ".cu")
-		{
-			// get the name and domain from the email
-			$emailParts = explode("@", $to);
-			$emailName = $emailParts[0];
-			$emailDomain = $emailParts[1];
-
-			// get the right domain
-			$result = $connection->query("
-				SELECT domain, sender
-				FROM domain
-				WHERE active = 1
-				AND sender <> 'gmail'
-				AND blacklist NOT LIKE '%$emailDomain%'
-				ORDER BY last_usage LIMIT 1");
-
-			// error if no domain can be selected
-			if(empty($result)) return $utils->createAlert("No provider to respond to $to with subject $subject", "ERROR");
-
-			// create a random email $from
-			$this->domain = $result[0]->domain;
-			$provider = $result[0]->sender;
-			$user = str_replace(array(".", "+", "-"), "", $emailName);
-			$seed = rand(80, 98);
-			$from = "{$user}{$seed}@{$this->domain}";
-
-			// send the email using the provider
-			if($provider == "mailgun") $this->sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments);
-			elseif($provider == "amazon") $this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
-		}
-		// respond to recipients outside Cuba
-		else
-		{
-			$provider = "amazon";
-			$this->domain = "apretaste.com";
-			$from = 'Apretaste <noreply@apretaste.com>';
-			$this->sendEmailViaAmazon($from, $to, $subject, $body, $images, $attachments);
-		}
-
-		// save a trace that the email was sent AND increase the send counter for the domain
-		$haveImages = empty($images) ? 0 : 1;
-		$haveAttachments = empty($attachments) ? 0 : 1;
-		$connection->query("
-			INSERT INTO delivery_sent (mailbox,user,subject,images,attachments,domain,`group`,type)
-			VALUES ('$from','$to','$subject','$haveImages','$haveAttachments','{$this->domain}','{$this->group}','$provider');
-			UPDATE domain
-			SET sent_count=sent_count+1, last_usage=CURRENT_TIMESTAMP
-			WHERE domain='{$this->domain}'");
-
-		return true;
-	}
-
-	/**
-	 * Set the id to respond to an email. This is important
-	 * to create conversations when replying to an email
-	 *
-	 * @author salvipascual
-	 * @param String $id
-	 * */
-	public function setRespondEmailID($messageid)
-	{
-		$this->messageid = $messageid;
-	}
-
-	/**
-	 * Force to use an specific domain
-	 *
-	 * @author salvipascual
-	 * @param String $domain
-	 * */
-	public function setDomain($domain)
-	{
-		$this->domain = $domain;
-	}
-
-	/**
-	 * Set the group to respond
-	 *
-	 * @author salvipascual
-	 * @param String $group
-	 * */
-	public function setGroup($group)
-	{
-		$this->group = $group;
-	}
-
-	/**
-	 * Sends an email using Mailgun
-	 *
-	 * @author salvipascual
-	 * @return Boolean
-	 */
-	private function sendEmailViaMailgun($from, $to, $subject, $body, $images, $attachments)
-	{
-		// create the list of images and attachments
-		$embedded = array();
-		if( ! empty($images)) $embedded['inline'] = $images;
-		if( ! empty($attachments)) $embedded['attachment'] = $attachments;
-
-		// create the array send
-		$message = array(
-			"from" => $from,
-			"to" => $to,
-			"subject" => $subject,
-			"html" => $body,
-			"o:native-send" => true,
-			"o:tracking" => false,
-			"o:tracking-clicks" => false,
-			"o:tracking-opens" => false
-		);
-
-		// adding In-Reply-To header (creating conversation with the user)
-		if ($this->messageid) $message["h:In-Reply-To"] = $this->messageid;
-
-		// get the API key and start MailGun client
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$mailgunKey = $di->get('config')['mailgun']['key'];
-		$mgClient = new Mailgun($mailgunKey);
-
-		// clear the email from the bounce list. We take will care of bad emails
-		try{$mgClient->delete("{$this->domain}/bounces/$to");} catch(Exception $e){}
-
-		// send email
-		try{
-			$mgClient->sendMessage($this->domain, $message, $embedded);
-		} catch (Exception $e) {
-			$utils = new Utils();
-			$msg = "MAIGUN: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
-			return $utils->createAlert($msg, "ERROR");
-		}
-
-		return true;
+		$this->to = $to;
+		$this->subject = $subject;
+		$this->body = $body;
+		$this->images = $images;
+		$this->attachments = $attachments;
+		return $this->send();
 	}
 
 	/**
@@ -190,6 +89,7 @@ class Email
 			SELECT * FROM nodes_output A JOIN nodes B
 			ON A.node = B.`key`
 			WHERE A.active = '1'
+			AND `group` LIKE '%{$this->group}%'
 			AND A.`limit` > A.daily
 			AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
@@ -230,17 +130,13 @@ class Email
 			$attachmentsToUpload[] = $item;
 		}
 
-		// create transaction ID
-		// @TODO should come from the ID of the table email
-		$id = str_replace(array("+",".","@","com"), "", $node->email).date("ymd").rand();
-
 		// create the email array request
 		$params['key'] = $node->key;
 		$params['from'] = $node->email;
 		$params['host'] = $node->host;
 		$params['user'] = $node->user;
 		$params['pass'] = $node->pass;
-		$params['id'] = $id;
+		$params['id'] = $this->id;
 		$params['messageid'] = $this->messageid;
 		$params['to'] = $to;
 		$params['subject'] = $subject;
@@ -260,7 +156,7 @@ class Email
 		// hanle errors
 		if($output->code != "" && $output->code != "200") {
 			// alert error message if an error happens
-			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->email} TO $to with ID $id";
+			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->email} TO $to with ID {$this->id}";
 			$utils->createAlert($errMsg, "ERROR");
 
 			// when error, block for 24H and add one strike
@@ -277,79 +173,6 @@ class Email
 		}
 
 		return $output;
-	}
-
-	/**
-	 * Sends an email using Gmail
-	 *
-	 * @author salvipascual
-	 * @return Boolean
-	 */
-	private function sendEmailViaGmail($to, $subject, $body, $images, $attachments)
-	{
-		// get all available gmail domains
-		$connection = new Connection();
-		$gmails = $connection->query("SELECT domain FROM domain WHERE sender = 'gmail' AND active = '1'");
-
-		// get the user part of the email
-		$username = str_replace(array(".","+"), "", explode("@", $to)[0]);
-
-		// get the most similar domain on the list
-		$percent = 0;
-		foreach ($gmails as $gmail) {
-			$domain = explode("+", $gmail->domain)[1];
-			similar_text ($domain, $username, $p);
-			if($p > $percent) {
-				$percent = $p;
-				$this->domain = $gmail->domain;
-			}
-		}
-
-		// get username and password
-		$username = str_replace(".", "", explode("+", $this->domain)[0]);
-		$password = $connection->query("SELECT password FROM gmail WHERE name = '$username'")[0]->password;
-
-		// create mailer
-		$from = "{$this->domain}@gmail.com";
-		$mailer = new Nette\Mail\SmtpMailer([
-			'host' => 'smtp.gmail.com',
-			'username' => $username,
-			'password' => $password,
-			'secure' => 'ssl'
-		]);
-
-		// create message
-		$mail = new Message;
-		$mail->setFrom($from);
-		$mail->addTo($to);
-		$mail->setSubject($subject);
-		$mail->setHtmlBody($body);
-		$mail->setReturnPath($from);
-		$mail->setHeader('X-Mailer', '');
-		$mail->setHeader('Sender', $from);
-		$mail->setHeader('In-Reply-To', $this->messageid);
-		$mail->setHeader('References', $this->messageid);
-
-		// add images to the template
-		foreach ($images as $image) {
-			$mail->addEmbeddedFile($image);
-		}
-
-		// add attachments
-		foreach ($attachments as $attachment) {
-			$mail->addAttachment($attachment);
-		}
-
-		// send email
-		try{
-			$mailer->send($mail, false);
-		} catch (Exception $e) {
-			$utils = new Utils();
-			$msg = "GMAIL: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
-			return $utils->createAlert($msg, "ERROR");
-		}
-
-		return true;
 	}
 
 	/**
