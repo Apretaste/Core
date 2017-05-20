@@ -10,7 +10,7 @@ class Email
 	public $to;
 	public $subject;
 	public $body;
-	public $replyToMessageId; // id to reply
+	public $replyId; // id to reply
 	public $attachments; // array of paths
 	public $images; // array of paths
 	public $group = '%';
@@ -33,25 +33,28 @@ class Email
 		if(substr($this->to, -3) === ".cu")
 		{
 			$res = $this->sendEmailViaNode($this->to, $this->subject, $this->body, $this->images, $this->attachments);
-			$from = $res->email->from;
+			$this->from = $res->email->from;
 		}
 		// respond via Amazon to recipients outside Cuba
 		else
 		{
-			$from = 'Apretaste <noreply@apretaste.com>';
+			$this->from = 'Apretaste <noreply@apretaste.com>';
 			$res = $this->sendEmailViaAmazon($this->from, $this->to, $this->subject, $this->body, $this->images, $this->attachments);
 		}
 
 		// save a trace that the email was sent AND increase the send counter for the domain
-		$haveImages = empty($this->images) ? 0 : 1;
 		$haveAttachments = empty($this->attachments) ? 0 : 1;
-		$status = $res ? "sent" : "error";
+		$haveImages = empty($this->images) ? 0 : 1;
+		$this->status = $res->code == "200" ? "sent" : "error";
+		$this->sent = date("Y-m-d H:i:s");
+		$connection = new Connection();
 		$connection->query("
-			UPDATE delivery_received SET status='$status', sent=CURRENT_TIMESTAMP WHERE id='{$this->id}';
-			INSERT INTO delivery_sent (mailbox,user,subject,images,attachments,`group`)
-			VALUES ('$this->from','$this->to','$this->subject','$haveImages','$haveAttachments','{$this->group}')");
+			UPDATE delivery_received SET status='{$this->status}', sent='{$this->sent}' WHERE id='{$this->id}';
+			INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`)
+			VALUES ('{$this->from}','{$this->to}','{$this->subject}','$haveImages','$haveAttachments','{$this->group}')");
 
-		return true;
+		// return {code, message, email} structure
+		return $res;
 	}
 
 	/**
@@ -108,7 +111,13 @@ class Email
 
 		// alert the team if no Node could be used
 		$utils = new Utils();
-		if(empty($node)) return $utils->createAlert("NODE: No active node to email $to", "ERROR");
+		if(empty($node)) {
+			$output = new stdClass();
+			$output->code = 515;
+			$output->message = "NODE: No active node to email $to";
+			$utils->createAlert($output->message, "ERROR");
+			return $output;
+		}
 
 		// transform images to base64
 		$imagesToUpload = array();
@@ -137,7 +146,7 @@ class Email
 		$params['user'] = $node->user;
 		$params['pass'] = $node->pass;
 		$params['id'] = $this->id;
-		$params['messageid'] = $this->messageid;
+		$params['messageid'] = $this->replyId;
 		$params['to'] = $to;
 		$params['subject'] = $subject;
 		$params['body'] = base64_encode($body);
@@ -215,6 +224,11 @@ class Email
 		$accessKey = $di->get('config')['amazon']['access'];
 		$secretKey = $di->get('config')['amazon']['secret'];
 
+		// create the structure to return
+		$output = new stdClass();
+		$output->code = 200;
+		$output->message = "";
+
 		// send email
 		try{
 			$ses = new SimpleEmailService($accessKey, $secretKey);
@@ -222,9 +236,11 @@ class Email
 		} catch (Exception $e) {
 			$utils = new Utils();
 			$msg = "AMAZON: Error sending from: $from to $to with subject $subject and error: ".$e->getMessage();
-			return $utils->createAlert($msg, "ERROR");
+			$utils->createAlert($msg, "ERROR");
+			$output->code = "500";
+			$output->message = $e->getMessage();
 		}
 
-		return true;
+		return $output;
 	}
 }

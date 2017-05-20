@@ -6,43 +6,14 @@ use phpseclib\Crypt\RSA;
 
 class Utils
 {
-	static private $extraResponses = array();
-
-	/**
-	 * Add extra response to send
-	 *
-	 * @param Response $response
-	 */
-	static function addExtraResponse(Response $response)
-	{
-		self::$extraResponses[] = $response;
-	}
-
-	/**
-	 * Extra responses to send
-	 *
-	 * @return array
-	 */
-	static function getExtraResponses()
-	{
-		return self::$extraResponses;
-	}
-
-	/**
-	 * Clear extra responses list
-	 */
-	static function clearExtraResponses()
-	{
-		self::$extraResponses = array();
-	}
-
 	/**
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
+	 * @param String $seed, text to create the email
 	 * @return String, email address
 	 */
-	public function getValidEmailAddress()
+	public function getValidEmailAddress($seed="")
 	{
 		// get a random mailbox
 		$connection = new Connection();
@@ -50,8 +21,9 @@ class Utils
 		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
 
 		// construct the mailbox
-		$half = $this->randomSentence(1);
-		return "$name+$half@gmail.com";
+		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
+		if(empty($seed)) $seed = $this->randomSentence(1);
+		return "$name+$seed@gmail.com";
 	}
 
 	/**
@@ -101,27 +73,26 @@ class Utils
 	}
 
 	/**
-	 * Check if the service exists
+	 * Check if the service exists and returns its real name
 	 *
 	 * @author salvipascual
-	 * @param String, name of the service
-	 * @return Boolean, true if service exist
+	 * @param String $name, name or alias of the service
+	 * @return String, name of service or false if not exist
 	 */
-	public function serviceExist(&$serviceName)
+	public function serviceExist($name)
 	{
-		// return positive if trying to invoke the secured API
-		if ($serviceName == "secured") return true;
-
 		// if serviceName is an alias and not is a name
 		$db = new Connection();
-		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$serviceName';");
+		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$name';");
 
 		// then get the service name
-		if (isset($r[0]->service)) $serviceName = $r[0]->service;
+		if (isset($r[0]->service)) $name = $r[0]->service;
 
+		// check if service exist and return its name
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		return file_exists("$wwwroot/services/$serviceName/config.xml");
+		if(file_exists("$wwwroot/services/$name/config.xml")) return $name;
+		else return false;
 	}
 
 	/**
@@ -186,13 +157,14 @@ class Utils
 	 */
 	public function usernameFromEmail($email)
 	{
-		$connection = new Connection();
 		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
 		$username = substr($username, 0, 5); // get the first 5 chars
+
+		$connection = new Connection();
 		$res = $connection->query("SELECT username as users FROM person WHERE username LIKE '$username%'");
 		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
 
-		// ensure the username is in reality unique
+		// ensure the username is unique
 		$res = $connection->query("SELECT username FROM person WHERE username='$username'");
 		if( ! empty($res))
 		{
@@ -806,48 +778,12 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
-		$connection = new Connection();
-		$notifications = $this->getNumberOfNotifications($email);
-
-		// insert notification
-		$sql = "INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag');";
-		$connection->query($sql);
-
-		// get notification id
-		$id = false;
-		$r = $connection->query("SELECT LAST_INSERT_ID() as id;");
-		if (isset($r[0]->id)) $id = intval($r[0]->id);
-
 		// increase number of notifications
-		$sql = "UPDATE person SET notifications = notifications + 1 WHERE email = '$email';";
-		$connection->query($sql);
+		$connection = new Connection();
+		$connection->query("UPDATE person SET notifications = notifications+1 WHERE email = '$email'");
 
-		// If more than 50 notifications, send the notifications to the user
-		if ($notifications + 1 >= 50)
-		{
-			// getting notifications
-			$sql = "SELECT * FROM notifications WHERE email ='{$email}' AND viewed = 0 ORDER BY inserted_date DESC;";
-			$notificationsList = $connection->query($sql);
-
-			if ( ! is_array($notificationsList)) $notificationsList = array();
-
-			// create extra response
-			$response = new Response();
-			$response->setEmailLayout('email_default.tpl');
-			$response->setResponseSubject("Tienes $notifications notificaciones sin leer");
-			$response->createFromTemplate("notifications.tpl", array('notificactions' => $notificationsList));
-			$response->internal = true;
-
-			self::addExtraResponse($response);
-
-			// Mark as seen
-			$connection->query("UPDATE notifications SET viewed = 1, viewed_date = CURRENT_TIMESTAMP WHERE email ='{$email}'");
-
-			// down to zero
-			$connection->query("UPDATE person SET notifications = 0 WHERE email = '{$email}';");
-		}
-
-		return $id;
+		// insert notification and return id
+		return $connection->query("INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag')");
 	}
 
 	/**
@@ -1055,20 +991,6 @@ class Utils
 
 		// return the actual sentence
 		return implode(" ", $sentence);
-	}
-
-	/**
-	 * Guess the default service based on the user's email address
-	 *
-	 * @author salvipascual
-	 * @param String $email, user's email
-	 * @return string
-	 **/
-	public function getDefaultService($email)
-	{
-		// @TODO find a right way to do this when needed
-		// maybe we need to add a field on the service table to set up the beginning of the
-		return "ayuda";
 	}
 
 	/**

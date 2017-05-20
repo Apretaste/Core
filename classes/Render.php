@@ -16,7 +16,10 @@ class Render
 	{
 		// if the response includes json, don't render HTML
 		// this is used mainly to build email APIs
-		if( ! empty($response->json)) return $response->json;
+		if($response->json) return $response->json;
+
+		// set the email of the response if empty
+		if(empty($response->email)) $response->email = $service->request->email;
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -53,6 +56,10 @@ class Render
 		// get the person
 		$utils = new Utils();
 		$person = $utils->getPerson($response->email);
+		$username = isset($person->username) ? "@{$person->username}" : "";
+
+		// get a valid email address
+		$validEmailAddress = $utils->getValidEmailAddress($username);
 
 		// list the system variables
 		$systemVariables = array(
@@ -64,12 +71,12 @@ class Render
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_ADS" => $ads,
-			"APRETASTE_EMAIL" => $utils->getValidEmailAddress(),
+			"APRETASTE_EMAIL" => $validEmailAddress,
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
-			'USER_USERNAME' => isset($person->username) ? "@{$person->username}" : "",
+			'USER_USERNAME' => $username,
 			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
 			'USER_EMAIL' => isset($person->email) ? $person->email : "",
@@ -87,6 +94,7 @@ class Render
 
 		// rendering and removing tabs, double spaces and break lines
 		$renderedTemplate = $smarty->fetch($response->layout);
+		$renderedTemplate = str_replace("{APRETASTE_EMAIL}", $validEmailAddress, $renderedTemplate);
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 

@@ -10,11 +10,8 @@ class Service
 	public $insertionDate;
 	public $pathToService;
 	public $showAds;
-	public $utils; // Instance of the Utils class
-
-	public function __construct($serviceName = null)
-	{
-		if ( ! is_null($serviceName)) $this->serviceName = $serviceName;
-		$this->utils = new Utils($this->serviceName);
-	}
+	public $group = 'apretaste';
+	public $utils; // Utils
+	public $email; // Email
+	public $request; // Request
 }

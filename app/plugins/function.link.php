@@ -16,7 +16,7 @@ function smarty_function_link($params, $template)
 	// get the body if exist
 	if(isset($params["body"])) $body = $params["body"];
 	else $body = "Envie+el+correo+tal+y+como+esta,+ya+esta+preparado+para+usted";
-	
+
 	// create direct link for the sandbox
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
 	if($di->get('environment') == "sandbox")
@@ -26,9 +26,7 @@ function smarty_function_link($params, $template)
 	}
 	else
 	{
-		$utils = new Utils();
-		$validEmailAddress = $utils->getValidEmailAddress();
-		$linkto = "mailto:$validEmailAddress?subject=$href&amp;body=$body";
+		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$body";
 	}
 
 	// create and return button
