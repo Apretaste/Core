@@ -1335,7 +1335,7 @@ class Utils
 
 		// include the service code
 		$pathToService = $this->getPathToService($serviceName);
-		include "$pathToService/service.php";
+		include_once "$pathToService/service.php";
 
 		// get the subservice
 		$subServiceName = "";
