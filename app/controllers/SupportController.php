@@ -126,7 +126,7 @@ class SupportController extends Controller
 	 */
 	public function saveTicketSubmitAction()
 	{
-		$email = $this->request->get("email");
+		$to = $this->request->get("email");
 		$subject = $this->request->get("subject");
 		$content = $this->request->get("content");
 		$status = $this->request->get("status");
@@ -136,7 +136,7 @@ class SupportController extends Controller
 		$connection->query("
 			UPDATE support_tickets
 			SET status = 'DONE'
-			WHERE (`from` = '$email' OR requester = '$email')
+			WHERE (`from` = '$to' OR requester = '$to')
 			AND (status = 'NEW' OR status = 'PENDING')");
 
 		// get the manager information
@@ -146,7 +146,7 @@ class SupportController extends Controller
 		// save response in the database
 		$connection->query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
-			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$email')");
+			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
 
 		// save report
 		$mysqlDateToday = date('Y-m-d');
@@ -158,9 +158,12 @@ class SupportController extends Controller
 		$body = str_replace("\r", "<br/>", $content);
 
 		// respond back to the user
-		$sender = new Email();
-		$sender->setGroup("support");
-		$sender->sendEmail($email, $subject, $body);
+		$email = new Email();
+		$email->to = $to;
+		$email->subject = $subject;
+		$email->body = $body;
+		$email->group = "support";
+		$email->send();
 
 		// go to the list of tickets
 		$this->response->redirect("support/index");

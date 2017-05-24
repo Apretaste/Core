@@ -12,6 +12,7 @@
 					<th class="text-center">Email</th>
 					<th class="text-center">Limit</th>
 					<th class="text-center">Total Sent</th>
+					<th class="text-center">Group</th>
 					<th class="text-center">Last Sent</th>
 					<th class="text-center">Status</th>
 					<th class="text-center">Actions</th>
@@ -31,6 +32,7 @@
 					<td class="text-center"><?=$node->email?></td>
 					<td class="text-center"><span <?php if($node->daily == $node->limit) echo 'style="color:#CD3853;"'; ?>><?=$node->daily?>/<b><?=$node->limit?></b></span></td>
 					<td class="text-center"><?=$node->sent?></td>
+					<td class="text-center"><?=$node->group?></td>
 					<td class="text-center"><?=$node->last_sent?></td>
 					<td class="text-center">
 						<?php

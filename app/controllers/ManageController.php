@@ -12,7 +12,7 @@ class ManageController extends Controller
 
 	/**
 	 * Index for the manage system
-	 * */
+	 */
 	public function indexAction()
 	{
 		$connection = new Connection();
@@ -68,7 +68,7 @@ class ManageController extends Controller
 
 	/**
 	 * Audience
-	 * */
+	 */
 	public function audienceAction()
 	{
 		$connection = new Connection();
@@ -198,7 +198,7 @@ class ManageController extends Controller
 
 	/**
 	 * Profile
-	 * */
+	 */
 	public function profileAction()
 	{
 		$connection = new Connection();
@@ -322,7 +322,7 @@ class ManageController extends Controller
 
 	/**
 	 * Profile search
-	 * */
+	 */
 	public function profilesearchAction()
 	{
 		$email = $this->request->get("email");
@@ -400,7 +400,7 @@ class ManageController extends Controller
 
 	/**
 	 * List of raffles
-	 * */
+	 */
 	public function rafflesAction()
 	{
 		// List of raffles
@@ -458,7 +458,7 @@ class ManageController extends Controller
 
 	/**
 	 * create raffle
-	 * */
+	 */
 	public function createraffleAction()
 	{
 		if($this->request->isPost())
@@ -501,13 +501,12 @@ class ManageController extends Controller
 
 	/**
 	 * List of services
-	 * */
+	 */
 	public function servicesAction()
 	{
 		$connection = new Connection();
-
 		$queryServices =
-			"SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, B.times_used, B.avg_latency
+			"SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, A.group, B.times_used, B.avg_latency
 			FROM service A
 			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service) B
 			ON A.name = B.service
@@ -519,8 +518,24 @@ class ManageController extends Controller
 	}
 
 	/**
+	 * Edit a service from the list
+	 */
+	public function editServiceSubmitAction()
+	{
+		$name = $this->request->get('name');
+		$group = $this->request->get('group');
+
+		// edit the service
+		$connection = new Connection();
+		$connection->query("UPDATE service SET `group`='$group' WHERE name='$name'");
+
+		// go to the list of services
+		$this->response->redirect('manage/services');
+	}
+
+	/**
 	 * List of ads
-	 * */
+	 */
 	public function adsAction()
 	{
 		$connection = new Connection();
@@ -534,7 +549,7 @@ class ManageController extends Controller
 
 	/**
 	 * Manage the ads
-	 * */
+	 */
 	public function createadAction()
 	{
 		// handle the submit if an ad is posted
@@ -590,7 +605,7 @@ class ManageController extends Controller
 
 	/**
 	 * Jumper
-	 * */
+	 */
 	public function jumperAction()
 	{
 		$connection = new Connection();
@@ -604,7 +619,7 @@ class ManageController extends Controller
 
 	/**
 	 * Deploy a new service or update an old one
-	 * */
+	 */
 	public function deployAction()
 	{
 		$this->view->title = "Deploy a service";
@@ -682,7 +697,7 @@ class ManageController extends Controller
 
 	/**
 	 * Show the dropped emails for the last 7 days
-	 * */
+	 */
 	public function droppedAction()
 	{
 		$connection = new Connection();
@@ -820,7 +835,7 @@ class ManageController extends Controller
 
 	/**
 	 * Show the error log
-	 * */
+	 */
 	public function errorsAction()
 	{
 		// get the error logs file
@@ -1004,7 +1019,7 @@ class ManageController extends Controller
 	 * Remarket
 	 *
 	 * @author salvipascual
-	 * */
+	 */
 	public function remarketingAction()
 	{
 		// create the sql for the graph
@@ -1057,7 +1072,7 @@ class ManageController extends Controller
 	 * add credits
 	 *
 	 * @author kuma
-	 * */
+	 */
 	public function addcreditAction()
 	{
 		$this->view->person = false;
@@ -1119,7 +1134,7 @@ class ManageController extends Controller
 	 * Reports for the ads
 	 *
 	 * @author kuma
-	 * */
+	 */
 	public function adReportAction()
 	{
 		// getting ad's id
@@ -1288,7 +1303,7 @@ class ManageController extends Controller
 	 * Show the ads target
 	 *
 	 * @author kuma
-	 * */
+	 */
 	public function adTageringAction()
 	{
 		// getting ad's id

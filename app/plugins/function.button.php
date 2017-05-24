@@ -79,9 +79,7 @@ function smarty_function_button($params, $template)
 	}
 	else
 	{
-		$utils = new Utils();
-		$validEmailAddress = $utils->getValidEmailAddress();
-		$linkto = "mailto:$validEmailAddress?subject=$href&amp;body=$body";
+		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$body";
 	}
 
 	// create and return button
