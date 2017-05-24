@@ -238,6 +238,7 @@ class RunController extends Controller
 		if($status != 'ok') return;
 
 		// save the new email in the database and get the ID
+		$connection = new Connection();
 		$attachStr = implode(",", $attachEmail);
 		$idEmail = $connection->query("
 			INSERT INTO delivery_received (user, mailbox, subject, body, messageid, attachments)
@@ -250,7 +251,6 @@ class RunController extends Controller
 		$logger->close();
 
 		// if the person exist in Apretaste
-		$connection = new Connection();
 		$personExist = $utils->personExist($fromEmail);
 		if ($personExist)
 		{
