@@ -22,9 +22,9 @@ class SenderTask extends \Phalcon\Cli\Task
 		// loop the list and re-send emails
 		foreach ($unsent as $u)
 		{
-			echo "\tPROCESING EMAIL TO:{$u->to}\n";
+			echo "\tPROCESING EMAIL TO:{$u->user}\n";
 
-			$idEmail =
+			$idEmail = $u->id;
 			$fromEmail = $u->user;
 			$subjectEmail = $u->subject;
 			$bodyEmail = $u->body;
