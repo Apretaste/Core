@@ -399,7 +399,7 @@ class RunController extends Controller
 			else
 			{
 				// mark email as done so we don't run it again
-				$connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail')");
+				$connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
 			}
 		}
 
