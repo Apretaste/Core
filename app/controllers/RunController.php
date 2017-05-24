@@ -223,7 +223,6 @@ class RunController extends Controller
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
-/*
 		// get the email params from the mailgun webhook
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
@@ -232,13 +231,6 @@ class RunController extends Controller
 		$bodyEmail = $res->body;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
-*/
-		$fromEmail = "salvi.pascual@gmail.com";
-		$toEmail = "apretaste+salvi@gmail.com";
-		$subjectEmail = "perfil foto";
-		$bodyEmail = "Hola Mundo";
-		$replyIdEmail = "23456789909@gmail.com";
-		$attachEmail = array("/home/salvipascual/Desktop/sagrada.jpg");
 
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
