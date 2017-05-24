@@ -461,6 +461,7 @@ class RunController extends Controller
 		}
 
 		// download attachments to the temp folder
+		$utils = new Utils();
 		$wwwroot = $this->di->get('path')['root'];
 		$attachments = array();
 		for ($i=1; $i<=$attachmentCount; $i++)
