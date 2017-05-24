@@ -47,12 +47,19 @@
 				<input id="limit" type="number" value="<?=$limit?>" class="form-control" name="limit" required />
 			</div>
 
+			<!-- GROUP -->
+			<div class="form-group">
+				<label for="group">Group</label>
+				(<small>apretaste, support, campaign, etc.</small>)
+				<input id="group" type="text" value="<?=$group?>" class="form-control" name="group" required />
+			</div>
+
 			<div class="form-group">
 				<input type="hidden" name="id" value="<?=$email?>"/>
 				<a class="btn btn-default" href="/nodes">Cancel</a>
 				<?php if($email) { ?>
 					<a class="btn btn-danger" onclick="return confirm('Are you sure? There is no way back!');" href="/nodes/deleteSubmit?email=<?=$email?>">Delete</a>
-				<? } ?>
+				<?php } ?>
 				<button class="btn btn-primary" type="submit">Submit</button>
 			</div>
 		</form>

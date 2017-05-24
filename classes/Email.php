@@ -11,10 +11,12 @@ class Email
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
-	public $attachments; // array of paths
-	public $images; // array of paths
-	public $group = '%';
+	public $attachments = array(); // array of paths
+	public $images = array(); // array of paths
+	public $group = 'apretaste';
 	public $status = "new"; // new, sent, bounced
+	public $message;
+	public $tries = 0;
 	public $created; // date
 	public $sent; // date
 
@@ -42,16 +44,26 @@ class Email
 			$res = $this->sendEmailViaAmazon($this->from, $this->to, $this->subject, $this->body, $this->images, $this->attachments);
 		}
 
-		// save a trace that the email was sent AND increase the send counter for the domain
-		$haveAttachments = empty($this->attachments) ? 0 : 1;
-		$haveImages = empty($this->images) ? 0 : 1;
+		// update the object
+		$this->tries++;
+		$this->message = $res->message;
 		$this->status = $res->code == "200" ? "sent" : "error";
-		$this->sent = date("Y-m-d H:i:s");
+		if($res->code == "200") $this->sent = date("Y-m-d H:i:s");
+
+		// update the database with the email sent
 		$connection = new Connection();
-		$connection->query("
-			UPDATE delivery_received SET status='{$this->status}', sent='{$this->sent}' WHERE id='{$this->id}';
-			INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`)
-			VALUES ('{$this->from}','{$this->to}','{$this->subject}','$haveImages','$haveAttachments','{$this->group}')");
+		$sentDate = $res->code == "200" ? "sent=CURRENT_TIMESTAMP," : "";
+		$connection->query("UPDATE delivery_received SET $sentDate status='{$this->status}', message='{$this->message}', tries=tries+1 WHERE id='{$this->id}'");
+
+		// save a trace that the email was sent
+		if($res->code == "200")
+		{
+			$attachments = count($this->attachments);
+			$images = count($this->images);
+			$connection->query("
+				INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin)
+				VALUES ('{$this->from}','{$this->to}','{$this->subject}','$images','$attachments','{$this->group}','{$this->id}')");
+		}
 
 		// return {code, message, email} structure
 		return $res;
@@ -113,7 +125,7 @@ class Email
 		$utils = new Utils();
 		if(empty($node)) {
 			$output = new stdClass();
-			$output->code = 515;
+			$output->code = "515";
 			$output->message = "NODE: No active node to email $to";
 			$utils->createAlert($output->message, "ERROR");
 			return $output;

@@ -1269,7 +1269,8 @@ class Utils
 	 * @param string $html
 	 * @return mixed
 	 */
-	public function clearHtml($html) {
+	public function clearHtml($html)
+	{
 		$html = str_replace('&nbsp;',' ',$html);
 
 		do {
@@ -1309,5 +1310,90 @@ class Utils
 		// send the alert to the error log
 		error_log($subject);
 		return false;
+	}
+
+	/**
+	 * Based on a subject process a request and return the Response
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $subject
+	 * @param String $body
+	 * @param String[] $attachments
+	 * @return [Service, Response[]]
+	 */
+	public function runRequest($email, $subject, $body, $attachments)
+	{
+		// get the name of the service or alias based on the subject line
+		$subjectPieces = explode(" ", $subject);
+		$serviceName = strtolower($subjectPieces[0]);
+		unset($subjectPieces[0]);
+
+		// get the service name, or use default service if the service does not exist
+		$serviceName = $this->serviceExist($serviceName);
+		if( ! $serviceName) $serviceName = "ayuda";
+
+		// include the service code
+		$pathToService = $this->getPathToService($serviceName);
+		include "$pathToService/service.php";
+
+		// get the subservice
+		$subServiceName = "";
+		if(isset($subjectPieces[1]) && ! preg_match('/\?|\(|\)|\\\|\/|\.|\$|\^|\{|\}|\||\!/', $subjectPieces[1])){
+			$serviceClassMethods = get_class_methods($serviceName);
+			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods)){
+				$subServiceName = strtolower($subjectPieces[1]);
+				unset($subjectPieces[1]);
+			}
+		}
+
+		// get the language of the user
+		$connection = new Connection();
+		$result = $connection->query("SELECT username, lang FROM person WHERE email = '$email'");
+		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
+		$username = isset($result[0]->username) ? $result[0]->username : "";
+
+		// create a new Request object
+		$request = new Request();
+		$request->email = $email;
+		$request->username = $username;
+		$request->subject = $subject;
+		$request->body = $body;
+		$request->attachments = $attachments;
+		$request->service = $serviceName;
+		$request->subservice = trim($subServiceName);
+		$request->query = trim(implode(" ", $subjectPieces)); // get the service query
+		$request->lang = $lang;
+
+		// create a new Service Object with info from the database
+		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
+		$service = new $serviceName();
+		$service->serviceName = $serviceName;
+		$service->serviceDescription = $result[0]->description;
+		$service->creatorEmail = $result[0]->creator_email;
+		$service->serviceCategory = $result[0]->category;
+		$service->serviceUsage = $result[0]->usage_text;
+		$service->insertionDate = $result[0]->insertion_date;
+		$service->pathToService = $pathToService;
+		$service->showAds = $result[0]->ads == 1;
+		$service->utils = $this;
+		$service->request = $request;
+		$service->group = $result[0]->group;
+
+		// run the service and get the Response
+		if(empty($subServiceName)) $response = $service->_main($request);
+		else{
+			$subserviceFunction = "_$subServiceName";
+			$response = $service->$subserviceFunction($request);
+		}
+
+		// make the responses to be always an array
+		$responses = is_array($response) ? $response : array($response);
+
+		// create and return the response
+		$return = new stdClass();
+		$return->service = $service;
+		$return->responses = $responses;
+		return $return;
 	}
 }

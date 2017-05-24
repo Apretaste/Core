@@ -18,7 +18,8 @@ class RunController extends Controller
 		$body = $this->request->get("body");
 
 		// run the request and get the service and responses
-		$ret = $this->run($email, $subject, $body, array());
+		$utils = new Utils();
+		$ret = $utils->runRequest($email, $subject, $body, array());
 		$service = $ret->service;
 		$responses = $ret->responses;
 
@@ -189,7 +190,7 @@ class RunController extends Controller
 		$render = new Render();
 
 		// run the request and get the service and first response
-		$ret = $this->run($email, $subject, $body, $attach);
+		$ret = $utils->runRequest($email, $subject, $body, $attach);
 		$service = $ret->service;
 		$response = $ret->responses[0];
 
@@ -244,13 +245,6 @@ class RunController extends Controller
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
 
-		// save the new email in the database and get the ID
-		$connection = new Connection();
-		$attachStr = implode(",", $attachEmail);
-		$idEmail = $connection->query("
-			INSERT INTO delivery_received (user, mailbox, subject, body, reply_id, attachments)
-			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$bodyEmail', '$replyIdEmail', '$attachStr')");
-
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
@@ -258,6 +252,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// if the person exist in Apretaste
+		$connection = new Connection();
 		$personExist = $utils->personExist($fromEmail);
 		if ($personExist)
 		{
@@ -356,9 +351,15 @@ class RunController extends Controller
 		}
 
 		// run the request and get the service and responses
-		$ret = $this->run($fromEmail, $subjectEmail, $bodyEmail, array());
+		$ret = $utils->runRequest($fromEmail, $subjectEmail, $bodyEmail, array());
 		$service = $ret->service;
 		$responses = $ret->responses;
+
+		// save the new email in the database and get the ID
+		$attachStr = implode(",", $attachEmail);
+		$idEmail = $connection->query("
+			INSERT INTO delivery_received (user, mailbox, subject, body, messageid, attachments)
+			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$bodyEmail', '$replyIdEmail', '$attachStr')");
 
 		// create the new Email object
 		$email = new Email();
@@ -387,7 +388,7 @@ class RunController extends Controller
 				}
 
 				// prepare and send the email
-				$email->to = empty($rs->email) ? $fromEmail : $rs->email;
+				if($rs->email) $email->to = $rs->email;
 				$email->subject = $utils->randomSentence();
 				$email->images = $rs->images;
 				$email->attachments = $rs->attachments;
@@ -397,8 +398,8 @@ class RunController extends Controller
 			// for the requests that don't send emails back to the user
 			else
 			{
-				// mark email as processed so we don't run it again
-				$connection->query("UPDATE delivery_received SET status='processed', sent=CURRENT_TIMESTAMP WHERE id='$idEmail')");
+				// mark email as done so we don't run it again
+				$connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail')");
 			}
 		}
 
@@ -510,90 +511,5 @@ class RunController extends Controller
 		$response->attachments = $attachments;
 		$response->messageId = $messageID;
 		return $response;
-	}
-
-	/**
-	 * Respond to a request based on the parameters passed
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String $subject
-	 * @param String $body
-	 * @param String[] $attachments
-	 * @return Service
-	 */
-	private function run($email, $subject, $body, $attachments)
-	{
-		// get the name of the service or alias based on the subject line
-		$subjectPieces = explode(" ", $subject);
-		$serviceName = strtolower($subjectPieces[0]);
-		unset($subjectPieces[0]);
-
-		// get the service name, or use default service if the service does not exist
-		$utils = new Utils();
-		$serviceName = $utils->serviceExist($serviceName);
-		if( ! $serviceName) $serviceName = "ayuda";
-
-		// include the service code
-		$pathToService = $utils->getPathToService($serviceName);
-		include "$pathToService/service.php";
-
-		// get the subservice
-		$subServiceName = "";
-		if(isset($subjectPieces[1]) && ! preg_match('/\?|\(|\)|\\\|\/|\.|\$|\^|\{|\}|\||\!/', $subjectPieces[1])){
-			$serviceClassMethods = get_class_methods($serviceName);
-			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods)){
-				$subServiceName = strtolower($subjectPieces[1]);
-				unset($subjectPieces[1]);
-			}
-		}
-
-		// get the language of the user
-		$connection = new Connection();
-		$result = $connection->query("SELECT username, lang FROM person WHERE email = '$email'");
-		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
-
-		// create a new Request object
-		$request = new Request();
-		$request->email = $email;
-		$request->username = "@{$result[0]->username}";
-		$request->subject = $subject;
-		$request->body = $body;
-		$request->attachments = $attachments;
-		$request->service = $serviceName;
-		$request->subservice = trim($subServiceName);
-		$request->query = trim(implode(" ", $subjectPieces)); // get the service query
-		$request->lang = $lang;
-
-		// create a new Service Object with info from the database
-		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
-		$service = new $serviceName();
-		$service->serviceName = $serviceName;
-		$service->serviceDescription = $result[0]->description;
-		$service->creatorEmail = $result[0]->creator_email;
-		$service->serviceCategory = $result[0]->category;
-		$service->serviceUsage = $result[0]->usage_text;
-		$service->insertionDate = $result[0]->insertion_date;
-		$service->pathToService = $pathToService;
-		$service->showAds = $result[0]->ads == 1;
-		$service->utils = $utils;
-		$service->request = $request;
-		$service->group = $result[0]->group;
-
-		// run the service and get the Response
-		if(empty($subServiceName)) $response = $service->_main($request);
-		else{
-			$subserviceFunction = "_$subServiceName";
-			$response = $service->$subserviceFunction($request);
-		}
-
-		// make the responses to be always an array
-		$responses = is_array($response) ? $response : array($response);
-
-		// create and return the response
-		$return = new stdClass();
-		$return->service = $service;
-		$return->responses = $responses;
-		return $return;
 	}
 }
