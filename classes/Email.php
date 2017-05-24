@@ -112,7 +112,6 @@ class Email
 		$percent = 0; $node = NULL;
 		$user = str_replace(array(".","+"), "", explode("@", $to)[0]);
 		foreach ($nodes as $n) {
-			if($n->limit <= $n->daily) continue;
 			$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
 			similar_text ($temp, $user, $p);
 			if($p > $percent) {
@@ -176,18 +175,16 @@ class Email
 
 		// hanle errors
 		if($output->code != "" && $output->code != "200") {
+			// insert in drops emails and add 24h of waiting time
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
+			$connection->query("
+				UPDATE nodes_output SET blocked_until='$blockedUntil' WHERE email = '{$node->email}';
+				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
+				VALUES ('$to','{$node->email}','failed','{$output->code}','{$output->message}');");
+
 			// alert error message if an error happens
 			$errMsg = "NODE: Sending failed: {$output->message} FROM {$node->email} TO $to with ID {$this->id}";
 			$utils->createAlert($errMsg, "ERROR");
-
-			// when error, block for 24H and add one strike
-			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil' WHERE email = '{$node->email}'");
-
-			// insert in drops emails and add 24h of waiting time
-			$connection->query("
-				INSERT INTO delivery_dropped(email,sender,reason,`code`,description)
-				VALUES ('$to','{$node->email}','failed','{$output->code}','{$output->message}');");
 		}else{
 			// update delivery time
 			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='{$node->email}'");

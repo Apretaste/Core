@@ -1292,7 +1292,7 @@ class Utils
 	{
 		// get the group from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$email = $di->get('config')['global']['alerts'];
+		$to = $di->get('config')['global']['alerts'];
 
 		// get the details of the alert
 		$date = date('l jS \of F Y h:i:s A');
@@ -1304,8 +1304,11 @@ class Utils
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send email alert to the alerts group
-		$sender = new Email();
-		$sender->sendEmail($email, $subject, $body);
+		$email = new Email();
+		$email->to = $to;
+		$email->subject = $subject;
+		$email->body = $body;
+		$email->send();
 
 		// send the alert to the error log
 		error_log($subject);
