@@ -442,8 +442,9 @@ class RunController extends Controller
 		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
 		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
 
-		// remove weird chars from the subject. Apostrophes break the SQL code
+		// remove weird chars. Apostrophes break the SQL code
 		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+		$body = str_replace("'", "", $body);
 
 		// clean incoming emails
 		$fromEmail = str_replace("'", "", $fromEmail);
