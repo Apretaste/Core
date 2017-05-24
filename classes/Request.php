@@ -1,8 +1,9 @@
-<?php 
+<?php
 
 class Request {
 	public $email;
-	public $name;
+	public $username;
+	public $lang;
 	public $subject;
 	public $body;
 	public $attachments;

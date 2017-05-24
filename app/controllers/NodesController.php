@@ -59,8 +59,10 @@ class NodesController extends Controller
 	{
 		// empty params
 		$email = $this->request->get("email");
-		$node = ""; $host = ""; $user = "";
-		$pass = ""; $limit = "";
+		$node = ""; $user = ""; $pass = "";
+		$host = "smtp.gmail.com";
+		$limit = "50";
+		$group = "apretaste";
 
 		// get the list of nodes
 		$connection = new Connection();
@@ -74,6 +76,7 @@ class NodesController extends Controller
 			$user = $n[0]->user;
 			$pass = $n[0]->pass;
 			$limit = $n[0]->limit;
+			$group = $n[0]->group;
 		}
 
 		// values for the view
@@ -84,6 +87,7 @@ class NodesController extends Controller
 		$this->view->user = $user;
 		$this->view->pass = $pass;
 		$this->view->limit = $limit;
+		$this->view->group = $group;
 		$this->view->nodes = $nodes;
 		$this->view->setLayout('manage');
 	}
@@ -102,17 +106,18 @@ class NodesController extends Controller
 		$user = $this->request->get("user");
 		$pass = $this->request->get("pass");
 		$limit = $this->request->get("limit");
+		$group = $this->request->get("group");
 
 		// get the list of nodes
 		$connection = new Connection();
 		if($id) {
 			$connection->query("UPDATE nodes_output SET
-				email='$email', node='$node', host='$host',
-				user='$user', pass='$pass', `limit`='$limit'
+				email='$email', node='$node', host='$host', user='$user',
+				pass='$pass', `limit`='$limit', `group`='$group'
 				WHERE email='$id'");
 		} else {
-			$connection->query("INSERT INTO nodes_output (email, node, host, user, pass, `limit`)
-				VALUES ('$email','$node','$host','$user','$pass','$limit')");
+			$connection->query("INSERT INTO nodes_output (email, node, host, user, pass, `limit`, `group`)
+				VALUES ('$email','$node','$host','$user','$pass','$limit','$group')");
 		}
 
 		// go to the list of nodes

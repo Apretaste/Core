@@ -36,7 +36,7 @@ class LoginController extends Controller
 		$security->login($email, $password);
 
 		// refresh page if not logged
-		$this->response->redirect("/login");
+		$this->response->redirect("login");
 	}
 
 	/**
