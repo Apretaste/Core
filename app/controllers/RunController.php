@@ -237,6 +237,12 @@ class RunController extends Controller
 		$status = $utils->deliveryStatus($fromEmail, 'in');
 		if($status != 'ok') return;
 
+		// save the new email in the database and get the ID
+		$attachStr = implode(",", $attachEmail);
+		$idEmail = $connection->query("
+			INSERT INTO delivery_received (user, mailbox, subject, body, messageid, attachments)
+			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$bodyEmail', '$replyIdEmail', '$attachStr')");
+
 		// save the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
@@ -346,12 +352,6 @@ class RunController extends Controller
 		$ret = $utils->runRequest($fromEmail, $subjectEmail, $bodyEmail, array());
 		$service = $ret->service;
 		$responses = $ret->responses;
-
-		// save the new email in the database and get the ID
-		$attachStr = implode(",", $attachEmail);
-		$idEmail = $connection->query("
-			INSERT INTO delivery_received (user, mailbox, subject, body, messageid, attachments)
-			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$bodyEmail', '$replyIdEmail', '$attachStr')");
 
 		// create the new Email object
 		$email = new Email();
