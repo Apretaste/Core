@@ -11,7 +11,12 @@ class SenderTask extends \Phalcon\Cli\Task
 
 		// get the number failures with less than 3 tries
 		$connection = new Connection();
-		$unsent = $connection->query("SELECT * FROM delivery_received WHERE status = 'error' AND tries <= 3 LIMIT 5");
+		$unsent = $connection->query("
+			SELECT * FROM delivery_received
+			WHERE tries < 3
+			AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
+			OR `status` = 'error')
+			LIMIT 5");
 
 		echo "SENDING ".count($unsent)." EMAILS\n";
 
