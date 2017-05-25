@@ -19,7 +19,9 @@ class Render
 		if($response->json) return $response->json;
 
 		// set the email of the response if empty
-		if(empty($response->email)) $response->email = $service->request->email;
+		if(empty($response->email))
+		    if (isset($service->request->email))
+		        $response->email = $service->request->email;
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();

@@ -26,6 +26,10 @@ class Email
 	 */
 	public function send()
 	{
+        $di = \Phalcon\DI\FactoryDefault::getDefault();
+        if($di->get('environment') == "sandbox")
+            return true;
+
 		// validate email before sending
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($this->to);
