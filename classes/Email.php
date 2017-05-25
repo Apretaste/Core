@@ -34,6 +34,7 @@ class Email
 		// send via Nodes if the receipient is from Cuba
 		if(substr($this->to, -3) === ".cu")
 		{
+			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode($this->to, $this->subject, $this->body, $this->images, $this->attachments);
 			$this->from = $res->email->from;
 		}
