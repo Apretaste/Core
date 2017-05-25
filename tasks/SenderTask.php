@@ -53,7 +53,7 @@ class SenderTask extends \Phalcon\Cli\Task
 			{
 				// prepare and send the email
 				if($rs->email) $email->to = $rs->email;
-				$email->subject = $utils->randomSentence();
+				$email->subject = $rs->subject;
 				$email->images = $rs->images;
 				$email->attachments = $rs->attachments;
 				$email->body = $render->renderHTML($service, $rs);

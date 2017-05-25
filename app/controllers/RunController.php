@@ -381,7 +381,7 @@ class RunController extends Controller
 
 				// prepare and send the email
 				if($rs->email) $email->to = $rs->email;
-				$email->subject = $utils->randomSentence();
+				$email->subject = $rs->subject;
 				$email->images = $rs->images;
 				$email->attachments = $rs->attachments;
 				$email->body = $render->renderHTML($service, $rs);
@@ -486,7 +486,7 @@ class RunController extends Controller
 
 			// grant full access to the file
 			chmod($tmpfilePath, 0777);
-			$attachments[] = $filePath;
+			$attachments[] = $tmpfilePath;
 		}
 
 		// save the mailgun log
