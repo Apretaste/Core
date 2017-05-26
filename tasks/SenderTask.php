@@ -16,7 +16,7 @@ class SenderTask extends \Phalcon\Cli\Task
 			WHERE tries < 3
 			AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
 			OR `status` = 'error')
-			LIMIT 5");
+			ORDER BY inserted ASC LIMIT 5");
 
 		echo "SENDING ".count($unsent)." EMAILS\n";
 
@@ -27,7 +27,7 @@ class SenderTask extends \Phalcon\Cli\Task
 		// loop the list and re-send emails
 		foreach ($unsent as $u)
 		{
-			echo "\tPROCESING EMAIL TO:{$u->user}\n";
+			echo "\tPROCESING EMAIL TO:{$u->user} WITH ID:{$u->id}\n";
 
 			// run the request and get the service and responses
 			$attachEmail = explode(",", $u->attachments);
@@ -62,7 +62,6 @@ class SenderTask extends \Phalcon\Cli\Task
 		echo "FINISHED IN $timeDiff SECONDS\n";
 
 		// save the status in the database
-		$connection = new Connection();
 		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='sender'");
 	}
 }
