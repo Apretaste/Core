@@ -200,7 +200,7 @@ class Email
 			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
 		// insert in drops emails and add 24h of waiting time
 		}else{
-			$lastError = "CODE:{$output->message} | MESSAGE:{$output->message}";
+			$lastError = "CODE:{$output->code} | MESSAGE:{$output->message}";
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
 			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
 		}
