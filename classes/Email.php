@@ -33,13 +33,13 @@ class Email
 		if($status != 'ok') return false;
 
 		// send via Nodes to Nauta
-		if(substr($to, -9) === "@nauta.cu")
+		if(substr($this->to, -9) === "@nauta.cu")
 		{
 			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode();
 		}
 		// send using aliases for all other Cuban emails
-		elseif(substr($to, -3) === ".cu")
+		elseif(substr($this->to, -3) === ".cu")
 		{
 			$res = $this->sendEmailViaAlias();
 		}
