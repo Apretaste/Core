@@ -36,7 +36,7 @@ class Email
 		{
 			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode($this->to, $this->subject, $this->body, $this->images, $this->attachments);
-			$this->from = $res->email->from;
+			if($res->code == "200") $this->from = $res->email->from;
 		}
 		// respond via Amazon to recipients outside Cuba
 		else
@@ -174,8 +174,15 @@ class Email
 		$output = json_decode(curl_exec($ch));
 		curl_close ($ch);
 
+		// treat node unreachable error
+		if(empty($output)) {
+			$output = new stdClass();
+			$output->code = "504";
+			$output->message = "Error reaching {$node->name} to email $to with ID {$this->id}";
+		}
+
 		// hanle errors
-		if($output->code != "" && $output->code != "200") {
+		if($output->code != "200") {
 			// insert in drops emails and add 24h of waiting time
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
 			$connection->query("
