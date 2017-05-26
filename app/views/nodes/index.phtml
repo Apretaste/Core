@@ -36,8 +36,8 @@
 					<td class="text-center"><?=$node->last_sent?></td>
 					<td class="text-center">
 						<?php
-							if(empty($node->active)) echo "<span class='glyphicon glyphicon-remove alert-danger' title='Account is inactive' aria-hidden='true'></span>";
-							elseif($node->paused) echo "<span class='glyphicon glyphicon-time alert-warning' title='Active at {$node->blocked_until}' aria-hidden='true'></span>";
+							if(empty($node->active)) echo "<span class='glyphicon glyphicon-remove alert-danger' title='{$node->last_error}' aria-hidden='true'></span>";
+							elseif($node->paused) echo "<span class='glyphicon glyphicon-time alert-warning' title='Active at {$node->blocked_until} | {$node->last_error}' aria-hidden='true'></span>";
 							elseif($node->daily >= $node->limit) echo "<span class='glyphicon glyphicon-alert alert-info' title='Daily limit reached' aria-hidden='true'></span>";
 							else echo "<span class='glyphicon glyphicon-ok alert-success' title='Running' aria-hidden='true'></span>";
 						?>
