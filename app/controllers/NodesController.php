@@ -28,9 +28,16 @@ class NodesController extends Controller
 			$node->paused = empty($node->active) || strtotime($node->blocked_until) > strtotime(date('Y-m-d H:i:s'));
 		}
 
+		// get number of email in the queque
+		$totalQuequed = $connection->query("
+			SELECT COUNT(id) as total FROM delivery_received
+			WHERE tries < 3 AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
+			OR `status` = 'error')")[0]->total;
+
 		// send data to the view
 		$this->view->title = "Output emails";
 		$this->view->nodes = $nodes;
+		$this->view->totalQuequed = $totalQuequed;
 		$this->view->currentNode = "";
 		$this->view->setLayout('manage');
 	}
@@ -45,8 +52,15 @@ class NodesController extends Controller
 		$connection = new Connection();
 		$emails = $connection->query("SELECT * FROM nodes_input");
 
+		// get number of email in the queque
+		$totalQuequed = $connection->query("
+			SELECT COUNT(id) as total FROM delivery_received
+			WHERE tries < 3 AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
+			OR `status` = 'error')")[0]->total;
+
 		// send data to the view
 		$this->view->title = "Input emails";
+		$this->view->totalQuequed = $totalQuequed;
 		$this->view->emails = $emails;
 		$this->view->setLayout('manage');
 	}
@@ -208,8 +222,11 @@ class NodesController extends Controller
 			OR `status` = 'error')
 			ORDER BY inserted ASC");
 
+		// get the total of emails
+		$total = count($emails);
+
 		// send data to the view
-		$this->view->title = "Waiting queque";
+		$this->view->title = "Waiting queque ($total)";
 		$this->view->emails = $emails;
 		$this->view->setLayout('manage');
 	}
