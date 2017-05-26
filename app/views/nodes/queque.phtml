@@ -1,8 +1,7 @@
 <div class="row">
 	<div class="col-xs-12 text-right">
-		<a class="btn btn-small btn-default" data-toggle="modal" data-target="#newInputEmail"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Email</a>
 		<a class="btn btn-small btn-default" href="/nodes">Output emails</a>
-		<a class="btn btn-small btn-default" href="/nodes/queque">Waiting Queque</a>
+		<a class="btn btn-small btn-default" href="/nodes">Input emails</a>
 		<br/><br/>
 	</div>
 
@@ -10,18 +9,27 @@
 		<table class="table">
 			<thead>
 				<tr>
-					<th class="text-center">Email</th>
+					<th class="text-center">ID</th>
+					<th class="text-center">From</th>
+					<th class="text-center">Subject</th>
+					<th class="text-center">Tries</th>
 					<th class="text-center">Received</th>
+					<th class="text-center">Message</th>
 					<th class="text-center">Actions</th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ($emails as $email) { ?>
 				<tr>
-					<td class="text-center"><?=$email->email?></td>
-					<td class="text-center"><?=$email->received?></td>
-					<td class="text-center">
-						<a class="btn btn-xs btn-danger" onclick="return confirm('Are you sure? There is no way back!');" href="/nodes/deleteInputSubmit?email=<?=$email->email?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+					<td class="text-center"><?=$email->id?></td>
+					<td class="text-center"><?=$email->user?></td>
+					<td class="text-center"><?=$email->subject?></td>
+					<td class="text-center"><?=$email->tries?></td>
+					<td class="text-center"><nobr><?=date("M d h:i A", strtotime($email->inserted))?></nobr></td>
+					<td class="text-center"><?=$email->message?></td>
+					<td class="text-center nobr">
+						<a class="btn btn-xs btn-default" href="/nodes/sendFromQuequeSubmit?id=<?=$email->id?>"><span class="glyphicon glyphicon-send" aria-hidden="true"></span></a>
+						<a class="btn btn-xs btn-default" href="/nodes/removeFromQuequeSubmit?id=<?=$email->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
 					</td>
 				</tr>
 			<?php } ?>
