@@ -29,15 +29,9 @@ class SenderTask extends \Phalcon\Cli\Task
 		{
 			echo "\tPROCESING EMAIL TO:{$u->user}\n";
 
-			$idEmail = $u->id;
-			$fromEmail = $u->user;
-			$subjectEmail = $u->subject;
-			$bodyEmail = $u->body;
-			$replyIdEmail = $u->messageid;
-			$attachEmail = explode(",", $u->attachments);
-
 			// run the request and get the service and responses
-			$ret = $utils->runRequest($fromEmail, $subjectEmail, $bodyEmail, array());
+			$attachEmail = explode(",", $u->attachments);
+			$ret = $utils->runRequest($u->user, $u->subject, $u->body, $attachEmail);
 			$service = $ret->service;
 			$responses = $ret->responses;
 
@@ -45,7 +39,7 @@ class SenderTask extends \Phalcon\Cli\Task
 			$email = new Email();
 			$email->id = $u->id;
 			$email->to = $u->user;
-			$email->replyId = $replyIdEmail;
+			$email->replyId = $u->messageid;
 			$email->group = $service->group;
 
 			// get params for the email and send the response emails
