@@ -111,25 +111,36 @@ class Email
 		$connection = new Connection();
 		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 
-		// get the right node to use
-		$nodes = $connection->query("
-			SELECT * FROM nodes_output A JOIN nodes B
-			ON A.node = B.`key`
-			WHERE A.active = '1'
-			AND `group` LIKE '%{$this->group}%'
-			AND A.`limit` > A.daily
-			AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+		// get the node of the from address
+		if($this->from) {
+			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
+			if(isset($node[0])) $node = $node[0];
+		}
+		// if no from is passed, calculate
+		else {
+			// get the right node to use
+			$nodes = $connection->query("
+				SELECT * FROM nodes_output A JOIN nodes B
+				ON A.node = B.`key`
+				WHERE A.active = '1'
+				AND `group` LIKE '%{$this->group}%'
+				AND A.`limit` > A.daily
+				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
-		// get your personal email
-		$percent = 0; $node = NULL;
-		$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-		foreach ($nodes as $n) {
-			$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-			similar_text ($temp, $user, $p);
-			if($p > $percent) {
-				$percent = $p;
-				$node = $n;
+			// get your personal email
+			$percent = 0; $node = NULL;
+			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+			foreach ($nodes as $n) {
+				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
+				similar_text ($temp, $user, $p);
+				if($p > $percent) {
+					$percent = $p;
+					$node = $n;
+				}
 			}
+
+			// save the from part in the object
+			$this->from = $node->email;
 		}
 
 		// alert the team if no Node could be used
@@ -141,9 +152,6 @@ class Email
 			$utils->createAlert($output->message, "ERROR");
 			return $output;
 		}
-
-		// save the from part in the object
-		$this->from = $node->email;
 
 		// transform images to base64
 		$imagesToUpload = array();
@@ -277,7 +285,7 @@ class Email
 	public function sendEmailViaAlias()
 	{
 		// list of aliases @TODO read directly from Amazon
-		$aliases = array("apre.taste+nenito","apretaste+ahora","apretaste+alfa","apretaste+aljuarismi","apretaste+angulo","apretaste+arquimedes","apretaste+beta","apretaste+bolzano","apretaste+bool","apretaste+brahmagupta","apretaste+brutal","apretaste+cantor","apretaste+cauchy","apretaste+chi","apretaste+colonia","apretaste+david","apretaste+delta","apretaste+descartes","apretaste+elias","apretaste+epsilon","apretaste+euclides","apretaste+euler","apretaste+fermat","apretaste+fibonacci","apretaste+fourier");
+		$aliases = array('apre.taste+nenito','apretaste+ahora','apretaste+alfa','apretaste+aljuarismi','apretaste+angulo','apretaste+arquimedes','apretaste+beta','apretaste+bolzano','apretaste+bool','apretaste+brahmagupta','apretaste+brutal','apretaste+cantor','apretaste+cauchy','apretaste+chi','apretaste+colonia','apretaste+david','apretaste+delta','apretaste+descartes','apretaste+elias','apretaste+epsilon','apretaste+euclides','apretaste+euler','apretaste+fermat','apretaste+fibonacci','apretaste+fourier','apretaste+francisco','apretaste+gamma','apretaste+gauss','apretaste+gonzalo','apretaste+hilbert','apretaste+hipatia','apretaste+homero','apretaste+imperator','apretaste+isaac','apretaste+james','apretaste+jey','apretaste+kappa','apretaste+kepler','apretaste+key','apretaste+lambda','apretaste+leibniz','apretaste+lota','apretaste+luis','apretaste+manuel','apretaste+mu','apretaste+newton','apretaste+nombre','apretaste+nu','apretaste+ohm','apretaste+omega','apretaste+omicron','apretaste+oscar','apretaste+pablo','apretaste+peta','apretaste+phi','apretaste+pi','apretaste+poincare','apretaste+psi','apretaste+quote','apretaste+ramon','apretaste+rho','apretaste+riemann','apretaste+salomon','apretaste+sigma','apretaste+tales','apretaste+theta','apretaste+travis','apretaste+turing','apretaste+upsilon','apretaste+uva','apretaste+vacio','apretaste+viete','apretaste+weierstrass','apretaste+working','apretaste+xenon','apretaste+xi','apretaste+yeah','apretaste+zeta');
 
 		// select an alias based on your personal email
 		$percent = 0; $alias = NULL;
