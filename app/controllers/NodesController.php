@@ -28,16 +28,9 @@ class NodesController extends Controller
 			$node->paused = empty($node->active) || strtotime($node->blocked_until) > strtotime(date('Y-m-d H:i:s'));
 		}
 
-		// get number of email in the queque
-		$totalQuequed = $connection->query("
-			SELECT COUNT(id) as total FROM delivery_received
-			WHERE tries < 3 AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
-			OR `status` = 'error')")[0]->total;
-
 		// send data to the view
 		$this->view->title = "Output emails";
 		$this->view->nodes = $nodes;
-		$this->view->totalQuequed = $totalQuequed;
 		$this->view->currentNode = "";
 		$this->view->setLayout('manage');
 	}
@@ -52,15 +45,8 @@ class NodesController extends Controller
 		$connection = new Connection();
 		$emails = $connection->query("SELECT * FROM nodes_input");
 
-		// get number of email in the queque
-		$totalQuequed = $connection->query("
-			SELECT COUNT(id) as total FROM delivery_received
-			WHERE tries < 3 AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
-			OR `status` = 'error')")[0]->total;
-
 		// send data to the view
 		$this->view->title = "Input emails";
-		$this->view->totalQuequed = $totalQuequed;
 		$this->view->emails = $emails;
 		$this->view->setLayout('manage');
 	}
@@ -289,5 +275,29 @@ class NodesController extends Controller
 
 		// go to the list of nodes
 		$this->response->redirect('nodes/queque');
+	}
+
+	/**
+	 * Delivery status
+	 *
+	 * @author salvipascual
+	 */
+	public function deliveryAction()
+	{
+		$email = $this->request->get('email');
+		$received = array();
+		$sent = array();
+
+		if($email) {
+			$connection = new Connection();
+			$received = $connection->query("SELECT id, inserted, subject, mailbox FROM delivery_received WHERE user='$email' ORDER BY inserted DESC LIMIT 100");
+			$sent = $connection->query("SELECT inserted, subject, attachments, mailbox, `group`, origin FROM delivery_sent WHERE user='$email' ORDER BY inserted DESC LIMIT 100");
+		}
+
+		$this->view->title = 'Delivery';
+		$this->view->email = $email;
+		$this->view->received = $received;
+		$this->view->sent = $sent;
+		$this->view->setLayout('manage');
 	}
 }
