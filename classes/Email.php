@@ -118,13 +118,17 @@ class Email
 		}
 		// if no from is passed, calculate
 		else {
-			// get the right node to use
+			// get the date of the last test
+			$lastTest = $connection->query("SELECT inserted FROM test ORDER BY inserted DESC LIMIT 1")[0]->inserted;
+
+			// get the list of available nodes to use
 			$nodes = $connection->query("
 				SELECT * FROM nodes_output A JOIN nodes B
 				ON A.node = B.`key`
 				WHERE A.active = '1'
 				AND `group` LIKE '%{$this->group}%'
 				AND A.`limit` > A.daily
+				AND (('$lastTest' - INTERVAL 24 HOUR) <= A.last_test OR A.last_test IS NULL)
 				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
 			// get your personal email
