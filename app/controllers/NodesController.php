@@ -23,8 +23,13 @@ class NodesController extends Controller
 			ON A.`key` = B.node
 			ORDER BY A.`name`");
 
+		// get the date of the last test
+		$lastTest = $connection->query("SELECT inserted FROM test ORDER BY inserted DESC LIMIT 1")[0]->inserted;
+
 		// format data for the view
 		foreach ($nodes as $node) {
+			$hoursFromLastTest = round(strtotime($node->last_test) - strtotime($lastTest)) / 3600;
+			$node->tested = $hoursFromLastTest < 24;
 			$node->paused = empty($node->active) || strtotime($node->blocked_until) > strtotime(date('Y-m-d H:i:s'));
 		}
 
@@ -153,7 +158,7 @@ class NodesController extends Controller
 
 		// get the list of nodes
 		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET active='$status', blocked_until=NULL, last_error=NULL WHERE email='$email'");
+		$connection->query("UPDATE nodes_output SET active='$status', blocked_until=NULL, last_error=NULL, last_test=NULL WHERE email='$email'");
 
 		// go to the list of nodes
 		$this->response->redirect('nodes');
