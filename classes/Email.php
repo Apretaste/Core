@@ -132,7 +132,7 @@ class Email
 				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
 			// get your personal email
-			$percent = 0; $node = NULL;
+			$percent = 0; $node = false;
 			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
 			foreach ($nodes as $n) {
 				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
@@ -144,7 +144,7 @@ class Email
 			}
 
 			// save the from part in the object
-			$this->from = $node->email;
+			if($node) $this->from = $node->email;
 		}
 
 		// alert the team if no Node could be used
