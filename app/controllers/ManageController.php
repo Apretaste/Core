@@ -787,53 +787,6 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * Delivery status
-	 *
-	 * @author kuma
-	 */
-	public function deliveryAction()
-	{
-		$connection = new Connection();
-		$userEmail = $this->request->get('email');
-		$delivery = array();
-
-		if ( ! empty("$userEmail"))
-		{
-			$delivery = $connection->query("
-				SELECT * FROM (
-					(SELECT 'received' as type,
-							user,
-							id,
-							inserted,
-							subject,
-							attachments_count as attachments,
-							mailbox
-					FROM delivery_received
-					WHERE user = '$userEmail'
-					LIMIT 50)
-					UNION
-					(SELECT 'sent' as type,
-							user,
-							id,
-							inserted,
-							subject,
-							attachments,
-							mailbox
-					FROM delivery_sent
-					WHERE user = '$userEmail'
-					LIMIT 50)
-				) AS subq1
-				ORDER BY inserted, type desc;");
-
-			$r = $connection->query("SELECT * FROM delivery_dropped WHERE email = '$userEmail';");
-		}
-
-		$this->view->delivery = $delivery;
-		$this->view->title = 'Delivery';
-		$this->view->userEmail = $userEmail;
-	}
-
-	/**
 	 * Show the error log
 	 */
 	public function errorsAction()
