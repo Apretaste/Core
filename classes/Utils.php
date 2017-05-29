@@ -1301,6 +1301,7 @@ class Utils
 
 		// save alert into the database
 		$connection = new Connection();
+		$text = str_replace("'", "", $text);
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send email alert to the alerts group
