@@ -1,7 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<title>{$APRETASTE_SERVICE_NAME}</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<style type="text/css">
@@ -74,7 +73,7 @@
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
 									<span style="white-space:nowrap;">
 										<nobr>
-											<font size="10" face="Tahoma" color="#5ebb47"><i>A</i>pretaste</font>
+											<font size="10" face="Tahoma" color="#5ebb47">A p r e t a s t e</font>
 											<font style="margin-left:-5px;" size="18" face="Curlz MT" color="#A03E3B"><i>!</i></font>
 										</nobr>
 									</span>
@@ -171,7 +170,7 @@
 					<td align="left" style="padding: 0px 5px;">
 						{space5}
 						<small>
-							Servicios similares:
+							Otros servicios:
 							{foreach $APRETASTE_SERVICE_RELATED as $APRETASTE_SERVICE}
 								{link href="{$APRETASTE_SERVICE}" caption="{$APRETASTE_SERVICE}"}
 								{if not $APRETASTE_SERVICE@last}{separator}{/if}
