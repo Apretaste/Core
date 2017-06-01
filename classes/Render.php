@@ -27,7 +27,7 @@ class Render
 
 		// select the right file to load
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
-		else $userTemplateFile = "$wwwroot/services/{$service->serviceName}/templates/{$response->template}";
+		else $userTemplateFile = "{$service->pathToService}/templates/{$response->template}";
 
 		// if we are rendering the whole HTML
 		if ($response->html)
@@ -36,6 +36,10 @@ class Render
 			file_put_contents($tempTemp, $response->html);
 			$response->layout = $tempTemp;
 		}
+
+		// get the internal layout if exit
+		$internalLayoutPath = "{$service->pathToService}/layouts/{$response->layout}";
+		if(file_exists($internalLayoutPath)) $response->layout = $internalLayoutPath;
 
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;

@@ -30,10 +30,16 @@ class SenderTask extends \Phalcon\Cli\Task
 			echo "\tPROCESING EMAIL TO:{$u->user} WITH ID:{$u->id}\n";
 
 			// run the request and get the service and responses
-			$attachEmail = explode(",", $u->attachments);
-			$ret = $utils->runRequest($u->user, $u->subject, $u->body, $attachEmail);
-			$service = $ret->service;
-			$responses = $ret->responses;
+			try{
+				$attachEmail = explode(",", $u->attachments);
+				$ret = $utils->runRequest($u->user, $u->subject, $u->body, $attachEmail);
+				$service = $ret->service;
+				$responses = $ret->responses;
+			} catch (Exception $e) {
+				error_log("SENDER ERROR:" . $e->getMessage());
+				echo $e->getMessage();
+				continue;
+			}
 
 			// create the new Email object
 			$email = new Email();
