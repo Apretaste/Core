@@ -71,12 +71,8 @@
 						<table border="0">
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
-									<span style="white-space:nowrap;">
-										<nobr>
-											<font size="10" face="Tahoma" color="#5ebb47">A p r e t a s t e</font>
-											<font style="margin-left:-5px;" size="18" face="Curlz MT" color="#A03E3B"><i>!</i></font>
-										</nobr>
-									</span>
+									<span style="color:#5ebb47; font-size:45px; font-family:Tahoma; white-space:nowrap;"><i>A</i> p r e t a s t e</span>
+									<span style="color:#A03E3B; font-size:50px; font-family:Curlz MT; white-space:nowrap;"><i>!</i></span>
 								</td>
 							</tr>
 						</table>
@@ -188,7 +184,6 @@
 						<small>
 							Escriba dudas e ideas a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
 							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
-							Copyright &copy; 2012 - {'Y'|date} Pragres Corp.
 						</small>
 						{space5}
 					</td>

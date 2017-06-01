@@ -20,7 +20,7 @@ class Utils
 		$node = $connection->query("SELECT email FROM nodes_input WHERE active=1 ORDER BY RAND() LIMIT 1");
 		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
 
-		// construct the mailbox
+		// add alias to the email
 		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
 		if(empty($seed)) $seed = $this->randomSentence(1);
 		return "$name+$seed@gmail.com";
@@ -35,7 +35,14 @@ class Utils
 	public function getSupportEmailAddress()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		return $di->get('config')['contact']['support'];
+		$support = $di->get('config')['contact']['support'];
+
+		// add alias to the email
+		$parts = explode("@", $support);
+		$seed = $this->randomSentence(1);
+		$support = $parts[0]."+$seed@".$parts[1];
+
+		return $support;
 	}
 
 	/**
