@@ -32,14 +32,23 @@ class Email
 		$status = $utils->deliveryStatus($this->to);
 		if($status != 'ok') return false;
 
+		// check if the email is from Nauta or Cuba
+		$isNauta = substr($this->to, -9) === "@nauta.cu";
+		$isCuba = substr($this->to, -3) === ".cu";
+
+		// if comes from Piropazo or Pizarra, and is Cuban
+		if($isCuba && $this->group == 'social')
+		{
+			$res = $this->sendEmailViaPostmark();
+		}
 		// send via Nodes to Nauta
-		if(substr($this->to, -9) === "@nauta.cu")
+		elseif($isNauta)
 		{
 			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode();
 		}
 		// send using aliases for all other Cuban emails
-		elseif(substr($this->to, -3) === ".cu")
+		elseif($isCuba)
 		{
 			$res = $this->sendEmailViaAlias();
 		}
@@ -305,5 +314,57 @@ class Email
 		// send the email using Amazon
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
+	}
+
+	/**
+	 * Sends an email using Postmark
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaPostmark()
+	{
+		// get the Postmark key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$key = $di->get('config')['postmark']['key'];
+
+		// create mailer
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => "smtp.postmarkapp.com",
+			'username' => $key,
+			'password' => "514aaca0-4e53-4e75-abf2-499419937e1c",
+			'port' => '2525',
+			'secure' => 'STARTTLS'
+		]);
+
+		// select the from part @TODO make this automatically
+		$this->from = "noreply@pizarra.me";
+
+		// create message
+		$mail = new Message;
+		$mail->setFrom($this->from);
+		$mail->addTo($this->to);
+		$mail->setSubject($this->subject);
+		$mail->setHtmlBody($this->body);
+		$mail->setReturnPath($this->from);
+		$mail->setHeader('Sender', $this->from);
+		$mail->setHeader('In-Reply-To', $this->replyId);
+		$mail->setHeader('References', $this->replyId);
+
+		// create the response code and message
+		$output = new stdClass();
+		$output->code = "200";
+		$output->message = "POSTMARK: Sent to {$this->to}";
+
+		// send email
+		try{
+			$mailer->send($mail, false);
+		}catch (Exception $e){
+			$output->code = "500";
+			$output->message = "POSTMARK: " . $e->getMessage();
+			$utils->createAlert($output->message, "ERROR");
+		}
+
+		return $output;
 	}
 }
