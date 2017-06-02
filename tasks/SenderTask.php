@@ -39,8 +39,8 @@ class SenderTask extends \Phalcon\Cli\Task
 
 		// get only the first 5 emails to send
 		$unsent = array_slice($unsent, 0, 5);
-		print_r($unsent); exit;
 
+		// echo guide note
 		echo "SENDING ".count($unsent)." EMAILS\n";
 
 		// create global objects
