@@ -24,7 +24,7 @@
 				<tr>
 					<td class="text-center"><?=$email->id?></td>
 					<td class="text-center"><?=$email->user?></td>
-					<td class="text-center"><?=substr($email->subject,0,30)?></td>
+					<td class="text-center" title="<?=$email->subject?>"><?=substr($email->subject,0,30)?></td>
 					<td class="text-center"><?=$email->tries?></td>
 					<td class="text-center"><nobr><?=date("M d h:i A", strtotime($email->inserted))?></nobr></td>
 					<td class="text-center"><?=$email->message?></td>
