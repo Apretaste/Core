@@ -114,7 +114,7 @@ class RunController extends Controller
 
 		// send the email via Apretaste
 		$sender = new Email();
-		$sender->setGroup($perms[0]->group);
+		$sender->group = $perms[0]->group;
 		$sender->sendEmail($toEmail, $subject, $response->body);
 
 		// do not continue processing
