@@ -191,7 +191,8 @@ class ApiController extends Controller
 		// create response to email the new code
 		$subject = "Code: $pin";
 		$response = new Response();
-		$response->setEmailLayout('email_piropazo.tpl');
+		$response->email = $email;
+		$response->setEmailLayout('email_minimal.tpl');
 		$response->setResponseSubject($subject);
 		$response->createFromTemplate("pinrecover_$lang.tpl", array("pin"=>$pin));
 		$response->internal = true;
@@ -202,7 +203,10 @@ class ApiController extends Controller
 
 		// email the code to the user
 		$sender = new Email();
-		$sender->sendEmail($email, $subject, $body);
+		$sender->to = $email;
+		$sender->subject = $subject;
+		$sender->body = $body;
+		$sender->send();
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
