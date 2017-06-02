@@ -16,7 +16,30 @@ class SenderTask extends \Phalcon\Cli\Task
 			WHERE tries < 3
 			AND ((`status` = 'new' AND TIMESTAMPDIFF(MINUTE, inserted, NOW()) > 5)
 			OR `status` = 'error')
-			ORDER BY inserted ASC LIMIT 5");
+			ORDER BY inserted ASC");
+
+		// remove duplicated entries from array
+		$ommit = array();
+		foreach ($unsent as $a){
+			if(in_array($a->id, $ommit)) continue;
+			foreach ($unsent as $b){
+				if($a->id != $b->id && $a->user == $b->user && $a->subject == $b->subject){
+					$ommit[] = $b->id;
+					$key = array_search($b, $unsent);
+					unset($unsent[$key]);
+				}
+			}
+		}
+
+		// remove duplicated entries from the database
+		if($ommit){
+			$ids = implode("','", $ommit);
+			$connection->query("UPDATE delivery_received SET status='block' WHERE id IN ('$ids')");
+		}
+
+		// get only the first 5 emails to send
+		$unsent = array_slice($unsent, 0, 5);
+		print_r($unsent); exit;
 
 		echo "SENDING ".count($unsent)." EMAILS\n";
 
@@ -68,6 +91,6 @@ class SenderTask extends \Phalcon\Cli\Task
 		echo "FINISHED IN $timeDiff SECONDS\n";
 
 		// save the status in the database
-		$connection->deepQuery("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='sender'");
+		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='sender'");
 	}
 }
