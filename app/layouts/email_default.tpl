@@ -71,7 +71,7 @@
 						<table border="0">
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
-									<span style="color:#5ebb47; font-size:45px; font-family:Tahoma; white-space:nowrap;"><i>A</i> p r e t a s t e</span>
+									<span style="color:#5ebb47; font-size:45px; font-family:Tahoma; white-space:nowrap;"><i>A</i>.p.r.e.t.a.s.t.e</span>
 									<span style="color:#A03E3B; font-size:50px; font-family:Curlz MT; white-space:nowrap;"><i>!</i></span>
 								</td>
 							</tr>
