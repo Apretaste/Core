@@ -36,27 +36,32 @@ class Email
 		$isNauta = substr($this->to, -9) === "@nauta.cu";
 		$isCuba = substr($this->to, -3) === ".cu";
 
-		// if comes from Piropazo or Pizarra, and is Cuban
-		if($isCuba && $this->group == 'social')
+		// respond via Amazon to people outside Cuba
+		if( ! $isCuba)
+		{
+			$this->from = 'Apretaste <noreply@apretaste.com>';
+			$res = $this->sendEmailViaAmazon();
+		}
+		// if responding to Piropazo or Pizarra
+		elseif($this->group == 'social')
 		{
 			$res = $this->sendEmailViaPostmark();
 		}
-		// send via Nodes to Nauta
+		// if responding to Web or Google
+		elseif($this->group == 'web')
+		{
+			$res = $this->sendEmailViaSendinblue();
+		}
+		// for all other Nauta emails
 		elseif($isNauta)
 		{
 			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode();
 		}
-		// send using aliases for all other Cuban emails
-		elseif($isCuba)
-		{
-			$res = $this->sendEmailViaAlias();
-		}
-		// respond via Amazon to recipients outside Cuba
+		// for all other Cuban emails
 		else
 		{
-			$this->from = 'Apretaste <noreply@apretaste.com>';
-			$res = $this->sendEmailViaAmazon();
+			$res = $this->sendEmailViaAlias();
 		}
 
 		// update the object
@@ -363,6 +368,59 @@ class Email
 		}catch (Exception $e){
 			$output->code = "500";
 			$output->message = "POSTMARK: " . $e->getMessage();
+			$utils->createAlert($output->message, "ERROR");
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Sends an email using Sendinblue
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaSendinblue()
+	{
+		// get the Postmark key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$user = $di->get('config')['sendinblue']['user'];
+		$pass = $di->get('config')['sendinblue']['pass'];
+
+		// create mailer
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => "smtp-relay.sendinblue.com",
+			'username' => $user,
+			'password' => $pass,
+			'port' => '587'
+		]);
+
+		// select the from part @TODO make this automatically
+		$this->from = "webmailcuba@gmail.com";
+
+		// create message
+		$mail = new Message;
+		$mail->setFrom($this->from);
+		$mail->addTo($this->to);
+		$mail->setSubject($this->subject);
+		$mail->setHtmlBody($this->body);
+		$mail->setReturnPath($this->from);
+		$mail->setHeader('X-Mailer', '');
+		$mail->setHeader('Sender', $this->from);
+		$mail->setHeader('In-Reply-To', $this->replyId);
+		$mail->setHeader('References', $this->replyId);
+
+		// create the response code and message
+		$output = new stdClass();
+		$output->code = "200";
+		$output->message = "SENDINBLUE: Sent to {$this->to}";
+
+		// send email
+		try{
+			$mailer->send($mail, false);
+		}catch (Exception $e){
+			$output->code = "500";
+			$output->message = "SENDINBLUE: " . $e->getMessage();
 			$utils->createAlert($output->message, "ERROR");
 		}
 
