@@ -42,6 +42,11 @@ class Email
 			$this->from = 'Apretaste <noreply@apretaste.com>';
 			$res = $this->sendEmailViaAmazon();
 		}
+		// if sending a campaign email
+		elseif($this->group == 'campaign')
+		{
+			$res = $this->sendEmailViaSendGrid();
+		}
 		// if responding to Piropazo or Pizarra
 		elseif($this->group == 'social')
 		{
@@ -421,6 +426,60 @@ class Email
 		}catch (Exception $e){
 			$output->code = "500";
 			$output->message = "SENDINBLUE: " . $e->getMessage();
+			$utils->createAlert($output->message, "ERROR");
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Sends an email using SendGrid
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaSendGrid()
+	{
+		// get the Postmark key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$key = $di->get('config')['sendgrid']['key'];
+
+		// create mailer
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => "smtp.sendgrid.net",
+			'username' => "apikey",
+			'password' => $key,
+			'port' => '465',
+			'secure' => 'ssl'
+		]);
+
+		// create the from using the email
+		$username = str_replace(array('.','+'), '', explode('@', $this->to)[0]);
+		$this->from = "$username@gmail.com";
+
+		// create message
+		$mail = new Message;
+		$mail->setFrom($this->from);
+		$mail->addTo($this->to);
+		$mail->setSubject($this->subject);
+		$mail->setHtmlBody($this->body);
+		$mail->setReturnPath($this->from);
+		$mail->setHeader('X-Mailer', '');
+		$mail->setHeader('Sender', $this->from);
+		$mail->setHeader('In-Reply-To', $this->replyId);
+		$mail->setHeader('References', $this->replyId);
+
+		// create the response code and message
+		$output = new stdClass();
+		$output->code = "200";
+		$output->message = "SENDGRID: Sent to {$this->to}";
+
+		// send email
+		try{
+			$mailer->send($mail, false);
+		}catch (Exception $e){
+			$output->code = "500";
+			$output->message = "SENDGRID: " . $e->getMessage();
 			$utils->createAlert($output->message, "ERROR");
 		}
 
