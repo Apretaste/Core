@@ -29,10 +29,6 @@ class CampaignTask extends \Phalcon\Cli\Task
 		if (empty($campaign)) return;
 		else $campaign = $campaign[0];
 
-		// set the default group to send emails
-		$sender = new Email();
-		$sender->setGroup($campaign->group);
-
 		// update campaign as SENDING
 		$connection->query("UPDATE campaign SET status='SENDING' WHERE id={$campaign->id}");
 
@@ -67,6 +63,11 @@ class CampaignTask extends \Phalcon\Cli\Task
 				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
 		}
 
+		// prepare the email
+		$sender = new Email();
+		$sender->subject = $campaign->subject;
+		$sender->group = "campaign";
+
 		// show initial message
 		$total = count($people);
 		echo "\nSTARTING COUNT: $total\n";
@@ -88,12 +89,14 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$service = new Service('campaign');
 			$html = $render->renderHTML($service, $response);
 
-			// send test email
-			$result = $sender->sendEmail($person->email, $campaign->subject, $html);
+			// send the email
+			$sender->to = $person->email;
+			$sender->body = $html;
+			$res = $sender->send();
 
 			// add to bounced and unsubscribe if there are issues sending
 			$bounced = ""; $status = "SENT";
-			if( ! $result)
+			if($res->code != "200")
 			{
 //				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
@@ -102,7 +105,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 			}
 
 			// save status before moving to the next email
-			$sql = "INSERT INTO campaign_sent (email, campaign, `group`, status) VALUES ('{$person->email}', '{$campaign->id}', '{$campaign->group}', '$status');";
+			$sql = "INSERT INTO campaign_sent (email, campaign, `group`, status) VALUES ('{$person->email}', '{$campaign->id}', '{$campaign->list}', '$status');";
 			$sql .= "UPDATE campaign SET $bounced sent=sent+1 WHERE id='{$campaign->id}';";
 			if($person->type == "list") $sql .= "UPDATE campaign_subscribers SET sent=sent+1, status='$status' WHERE id='{$person->id}';";
 			$connection->query($sql);
@@ -110,17 +113,10 @@ class CampaignTask extends \Phalcon\Cli\Task
 			// stop execution if the bounced percentage > 5%
 			if(($bouncedCounter*100)/$total > 5)
 			{
-				// save as error
+				// save as error and save log
 				$connection->query("UPDATE campaign SET status='ERROR' WHERE id='{$campaign->id}'");
-
-				// saving the log
-				$wwwroot = $this->di->get('path')['root'];
 				$msg = "CAMPAIGN: {$campaign->id}, MESSAGE: Error failure percent too high at $failurePercent%";
-				$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/campaigns.log");
-				$logger->log($msg);
-				$logger->close();
-
-				// stop execution
+				$utils->createAlert($msg, "ERROR");
 				die($msg);
 			}
 		}

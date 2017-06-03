@@ -371,7 +371,7 @@ class CampaignsController extends Controller
 		$content = str_replace("'", "&#39;", $content);
 		$content = preg_replace('/\s+/S', " ", $content);
 		$content = $utils->clearHtml($content);
-		
+
 		//$p = strpos($content, '<body>');
 		//$content = substr($content,str)
 
@@ -387,7 +387,7 @@ class CampaignsController extends Controller
 			$sql = "
 				INSERT INTO campaign (subject, list, `group`, content, sending_date)
 				VALUES ('$subject','$list','{$manager->group}','$content', '$date')";
-				
+
 			$id = $connection->query($sql);
 		}
 		else
@@ -459,7 +459,11 @@ class CampaignsController extends Controller
 
 		// send test email
 		$sender = new Email();
-		$sender->sendEmail($email, $subject, $html);
+		$sender->to = $email;
+		$sender->subject = $subject;
+		$sender->body = $html;
+		$sender->group = "campaign";
+		$sender->send();
 
 		// send the response
 		echo '{result: true}';
