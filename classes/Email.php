@@ -334,49 +334,18 @@ class Email
 	 */
 	public function sendEmailViaPostmark()
 	{
-		// get the Postmark key
+		// get the Postmark params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$host = "smtp.postmarkapp.com";
 		$key = $di->get('config')['postmark']['key'];
-
-		// create mailer
-		$mailer = new Nette\Mail\SmtpMailer([
-			'host' => "smtp.postmarkapp.com",
-			'username' => $key,
-			'password' => "514aaca0-4e53-4e75-abf2-499419937e1c",
-			'port' => '2525',
-			'secure' => 'STARTTLS'
-		]);
+		$port = '2525';
+		$security = 'STARTTLS';
 
 		// select the from part @TODO make this automatically
 		$this->from = "noreply@pizarra.me";
 
-		// create message
-		$mail = new Message;
-		$mail->setFrom($this->from);
-		$mail->addTo($this->to);
-		$mail->setSubject($this->subject);
-		$mail->setHtmlBody($this->body);
-		$mail->setReturnPath($this->from);
-		$mail->setHeader('X-Mailer', '');
-		$mail->setHeader('Sender', $this->from);
-		$mail->setHeader('In-Reply-To', $this->replyId);
-		$mail->setHeader('References', $this->replyId);
-
-		// create the response code and message
-		$output = new stdClass();
-		$output->code = "200";
-		$output->message = "POSTMARK: Sent to {$this->to}";
-
-		// send email
-		try{
-			$mailer->send($mail, false);
-		}catch (Exception $e){
-			$output->code = "500";
-			$output->message = "POSTMARK: " . $e->getMessage();
-			$utils->createAlert($output->message, "ERROR");
-		}
-
-		return $output;
+		// send the email using smtp
+		return $this->smtp($host, $key, $key, $port, $security);
 	}
 
 	/**
@@ -387,49 +356,18 @@ class Email
 	 */
 	public function sendEmailViaSendinblue()
 	{
-		// get the Postmark key
+		// get the Sendinblue params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$host = 'smtp-relay.sendinblue.com';
 		$user = $di->get('config')['sendinblue']['user'];
 		$pass = $di->get('config')['sendinblue']['pass'];
-
-		// create mailer
-		$mailer = new Nette\Mail\SmtpMailer([
-			'host' => "smtp-relay.sendinblue.com",
-			'username' => $user,
-			'password' => $pass,
-			'port' => '587'
-		]);
+		$port = '587';
 
 		// select the from part @TODO make this automatically
 		$this->from = "webmailcuba@gmail.com";
 
-		// create message
-		$mail = new Message;
-		$mail->setFrom($this->from);
-		$mail->addTo($this->to);
-		$mail->setSubject($this->subject);
-		$mail->setHtmlBody($this->body);
-		$mail->setReturnPath($this->from);
-		$mail->setHeader('X-Mailer', '');
-		$mail->setHeader('Sender', $this->from);
-		$mail->setHeader('In-Reply-To', $this->replyId);
-		$mail->setHeader('References', $this->replyId);
-
-		// create the response code and message
-		$output = new stdClass();
-		$output->code = "200";
-		$output->message = "SENDINBLUE: Sent to {$this->to}";
-
-		// send email
-		try{
-			$mailer->send($mail, false);
-		}catch (Exception $e){
-			$output->code = "500";
-			$output->message = "SENDINBLUE: " . $e->getMessage();
-			$utils->createAlert($output->message, "ERROR");
-		}
-
-		return $output;
+		// send the email using smtp
+		return $this->smtp($host, $user, $pass, $port, '');
 	}
 
 	/**
@@ -440,47 +378,75 @@ class Email
 	 */
 	public function sendEmailViaSendGrid()
 	{
-		// get the Postmark key
+		// get the SendGrid params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['sendgrid']['key'];
-
-		// create mailer
-		$mailer = new Nette\Mail\SmtpMailer([
-			'host' => "smtp.sendgrid.net",
-			'username' => "apikey",
-			'password' => $key,
-			'port' => '465',
-			'secure' => 'ssl'
-		]);
+		$host = "smtp.sendgrid.net";
+		$user = "apikey";
+		$pass = $di->get('config')['sendgrid']['key'];
+		$port = '465';
+		$security = 'ssl';
 
 		// create the from using the email
 		$username = str_replace(array('.','+'), '', explode('@', $this->to)[0]);
 		$this->from = "$username@gmail.com";
+
+		// send the email using smtp
+		return $this->smtp($host, $user, $pass, $port, $security);
+	}
+
+	/**
+	 * Send email using SMTP
+	 *
+	 * @author salvipascual
+	 */
+	private function smtp($host, $user, $pass, $port, $security)
+	{
+		// create mailer
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => $host,
+			'username' => $user,
+			'password' => $pass,
+			'port' => $port,
+			'secure' => $security
+		]);
 
 		// create message
 		$mail = new Message;
 		$mail->setFrom($this->from);
 		$mail->addTo($this->to);
 		$mail->setSubject($this->subject);
-		$mail->setHtmlBody($this->body);
+		$mail->setHtmlBody($this->body, false);
 		$mail->setReturnPath($this->from);
 		$mail->setHeader('X-Mailer', '');
 		$mail->setHeader('Sender', $this->from);
 		$mail->setHeader('In-Reply-To', $this->replyId);
 		$mail->setHeader('References', $this->replyId);
 
+		// add images to the template
+		foreach ($this->images as $image) {
+			if (file_exists($image)) {
+				$inline = $mail->addEmbeddedFile($image);
+				$inline->setHeader("Content-ID", basename($image));
+			}
+		}
+
+		// add attachments
+		foreach ($this->attachments as $attachment) {
+			if (file_exists($attachment)) $mail->addAttachment($attachment);
+		}
+
 		// create the response code and message
 		$output = new stdClass();
 		$output->code = "200";
-		$output->message = "SENDGRID: Sent to {$this->to}";
+		$output->message = "Sent to {$this->to}";
 
 		// send email
 		try{
 			$mailer->send($mail, false);
 		}catch (Exception $e){
 			$output->code = "500";
-			$output->message = "SENDGRID: " . $e->getMessage();
-			$utils->createAlert($output->message, "ERROR");
+			$output->message = $e->getMessage();
+			$utils->createAlert($e->getMessage(), "ERROR");
 		}
 
 		return $output;
