@@ -83,9 +83,10 @@ class Email
 		// save a trace that the email was sent
 		if($res->code == "200")
 		{
+			$subject = str_replace("'", "", $this->subject);
 			$attachments = count($this->attachments);
 			$images = count($this->images);
-			$connection->query("INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin) VALUES ('{$this->from}','{$this->to}','{$this->subject}','$images','$attachments','{$this->group}','{$this->id}')");
+			$connection->query("INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin) VALUES ('{$this->from}','{$this->to}','$subject','$images','$attachments','{$this->group}','{$this->id}')");
 		}
 		// save a trace that the email failed and alert
 		else
