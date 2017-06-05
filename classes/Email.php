@@ -39,7 +39,6 @@ class Email
 		// respond via Amazon to people outside Cuba
 		if( ! $isCuba)
 		{
-			$this->from = 'Apretaste <noreply@apretaste.com>';
 			$res = $this->sendEmailViaAmazon();
 		}
 		// if sending a campaign email
@@ -56,6 +55,11 @@ class Email
 		elseif($this->group == 'web')
 		{
 			$res = $this->sendEmailViaSendinblue();
+		}
+		// if responding to business services
+		elseif($this->group == 'business')
+		{
+			$res = $this->sendEmailViaMailjet();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
@@ -248,56 +252,19 @@ class Email
 	 */
 	public function sendEmailViaAmazon()
 	{
-		// clean special characters from the subject and shorten to 100 characters
-		$this->subject = substr(preg_replace('/[^A-Za-z0-9\- ]/', '', $this->subject), 0, 100);
-
-		// prepare email to be sent
-		$m = new SimpleEmailServiceMessage();
-		$m->addTo($this->to);
-		$m->setFrom($this->from);
-		$m->setSubject($this->subject);
-		$m->setMessageFromString('Su cliente de correo no acepta HTML', $this->body);
-
-		// set the encoding of the subject and the body
-		$m->setSubjectCharset('ISO-8859-1');
-		$m->setMessageCharset('ISO-8859-1');
-
-		// embebbed images
-		foreach ($this->images as $path) {
-			$fileName = basename($path);
-			$m->addAttachmentFromFile($fileName,$path,'application/octet-stream',"<$fileName>",'inline');
-		}
-
-		// add attachments
-		foreach ($this->attachments as $path) {
-			$mimeType = mime_content_type($path);
-			$fileName = basename($path);
-			$m->addAttachmentFromFile($fileName, $path, $mimeType);
-		}
-
-		// get the API key and start MailGun client
+		// get the Postmark params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$accessKey = $di->get('config')['amazon']['access'];
-		$secretKey = $di->get('config')['amazon']['secret'];
+		$host = "email-smtp.us-east-1.amazonaws.com";
+		$user = $di->get('config')['amazon']['access'];
+		$pass = $di->get('config')['amazon']['secret'];
+		$port = '465';
+		$security = 'ssl';
 
-		// create the structure to return
-		$output = new stdClass();
-		$output->code = 200;
-		$output->message = "";
+		// select the from part
+		$this->from = 'noreply@apretaste.com';
 
-		// send email
-		try{
-			$ses = new SimpleEmailService($accessKey, $secretKey);
-			$ses->sendEmail($m);
-		} catch (Exception $e) {
-			$utils = new Utils();
-			$msg = "AMAZON: Error sending from: {$this->from} to {$this->to} with subject {$this->subject} and error: ".$e->getMessage();
-			$utils->createAlert($msg, "ERROR");
-			$output->code = "500";
-			$output->message = $e->getMessage();
-		}
-
-		return $output;
+		// send the email using smtp
+		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
 	/**
@@ -396,6 +363,29 @@ class Email
 	}
 
 	/**
+	 * Sends an email using Mailjet
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaMailjet()
+	{
+		// get the Mailjet params
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$host = "in-v3.mailjet.com";
+		$user = $di->get('config')['mailjet']['user'];
+		$pass = $di->get('config')['mailjet']['pass'];
+		$port = '587';
+		$security = 'tsl';
+
+		// select the from part @TODO make this automatically
+		$this->from = "ajonhalons@gmail.com";
+
+		// send the email using smtp
+		return $this->smtp($host, $user, $pass, $port, $security);
+	}
+
+	/**
 	 * Send email using SMTP
 	 *
 	 * @author salvipascual
@@ -447,6 +437,8 @@ class Email
 		}catch (Exception $e){
 			$output->code = "500";
 			$output->message = $e->getMessage();
+
+			$utils = new Utils();
 			$utils->createAlert($e->getMessage(), "ERROR");
 		}
 
