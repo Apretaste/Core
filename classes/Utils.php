@@ -1293,9 +1293,9 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $text
-	 * @param Enum $type: WARNING,NOTICE,ERROR
+	 * @param Enum $type: NOTICE,WARNING,ERROR
 	 */
-	public function createAlert($text, $type="WARNING")
+	public function createAlert($text, $type="NOTICE")
 	{
 		// get the group from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -1311,15 +1311,19 @@ class Utils
 		$text = str_replace("'", "", $text);
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
-		// send email alert to the alerts group
-		$email = new Email();
-		$email->to = $to;
-		$email->subject = $subject;
-		$email->body = $body;
-		$email->send();
-
 		// send the alert to the error log
 		error_log($subject);
+
+		// send email alert to the alerts group in case of errors
+		if($text == "ERROR")
+		{
+			$email = new Email();
+			$email->to = $to;
+			$email->subject = $subject;
+			$email->body = $body;
+			$email->send();
+		}
+
 		return false;
 	}
 

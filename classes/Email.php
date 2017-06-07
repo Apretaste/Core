@@ -46,26 +46,26 @@ class Email
 		{
 			$res = $this->sendEmailViaSendGrid();
 		}
+		// if responding to the Support
+		elseif($this->group == 'support')
+		{
+			$res = $this->sendEmailViaNode();
+		}
 		// if responding to Piropazo or Pizarra
 		elseif($this->group == 'social')
 		{
 			$res = $this->sendEmailViaPostmark();
 		}
-		// if responding to Web or Google
-		elseif($this->group == 'web')
+		// if responding to Marti
+		elseif($this->group == 'danger')
 		{
-			$res = $this->sendEmailViaSendinblue();
-		}
-		// if responding to business services
-		elseif($this->group == 'business')
-		{
-			$res = $this->sendEmailViaMailjet();
+			$this->subject = $utils->randomSentence();
+			$res = $this->sendEmailViaNode();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-			$this->subject = $utils->randomSentence();
-			$res = $this->sendEmailViaNode();
+			$res = $this->sendEmailViaMailjet();
 		}
 		// for all other Cuban emails
 		else
@@ -260,8 +260,8 @@ class Email
 		$port = '465';
 		$security = 'ssl';
 
-		// select the from part
-		$this->from = 'noreply@apretaste.com';
+		// select the from part if empty
+		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
 
 		// send the email using smtp
 		return $this->smtp($host, $user, $pass, $port, $security);
@@ -310,7 +310,7 @@ class Email
 		$security = 'STARTTLS';
 
 		// select the from part @TODO make this automatically
-		$this->from = "noreply@pizarra.me";
+		if(empty($this->from)) $this->from = "noreply@pizarra.me";
 
 		// send the email using smtp
 		return $this->smtp($host, $key, $key, $port, $security);
@@ -332,7 +332,7 @@ class Email
 		$port = '587';
 
 		// select the from part @TODO make this automatically
-		$this->from = "webmailcuba@gmail.com";
+		if(empty($this->from)) $this->from = "webmailcuba@gmail.com";
 
 		// send the email using smtp
 		return $this->smtp($host, $user, $pass, $port, '');
@@ -356,7 +356,7 @@ class Email
 
 		// create the from using the email
 		$username = str_replace(array('.','+'), '', explode('@', $this->to)[0]);
-		$this->from = "$username@gmail.com";
+		if(empty($this->from)) $this->from = "$username@gmail.com";
 
 		// send the email using smtp
 		return $this->smtp($host, $user, $pass, $port, $security);
@@ -379,7 +379,7 @@ class Email
 		$security = 'tsl';
 
 		// select the from part @TODO make this automatically
-		$this->from = "ajonhalons@gmail.com";
+		if(empty($this->from)) $this->from = "alfonsedalong@gmail.com";
 
 		// send the email using smtp
 		return $this->smtp($host, $user, $pass, $port, $security);
