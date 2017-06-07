@@ -197,11 +197,11 @@ class RunController extends Controller
 		// respond by email, if there is an email to send
 		if($response->email && $response->render)
 		{
-			$email = new Email();
-			$email->to = $response->email;
-			$email->subject = $response->subject;
-			$email->body = $render->renderHTML($service, $response);
-			$email->send();
+			$sender = new Email();
+			$sender->to = $response->email;
+			$sender->subject = $response->subject;
+			$sender->body = $render->renderHTML($service, $response);
+			$sender->send();
 		}
 
 		// update last access time to current
