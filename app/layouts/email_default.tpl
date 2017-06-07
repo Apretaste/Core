@@ -183,7 +183,7 @@
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
 						<small>
-							Escr&iacute;banos a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
+							Env&iacute;a tus preguntas a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
 							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
 						</small>
 						{space5}
