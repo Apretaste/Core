@@ -49,7 +49,7 @@ class Email
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
-			$res = $this->sendEmailViaNode();
+			$res = $this->sendEmailViaGmail();
 		}
 		// if responding to Piropazo or Pizarra
 		elseif($this->group == 'social')
@@ -60,7 +60,7 @@ class Email
 		elseif($this->group == 'danger')
 		{
 			$this->subject = $utils->randomSentence();
-			$res = $this->sendEmailViaNode();
+			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
@@ -386,6 +386,76 @@ class Email
 	}
 
 	/**
+	 * Sends an email using Gmail
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaGmail()
+	{
+		// every new day set the daily counter back to zero
+		$connection = new Connection();
+		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+
+		// get the node of the from address
+		if($this->from) {
+			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
+			if(isset($node[0])) $node = $node[0];
+		}
+		// if no from is passed, calculate
+		else {
+			// get the list of available nodes to use
+			$nodes = $connection->query("
+				SELECT * FROM nodes_output A JOIN nodes B
+				ON A.node = B.`key`
+				WHERE A.active = '1'
+				AND A.`limit` > A.daily
+				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+
+			// get your personal email
+			$percent = 0; $node = false;
+			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+			foreach ($nodes as $n) {
+				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
+				similar_text ($temp, $user, $p);
+				if($p > $percent) {
+					$percent = $p;
+					$node = $n;
+				}
+			}
+
+			// save the from part in the object
+			if($node) $this->from = $node->email;
+		}
+
+		// alert the team if no email can be used
+		if(empty($node)) {
+			$output = new stdClass();
+			$output->code = "515";
+			$output->message = "No active email to reach {$this->to}";
+
+			$utils = new Utils();
+			$utils->createAlert($output->message, "ERROR");
+			return $output;
+		}
+
+		// send the email using smtp
+		$output = $this->smtp($node->host, $node->user, $node->pass, '', 'ssl');
+
+		// update delivery time if OK
+		if($output->code == "200") {
+			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+		// insert in drops emails and add 24h of waiting time
+		}else{
+			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
+			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Send email using SMTP
 	 *
 	 * @author salvipascual
@@ -400,6 +470,9 @@ class Email
 			'port' => $port,
 			'secure' => $security
 		]);
+
+		// subject has to be UTF-8
+		$this->subject = utf8_encode($this->subject);
 
 		// create message
 		$mail = new Message;
