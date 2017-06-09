@@ -72,7 +72,7 @@
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
 									<span style="color:#5ebb47; font-size:45px; font-family:Tahoma; white-space:nowrap;">
-										<i>A<span style="color:#A03E3B;">!</span></i>
+										<i>A</i>pretaste<span style="color:#A03E3B;"><i>!</i></span>
 									</span>
 								</td>
 							</tr>
@@ -183,8 +183,8 @@
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
 						<small>
-							Env&iacute;a tus preguntas a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
-							Lea nuestros {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
+							&iquest;Tiene dudas? Escriba a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
+							Mire los {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
 						</small>
 						{space5}
 					</td>
