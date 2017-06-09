@@ -44,27 +44,24 @@ class Email
 		// if sending a campaign email
 		elseif($this->group == 'campaign')
 		{
-			$res = $this->sendEmailViaSendGrid();
+			$res = $this->sendEmailViaGmail();
 		}
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
 			$res = $this->sendEmailViaGmail();
 		}
-		// if responding to Piropazo or Pizarra
-		elseif($this->group == 'social')
-		{
-			$res = $this->sendEmailViaPostmark();
-		}
 		// if responding to Marti
 		elseif($this->group == 'danger')
 		{
 			$this->subject = $utils->randomSentence();
+			if($isNauta) $this->setContentAsAttachment();
 			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
+			$this->setContentAsAttachment();
 			$res = $this->sendEmailViaMailjet();
 		}
 		// for all other Cuban emails
@@ -121,127 +118,6 @@ class Email
 		$this->images = $images;
 		$this->attachments = $attachments;
 		return $this->send();
-	}
-
-	/**
-	 * Sends an email using our of our external nodes
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaNode()
-	{
-		// every new day set the daily counter back to zero
-		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
-
-		// get the node of the from address
-		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
-			if(isset($node[0])) $node = $node[0];
-		}
-		// if no from is passed, calculate
-		else {
-			// get the date of the last test
-			$lastTest = $connection->query("SELECT inserted FROM test ORDER BY inserted DESC LIMIT 1")[0]->inserted;
-
-			// get the list of available nodes to use
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND `group` LIKE '%{$this->group}%'
-				AND A.`limit` > A.daily
-				AND (('$lastTest' - INTERVAL 24 HOUR) <= A.last_test OR A.last_test IS NULL)
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
-
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			if($node) $this->from = $node->email;
-		}
-
-		// alert the team if no Node could be used
-		$utils = new Utils();
-		if(empty($node)) {
-			$output = new stdClass();
-			$output->code = "515";
-			$output->message = "NODE: No active node to email {$this->to}";
-			$utils->createAlert($output->message, "ERROR");
-			return $output;
-		}
-
-		// transform images to base64
-		$imagesToUpload = array();
-		foreach ($this->images as $image) {
-			$item = new stdClass();
-			$item->type = mime_content_type($image);
-			$item->name = basename($image);
-			$item->content = base64_encode(file_get_contents($image));
-			$imagesToUpload[] = $item;
-		}
-
-		// transform attachments to base64
-		$attachmentsToUpload = array();
-		foreach ($this->attachments as $attachment) {
-			$item = new stdClass();
-			$item->type = mime_content_type($attachment);
-			$item->name = basename($attachment);
-			$item->content = base64_encode(file_get_contents($attachment));
-			$attachmentsToUpload[] = $item;
-		}
-
-		// create the email array request
-		$params['key'] = $node->key;
-		$params['from'] = $node->email;
-		$params['host'] = $node->host;
-		$params['user'] = $node->user;
-		$params['pass'] = $node->pass;
-		$params['id'] = $this->id;
-		$params['messageid'] = $this->replyId;
-		$params['to'] = $this->to;
-		$params['subject'] = $this->subject;
-		$params['body'] = base64_encode($this->body);
-		$params['attachments'] = serialize($attachmentsToUpload);
-		$params['images'] = serialize($imagesToUpload);
-
-		// contact the Sender to send the email
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$output = json_decode(curl_exec($ch));
-		curl_close ($ch);
-
-		// treat node unreachable error
-		if(empty($output)) {
-			$output = new stdClass();
-			$output->code = "504";
-			$output->message = "Error reaching {$node->name} to email {$this->to} with ID {$this->id}";
-		}
-
-		// update delivery time if OK
-		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
-		// insert in drops emails and add 24h of waiting time
-		}else{
-			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
-			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
-		}
-
-		return $output;
 	}
 
 	/**
@@ -456,6 +332,78 @@ class Email
 	}
 
 	/**
+	 * Sends an email using TurboSMTP
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaTurboSmtp()
+	{
+		// get the node of the from address
+		if(empty($this->from)) {
+			$nodes = $connection->query("
+				SELECT * FROM nodes_output A JOIN nodes B
+				ON A.node = B.`key`
+				WHERE A.active = '1'
+				AND A.`limit` > A.daily
+				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+
+			// get your personal email
+			$percent = 0; $node = false;
+			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+			foreach ($nodes as $n) {
+				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
+				similar_text ($temp, $user, $p);
+				if($p > $percent) {
+					$percent = $p;
+					$node = $n;
+				}
+			}
+
+			// save the from part in the object
+			$this->from = $node->email;
+		}
+die($this->from);
+
+		// get the Turbo SMTP params
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$host = "smtp.postmarkapp.com";
+		$key = $di->get('config')['postmark']['key'];
+		$port = '2525';
+		$security = 'STARTTLS';
+
+		// send the email using smtp
+		return $this->smtp($host, $key, $key, $port, $security);
+
+
+		// alert the team if no email can be used
+		if(empty($node)) {
+			$output = new stdClass();
+			$output->code = "515";
+			$output->message = "No active email to reach {$this->to}";
+
+			$utils = new Utils();
+			$utils->createAlert($output->message, "ERROR");
+			return $output;
+		}
+
+		// send the email using smtp
+		$output = $this->smtp($node->host, $node->user, $node->pass, '', 'ssl');
+
+		// update delivery time if OK
+		if($output->code == "200") {
+			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+		// insert in drops emails and add 24h of waiting time
+		}else{
+			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
+			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Send email using SMTP
 	 *
 	 * @author salvipascual
@@ -516,5 +464,27 @@ class Email
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
+	 *
+	 * @author salvipascual
+	 */
+	public function setContentAsAttachment()
+	{
+		// get temp path
+		$utils = new Utils();
+		$tmpFile = $utils->getTempDir() . rand(1000000,9999999) . ".zip";
+
+		// create the zip file
+		$zip = new ZipArchive;
+		$zip->open($tmpFile, ZipArchive::CREATE);
+		$zip->addFromString("respuesta.html",  $this->body);
+		$zip->close();
+
+		// create the body part and attachments
+		$this->body = "A peticion de muchos usuarios que no reciben HTML, estamos probando adjuntar las respuestas al email. La respuesta viene comprimida como ZIP para ahorrarle saldo. Por favor abra el archivo adjunto para ver su respuesta. Si no se abre el adjunto, instale WinZip en su telefono. Comunique sus inquietudes al soporte y le atenderemos.";
+		$this->attachments[] = $tmpFile;
 	}
 }
