@@ -55,13 +55,13 @@ class Email
 		elseif($this->group == 'danger')
 		{
 			$this->subject = $utils->randomSentence();
-			if($isNauta) $this->setContentAsAttachment();
+//			if($isNauta) $this->setContentAsAttachment();
 			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-			$this->setContentAsAttachment();
+//			$this->setContentAsAttachment();
 			$res = $this->sendEmailViaMailjet();
 		}
 		// for all other Cuban emails
