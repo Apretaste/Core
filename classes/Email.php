@@ -44,7 +44,7 @@ class Email
 		// if sending a campaign email
 		elseif($this->group == 'campaign')
 		{
-			$res = $this->sendEmailViaGmail();
+			$res = $this->sendEmailViaMailjet();
 		}
 		// if responding to the Support
 		elseif($this->group == 'support')
@@ -55,14 +55,12 @@ class Email
 		elseif($this->group == 'danger')
 		{
 			$this->subject = $utils->randomSentence();
-//			if($isNauta) $this->setContentAsAttachment();
 			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-//			$this->setContentAsAttachment();
-			$res = $this->sendEmailViaMailjet();
+			$res = $this->sendEmailViaTurboSmtp();
 		}
 		// for all other Cuban emails
 		else
@@ -171,74 +169,6 @@ class Email
 	}
 
 	/**
-	 * Sends an email using Postmark
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaPostmark()
-	{
-		// get the Postmark params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "smtp.postmarkapp.com";
-		$key = $di->get('config')['postmark']['key'];
-		$port = '2525';
-		$security = 'STARTTLS';
-
-		// select the from part @TODO make this automatically
-		if(empty($this->from)) $this->from = "noreply@pizarra.me";
-
-		// send the email using smtp
-		return $this->smtp($host, $key, $key, $port, $security);
-	}
-
-	/**
-	 * Sends an email using Sendinblue
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaSendinblue()
-	{
-		// get the Sendinblue params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = 'smtp-relay.sendinblue.com';
-		$user = $di->get('config')['sendinblue']['user'];
-		$pass = $di->get('config')['sendinblue']['pass'];
-		$port = '587';
-
-		// select the from part @TODO make this automatically
-		if(empty($this->from)) $this->from = "webmailcuba@gmail.com";
-
-		// send the email using smtp
-		return $this->smtp($host, $user, $pass, $port, '');
-	}
-
-	/**
-	 * Sends an email using SendGrid
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaSendGrid()
-	{
-		// get the SendGrid params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "smtp.sendgrid.net";
-		$user = "apikey";
-		$pass = $di->get('config')['sendgrid']['key'];
-		$port = '465';
-		$security = 'ssl';
-
-		// create the from using the email
-		$username = str_replace(array('.','+'), '', explode('@', $this->to)[0]);
-		if(empty($this->from)) $this->from = "$username@gmail.com";
-
-		// send the email using smtp
-		return $this->smtp($host, $user, $pass, $port, $security);
-	}
-
-	/**
 	 * Sends an email using Mailjet
 	 *
 	 * @author salvipascual
@@ -246,6 +176,21 @@ class Email
 	 */
 	public function sendEmailViaMailjet()
 	{
+		// list of possible emails to use
+		$emails = array('ajonhalons','alfonsedalong','stefaniforall','shalomquoi','alongpathtohome','pf96534','evy2017d','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','hellangalfons','webmailcuba','agbnerhomml','alssrouml','ahoychang','manriquesusan8','jenny.clape');
+
+		// get your personal email
+		$percent = 0;
+		$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+		foreach ($emails as $e) {
+			$temp = str_replace(array(".","+"), "", $e);
+			similar_text ($temp, $user, $p);
+			if($p > $percent) {
+				$percent = $p;
+				$this->from = "$e@gmail.com";
+			}
+		}
+
 		// get the Mailjet params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$host = "in-v3.mailjet.com";
@@ -253,9 +198,6 @@ class Email
 		$pass = $di->get('config')['mailjet']['pass'];
 		$port = '587';
 		$security = 'tsl';
-
-		// select the from part @TODO make this automatically
-		if(empty($this->from)) $this->from = "alfonsedalong@gmail.com";
 
 		// send the email using smtp
 		return $this->smtp($host, $user, $pass, $port, $security);
@@ -339,68 +281,22 @@ class Email
 	 */
 	public function sendEmailViaTurboSmtp()
 	{
-		// get the node of the from address
-		if(empty($this->from)) {
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND A.`limit` > A.daily
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
-
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			$this->from = $node->email;
-		}
-die($this->from);
+		// get a random name for the from address
+		$names = array('rachel','idania','arianna','daylin','kamila','reinier','keilan','loraine','odalys','annalie','daylen','elianne','elienay','utilizados','gillian','maylin','yadira','yanara','adamina','alejandro','deylert','dianelys','ernesto','jasiel','magaly','maikel','mariam','maydelis','maykel','aleida','alexey','aleyna','alianne','gabriela','janina','laritza','linnet','lismary','lissandra','lissette','marise','marlene','noraly','rainier','renier','roberto','yelena','normanda','altÄ±nay','amanda','anielka','claudia','cosette','daimery','dalianys','darlyn','dayron','delinna','denisley','elaine','elienai','evisley','giselle','gretchen','haniel','hiroki','hiromi','iliana','iselda','ivonne','jaylah','jennifer','karimet','lauren','lilibet','lilliam','linnette','lisandra','lisbet','lisette','lizandra','madelin','magalys','marianne','mayelin','mayumi','meylin','milena','noslen','olivia','oneida','orlando','osmany','pierre','rayner','muerta','sharai','sherelyn','suzette','wilder','yadiel','yalimilka','yanira','yareli','yelexys','yesica','yulaine','adaliz','adianis','adniel','adriana','aimelis','aksana','aleera','alenay','alessandro','alessia','alexander','aleydis','alfredo','allyson','altinay','holanda','aminta','anabel','anaiya','anelys','angeli','angelika','angely','aniela','anieska','anisleidy','anthony','antuan','antuane','arabel','arelys','arezki','ariadne','ariana','arinda','arioski','arisai','arlette','arliss','arnaldo','ashanti','ashely','nombre','asmara','aylena','azalia','beatriz','bismark','brendon','caridad','christelle','christian','cinthya','colibri','cossette','cristian','dagmar','dailany','dailet','daimary','dainis','damayanti','daniel','danilo','dannel','dariannis','darina','darinka','dassiel','dayana','dayani','dayanis','daylan','dayrene','delgado','dervis','deylin','dhaara','dianelis','dietmar','dilaila','dimara','doralis','ediane','edilberto','elcides','eleonora','eliana','eliany','elienne','eloÃ¯sa','elvira','vengadores','emmanuel','eridania','aethelthryth','euladis','evelin','evelyn','exinten','faustina','fernando','fhortrze','flavia','fontaine','francy','freddy','gabriel','gabriella','galina','geilys','giorgia','glenda','grabiel','gretel','grettel','grissel','halina','harald','hassan','havana','heberto','heilyn','ibraham','ichrak','idelice','idelieliaa','idelisa','ileana','indira','iraida','iralis','iskander','ivania','iveett','ivette','jackeline','janice','jasier','jaylene','jessica','jessie','jessika','julide','karilyn','katina','katrine','kellyn','kelsey','kelvin','kendall','kerelyn','keylan','keyshla','kimani','krisly','lairet','lander','lanyin','laurent','leilani','bernstein','leonardo','leonidasz','leonor','liamne','lianett','libnny','lilian','lilibeth','lourdes','lucely','madelyn','maidely','mailyn','maiyara','malaika','manami');
+		$name = $names[rand(0, count($names)-1)];
+		$seed = rand(10,99);
+		$this->from = "$name$seed@gmail.com";
 
 		// get the Turbo SMTP params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "smtp.postmarkapp.com";
-		$key = $di->get('config')['postmark']['key'];
-		$port = '2525';
-		$security = 'STARTTLS';
+		$host = "pro.turbo-smtp.com";
+		$user = $di->get('config')['turbosmtp']['user'];
+		$pass = $di->get('config')['turbosmtp']['pass'];
+		$port = '465';
+		$security = 'ssl';
 
 		// send the email using smtp
-		return $this->smtp($host, $key, $key, $port, $security);
-
-
-		// alert the team if no email can be used
-		if(empty($node)) {
-			$output = new stdClass();
-			$output->code = "515";
-			$output->message = "No active email to reach {$this->to}";
-
-			$utils = new Utils();
-			$utils->createAlert($output->message, "ERROR");
-			return $output;
-		}
-
-		// send the email using smtp
-		$output = $this->smtp($node->host, $node->user, $node->pass, '', 'ssl');
-
-		// update delivery time if OK
-		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
-		// insert in drops emails and add 24h of waiting time
-		}else{
-			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
-			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
-		}
-
-		return $output;
+		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
 	/**
