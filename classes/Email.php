@@ -60,7 +60,9 @@ class Email
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-			$res = $this->sendEmailViaTurboSmtp();
+			$this->subject = $utils->randomSentence();
+			if($this->group == 'pdf') $this->setContentAsPdfAttachment();
+			$res = $this->sendEmailViaMailjet();
 		}
 		// for all other Cuban emails
 		else
@@ -177,7 +179,7 @@ class Email
 	public function sendEmailViaMailjet()
 	{
 		// list of possible emails to use
-		$emails = array('ajonhalons','alfonsedalong','stefaniforall','shalomquoi','alongpathtohome','pf96534','evy2017d','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','hellangalfons','webmailcuba','agbnerhomml','alssrouml','ahoychang','manriquesusan8','jenny.clape');
+		$emails = array('pf96534','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','webmailcuba','manriquesusan8');
 
 		// get your personal email
 		$percent = 0;
@@ -274,33 +276,7 @@ class Email
 	}
 
 	/**
-	 * Sends an email using TurboSMTP
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaTurboSmtp()
-	{
-		// get a random name for the from address
-		$names = array('rachel','idania','arianna','daylin','kamila','reinier','keilan','loraine','odalys','annalie','daylen','elianne','elienay','utilizados','gillian','maylin','yadira','yanara','adamina','alejandro','deylert','dianelys','ernesto','jasiel','magaly','maikel','mariam','maydelis','maykel','aleida','alexey','aleyna','alianne','gabriela','janina','laritza','linnet','lismary','lissandra','lissette','marise','marlene','noraly','rainier','renier','roberto','yelena','normanda','amanda','anielka','claudia','cosette','daimery','dalianys','darlyn','dayron','delinna','denisley','elaine','elienai','evisley','giselle','gretchen','haniel','hiroki','hiromi','iliana','iselda','ivonne','jaylah','jennifer','karimet','lauren','lilibet','lilliam','linnette','lisandra','lisbet','lisette','lizandra','madelin','magalys','marianne','mayelin','mayumi','meylin','milena','noslen','olivia','oneida','orlando','osmany','pierre','rayner','muerta','sharai','sherelyn','suzette','wilder','yadiel','yalimilka','yanira','yareli','yelexys','yesica','yulaine','adaliz','adianis','adniel','adriana','aimelis','aksana','aleera','alenay','alessandro','alessia','alexander','aleydis','alfredo','allyson','altinay','holanda','aminta','anabel','anaiya','anelys','angeli','angelika','angely','aniela','anieska','anisleidy','anthony','antuan','antuane','arabel','arelys','arezki','ariadne','ariana','arinda','arioski','arisai','arlette','arliss','arnaldo','ashanti','ashely','nombre','asmara','aylena','azalia','beatriz','bismark','brendon','caridad','christelle','christian','cinthya','colibri','cossette','cristian','dagmar','dailany','dailet','daimary','dainis','damayanti','daniel','danilo','dannel','dariannis','darina','darinka','dassiel','dayana','dayani','dayanis','daylan','dayrene','delgado','dervis','deylin','dhaara','dianelis','dietmar','dilaila','dimara','doralis','ediane','edilberto','elcides','eleonora','eliana','eliany','elienne','eloisa','elvira','vengadores','emmanuel','eridania','aethelthryth','euladis','evelin','evelyn','exinten','faustina','fernando','fhortrze','flavia','fontaine','francy','freddy','gabriel','gabriella','galina','geilys','giorgia','glenda','grabiel','gretel','grettel','grissel','halina','harald','hassan','havana','heberto','heilyn','ibraham','ichrak','idelice','idelieliaa','idelisa','ileana','indira','iraida','iralis','iskander','ivania','iveett','ivette','jackeline','janice','jasier','jaylene','jessica','jessie','jessika','julide','karilyn','katina','katrine','kellyn','kelsey','kelvin','kendall','kerelyn','keylan','keyshla','kimani','krisly','lairet','lander','lanyin','laurent','leilani','bernstein','leonardo','leonidasz','leonor','liamne','lianett','libnny','lilian','lilibeth','lourdes','lucely','madelyn','maidely','mailyn','maiyara','malaika','manami');
-		$name = $names[rand(0, count($names)-1)];
-		$seed = rand(10,99);
-		$this->from = "$name$seed@gmail.com";
-
-		// get the Turbo SMTP params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "pro.turbo-smtp.com";
-		$user = $di->get('config')['turbosmtp']['user'];
-		$pass = $di->get('config')['turbosmtp']['pass'];
-		$port = '465';
-		$security = 'ssl';
-
-		// send the email using smtp
-		return $this->smtp($host, $user, $pass, $port, $security);
-	}
-
-	/**
-	 * Send email using SMTP
+	 * Handler to send email using SMTP
 	 *
 	 * @author salvipascual
 	 */
@@ -367,7 +343,7 @@ class Email
 	 *
 	 * @author salvipascual
 	 */
-	public function setContentAsAttachment()
+	public function setContentAsZipAttachment()
 	{
 		// get temp path
 		$utils = new Utils();
@@ -381,6 +357,31 @@ class Email
 
 		// create the body part and attachments
 		$this->body = "A peticion de muchos usuarios que no reciben HTML, estamos probando adjuntar las respuestas al email. La respuesta viene comprimida como ZIP para ahorrarle saldo. Por favor abra el archivo adjunto para ver su respuesta. Si no se abre el adjunto, instale WinZip en su telefono. Comunique sus inquietudes al soporte y le atenderemos.";
+		$this->attachments[] = $tmpFile;
+	}
+
+	/**
+	 * Configures the contents to be sent as a PDF attached to the body
+	 *
+	 * @author salvipascual
+	 */
+	public function setContentAsPdfAttachment()
+	{
+		// get path to the root folder
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwRoot = $di->get('path')['root'];
+
+		// create a new path to save the pdf
+		$utils = new Utils();
+		$tmpFile = "$wwwRoot/temp/" . $utils->generateRandomHash() . ".pdf";
+
+		// download the website as pdf
+		$mpdf = new mPDF();
+		$mpdf->WriteHTML($this->body);
+		$mpdf->Output($tmpFile, 'F');
+
+		// create the body part and attachments
+		$this->body = "A peticion de muchos usuarios que no reciben HTML, estamos probando adjuntar las como PDF con elementos clickleables. Prefiere Apretaste como antes? Nos encantaria saber su opinion. Comunique sus inquietudes al soporte y le atenderemos.";
 		$this->attachments[] = $tmpFile;
 	}
 }
