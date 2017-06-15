@@ -30,7 +30,12 @@ class Email
 		// validate email before sending
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($this->to);
-		if($status != 'ok') return false;
+		if($status != 'ok') {
+			$output = new stdClass();
+			$output->code = "500";
+			$output->message = "Email failed with status: $status";
+			return $output;
+		}
 
 		// check if the email is from Nauta or Cuba
 		$isNauta = substr($this->to, -9) === "@nauta.cu";
@@ -49,6 +54,12 @@ class Email
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
+			$res = $this->sendEmailViaGmail();
+		}
+		// if responding to DimeCuba
+		elseif($this->group == 'support')
+		{
+			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Nauta emails
