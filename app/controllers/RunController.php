@@ -89,39 +89,6 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Forwards an email using the anti-censorship engine
-	 *
-	 * @author salvipascual
-	 * @param POST Multiple Values
-	 */
-	public function forwardAction()
-	{
-		// format the response when comes from mailgun
-		$response = $this->formatMailgunWebhook($_POST);
-
-		// do not allow emails from people who are not managers with access
-		$connection = new Connection();
-		$perms = $connection->query("SELECT `group` FROM manage_users WHERE email='{$response->fromEmail}' AND `pages` LIKE '%forward%'");
-		if(empty($perms)) return false;
-
-		// ensure the subject is an email and trim
-		$toEmail = trim($response->subject);
-		if ( ! filter_var($toEmail, FILTER_VALIDATE_EMAIL)) return false;
-
-		// create a random subject
-		$utils = new Utils();
-		$subject = $utils->randomSentence();
-
-		// send the email via Apretaste
-		$sender = new Email();
-		$sender->group = $perms[0]->group;
-		$sender->sendEmail($toEmail, $subject, $response->body);
-
-		// do not continue processing
-		return true;
-	}
-
-	/**
 	 * Executes an API request. Display the JSON on screen
 	 *
 	 * @author salvipascual
