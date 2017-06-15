@@ -222,8 +222,8 @@ class ApiController extends Controller
 	 * Sends an email using the anti-censorship engine
 	 *
 	 * @author salvipascual
-	 * @param String64 $key: Base64 of "$email:$pass"
-	 * @param String $email
+	 * @param String64 $key: Base64 of "$to:$pass"
+	 * @param String $to
 	 * @param String $subject
 	 * @param String $body
 	 */
@@ -231,12 +231,12 @@ class ApiController extends Controller
 	{
 		// get params from GET (or from the encripted API)
 		$key = $this->request->get("key");
-		$email = $this->request->get("email");
+		$to = $this->request->get("email");
 		$subject = $this->request->get("subject");
 		$body = file_get_contents("php://input");
 
 		// do not allow empty emails
-		if(empty($email) || empty($body))
+		if(empty($to) || empty($body))
 		{
 			die('{"status":"0", "message":"Empty email"}');
 		}
@@ -261,11 +261,15 @@ class ApiController extends Controller
 		}
 
 		// forward the email
-		$sender = new Email();
-		$sender->setGroup($res->items->group);
-		$sender->sendEmail($email, $subject, $body);
+		$email = new Email();
+		$email->to = $to;
+		$email->subject = $subject;
+		$email->body = $body;
+		$email->group = $res->items->group;
+		$res = $email->send();
 
-		// display OK message
-		die('{"status":"1", "message":""}');
+		// display message
+		$res->status = ($res->code == "200") ? "1" : "0";
+		die(json_encode($res));
 	}
 }
