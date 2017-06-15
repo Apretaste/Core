@@ -57,7 +57,7 @@ class Email
 			$res = $this->sendEmailViaGmail();
 		}
 		// if responding to DimeCuba
-		elseif($this->group == 'support')
+		elseif($this->group == 'dimecuba')
 		{
 			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaGmail();
