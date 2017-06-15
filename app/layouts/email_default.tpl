@@ -44,7 +44,6 @@
 		<center>
 			<table id="container" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
 				{* top links *}
-{*
 				<tr>
 					<td align="right" bgcolor="#D0D0D0" style="padding: 5px;">
 						<small>
@@ -65,7 +64,6 @@
 						</small>
 					</td>
 				</tr>
-*}
 
 				{* logo and service name *}
 				<tr>
@@ -74,7 +72,7 @@
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
 									<span style="font-size:45px; white-space:nowrap; font-family:Tahoma; color:#5ebb47;">
-										<i>A</i><span style="color:#A03E3B;"><i>!</i></span>
+										<i>A</i>pretaste<span style="color:#A03E3B;"><i>!</i></span>
 									</span>
 								</td>
 							</tr>
@@ -83,7 +81,6 @@
 				</tr>
 
 				{* top ad *}
-{*
 				{if $APRETASTE_ADS|@count gt 0}
 				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
 					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
@@ -93,10 +90,8 @@
 					</td>
 				</tr></table></td></tr>
 				{/if}
-*}
 
 				{* the stars game *}
-{*
 				{if $requests_today == 0}
 					{if $raffle_stars > 0}
 					<tr>
@@ -130,7 +125,6 @@
 					</tr>
 					{/if}
 				{/if}
-*}
 
 				{* main section to load the user template *}
 				<tr>
@@ -142,7 +136,6 @@
 				</tr>
 
 				{* subscribe to email list *}
-{*
 				{if ! $APRETASTE_EMAIL_LIST}
 				<tr>
 					<td align="center" bgcolor="red">
@@ -156,10 +149,8 @@
 					</td>
 				</tr>
 				{/if}
-*}
 
 				{* bottom ad *}
-{*
 				{if $APRETASTE_ADS|@count gt 1}
 				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
 					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
@@ -169,10 +160,8 @@
 					</td>
 				</tr></table></td></tr>
 				{/if}
-*}
 
 				{* services related *}
-{*
 				{if $APRETASTE_SERVICE_RELATED|@count gt 0}
 				<tr bgcolor="#e6e6e6">
 					<td align="left" style="padding: 0px 5px;">
@@ -188,10 +177,8 @@
 					</td>
 				</tr>
 				{/if}
-*}
 
 				{* footer *}
-{*
 				<tr>
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
@@ -202,7 +189,6 @@
 						{space5}
 					</td>
 				</tr>
-*}
 			</table>
 		</center>
 	</body>
