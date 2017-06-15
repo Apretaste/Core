@@ -51,18 +51,12 @@ class Email
 		{
 			$res = $this->sendEmailViaGmail();
 		}
-		// if responding to Marti
-		elseif($this->group == 'danger')
-		{
-			$this->subject = $utils->randomSentence();
-			$res = $this->sendEmailViaGmail();
-		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
 			$this->subject = $utils->randomSentence();
-			if($this->group == 'pdf') $this->setContentAsPdfAttachment();
-			$res = $this->sendEmailViaMailjet();
+			$this->setContentAsPdfAttachment();
+			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
 		else
@@ -178,18 +172,20 @@ class Email
 	 */
 	public function sendEmailViaMailjet()
 	{
-		// list of possible emails to use
-		$emails = array('pf96534','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','webmailcuba','manriquesusan8');
+		if(empty($this->from)) {
+			// list of possible emails to use
+			$emails = array('pf96534','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','webmailcuba','manriquesusan8');
 
-		// get your personal email
-		$percent = 0;
-		$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-		foreach ($emails as $e) {
-			$temp = str_replace(array(".","+"), "", $e);
-			similar_text ($temp, $user, $p);
-			if($p > $percent) {
-				$percent = $p;
-				$this->from = "$e@gmail.com";
+			// get your personal email
+			$percent = 0;
+			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+			foreach ($emails as $e) {
+				$temp = str_replace(array(".","+"), "", $e);
+				similar_text ($temp, $user, $p);
+				if($p > $percent) {
+					$percent = $p;
+					$this->from = "$e@gmail.com";
+				}
 			}
 		}
 
@@ -381,7 +377,7 @@ class Email
 		$mpdf->Output($tmpFile, 'F');
 
 		// create the body part and attachments
-		$this->body = "A peticion de muchos usuarios que no reciben HTML, estamos probando adjuntar las como PDF con elementos clickleables. Prefiere Apretaste como antes? Nos encantaria saber su opinion. Comunique sus inquietudes al soporte y le atenderemos.";
+		$this->body = "";
 		$this->attachments[] = $tmpFile;
 	}
 }
