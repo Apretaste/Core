@@ -73,14 +73,14 @@
 						<?php } ?>
 
 						<!-- ADMIN -->
-						<?php if($security->checkAccess("manage")) { ?>
+						<?php if($security->checkAccess("admin")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-wrench"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
 								<li><a href="/manage/createad">Create ad</a></li>
 								<li><a href="/manage/createraffle">Create raffle</a></li>
 								<li><a href="/manage/addcredit">Add credit</a></li>
-								<li><a href="/manage/jumper">Jumper</a></li>
+								<li><a href="/admin/synonyms">Synonyms</a></li>
 							</ul>
 						</li>
 						<?php } ?>

@@ -129,12 +129,13 @@ class Render
 		if($di->get('environment') == "sandbox") return array('ayuda','nota','tienda','traducir','publicidad');
 
 		// get last 5 services inserted with the same category
-		$query = "SELECT name FROM service
+		$query = "
+			SELECT name FROM service
 			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
 			AND name <> '$serviceName'
 			AND name <> 'excluyeme'
 			AND listed = 1
-			ORDER BY insertion_date
+			ORDER BY RAND()
 			LIMIT 5";
 		$connection = new Connection();
 		$result = $connection->deepQuery($query);
