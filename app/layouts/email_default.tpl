@@ -72,7 +72,7 @@
 							<tr>
 								<td class="phone-block" style="margin-right: 20px;" valign="middle">
 									<span style="font-size:45px; white-space:nowrap; font-family:Tahoma; color:#5ebb47;">
-										<i>A</i>pretaste<span style="color:#A03E3B;"><i>!</i></span>
+										Apretaste<span style="color:#A03E3B;"><i>!</i></span>
 									</span>
 								</td>
 							</tr>
