@@ -65,8 +65,7 @@ class Email
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-			$this->subject = $utils->randomSentence();
-			$this->setContentAsPdfAttachment();
+			$this->setContentRandom();
 			$res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
@@ -237,6 +236,7 @@ class Email
 				ON A.node = B.`key`
 				WHERE A.active = '1'
 				AND A.`limit` > A.daily
+				AND A.`group` LIKE '%{$this->group}%'
 				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
 			// get your personal email
@@ -390,5 +390,51 @@ class Email
 		// create the body part and attachments
 		$this->body = "";
 		$this->attachments[] = $tmpFile;
+	}
+
+	/**
+	 * Randomize the subject and body of an email
+	 *
+	 * @author salvipascual
+	 */
+	public function setContentRandom()
+	{
+		// replace accents in the body by unicode chars
+		$this->body = str_replace(array("á", "Á", "&aacute;", "&Aacute;"), "a", $this->body);
+		$this->body = str_replace(array("é", "É", "&eacute;", "&Eacute;"), "e", $this->body);
+		$this->body = str_replace(array("í", "Í", "&iacute;", "&Iacute;"), "i", $this->body);
+		$this->body = str_replace(array("ó", "Ó", "&oacute;", "&Oacute;"), "o", $this->body);
+		$this->body = str_replace(array("ú", "Ú", "&uacute;", "&Uacute;"), "u", $this->body);
+		$this->body = str_replace(array("ñ", "Ñ", "&ntilde;", "&Ntilde;"), "n", $this->body);
+
+		// get the synonyms dictionary
+		$connection = new Connection();
+		$synonyms = $connection->query("SELECT * FROM synonyms");
+
+		// get the service aliases
+		$aliases = $connection->query("SELECT service as word, GROUP_CONCAT(alias) as synonyms FROM service_alias GROUP BY service");
+		$synonyms = array_merge($synonyms, $aliases);
+
+		foreach ($synonyms as $key) {
+			// get word and synonyms
+			$regexp = "/\b{$key->word}\b/ui";
+			$values = explode(",", $key->synonyms);
+			$replacement = $values[rand(0, count($values)-1)];
+
+			// do not replace the word 2/10 of the time
+			if(rand(1, 10) <= 2) continue;
+
+			// replace in the subject
+			$this->subject = preg_replace($regexp, $replacement, $this->subject);
+
+			// replace in the body
+			$this->body = preg_replace($regexp, $replacement, $this->body);
+		}
+
+		// randomize the word Apretaste
+		$apretaste = substr_replace("Apretaste", ".", rand(1,8), 0); // insert random dot
+		$apretaste = substr_replace($apretaste, ".", rand(1,9), 0); // insert random dot
+		$apretaste = substr_replace($apretaste, ".", rand(1,10), 0); // insert random dot
+		$this->body = str_ireplace("Apretaste", $apretaste, $this->body);
 	}
 }

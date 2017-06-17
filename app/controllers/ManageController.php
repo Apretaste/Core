@@ -604,20 +604,6 @@ class ManageController extends Controller
 	}
 
 	/**
-	 * Jumper
-	 */
-	public function jumperAction()
-	{
-		$connection = new Connection();
-
-		$queryJumper = "SELECT email, last_usage, sent_count, blocked_domains, status FROM jumper ORDER BY last_usage DESC";
-		$jumperData = $connection->query($queryJumper);
-
-		$this->view->title = "Jumper";
-		$this->view->jumperData = $jumperData;
-	}
-
-	/**
 	 * Deploy a new service or update an old one
 	 */
 	public function deployAction()

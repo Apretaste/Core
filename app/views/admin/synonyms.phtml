@@ -1,0 +1,78 @@
+<div class="row">
+	<div class="col-xs-12 text-right">
+		<a class="btn btn-small btn-default" onclick="newWord();"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Word</a>
+		<br/><br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Word</th>
+					<th class="text-center">Synonyms</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($synonyms as $syn) { ?>
+				<tr>
+					<td class="text-center"><?=$syn->word?></td>
+					<td class="text-center"><?=$syn->synonyms?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" href="#" onclick="editSynonyms('<?=$syn->word?>','<?=$syn->synonyms?>');"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+							<a class="btn btn-xs btn-default" onclick="return confirm('Are you sure?');" href="/admin/manageWordSubmit?word=<?=$syn->word?>&type=delete"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<!-- Modal for add/edit a word and its synonys -->
+<div id="manageWord" class="modal fade" role="dialog">
+	<form action="/admin/manageWordSubmit" method="POST">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">New word</h4>
+				</div>
+				<div class="modal-body">
+					<!-- Word -->
+					<div class="form-group">
+						<label for="word">New word</label>
+						<input id="word" type="text" name="word" class="form-control" required />
+					</div>
+
+					<!-- Synonyms -->
+					<div class="form-group">
+						<label for="synonyms">Comma separated list of synonyms</label>
+						<input id="synonyms" type="text" name="synonyms" class="form-control" required />
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input id="type" type="hidden" name="type" value="new"/>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<input type="submit" class="btn btn-primary" value="Submit"/>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<script type="text/javascript">
+	function newWord(){
+		$('#type').val("new");
+		$('#manageWord').modal('show');
+	}
+
+	function editSynonyms(word, synonyms){
+		$('#type').val("edit");
+		$('#word').val(word);
+		$('#synonyms').val(synonyms);
+		$('#manageWord').modal('show');
+	}
+</script>
