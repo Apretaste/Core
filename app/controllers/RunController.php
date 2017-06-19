@@ -195,6 +195,14 @@ class RunController extends Controller
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
 
+		// error if no attachment is received
+		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
+			$output = new stdClass();
+			$output->code = "515";
+			$output->message = "Error on attachment file";
+			die(json_encode($res));
+		}
+
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($fromEmail, 'in');
@@ -202,12 +210,12 @@ class RunController extends Controller
 
 		// get path to the folder to save
 		$textFile = ""; $attachs = array();
-		$folderName = str_replace(".zip", "", basename($attachEmail));
+		$folderName = str_replace(".zip", "", basename($attachEmail[0]));
 		$temp = $utils->getTempDir();
 
 		// get the text file and attached files
 		$zip = new ZipArchive;
-		$zip->open($attachEmail);
+		$zip->open($attachEmail[0]);
 		for($i = 0; $i < $zip->numFiles; $i++) {
 			$filename = $zip->getNameIndex($i);
 			if(strrchr($filename, '.txt')) $textFile = $filename;
@@ -258,6 +266,11 @@ class RunController extends Controller
 		$email->images = $responses[0]->images;
 		$email->setContentAsZipAttachment();
 		$res = $email->send();
+
+		// save the apps log
+		$logger = new \Phalcon\Logger\Adapter\File("$temp/logs/app.log");
+		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$subjectEmail");
+		$logger->close();
 
 		// mark as done if the email was send correctly
 		if($res->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
