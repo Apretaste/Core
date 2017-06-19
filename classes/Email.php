@@ -1,6 +1,5 @@
 <?php
 
-use Mailgun\Mailgun;
 use Nette\Mail\Message;
 
 class Email
@@ -352,19 +351,21 @@ class Email
 	 */
 	public function setContentAsZipAttachment()
 	{
-		// get temp path
+		// get a random name for the file and folder
 		$utils = new Utils();
-		$tmpFile = $utils->getTempDir() . rand(1000000,9999999) . ".zip";
+		$zipFile = $utils->getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+		$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
 
 		// create the zip file
 		$zip = new ZipArchive;
-		$zip->open($tmpFile, ZipArchive::CREATE);
-		$zip->addFromString("respuesta.html",  $this->body);
+		$zip->open($zipFile, ZipArchive::CREATE);
+		$zip->addFromString($htmlFile,  $this->body);
+		foreach ($this->images as $images) $zip->addFile($images);
 		$zip->close();
 
-		// create the body part and attachments
-		$this->body = "A peticion de muchos usuarios que no reciben HTML, estamos probando adjuntar las respuestas al email. La respuesta viene comprimida como ZIP para ahorrarle saldo. Por favor abra el archivo adjunto para ver su respuesta. Si no se abre el adjunto, instale WinZip en su telefono. Comunique sus inquietudes al soporte y le atenderemos.";
-		$this->attachments[] = $tmpFile;
+		// add to the attachments and clean the body
+		$this->attachments = array($zipFile);
+		$this->body = "";
 	}
 
 	/**
