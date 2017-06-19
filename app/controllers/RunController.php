@@ -180,7 +180,92 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives email from the MailGun webhook and send it to be parsed
+	 * Receives email from the webhook and parse it for the app
+	 *
+	 * @author salvipascual
+	 * @param POST Multiple Values
+	 */
+	public function appAction()
+	{
+		// get the email params from the mailgun webhook
+		$res = $this->formatMailgunWebhook($_POST);
+		$fromEmail = $res->fromEmail;
+		$toEmail = $res->toEmail;
+		$subjectEmail = $res->subject;
+		$replyIdEmail = $res->messageId;
+		$attachEmail = $res->attachments;
+
+		// do not continue procesing the email if the sender is not valid
+		$utils = new Utils();
+		$status = $utils->deliveryStatus($fromEmail, 'in');
+		if($status != 'ok') return;
+
+		// get path to the folder to save
+		$textFile = ""; $attachs = array();
+		$folderName = str_replace(".zip", "", basename($attachEmail));
+		$temp = $utils->getTempDir();
+
+		// get the text file and attached files
+		$zip = new ZipArchive;
+		$zip->open($attachEmail);
+		for($i = 0; $i < $zip->numFiles; $i++) {
+			$filename = $zip->getNameIndex($i);
+			if(strrchr($filename, '.txt')) $textFile = $filename;
+			else $attachs[] = "$temp/$folderName/$filename";
+		}
+
+		// extract file contents
+		$zip->extractTo("$temp/$folderName");
+		$zip->close();
+
+		// save the new email in the database and get the ID
+		$attachStr = implode(",", $attachs);
+		$connection = new Connection();
+		$idEmail = $connection->query("
+			INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
+			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$replyIdEmail', '$attachStr', 'app')");
+
+		// update last access time to current and make person active
+		$personExist = $utils->personExist($fromEmail);
+		if ($personExist) {
+			$connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
+		} else {
+			// create a unique username and save the new person
+			$username = $utils->usernameFromEmail($fromEmail);
+			// insert the person if accessed for the first time
+			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, '$inviteSource')");
+		}
+
+		// run the request and get the service and responses
+		$fileText = file_get_contents("$temp/$folderName/$textFile");
+		$ret = $utils->runRequest($fromEmail, $fileText, '', array());
+		$service = $ret->service;
+		$responses = $ret->responses;
+		$responses[0]->setEmailLayout('email_text.tpl');
+
+		// render the HTML
+		$render = new Render();
+		$body = $render->renderHTML($service, $responses[0]);
+
+		// create the new Email object
+		$email = new Email();
+		$email->id = $idEmail;
+		$email->to = $fromEmail;
+		$email->subject = $subjectEmail;
+		$email->body = $body;
+		$email->replyId = $replyIdEmail;
+		$email->group = $service->group;
+		$email->images = $responses[0]->images;
+		$email->setContentAsZipAttachment();
+		$res = $email->send();
+
+		// mark as done if the email was send correctly
+		if($res->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
+		die(json_encode($res));
+	}
+
+	/**
+	 * Receives email from the webhook and parse it for the email tool
 	 *
 	 * @author salvipascual
 	 * @param POST Multiple Values
