@@ -270,7 +270,8 @@ class RunController extends Controller
 		$res = $email->send();
 
 		// save the apps log
-		$logger = new \Phalcon\Logger\Adapter\File("$temp/logs/app.log");
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
 		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$subjectEmail");
 		$logger->close();
 
