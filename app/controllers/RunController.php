@@ -197,6 +197,8 @@ class RunController extends Controller
 
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
+			$attachEmail = $attachEmail[0];
+		} else {
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "Error on attachment file";
@@ -210,12 +212,12 @@ class RunController extends Controller
 
 		// get path to the folder to save
 		$textFile = ""; $attachs = array();
-		$folderName = str_replace(".zip", "", basename($attachEmail[0]));
+		$folderName = str_replace(".zip", "", basename($attachEmail));
 		$temp = $utils->getTempDir();
 
 		// get the text file and attached files
 		$zip = new ZipArchive;
-		$zip->open($attachEmail[0]);
+		$zip->open($attachEmail);
 		for($i = 0; $i < $zip->numFiles; $i++) {
 			$filename = $zip->getNameIndex($i);
 			if(strrchr($filename, '.txt')) $textFile = $filename;
@@ -268,7 +270,8 @@ class RunController extends Controller
 		$res = $email->send();
 
 		// save the apps log
-		$logger = new \Phalcon\Logger\Adapter\File("$temp/logs/app.log");
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
 		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$subjectEmail");
 		$logger->close();
 
