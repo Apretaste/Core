@@ -48,7 +48,7 @@ class Email
 		// if sending a campaign email
 		elseif($this->group == 'campaign')
 		{
-			$res = $this->sendEmailViaMailjet();
+			$res = $this->sendEmailViaGmail();
 		}
 		// if responding to the Support
 		elseif($this->group == 'support')
@@ -154,7 +154,7 @@ class Email
 	 */
 	public function sendEmailViaAlias()
 	{
-		// list of aliases @TODO read directly from Amazon
+		// list of aliases
 		$aliases = array('apre.taste+nenito','apretaste+ahora','apretaste+alfa','apretaste+aljuarismi','apretaste+angulo','apretaste+arquimedes','apretaste+beta','apretaste+bolzano','apretaste+bool','apretaste+brahmagupta','apretaste+brutal','apretaste+cantor','apretaste+cauchy','apretaste+chi','apretaste+colonia','apretaste+david','apretaste+delta','apretaste+descartes','apretaste+elias','apretaste+epsilon','apretaste+euclides','apretaste+euler','apretaste+fermat','apretaste+fibonacci','apretaste+fourier','apretaste+francisco','apretaste+gamma','apretaste+gauss','apretaste+gonzalo','apretaste+hilbert','apretaste+hipatia','apretaste+homero','apretaste+imperator','apretaste+isaac','apretaste+james','apretaste+jey','apretaste+kappa','apretaste+kepler','apretaste+key','apretaste+lambda','apretaste+leibniz','apretaste+lota','apretaste+luis','apretaste+manuel','apretaste+mu','apretaste+newton','apretaste+nombre','apretaste+nu','apretaste+ohm','apretaste+omega','apretaste+omicron','apretaste+oscar','apretaste+pablo','apretaste+peta','apretaste+phi','apretaste+pi','apretaste+poincare','apretaste+psi','apretaste+quote','apretaste+ramon','apretaste+rho','apretaste+riemann','apretaste+salomon','apretaste+sigma','apretaste+tales','apretaste+theta','apretaste+travis','apretaste+turing','apretaste+upsilon','apretaste+uva','apretaste+vacio','apretaste+viete','apretaste+weierstrass','apretaste+working','apretaste+xenon','apretaste+xi','apretaste+yeah','apretaste+zeta');
 
 		// select an alias based on your personal email
@@ -174,43 +174,6 @@ class Email
 	}
 
 	/**
-	 * Sends an email using Mailjet
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaMailjet()
-	{
-		if(empty($this->from)) {
-			// list of possible emails to use
-			$emails = array('pf96534','alisenwestbrook','gonzalesalfonso589','alonsomarshall686','webmailcuba','manriquesusan8');
-
-			// get your personal email
-			$percent = 0;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($emails as $e) {
-				$temp = str_replace(array(".","+"), "", $e);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$this->from = "$e@gmail.com";
-				}
-			}
-		}
-
-		// get the Mailjet params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "in-v3.mailjet.com";
-		$user = $di->get('config')['mailjet']['user'];
-		$pass = $di->get('config')['mailjet']['pass'];
-		$port = '587';
-		$security = 'tsl';
-
-		// send the email using smtp
-		return $this->smtp($host, $user, $pass, $port, $security);
-	}
-
-	/**
 	 * Sends an email using Gmail
 	 *
 	 * @author salvipascual
@@ -224,19 +187,18 @@ class Email
 
 		// get the node of the from address
 		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
+			$node = $connection->query("SELECT * FROM nodes_output WHERE email = '{$this->from}'");
 			if(isset($node[0])) $node = $node[0];
 		}
 		// if no from is passed, calculate
 		else {
 			// get the list of available nodes to use
 			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND A.`limit` > A.daily
-				AND A.`group` LIKE '%{$this->group}%'
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+				SELECT * FROM nodes_output
+				WHERE active = '1'
+				AND `limit` > daily
+				AND `group` LIKE '%{$this->group}%'
+				AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)");
 
 			// get your personal email
 			$percent = 0; $node = false;

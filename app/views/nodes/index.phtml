@@ -22,14 +22,6 @@
 			</thead>
 			<tbody>
 			<?php foreach ($nodes as $node) { ?>
-				<?php if($currentNode != $node->node) { ?>
-				<tr>
-					<td class="success text-center" colspan="6">
-						<a href="http://<?=$node->ip?>" target="_blank"><?=$node->name?></a>
-					</td>
-				</tr>
-				<?php $currentNode = $node->node; ?>
-				<?php } ?>
 				<tr>
 					<td class="text-center"><?=$node->email?></td>
 					<td class="text-center"><span <?php if($node->daily == $node->limit) echo 'style="color:#CD3853;"'; ?>><?=$node->daily?>/<b><?=$node->limit?></b></span></td>
