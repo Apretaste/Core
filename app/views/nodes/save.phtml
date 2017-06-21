@@ -13,16 +13,6 @@
 				<input id="email" type="email" value="<?=$email?>" class="form-control" name="email" required />
 			</div>
 
-			<!-- NODE -->
-			<div class="form-group">
-				<label for="node">Node</label>
-				<select id="node" name="node" class="form-control">
-					<?php foreach($nodes as $n) { ?>
-						<option value="<?=$n->key?>" <?php if($node==$n->key) echo 'selected="selected"'; ?>><?=$n->name?></option>
-					<?php } ?>
-				</select>
-			</div>
-
 			<!-- HOST -->
 			<div class="form-group">
 				<label for="host">Host</label>
