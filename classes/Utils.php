@@ -3,6 +3,8 @@
 use Mailgun\Mailgun;
 use abeautifulsite\SimpleImage;
 use phpseclib\Crypt\RSA;
+use Mremi\UrlShortener\Model\Link;
+use Mremi\UrlShortener\Provider\Google\GoogleProvider;
 
 class Utils
 {
@@ -1325,6 +1327,47 @@ class Utils
 		}
 
 		return false;
+	}
+
+	/**
+	 * Replace Spanish tildes by their unicode characters
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @return String
+	 */
+	public function removeTildes($text)
+	{
+		$text = str_replace(array("á", "Á", "&aacute;", "&Aacute;"), "a", $text);
+		$text = str_replace(array("é", "É", "&eacute;", "&Eacute;"), "e", $text);
+		$text = str_replace(array("í", "Í", "&iacute;", "&Iacute;"), "i", $text);
+		$text = str_replace(array("ó", "Ó", "&oacute;", "&Oacute;"), "o", $text);
+		$text = str_replace(array("ú", "Ú", "&uacute;", "&Uacute;"), "u", $text);
+		$text = str_replace(array("ñ", "Ñ", "&ntilde;", "&Ntilde;"), "n", $text);
+
+		return $text;
+	}
+
+	/**
+	 * Shorten an URL and return the new short URL
+	 *
+	 * @author salvipascual
+	 * @param String $url
+	 * @return String
+	 */
+	public function shortenUrl($url)
+	{
+		// get the Google API key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$key = $di->get('config')['google']['key'];
+
+		$link = new Link;
+		$link->setLongUrl($url);
+
+		$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
+		$shortenUrl = $googleProvider->shorten($link);
+
+		return $link->getShortUrl();
 	}
 
 	/**
