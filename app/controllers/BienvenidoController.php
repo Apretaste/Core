@@ -10,12 +10,12 @@ class BienvenidoController extends Controller
 		$connection = new Connection();
 		$visits = $connection->deepQuery("
 			SELECT
-				count(usage_id) as received, 
-				DATE_FORMAT(request_time,'%Y-%m') as inserted 
+				count(usage_id) as received,
+				DATE_FORMAT(request_time,'%Y-%m') as inserted
 			FROM utilization
 			GROUP BY DATE_FORMAT(request_time,'%Y-%m')
 			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
-			ORDER BY inserted DESC 
+			ORDER BY inserted DESC
 			LIMIT 5");
 		$visitors = array();
 		$visitorsPerMonth = 0;
@@ -31,8 +31,6 @@ class BienvenidoController extends Controller
 		$this->view->visitorsPerMonth = $visitorsPerMonth;
 		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->wwwroot = $this->di->get('path')['root'];
-		$this->view->stripePushibleKey = $this->di->get('config')['stripe']['pushible'];
-
 		$this->view->pick("index/bienvenido");
 	}
 }

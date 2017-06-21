@@ -131,7 +131,7 @@ class Email
 	 */
 	public function sendEmailViaAmazon()
 	{
-		// get the Postmark params
+		// get the Amazon params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$host = "email-smtp.us-east-1.amazonaws.com";
 		$user = $di->get('config')['amazon']['access'];
@@ -401,12 +401,8 @@ class Email
 	public function setContentRandom()
 	{
 		// replace accents in the body by unicode chars
-		$this->body = str_replace(array("á", "Á", "&aacute;", "&Aacute;"), "a", $this->body);
-		$this->body = str_replace(array("é", "É", "&eacute;", "&Eacute;"), "e", $this->body);
-		$this->body = str_replace(array("í", "Í", "&iacute;", "&Iacute;"), "i", $this->body);
-		$this->body = str_replace(array("ó", "Ó", "&oacute;", "&Oacute;"), "o", $this->body);
-		$this->body = str_replace(array("ú", "Ú", "&uacute;", "&Uacute;"), "u", $this->body);
-		$this->body = str_replace(array("ñ", "Ñ", "&ntilde;", "&Ntilde;"), "n", $this->body);
+		$utils = new Utils();
+		$this->body = $utils->removeTildes($this->body);
 
 		// get the synonyms dictionary
 		$connection = new Connection();
