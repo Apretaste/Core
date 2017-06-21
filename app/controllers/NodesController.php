@@ -18,10 +18,7 @@ class NodesController extends Controller
 	{
 		// measure the effectiveness of each promoter
 		$connection = new Connection();
-		$nodes = $connection->query("
-			SELECT * FROM nodes A JOIN nodes_output B
-			ON A.`key` = B.node
-			ORDER BY A.`name`");
+		$nodes = $connection->query("SELECT * FROM nodes_output ORDER BY email");
 
 		// get the date of the last test
 		$lastTest = $connection->query("SELECT inserted FROM test ORDER BY inserted DESC LIMIT 1")[0]->inserted;
@@ -69,14 +66,10 @@ class NodesController extends Controller
 		$limit = "50";
 		$group = "apretaste";
 
-		// get the list of nodes
-		$connection = new Connection();
-		$nodes = $connection->query("SELECT * FROM nodes ORDER BY name");
-
 		// in case is it an update
 		if($email) {
+			$connection = new Connection();
 			$n = $connection->query("SELECT * FROM nodes_output WHERE email = '$email'");
-			$node = $n[0]->node;
 			$host = $n[0]->host;
 			$user = $n[0]->user;
 			$pass = $n[0]->pass;
@@ -87,13 +80,11 @@ class NodesController extends Controller
 		// values for the view
 		$this->view->title = "New email";
 		$this->view->email = $email;
-		$this->view->node = $node;
 		$this->view->host = $host;
 		$this->view->user = $user;
 		$this->view->pass = $pass;
 		$this->view->limit = $limit;
 		$this->view->group = $group;
-		$this->view->nodes = $nodes;
 		$this->view->setLayout('manage');
 	}
 
