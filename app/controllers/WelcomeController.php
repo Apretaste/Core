@@ -31,8 +31,6 @@ class WelcomeController extends Controller
 		$this->view->visitorsPerMonth = $visitorsPerMonth;
 		$this->view->wwwhttp = $this->di->get('path')['http'];
 		$this->view->wwwroot = $this->di->get('path')['root'];
-		$this->view->stripePushibleKey = $this->di->get('config')['stripe']['pushible'];
-
 		$this->view->pick("index/welcome");
 	}
 
