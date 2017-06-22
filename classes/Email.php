@@ -275,7 +275,7 @@ class Email
 		$mail->setHeader('References', $this->replyId);
 
 		// add images to the template
-		foreach ($this->images as $image) {
+		if(is_array($this->images)) foreach ($this->images as $image) {
 			if (file_exists($image)) {
 				$inline = $mail->addEmbeddedFile($image);
 				$inline->setHeader("Content-ID", basename($image));
@@ -283,7 +283,7 @@ class Email
 		}
 
 		// add attachments
-		foreach ($this->attachments as $attachment) {
+		if(is_array($this->attachments)) foreach ($this->attachments as $attachment) {
 			if (file_exists($attachment)) $mail->addAttachment($attachment);
 		}
 
