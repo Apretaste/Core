@@ -52,6 +52,47 @@ class ApiController extends Controller
 	}
 
 	/**
+	 * Update the appid and appname for a certain token
+	 *
+	 * @author salvipascual
+	 * @version 1.0
+	 * @param POST token
+	 * @param POST appid
+	 * @param POST appname
+	 * @return JSON with code
+	 */
+	public function updateAppIdAction()
+	{
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
+
+		// get params from GET
+		$token = $this->request->get("token");
+		$appid = trim($this->request->get('appid'));
+		$appname = trim($this->request->get('appname'));
+
+		// force appid and appname
+		if(empty($appid) || empty($appname)) die('{"code":"error","message":"missing appid or appname"}');
+
+		// check if token exists
+		$connection = new Connection();
+		$exist = $connection->query("SELECT COUNT(id) AS exist FROM authentication WHERE token = '$token'")[0]->exist;
+		if(empty($exist)) die('{"code":"error","message":"invalid token"}');
+
+		// update appid and appname
+		$connection->deepQuery("UPDATE authentication SET appid='$appid', appname='$appname' WHERE token='$token'");
+
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("UPDATEAPPID token:$token, appid:$appid, appname:$appname");
+		$logger->close();
+
+		// return ok response
+		die('{"code":"ok"}');
+	}
+
+	/**
 	 * Authenticate an user and return the token
 	 *
 	 * @author salvipascual
