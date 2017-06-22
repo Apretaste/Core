@@ -56,7 +56,7 @@ class PushNotification
 			'notification_type' => '');
 
 		// call the general push
-		$this->sendGeneralPush($appids, $data);
+		$this->sendGeneralAppPush($appids, $data);
 	}
 
 	/**
@@ -90,7 +90,7 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralPush($appids, $data);
+		return $this->sendGeneralAppPush($appids, $data);
 	}
 
 	/**
@@ -121,7 +121,7 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralPush($appids, $data);
+		return $this->sendGeneralAppPush($appids, $data);
 	}
 
 	/**
@@ -150,7 +150,7 @@ class PushNotification
 		$data = array (
 			"title" => $person->full_name,
 			"body" => $header,
-      "notification_type" => "flower_notification",
+			"notification_type" => "flower_notification",
 			"flower_data" => array(
 				"from_username" => $person->username,
 				"from_user_fullname" => $person->full_name,
@@ -160,18 +160,77 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralPush($appids, $data);
+		return $this->sendGeneralAppPush($appids, $data);
 	}
 
 	/**
-	 * Send a push notification
+	 * Send a web push notification when you receive a chat at Pizarra
+	 *
+	 * @author salvipascual
+	 * @param String $appid, id to send the notification
+	 * @param String $from, @username of the sender
+	 * @param String $text, text sent
+	 * @return Boolean
+	 */
+	public function pizarraChatReceived($appid, $from, $text)
+	{
+		// prepara params to send
+		$title = "@$from le ha escrito una nota";
+		$message = substr($text, 0, 80);
+		$callbackUrl = "https://pizarracuba.com/chats/with/$from";
+
+		// call the general web push
+		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
+	}
+
+	/**
+	 * Send a web push notification when somebody mentions you
+	 *
+	 * @author salvipascual
+	 * @param String $appid, id to send the notification
+	 * @param String $from, @username of the sender
+	 * @return Boolean
+	 */
+	public function pizarraUserMentioned($appid, $from)
+	{
+		// prepara params to send
+		$title = "@$from le mencionó en público";
+		$message = "Haga click aquí para ver que @$from escribió de usted";
+		$callbackUrl = "https://pizarracuba.com/feed"; //@TODO point to a unique note
+
+		// call the general web push
+		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
+	}
+
+	/**
+	 * Send a web push notification when somebody adds a heart to your post
+	 *
+	 * @author salvipascual
+	 * @param String $appid, id to send the notification
+	 * @param String $from, @username of the sender
+	 * @param String $text, text sent
+	 * @return Boolean
+	 */
+	public function pizarraHeartNote($appid, $from, $note)
+	{
+		// prepara params to send
+		$title = "A @$from le gustó su nota";
+		$message = substr($note, 0, 80);
+		$callbackUrl = "https://pizarracuba.com/feed"; //@TODO point to a unique note
+
+		// call the general web push
+		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
+	}
+
+	/**
+	 * Send a push notification for a phone
 	 *
 	 * @author salvipascual
 	 * @param Array|String $appids, IDs to push
 	 * @param Array $data, structure to send
 	 * @return JSON Response
 	 */
-	private function sendGeneralPush($appids, $data)
+	private function sendGeneralAppPush($appids, $data)
 	{
 		// appids must be an array
 		$appids = explode(",", $appids);
@@ -209,13 +268,57 @@ class PushNotification
 		curl_close($ch);
 
 		// save the API log
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
-		$logger->log("NEW PUSH: ".json_encode($data));
+		$logger->log("NEW APP PUSH: ".json_encode($data));
 		$logger->close();
 
 		// return the result
 		return $result;
+	}
+
+	/**
+	 * Send a push notification for the web
+	 *
+	 * @author salvipascual
+	 * @param String $appid, ID to push
+	 * @param String $title, title of the push
+	 * @param String $message, message of the push
+	 * @param String $callbackUrl, url to send the user
+	 * @return Boolean
+	 */
+	private function sendGeneralWebPush($appid, $title, $message, $callbackUrl)
+	{
+		// get the server key
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$apiToken = $di->get('config')['pushcrew']['apitoken'];
+
+		// set POST variables
+		$fields = array(
+			'title' => $title,
+			'message' => $message,
+			'url' => $callbackUrl,
+			'subscriber_id' => $appid
+		);
+
+		// contact the API using curl
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://pushcrew.com/api/v1/send/individual/');
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization:key='.$apiToken));
+		$json = curl_exec($ch);
+		curl_close($ch);
+
+		// save the API log
+		$wwwroot = $di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("NEW WEB PUSH: $json");
+		$logger->close();
+
+		// return boolean if susccess
+		$res = json_decode($json, true);
+		return $res['status'] == 'success';
 	}
 }
