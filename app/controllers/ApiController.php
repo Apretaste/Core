@@ -26,20 +26,19 @@ class ApiController extends Controller
 
 		// check if user/pass is correct
 		$connection = new Connection();
-		$auth = $connection->deepQuery("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
+		$auth = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
 		if(empty($auth)) die('{"code":"error","message":"invalid email or pin"}');
 
-		// get the new expiration date and token
-		$expires = date("Y-m-d", strtotime("+1 month"));
-		$token = md5($email.$pin.$expires.rand());
+		// check if the token exist and grab it
+		$token = $connection->query("SELECT token FROM authentication WHERE email='$email' AND appname='$appname'");
+		if(isset($token[0]->token)) $token = $token[0]->token;
 
-		// create new entry on the authentication table
-		// and delete all previous entries for this token
-		$connection->deepQuery("
-			START TRANSACTION;
-			DELETE FROM authentication WHERE email='$email' AND appname = '$appname';
-			INSERT INTO authentication (token,email,appid,appname,expires) VALUES ('$token','$email','$appid','$appname','$expires');
-			COMMIT");
+		// else create a new one and save it to the databae
+		if(empty($token))
+		{
+			$token = md5($email.$pin.rand());
+			$connection->query("INSERT INTO authentication (token,email,appid,appname) VALUES ('$token','$email','$appid','$appname')");
+		}
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -80,7 +79,7 @@ class ApiController extends Controller
 		if(empty($exist)) die('{"code":"error","message":"invalid token"}');
 
 		// update appid and appname
-		$connection->deepQuery("UPDATE authentication SET appid='$appid', appname='$appname' WHERE token='$token'");
+		$connection->query("UPDATE authentication SET appid='$appid', appname='$appname' WHERE token='$token'");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -111,7 +110,7 @@ class ApiController extends Controller
 
 		// delete the row for the token
 		$connection = new Connection();
-		$connection->deepQuery("DELETE FROM authentication WHERE token='$token'");
+		$connection->query("DELETE FROM authentication WHERE token='$token'");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -148,7 +147,7 @@ class ApiController extends Controller
 
 		// create the new profile
 		$username = $utils->usernameFromEmail($email);
-		$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
+		$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -176,7 +175,7 @@ class ApiController extends Controller
 
 		// check if the user exist
 		$connection = new Connection();
-		$res = $connection->deepQuery("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
+		$res = $connection->query("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
 		$exist = empty($res) ? 'false' : 'true';
 
 		// check if the user already created a pin
@@ -222,12 +221,12 @@ class ApiController extends Controller
 		{
 			$newUser = "true";
 			$username = $utils->usernameFromEmail($email);
-			$connection->deepQuery("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
+			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 		}
 
 		// create a new pin for the user
 		$pin = mt_rand(1000, 9999);
-		$connection->deepQuery("UPDATE person SET pin='$pin' WHERE email='$email'");
+		$connection->query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
 		// create response to email the new code
 		$subject = "Code: $pin";
