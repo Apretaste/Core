@@ -550,16 +550,11 @@ class Utils
 	 */
 	public function detokenize($token)
 	{
+		// get the email for a token
 		$connection = new Connection();
+		$auth = $connection->query("SELECT id, email FROM authentication WHERE token='$token'");
 
-		// get the user if there is an active token
-		$auth = $connection->query("SELECT id, email FROM authentication WHERE token='$token' AND CURRENT_TIMESTAMP < DATE(expires)");
 		if(empty($auth)) return false;
-
-		// extend the life of the token
-		$expires = date("Y-m-d", strtotime("+1 month"));
-		$connection->query("UPDATE authentication SET expires='$expires' WHERE id='{$auth[0]->id}'");
-
 		return $auth[0]->email;
 	}
 
