@@ -2,7 +2,6 @@
 
 // include the Twitter library
 use Abraham\TwitterOAuth\TwitterOAuth;
-include_once "vendor/abraham/twitteroauth/autoload.php";
 
 class PizarraTask extends \Phalcon\Cli\Task
 {
@@ -10,7 +9,6 @@ class PizarraTask extends \Phalcon\Cli\Task
 	private $KEY_SECRET = "kjSF6NOppBgR3UsP4u9KjwavrLUFGOcWEeFKmcWCZQyLLpOWCm";
 	private $TOKEN = "4247250736-LgRlKf0MgOLQZY6VnaZTJUKTuDU7q0GefcEPYyB";
 	private $TOKEN_SECRET = "WXpiTky2v9RVlnJnrwSYlX2BOmJqv8W3Sfb1Ve61RrWa3";
-	private $connection = null;
 
 	/**
 	 * sources to pull from twitter
@@ -27,7 +25,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 	/**
 	 * Get the content from outside sources and post it in Pizarra
 	 *
-	 * @author kuma
+	 * @author salvipascual
 	 */
 	public function mainAction()
 	{
@@ -41,15 +39,16 @@ class PizarraTask extends \Phalcon\Cli\Task
 		foreach ($this->sources as $email => $query)
 		{
 			// get the last
-			$listOfTweets = $twitter->get("search/tweets", array("q"=>$query, "count"=>50));
+			$tweets = $twitter->get("search/tweets", array("q"=>$query, "count"=>50));
 
 			// pick the newest, unpicked tweet form the list
-			$total = count($listOfTweets->statuses);
-			for ($i=0; $i<$total; $i++)
+			foreach ($tweets->statuses as $tweet)
 			{
-				// get the original post
-				if(isset($listOfTweets->statuses[$i]->retweeted_status->text)) $note = $listOfTweets->statuses[$i]->retweeted_status->text;
-				else $note = $listOfTweets->statuses[$i]->text;
+				// get a tweet object
+				$note = $tweet->text;
+
+				// do not post replies or retweets
+				if($this->startsWith($note, "@") || $this->startsWith($note, "RT")) continue;
 
 				// trim, escape and format text
 				$note = str_replace("\n", " ", $note);
@@ -74,5 +73,14 @@ class PizarraTask extends \Phalcon\Cli\Task
 
 		// save the status in the database
 		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP WHERE task='pizarra'");
+	}
+
+	/**
+	 * Check if a String starts with a character
+	 */
+	function startsWith($haystack, $needle)
+	{
+		$length = strlen($needle);
+		return (substr($haystack, 0, $length) === $needle);
 	}
 }
