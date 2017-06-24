@@ -105,6 +105,8 @@ class WebhookController extends Controller
 		}
 
 		// save into the database
+		$desc = str_replace("'", "", $desc);
+		$desc = str_replace("\n", "", $desc);
 		$sql = "INSERT INTO delivery_dropped(email,sender,company,reason,code,description) VALUES ('$email','$domain','$sender','$reason','$code','$desc')";
 		$connection->deepQuery($sql);
 
