@@ -1348,7 +1348,7 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $url
-	 * @return String
+	 * @return String or false if error
 	 */
 	public function shortenUrl($url)
 	{
@@ -1356,13 +1356,16 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$key = $di->get('config')['google']['key'];
 
-		$link = new Link;
-		$link->setLongUrl($url);
-
-		$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
-		$shortenUrl = $googleProvider->shorten($link);
-
-		return $link->getShortUrl();
+		try{
+			$link = new Link;
+			$link->setLongUrl($url);
+			$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
+			$shortenUrl = $googleProvider->shorten($link);
+			return $link->getShortUrl();
+		}catch (Exception $e){
+			$this->createAlert("ERORR SHORTENING $url, ERROR:" . $e->getMessage(), "ERROR");
+			return false;
+		}
 	}
 
 	/**
