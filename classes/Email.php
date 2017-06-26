@@ -432,8 +432,9 @@ class Email
 		// create the zip file
 		$zip = new ZipArchive;
 		$zip->open($zipFile, ZipArchive::CREATE);
-		$zip->addFromString($htmlFile,  $this->body);
-		foreach ($this->images as $images) $zip->addFile($images);
+		$zip->addFromString($htmlFile, $this->body);
+		foreach ($this->images as $i) $zip->addFile($i, basename($i));
+		foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
 		$zip->close();
 
 		// add to the attachments and clean the body

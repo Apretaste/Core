@@ -266,6 +266,7 @@ class RunController extends Controller
 		$email->replyId = $replyIdEmail;
 		$email->group = $service->group;
 		$email->images = $responses[0]->images;
+		$email->attachments = $responses[0]->attachments;
 		$email->setContentAsZipAttachment();
 		$res = $email->send();
 
