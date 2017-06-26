@@ -45,27 +45,22 @@ class Email
 		{
 			$res = $this->sendEmailViaAmazon();
 		}
-		// if sending a campaign email
-		elseif($this->group == 'campaign')
-		{
-			$res = $this->sendEmailViaGmail();
-		}
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
-			$res = $this->sendEmailViaGmail();
+			$res = $this->sendEmailViaNode();
 		}
 		// if responding to DimeCuba
 		elseif($this->group == 'dimecuba')
 		{
 			$this->subject = $utils->randomSentence();
-			$res = $this->sendEmailViaGmail();
+			$res = $this->sendEmailViaNode();
 		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
 			$this->setContentRandom();
-			$res = $this->sendEmailViaGmail();
+			$res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
 		else
@@ -240,6 +235,122 @@ class Email
 			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
 		}
 
+		return $output;
+	}
+
+	/**
+	 * Sends an email using our of our external nodes
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaNode()
+	{
+		// every new day set the daily counter back to zero
+		$connection = new Connection();
+		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+
+		// get the node of the from address
+		if($this->from) {
+			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
+			if(isset($node[0])) $node = $node[0];
+		}
+		// if no from is passed, calculate
+		else {
+			// get the list of available nodes to use
+			$nodes = $connection->query("
+				SELECT * FROM nodes_output A JOIN nodes B
+				ON A.node = B.`key`
+				WHERE A.active = '1'
+				AND `group` LIKE '%{$this->group}%'
+				AND A.`limit` > A.daily
+				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+
+			// get your personal email
+			$percent = 0; $node = false;
+			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
+			foreach ($nodes as $n) {
+				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
+				similar_text ($temp, $user, $p);
+				if($p > $percent) {
+					$percent = $p;
+					$node = $n;
+				}
+			}
+
+			// save the from part in the object
+			if($node) $this->from = $node->email;
+		}
+
+		// alert the team if no Node could be used
+		$utils = new Utils();
+		if(empty($node)) {
+			$output = new stdClass();
+			$output->code = "515";
+			$output->message = "NODE: No active node to email {$this->to}";
+			$utils->createAlert($output->message, "ERROR");
+			return $output;
+		}
+
+		// transform images to base64
+		$imagesToUpload = array();
+		foreach ($this->images as $image) {
+			$item = new stdClass();
+			$item->type = mime_content_type($image);
+			$item->name = basename($image);
+			$item->content = base64_encode(file_get_contents($image));
+			$imagesToUpload[] = $item;
+		}
+
+		// transform attachments to base64
+		$attachmentsToUpload = array();
+		foreach ($this->attachments as $attachment) {
+			$item = new stdClass();
+			$item->type = mime_content_type($attachment);
+			$item->name = basename($attachment);
+			$item->content = base64_encode(file_get_contents($attachment));
+			$attachmentsToUpload[] = $item;
+		}
+
+		// create the email array request
+		$params['key'] = $node->key;
+		$params['from'] = $node->email;
+		$params['host'] = $node->host;
+		$params['user'] = $node->user;
+		$params['pass'] = $node->pass;
+		$params['id'] = $this->id;
+		$params['messageid'] = $this->replyId;
+		$params['to'] = $this->to;
+		$params['subject'] = $this->subject;
+		$params['body'] = base64_encode($this->body);
+		$params['attachments'] = serialize($attachmentsToUpload);
+		$params['images'] = serialize($imagesToUpload);
+
+		// contact the Sender to send the email
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$output = json_decode(curl_exec($ch));
+		curl_close ($ch);
+
+		// treat node unreachable error
+		if(empty($output)) {
+			$output = new stdClass();
+			$output->code = "504";
+			$output->message = "Error reaching {$node->name} to email {$this->to} with ID {$this->id}";
+		}
+
+		// update delivery time if OK
+		if($output->code == "200") {
+			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+		// insert in drops emails and add 24h of waiting time
+		}else{
+			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
+			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
+			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+		}
 		return $output;
 	}
 
