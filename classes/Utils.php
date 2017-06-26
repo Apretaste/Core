@@ -820,18 +820,23 @@ class Utils
 	}
 
 	/**
-	 * Return user's notifications
+	 * Return user's notifications, and mark notifications as read
 	 *
 	 * @param string $email
 	 * @return array
 	 */
-	public function getUnreadNotifications($email, $limit = 50)
+	public function getUnreadNotifications($email)
 	{
+		// get all user notifications
 		$connection = new Connection();
-		$sql = "SELECT * FROM notifications WHERE viewed = '0' AND email ='{$email}' ORDER BY inserted_date DESC LIMIT $limit;";
-		$n = $connection->query($sql);
-		if ( ! is_array($n)) $n = array();
-		return $n;
+		$notifications = $connection->query("SELECT * FROM notifications WHERE viewed='0' AND email='$email' ORDER BY inserted_date DESC");
+
+		// Mark all notifications as read
+		if($notifications){
+//			$connection->query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE email='$email'");
+		}
+
+		return $notifications;
 	}
 
 	/**
