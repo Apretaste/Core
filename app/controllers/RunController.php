@@ -187,6 +187,9 @@ class RunController extends Controller
 	 */
 	public function appAction()
 	{
+		// make the system react in "mode app"
+		$this->di->set('environment', function(){return "app";});
+
 		// get the email params from the mailgun webhook
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
