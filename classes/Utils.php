@@ -337,11 +337,7 @@ class Utils
 		foreach ($namePieces as $piece)
 		{
 			$tmp .= "$piece ";
-
-			if(in_array(strtoupper($piece), array("DE","LA","Y","DEL")))
-			{
-				continue;
-			}
+			if(in_array(strtoupper($piece), array("DE","LA","Y","DEL"))) continue;
 			else
 			{
 				$newNamePieces[] = $tmp;
@@ -1385,6 +1381,10 @@ class Utils
 	 */
 	public function runRequest($email, $subject, $body, $attachments)
 	{
+		// sanitize subject and body to avoid mysql injections
+		$subject = $this->sanitize($subject);
+		$body = $this->sanitize($body);
+
 		// get the name of the service or alias based on the subject line
 		$subjectPieces = explode(" ", $subject);
 		$serviceName = strtolower($subjectPieces[0]);
@@ -1456,5 +1456,21 @@ class Utils
 		$return->service = $service;
 		$return->responses = $responses;
 		return $return;
+	}
+
+	/**
+	 * Erase SQL code from input text to avoid sql injections
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @return String
+	 */
+	public function sanitize($text)
+	{
+		$text = str_ireplace('select ', '', $text);
+		$text = str_ireplace('insert ', '', $text);
+		$text = str_ireplace('update ', '', $text);
+		$text = str_ireplace('drop ', '', $text);
+		return $text;
 	}
 }
