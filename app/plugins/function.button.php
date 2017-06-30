@@ -16,6 +16,8 @@ function smarty_function_button($params, $template)
 	$size = isset($params["size"]) ? $params["size"] : "medium";
 	$style = isset($params["style"]) ? $params["style"] : "";
 	$icon = isset($params["icon"]) ? "<b style='font-size: 25px;'>{$params["icon"]}</b><br/>": "";
+	$type = isset($params["type"]) ? $params["type"] : "";
+	$desc = isset($params["desc"]) ? $params["desc"] : "";
 
 	// get the body if exist
 	if (isset($params["body"])) $body = $params["body"];
@@ -70,12 +72,16 @@ function smarty_function_button($params, $template)
 			break;
 	}
 
-	// create direct link for the sandbox
+	// create different type of links depending the environment
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
 	if($di->get('environment') == "sandbox")
 	{
 		$wwwhttp = $di->get('path')['http'];
 		$linkto = "$wwwhttp/run/display?subject=$href&amp;body=$body";
+	}
+	elseif($di->get('environment') == "app")
+	{
+		$linkto = $href;
 	}
 	else
 	{
@@ -89,5 +95,5 @@ function smarty_function_button($params, $template)
 		<center style='color:$text;font-family:Helvetica, Arial,sans-serif;font-size:{$fontsize}px;'>{$icon}$caption</center>
 		</v:roundrect>
 	<![endif]-->
-	<a href='$linkto' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'>{$icon}$caption</a>";
+	<a href='$linkto' type='$type' desc='$desc' style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'>{$icon}$caption</a>";
 }
