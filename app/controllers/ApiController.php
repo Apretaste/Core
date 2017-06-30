@@ -12,7 +12,7 @@ class ApiController extends Controller
 	 * @param POST email
 	 * @param POST pin
 	 * @return JSON with token
-	 * */
+	 */
 	public function authAction()
 	{
 		// allow JS clients to use the API
@@ -23,6 +23,7 @@ class ApiController extends Controller
 		$pin = trim($this->request->get('pin'));
 		$appid = trim($this->request->get('appid'));
 		$appname = trim($this->request->get('appname'));
+		$platform = trim($this->request->get('platform')); // android, web, ios
 
 		// check if user/pass is correct
 		$connection = new Connection();
@@ -37,7 +38,7 @@ class ApiController extends Controller
 		if(empty($token))
 		{
 			$token = md5($email.$pin.rand());
-			$connection->query("INSERT INTO authentication (token,email,appid,appname) VALUES ('$token','$email','$appid','$appname')");
+			$connection->query("INSERT INTO authentication (token,email,appid,appname,platform) VALUES ('$token','$email','$appid','$appname','$platform')");
 		}
 
 		// save the API log
@@ -99,7 +100,7 @@ class ApiController extends Controller
 	 * @param POST email
 	 * @param POST pin
 	 * @return JSON with token
-	 * */
+	 */
 	public function logoutAction()
 	{
 		// allow JS clients to use the API
@@ -165,7 +166,7 @@ class ApiController extends Controller
 	 * @author salvipascual
 	 * @param GET email
 	 * @return JSON
-	 * */
+	 */
 	public function lookupAction()
 	{
 		// allow JS clients to use the API
@@ -198,7 +199,7 @@ class ApiController extends Controller
 	 * @param GET email
 	 * @param GET lang, two digits languge code, IE: en, es
 	 * @return JSON
-	 * */
+	 */
 	public function startAction()
 	{
 		// allow JS clients to use the API
