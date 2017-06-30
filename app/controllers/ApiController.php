@@ -273,20 +273,15 @@ class ApiController extends Controller
 		$key = $this->request->get("key");
 		$to = $this->request->get("email");
 		$subject = $this->request->get("subject");
-		$body = file_get_contents("php://input");
+		$asZip = $this->request->get("zip");
+		$content = file_get_contents("php://input");
 
 		// do not allow empty emails
-		if(empty($to) || empty($body))
-		{
-			die('{"status":"0", "message":"Empty email"}');
-		}
+		if(empty($to)) die('{"status":"0", "message":"Empty email"}');
 
 		// create a random subject if empty
-		if(empty($subject))
-		{
-			$utils = new Utils();
-			$subject = $utils->randomSentence();
-		}
+		$utils = new Utils();
+		if(empty($subject)) $subject = $utils->randomSentence();
 
 		// check user pass combination
 		$loginInfo = explode(":", base64_decode($key));
@@ -295,9 +290,21 @@ class ApiController extends Controller
 
 		// check is the user has permissions to forward
 		$pages = explode(",", $res->items->pages);
-		if( ! (in_array("*", $pages) || in_array("forward", $pages)))
-		{
+		if( ! (in_array("*", $pages) || in_array("forward", $pages))) {
 			die('{"status":"0", "message":"No permissions"}');
+		}
+
+		// get the body and attachments
+		$content = unserialize($content);
+		$body = $content['body'];
+		$atts = $content['attachments'];
+
+		// save attachments to the filesystem
+		$attachments = array();
+		foreach($atts as $a){
+			$filename = $utils->getTempDir() . $a['filename'];
+			file_put_contents($filename, base64_decode($a['content']));
+			$attachments[] = $filename;
 		}
 
 		// forward the email
@@ -305,7 +312,9 @@ class ApiController extends Controller
 		$email->to = $to;
 		$email->subject = $subject;
 		$email->body = $body;
+		$email->attachments = $attachments;
 		$email->group = $res->items->group;
+		if($asZip) $email->setContentAsZipAttachment();
 		$res = $email->send();
 
 		// display message
