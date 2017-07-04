@@ -53,7 +53,6 @@ class Email
 		// if responding to DimeCuba
 		elseif($this->group == 'dimecuba')
 		{
-			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode();
 		}
 		// for all other Nauta emails
