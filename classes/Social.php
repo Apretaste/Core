@@ -342,7 +342,7 @@ class Social
 		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
 		else $location = $this->getCountryNameFromCode($profile->country, $lang);
-		$profile->location = $location;
+		$profile->location = substr($location, 0, 23);
 
 		// get the person's full name
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";

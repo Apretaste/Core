@@ -297,8 +297,8 @@ class ApiController extends Controller
 
 		// get the body and attachments
 		$content = unserialize($content);
-		$body = $content['body'];
-		$atts = $content['attachments'];
+		$body = isset($content['body']) ? $content['body'] : "";
+		$atts = isset($content['attachments']) ? $content['attachments'] : array();
 
 		// save attachments to the filesystem
 		$attachments = array();
