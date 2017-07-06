@@ -97,7 +97,8 @@ class NodesController extends Controller
 		// get params from the url
 		$id = $this->request->get("id");
 		$email = $this->request->get("email");
-		$node = $this->request->get("node");
+//		$node = $this->request->get("node");
+		$node = "834bfe989b6e7210e3f2637aebced0"; // @TODO temporal hack Salvi
 		$host = $this->request->get("host");
 		$user = $this->request->get("user");
 		$pass = $this->request->get("pass");
