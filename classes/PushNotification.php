@@ -69,17 +69,13 @@ class PushNotification
 	 * @param String $message
 	 * @return JSON Response
 	 */
-	public function piropazoChatPush($appids, $from, $to, $message)
+	public function piropazoChatPush($appid, $from, $to, $message)
 	{
 		// prepare de data structure
 		$data = array(
 			"title" => $from->full_name,
 			"body" => "@{$from->username}: $message",
 			"notification_type" => "chat_notification",
-			"aps" => array(
-				"alert" => $message,
-				"sound" => "default"
-			),
 			"message_data" => array(
 				"from_username" => $from->username,
 				"from_user_fullname" => $from->full_name,
@@ -93,7 +89,7 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralAppPush($appids, $data);
+		return $this->sendGeneralAppPush($appid, $data);
 	}
 
 	/**
@@ -104,7 +100,7 @@ class PushNotification
 	 * @param Person $person
 	 * @return JSON Response
 	 */
-	public function piropazoLikePush($appids, $person)
+	public function piropazoLikePush($appid, $person)
 	{
 		// translate message
 		if($person->lang == "en") $body = "@{$person->username} likes your profile";
@@ -115,10 +111,6 @@ class PushNotification
 			"title" => $person->full_name,
 			"body" => $body,
 			"notification_type" => "like_notification",
-			"aps" => array(
-				"alert" => $body,
-				"sound" => "default"
-			),
 			"like_data" => array(
 				"from_username" => $person->username,
 				"from_user_fullname" => $person->full_name,
@@ -128,7 +120,7 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralAppPush($appids, $data);
+		return $this->sendGeneralAppPush($appid, $data);
 	}
 
 	/**
@@ -139,7 +131,7 @@ class PushNotification
 	 * @param Person $person
 	 * @return JSON Response
 	 */
-	public function piropazoFlowerPush($appids, $person)
+	public function piropazoFlowerPush($appid, $person)
 	{
 		// translate messages
 		if($person->lang == "en")
@@ -158,10 +150,6 @@ class PushNotification
 			"title" => $person->full_name,
 			"body" => $header,
 			"notification_type" => "flower_notification",
-			"aps" => array(
-				"alert" => $text,
-				"sound" => "default"
-			),
 			"flower_data" => array(
 				"from_username" => $person->username,
 				"from_user_fullname" => $person->full_name,
@@ -171,7 +159,7 @@ class PushNotification
 		);
 
 		// call the general push
-		return $this->sendGeneralAppPush($appids, $data);
+		return $this->sendGeneralAppPush($appid, $data);
 	}
 
 	/**
@@ -241,19 +229,18 @@ class PushNotification
 	 * @param Array $data, structure to send
 	 * @return JSON Response
 	 */
-	private function sendGeneralAppPush($appids, $data)
+	private function sendGeneralAppPush($appid, $data)
 	{
-		// appids must be an array
-		$appids = explode(",", $appids);
-
 		// get the server key
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$serverKey = $di->get('config')['firebase']['serverkey'];
 
 		// prepare de message
 		$fields = array(
-			'registration_ids' => $appids,
-			'data' => $data
+			'to' => $appid,
+			'data' => $data,
+			'notification' => $data,
+			'priority'=>'high'
 		);
 
 		// prepare the server auth
