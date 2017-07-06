@@ -59,6 +59,7 @@ class Email
 		elseif($isNauta)
 		{
 			$this->setContentRandom();
+			$this->subject = $utils->randomSentence();
 			$res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
