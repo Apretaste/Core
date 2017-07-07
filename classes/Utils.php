@@ -376,6 +376,11 @@ class Utils
 			$firstName = $newNamePieces[0];
 		}
 
+		$firstName = str_replace("'", "", $firstName);
+		$middleName = str_replace("'", "", $middleName);
+		$lastName = str_replace("'", "", $lastName);
+		$motherName = str_replace("'", "", $motherName);
+
 		return array($firstName, $middleName, $lastName, $motherName);
 	}
 

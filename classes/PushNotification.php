@@ -13,7 +13,7 @@ class PushNotification
 	public function getAppId($email, $appname)
 	{
 		$connection = new Connection();
-		$appid = $connection->deepQuery("SELECT appid FROM authentication WHERE email='$email' AND appname='$appname'");
+		$appid = $connection->query("SELECT appid FROM authentication WHERE email='$email' AND appname='$appname'");
 
 		if(empty($appid)) return false;
 		return $appid[0]->appid;
@@ -30,7 +30,7 @@ class PushNotification
 	public function setAppId($email, $appid, $appname)
 	{
 		$connection = new Connection();
-		$connection->deepQuery("UPDATE authentication SET appid='$appid' WHERE email='$email' AND appname='$appname'");
+		$connection->query("UPDATE authentication SET appid='$appid' WHERE email='$email' AND appname='$appname'");
 	}
 
 	/**
@@ -41,7 +41,7 @@ class PushNotification
 	 * @param String $body
 	 * @return JSON Response
 	 */
-	public function sendTextPush($appids, $title, $body)
+	public function sendTextPush($appid, $title, $body)
 	{
 		// prepare de data structure
 		$data = array (
@@ -56,7 +56,7 @@ class PushNotification
 			'notification_type' => '');
 
 		// call the general push
-		$this->sendGeneralAppPush($appids, $data);
+		$this->sendGeneralAppPush($appid, $data);
 	}
 
 	/**
@@ -225,7 +225,7 @@ class PushNotification
 	 * Send a push notification for a phone
 	 *
 	 * @author salvipascual
-	 * @param Array|String $appids, IDs to push
+	 * @param Array|String $appid, IDs to push
 	 * @param Array $data, structure to send
 	 * @return JSON Response
 	 */
@@ -238,8 +238,8 @@ class PushNotification
 		// prepare de message
 		$fields = array(
 			'to' => $appid,
-			'data' => $data,
-			'notification' => $data,
+			'data' => $data, // Android
+			'notification' => $data, // IOS
 			'priority'=>'high'
 		);
 

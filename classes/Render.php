@@ -45,7 +45,7 @@ class Render
 		$smarty = new Smarty;
 		$smarty->addPluginsDir("$wwwroot/app/plugins/");
 		$smarty->setTemplateDir("$wwwroot/app/layouts/");
-		$smarty->setCompileDir("$wwwroot/temp/templates_c/");
+		$smarty->setCompileDir("/tmp/"); // "$wwwroot/temp/templates_c/"
 		$smarty->setCacheDir("$wwwroot/temp/cache/");
 		$smarty->setConfigDir("$wwwroot/configs/");
 
