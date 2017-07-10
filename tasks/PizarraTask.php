@@ -38,7 +38,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 		// loop all sources and get their content
 		foreach ($this->sources as $email => $query)
 		{
-			// get the last
+			// get the list of tweets from the user feed
 			$tweets = $twitter->get("statuses/user_timeline", array("screen_name"=>$query, "count"=>50));
 
 			// pick the newest, unpicked tweet form the list
