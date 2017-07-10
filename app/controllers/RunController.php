@@ -514,10 +514,6 @@ class RunController extends Controller
 		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
 		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
 
-		// remove weird chars. Apostrophes break the SQL code
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
-		$body = str_replace("'", "", $body);
-
 		// clean incoming emails
 		$fromEmail = str_replace("'", "", $fromEmail);
 		$toEmail = str_replace("'", "", $toEmail);
@@ -560,6 +556,11 @@ class RunController extends Controller
 			chmod($tmpfilePath, 0777);
 			$attachments[] = $tmpfilePath;
 		}
+
+		// remove weird chars and apostrophes that break the SQL code
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+		$body = str_replace("'", "", $body);
+		$messageID = str_replace("'", "", $messageID);
 
 		// save the mailgun log
 		$wwwroot = $this->di->get('path')['root'];
