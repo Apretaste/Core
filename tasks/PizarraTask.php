@@ -14,7 +14,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 	 * sources to pull from twitter
 	 */
 	private $sources = array(
-		"salvipascual+chistoso@gmail.com" => "@EresChiste",
+//		"salvipascual+chistoso@gmail.com" => "@EresChiste",
 		"salvipascual+etecsa@gmail.com" => "@ETECSA_Cuba",
 		"salvipascual+cafefuerte@gmail.com" => "@CafeFuertecom",
 		"salvipascual+cubadebate@gmail.com" => "@cubadebate",
@@ -39,15 +39,13 @@ class PizarraTask extends \Phalcon\Cli\Task
 		foreach ($this->sources as $email => $query)
 		{
 			// get the last
-			$tweets = $twitter->get("search/tweets", array("q"=>$query, "count"=>50));
+			$tweets = $twitter->get("statuses/user_timeline", array("screen_name"=>$query, "count"=>50));
 
 			// pick the newest, unpicked tweet form the list
-			foreach ($tweets->statuses as $tweet)
+			foreach ($tweets as $tweet)
 			{
-				// get a tweet object
-				$note = $tweet->text;
-
 				// do not post replies or retweets
+				$note = $tweet->text;
 				if($this->startsWith($note, "@") || $this->startsWith($note, "RT")) continue;
 
 				// trim, escape and format text
@@ -57,7 +55,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 				$note = str_replace("“", '"', $note);
 				$note = str_replace("”", '"', $note);
 				$note = $utils->removeTildes($note); // removes Spanish tildes
-				$note = preg_replace('/[^A-Za-z0-9\- \/\._]/', '', $note); // removes special chars.
+				$note = preg_replace('/[^A-Za-z0-9\- \/\.:_]/', '', $note); // removes special chars.
 				$note = preg_replace('/([\s])\1+/', ' ', $note);
 				$note = substr($note, 0, 140);
 
