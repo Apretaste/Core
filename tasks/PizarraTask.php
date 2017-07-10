@@ -14,7 +14,7 @@ class PizarraTask extends \Phalcon\Cli\Task
 	 * sources to pull from twitter
 	 */
 	private $sources = array(
-//		"salvipascual+chistoso@gmail.com" => "@EresChiste",
+		"salvipascual+chistoso@gmail.com" => "@EresChiste",
 		"salvipascual+etecsa@gmail.com" => "@ETECSA_Cuba",
 		"salvipascual+cafefuerte@gmail.com" => "@CafeFuertecom",
 		"salvipascual+cubadebate@gmail.com" => "@cubadebate",
