@@ -16,6 +16,7 @@ class Email
 	public $status = "new"; // new, sent, bounced
 	public $message;
 	public $tries = 0;
+	public $app = false; // if sending to email or app
 	public $created; // date
 	public $sent; // date
 
@@ -50,16 +51,10 @@ class Email
 		{
 			$res = $this->sendEmailViaNode();
 		}
-		// if responding to DimeCuba
-		elseif($this->group == 'dimecuba')
-		{
-			$res = $this->sendEmailViaNode();
-		}
 		// for all other Nauta emails
 		elseif($isNauta)
 		{
-			$this->setContentRandom();
-			$this->subject = $utils->randomSentence();
+			if( ! $this->app) $this->setContentRandom();
 			$res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
@@ -486,6 +481,7 @@ class Email
 		$aliases = $connection->query("SELECT service as word, GROUP_CONCAT(alias) as synonyms FROM service_alias GROUP BY service");
 		$synonyms = array_merge($synonyms, $aliases);
 
+		// replace words in the body
 		foreach ($synonyms as $key) {
 			// get word and synonyms
 			$regexp = "/\b{$key->word}\b/ui";
@@ -495,12 +491,12 @@ class Email
 			// do not replace the word 2/10 of the time
 			if(rand(1, 10) <= 2) continue;
 
-			// replace in the subject
-			$this->subject = preg_replace($regexp, $replacement, $this->subject);
-
 			// replace in the body
 			$this->body = preg_replace($regexp, $replacement, $this->body);
 		}
+
+		// make the subject random as well
+		$this->subject = $utils->randomSentence();
 
 		// randomize the word Apretaste
 		$apretaste = substr_replace("Apretaste", ".", rand(1,8), 0); // insert random dot

@@ -315,7 +315,10 @@ class ApiController extends Controller
 		$email->body = $body;
 		$email->attachments = $attachments;
 		$email->group = $res->items->group;
-		if($asZip) $email->setContentAsZipAttachment();
+		if($asZip) {
+			$email->app = true;
+			$email->setContentAsZipAttachment();
+		}
 		$res = $email->send();
 
 		// display message
