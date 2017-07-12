@@ -82,7 +82,7 @@ function smarty_function_button($params, $template)
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
-		$desc = isset($params["desc"]) ? $params["desc"] : "";
+		$desc = isset($params["desc"]) ? $params["desc"] : ($popup == "true" ? "Inserte una palabra o frase a buscar" : "");
 		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait);\"";
 		$linkto = "#";
 	}
