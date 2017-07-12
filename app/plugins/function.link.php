@@ -27,9 +27,10 @@ function smarty_function_link($params, $template)
 	}
 	elseif($di->get('environment') == "app")
 	{
-		$type = isset($params["type"]) ? $params["type"] : "";
+		$popup = empty($params["popup"]) ? "false" : $params["popup"];
+		$wait = empty($params["wait"]) ? "true" : $params["wait"];
 		$desc = isset($params["desc"]) ? $params["desc"] : "";
-		return "<a href='$href' type='$type' desc='$desc'>$caption</a>";
+		return "<a onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait);\" href='#'>$caption</a>";
 	}
 	else
 	{
