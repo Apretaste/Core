@@ -189,7 +189,7 @@ class RunController extends Controller
 	{
 		// make the system react in "mode app"
 		$this->di->set('environment', function(){return "app";});
-/*
+
 		// get the email params from the mailgun webhook
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
@@ -197,14 +197,6 @@ class RunController extends Controller
 		$ticket = $res->subject;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
-*/
-
-		$fromEmail = "abfernandez@elnuevoherald.com";
-		$toEmail = "apretaste@gmail.com";
-		$ticket = "my ticketon";
-		$replyIdEmail = "12345456787890";
-		$attachEmail = array("/home/salvipascual/g4X34mc2.zip");
-		$attachEmail = array("/home/salvipascual/conocer.zip");
 
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
