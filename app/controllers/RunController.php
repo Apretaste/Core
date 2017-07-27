@@ -194,7 +194,7 @@ class RunController extends Controller
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
 		$toEmail = $res->toEmail;
-		$subjectEmail = $res->subject;
+		$ticket = $res->subject;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
 
@@ -205,7 +205,7 @@ class RunController extends Controller
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "Error on attachment file";
-			die(json_encode($res));
+			die(json_encode($output));
 		}
 
 		// do not continue procesing the email if the sender is not valid
@@ -223,7 +223,7 @@ class RunController extends Controller
 		$zip->open($attachEmail);
 		for($i = 0; $i < $zip->numFiles; $i++) {
 			$filename = $zip->getNameIndex($i);
-			if(strrchr($filename, '.txt')) $textFile = $filename;
+			if(substr($filename, -4) == ".txt") $textFile = $filename;
 			else $attachs[] = "$temp/$folderName/$filename";
 		}
 
@@ -236,7 +236,7 @@ class RunController extends Controller
 		$connection = new Connection();
 		$idEmail = $connection->query("
 			INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
-			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$replyIdEmail', '$attachStr', 'app')");
+			VALUES ('$fromEmail', '$toEmail', '$ticket', '$replyIdEmail', '$attachStr', 'app')");
 
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);
@@ -251,38 +251,47 @@ class RunController extends Controller
 
 		// run the request and get the service and responses
 		$fileText = file_get_contents("$temp/$folderName/$textFile");
-		$ret = $utils->runRequest($fromEmail, $fileText, '', array());
+		$ret = $utils->runRequest($fromEmail, $fileText, '', $attachs);
 		$service = $ret->service;
-		$responses = $ret->responses;
-		$responses[0]->setEmailLayout('email_text.tpl');
-
-		// render the HTML
-		$render = new Render();
-		$body = $render->renderHTML($service, $responses[0]);
-
-		// create the new Email object
-		$email = new Email();
-		$email->id = $idEmail;
-		$email->to = $fromEmail;
-		$email->subject = $subjectEmail;
-		$email->body = $body;
-		$email->replyId = $replyIdEmail;
-		$email->group = $service->group;
-		$email->images = $responses[0]->images;
-		$email->attachments = $responses[0]->attachments;
-		$email->app = true;
-		$email->setContentAsZipAttachment();
-		$res = $email->send();
+		$response = $ret->responses[0];
 
 		// save the apps log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$subjectEmail");
+		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$ticket");
 		$logger->close();
 
+		// create default output
+		$output = new stdClass();
+		$output->code = "200";
+
+		// send email if can be rendered
+		if($response->render) {
+			// set the layout to blank
+			$response->setEmailLayout('email_text.tpl');
+
+			// render the HTML
+			$render = new Render();
+			$body = $render->renderHTML($service, $response);
+
+			// prepare and send the email
+			$email = new Email();
+			$email->id = $idEmail;
+			$email->to = $fromEmail;
+			$email->subject = $ticket;
+			$email->body = $body;
+			$email->replyId = $replyIdEmail;
+			$email->group = $service->group;
+			$email->images = $response->images;
+			$email->attachments = $response->attachments;
+			$email->app = true;
+			$email->setContentAsZipAttachment();
+			$output = $email->send();
+		}
+
 		// mark as done if the email was send correctly
-		if($res->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
-		die(json_encode($res));
+		if($output->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
+		die(json_encode($output));
 	}
 
 	/**
