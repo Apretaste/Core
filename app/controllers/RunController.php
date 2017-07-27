@@ -189,7 +189,7 @@ class RunController extends Controller
 	{
 		// make the system react in "mode app"
 		$this->di->set('environment', function(){return "app";});
-
+/*
 		// get the email params from the mailgun webhook
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
@@ -197,6 +197,14 @@ class RunController extends Controller
 		$ticket = $res->subject;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
+*/
+
+		$fromEmail = "abfernandez@elnuevoherald.com";
+		$toEmail = "apretaste@gmail.com";
+		$ticket = "my ticketon";
+		$replyIdEmail = "12345456787890";
+		$attachEmail = array("/home/salvipascual/g4X34mc2.zip");
+		$attachEmail = array("/home/salvipascual/conocer.zip");
 
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
@@ -238,27 +246,29 @@ class RunController extends Controller
 			INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
 			VALUES ('$fromEmail', '$toEmail', '$ticket', '$replyIdEmail', '$attachStr', 'app')");
 
+		// run the request and get the service and responses
+		$file = file("$temp/$folderName/$textFile");
+		$text = $file[0];
+		$version = empty($file[1]) ? "" : $file[1];
+
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);
 		if ($personExist) {
-			$connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
+			$connection->query("UPDATE person SET active=1, appversion='$version', last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
 		} else {
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($fromEmail);
-			// insert the person if accessed for the first time
-			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, '$inviteSource')");
+			$connection->query("INSERT INTO person (email, username, last_access, source, appversion) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, 'app', '$version')");
 		}
 
-		// run the request and get the service and responses
-		$fileText = file_get_contents("$temp/$folderName/$textFile");
-		$ret = $utils->runRequest($fromEmail, $fileText, '', $attachs);
+		$ret = $utils->runRequest($fromEmail, $text, '', $attachs);
 		$service = $ret->service;
 		$response = $ret->responses[0];
 
 		// save the apps log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Text:$fileText, Ticket:$ticket");
+		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket");
 		$logger->close();
 
 		// create default output
