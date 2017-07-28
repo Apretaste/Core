@@ -240,8 +240,8 @@ class RunController extends Controller
 
 		// run the request and get the service and responses
 		$file = file("$temp/$folderName/$textFile");
-		$text = $file[0];
-		$version = empty($file[1]) ? "" : $file[1];
+		$text = trim($file[0]);
+		$version = empty($file[1]) ? "" : trim($file[1]);
 
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);

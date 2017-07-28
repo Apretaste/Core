@@ -90,11 +90,9 @@ class Utils
 	 */
 	public function serviceExist($name)
 	{
-		// if serviceName is an alias and not is a name
+		// if serviceName is an alias get the service name
 		$db = new Connection();
 		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$name';");
-
-		// then get the service name
 		if (isset($r[0]->service)) $name = $r[0]->service;
 
 		// check if service exist and return its name
