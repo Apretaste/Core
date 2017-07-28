@@ -24,6 +24,10 @@ function smarty_function_img($params, $template)
 		@copy($href, "$wwwroot/public/temp/$file");
 		$destination = "$wwwhttp/temp/$file";
 	}
+	elseif($di->get('environment') == "app")
+	{
+		$destination = $file;
+	}
 	else
 	{
 		$destination = "cid:$file";
