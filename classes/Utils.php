@@ -1407,8 +1407,9 @@ class Utils
 		$subServiceName = "";
 		if(isset($subjectPieces[1]) && ! preg_match('/\?|\(|\)|\\\|\/|\.|\$|\^|\{|\}|\||\!/', $subjectPieces[1])){
 			$serviceClassMethods = get_class_methods($serviceName);
-			if(preg_grep("/^_{$subjectPieces[1]}$/i", $serviceClassMethods)){
-				$subServiceName = strtolower($subjectPieces[1]);
+			$tempSubService = trim($subjectPieces[1]);
+			if(preg_grep("/^_$tempSubService$/i", $serviceClassMethods)){
+				$subServiceName = strtolower($tempSubService);
 				unset($subjectPieces[1]);
 			}
 		}
