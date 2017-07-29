@@ -1343,6 +1343,8 @@ class Utils
 		$text = str_replace(array("ó", "Ó", "&oacute;", "&Oacute;"), "o", $text);
 		$text = str_replace(array("ú", "Ú", "&uacute;", "&Uacute;"), "u", $text);
 		$text = str_replace(array("ñ", "Ñ", "&ntilde;", "&Ntilde;"), "n", $text);
+		$text = str_replace("¡", "&iexcl;", $text);
+		$text = str_replace("¿", "&iquest;", $text);
 
 		return $text;
 	}
