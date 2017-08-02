@@ -56,7 +56,8 @@ class NautaClient
             $cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
             curl_setopt($this->client, CURLOPT_COOKIEJAR, $cookieFile);
             curl_setopt($this->client, CURLOPT_COOKIEFILE, $cookieFile);
-
+			
+			$this->setHttpHeaders();
             $this->cookieFile = $cookieFile;
         }
 
@@ -79,7 +80,7 @@ class NautaClient
 
         $default_headers = array_merge($default_headers, $headers);
 
-        curl_setopt($this->getClient(), CURLOPT_HTTPHEADER, $default_headers);
+        curl_setopt($this->client, CURLOPT_HTTPHEADER, $default_headers);
     }
 
     /**
