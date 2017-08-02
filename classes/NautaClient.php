@@ -189,7 +189,7 @@ class NautaClient
         $values = [];
         foreach($fields as $field)
         {
-            echo "searching hidden field: $field\n";
+            //echo "searching hidden field: $field\n";
             $p = 0;
             $s = '<input type="hidden" name="'. $field;
             $p = strpos($html, $s);
