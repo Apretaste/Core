@@ -184,7 +184,9 @@ class revolicoTask extends \Phalcon\Cli\Task
 		// create crawler
 		try
 		{
-			$url = str_replace("//", "/", $url);
+			while (strpos($url, '//') !== false)
+				$url = str_replace("//", "/", $url);
+			
 			$url = str_replace("http:/", "http://", $url);
 			$crawler = $this->client->request('GET', $url);
 		} 
