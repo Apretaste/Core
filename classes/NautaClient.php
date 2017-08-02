@@ -11,7 +11,6 @@
 
 class NautaClient
 {
-
     private $user = null;
     private $pass = null;
 
