@@ -295,6 +295,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 								$email = $data;
 							else
 								$email = 'desconocido@apretaste.com';
+							
+						echo "EMAIL $email \n";
 						break;
 					}
 			}
