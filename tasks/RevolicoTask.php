@@ -136,6 +136,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 			$lastPage = $crawler->filter('[title="Final"]')->attr('href');
 			echo "LAST PAGE $lastPage\n";
 			$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
+			echo "PAGES TOTAL $pagesTotal \n";
+			echo "TODAY ".$this->utils->getTodaysDateSpanishString();
 			
 			// get all valid links
 			for ($n = 1; $n < $pagesTotal; $n ++)
