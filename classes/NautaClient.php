@@ -32,36 +32,23 @@ class NautaClient
     {
         $this->user = $user;
         $this->pass = $pass;
-    }
 
-    /**
-     * Singleton get client
-     *
-     * @return null|resource
-     */
-    public function getClient()
-    {
         $di = \Phalcon\DI\FactoryDefault::getDefault();
         $wwwroot = $di->get('path')['root'];
 
-        if (is_null($this->client))
-        {
-            $this->client = curl_init();
+        $this->client = curl_init();
 
+        curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 
-            curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+        @mkdir ("$wwwroot/temp/nautaclient");
 
-            @mkdir ("$wwwroot/temp/nautaclient");
-            $cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
-            curl_setopt($this->client, CURLOPT_COOKIEJAR, $cookieFile);
-            curl_setopt($this->client, CURLOPT_COOKIEFILE, $cookieFile);
-			
-			$this->setHttpHeaders();
-            $this->cookieFile = $cookieFile;
-        }
+        $cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
+        curl_setopt($this->client, CURLOPT_COOKIEJAR, $cookieFile);
+        curl_setopt($this->client, CURLOPT_COOKIEFILE, $cookieFile);
 
-        return $this->client;
+        $this->setHttpHeaders();
+        $this->cookieFile = $cookieFile;
     }
 
     /**
@@ -72,15 +59,19 @@ class NautaClient
     public function setHttpHeaders($headers = [])
     {
         $default_headers = [
-            "Cache-Control: max-age=0",
-            "Origin: {$this->baseUrl}",
-            "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
-            "Content-Type: application/x-www-form-urlencoded"
+            "Cache-Control" => "max-age=0",
+            "Origin" => "{$this->baseUrl}",
+            "User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
+            "Content-Type" => "application/x-www-form-urlencoded"
         ];
 
         $default_headers = array_merge($default_headers, $headers);
 
-        curl_setopt($this->client, CURLOPT_HTTPHEADER, $default_headers);
+        $hhs = [];
+        foreach ($default_headers as $key => $val)
+            $hhs[] = "$key: $val";
+
+        curl_setopt($this->client, CURLOPT_HTTPHEADER, $hhs);
     }
 
     /**
@@ -91,8 +82,6 @@ class NautaClient
      */
     public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
     {
-        $this->getClient();
-
         curl_setopt($this->client, CURLOPT_PROXY, $host);
         curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
     }
@@ -112,10 +101,10 @@ class NautaClient
         if (is_null($pass))
             $pass = $this->pass;
 
-        curl_setopt($this->getClient(), CURLOPT_URL, "{$this->baseUrl}horde/login.php");
-        curl_setopt($this->getClient(), CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={$user}&horde_pass={$pass}&horde_select_view=mobile&new_lang=en_US");
+        curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/login.php");
+        curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={$user}&horde_pass={$pass}&horde_select_view=mobile&new_lang=en_US");
 
-        $response = curl_exec($this->getClient());
+        $response = curl_exec($this->client);
 
         if ($response === false)
             return false;
@@ -161,8 +150,8 @@ class NautaClient
     public function sendEmail($to, $subject, $body, $attachment = false, $cc = "", $bcc = "", $priority = "normal")
     {
         // get send form
-        curl_setopt($this->getClient(), CURLOPT_URL, "{$this->baseUrl}horde/imp/compose.php?u={$this->composeToken}");
-        $html = curl_exec($this->getClient());
+        curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/compose.php?u={$this->composeToken}");
+        $html = curl_exec($this->client);
 
         // parse action attr
         $s  = "action=\"";
@@ -191,7 +180,6 @@ class NautaClient
         foreach($fields as $field)
         {
             //echo "searching hidden field: $field\n";
-            $p = 0;
             $s = '<input type="hidden" name="'. $field;
             $p = strpos($html, $s);
             if ($p!==false)
@@ -247,16 +235,16 @@ class NautaClient
         $body = $this->buildMultipart($data, $boundary);
 
         $this->setHttpHeaders([
-            "Content-Type: multipart/form-data; boundary=$boundary",
-            "Content-Length: ". strlen($body)-1
+            "Content-Type" => "multipart/form-data; boundary=$boundary",
+            "Content-Length" => "". (strlen($body) - 1)
         ]);
 
-        curl_setopt($this->getClient(), CURLOPT_URL, $url);
-        curl_setopt($this->getClient(), CURLOPT_POST, true);
-        curl_setopt($this->getClient(), CURLOPT_POSTFIELDS, $body);
+        curl_setopt($this->client, CURLOPT_URL, $url);
+        curl_setopt($this->client, CURLOPT_POST, true);
+        curl_setopt($this->client, CURLOPT_POSTFIELDS, $body);
 
         // send
-        $response = curl_exec($this->getClient());
+        $response = curl_exec($this->client);
 
         return $response;
     }
@@ -270,7 +258,7 @@ class NautaClient
     {
         if (!is_null($this->client))
         {
-            curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/login.php?horde_logout_token={$this->logOutToken}");
+            curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/login.php?horde_logout_token={$this->logoutToken}");
             $response = curl_exec($this->client);
             curl_close($this->client);
             return $response;
