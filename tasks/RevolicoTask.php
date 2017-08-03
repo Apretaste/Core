@@ -286,7 +286,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Email:":
 					{
-						if (empty($email)) $email = $data;
+						$email = 'desconocido@apretaste.com';
+						if (empty($email)) 
+							$data = $this->utils->getEmailFromText($data);
+						    if ($data !== false)
+								$email = $data;
 						break;
 					}
 			}
