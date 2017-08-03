@@ -66,6 +66,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 			{
 				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
 				
+				$data = false;
+				
 				// get the page's data and images
 				try 
 				{
@@ -286,11 +288,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Email:":
 					{
-						$email = 'desconocido@apretaste.com';
+						$email = '';
 						if (empty($email)) 
 							$data = $this->utils->getEmailFromText($data);
 						    if ($data !== false)
 								$email = $data;
+							else
+								$email = 'desconocido@apretaste.com';
 						break;
 					}
 			}
