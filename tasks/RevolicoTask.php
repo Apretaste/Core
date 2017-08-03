@@ -59,7 +59,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			// calculate the total number of posts
 			$totalPosts += count($pages);
 			
-			echo "PROCESSING URLs $url\n";
+			echo "PROCESSING URLs $url - $totalPages pages\n";
 			
 			// for every page
 			for ($i = 0; $i < $totalPages; $i ++)
