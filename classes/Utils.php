@@ -2,7 +2,8 @@
 
 use Mailgun\Mailgun;
 use abeautifulsite\SimpleImage;
-use phpseclib\Crypt\RSA;
+use G4\Crypto\Crypt;
+use G4\Crypto\Adapter\OpenSSL;
 use Mremi\UrlShortener\Model\Link;
 use Mremi\UrlShortener\Provider\Google\GoogleProvider;
 
@@ -893,85 +894,46 @@ class Utils
 	}
 
 	/**
+	 * Encript a message using the user's public key.
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @return String
+	 */
+	public function encrypt($text)
+	{
+		// get the seed from the config file
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$seed = $di->get('config')['global']['seed'];
+
+		// configure crypto with SSL
+		$crypto = new Crypt(new OpenSSL());
+		$crypto->setEncryptionKey($seed);
+
+		// encript message
+		return $crypto->encode($text);
+	}
+
+	/**
 	 * Decript a message using the user's private key.
 	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
 	 *
 	 * @author salvipascual
-	 * @param String $email
-	 * @param String64 $message
+	 * @param String $text
 	 * @return String
 	 */
-	public function decript($email, $message)
+	public function decrypt($text)
 	{
-		// get the user's private key
-		$connection = new Connection();
-		$res = $connection->query("SELECT privatekey FROM `keys` WHERE email='$email'");
-		$privatekey = $res[0]->privatekey;
+		// get the seed from the config file
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$seed = $di->get('config')['global']['seed'];
 
-		// create the key if it does not exist
-		if(empty($privatekey))
-		{
-			$keys = $this->recreateRSAKeys($email);
-			$privatekey = $keys["privatekey"];
-		}
+		// configure crypto with SSL
+		$crypto = new Crypt(new OpenSSL());
+		$crypto->setEncryptionKey($seed);
 
-		// decript and return
-		$rsa = new RSA();
-		$rsa->loadKey($privatekey);
-		return $rsa->decrypt(base64_decode($message));
-	}
-
-	/**
-	 * Encript a message using the user's public key.
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @param String $message
-	 * @return String64
-	 */
-	public function encript($email, $message)
-	{
-		// get the user's public key
-		$connection = new Connection();
-		$res = $connection->query("SELECT publickey FROM `keys` WHERE email='$email'");
-		$publickey = $res[0]->publickey;
-
-		// create the key if it does not exist
-		if(empty($publickey))
-		{
-			$keys = $this->recreateRSAKeys($email);
-			$publickey = $keys["publickey"];
-		}
-
-		// encript and return
-		$rsa = new RSA();
-		$rsa->loadKey($publickey);
-		$rsa->setEncryptionMode(RSA::ENCRYPTION_OAEP);
-		return base64_encode($rsa->encrypt($message));
-	}
-
-	/**
-	 * Regenerate and return the private and public keys for a user
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return Array(privatekey, publickey)
-	 */
-	public function recreateRSAKeys($email)
-	{
-		// create the public and private keys
-		$rsa = new RSA();
-		$rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_OPENSSH);
-		$keys = $rsa->createKey();
-		$privatekey = $keys['privatekey'];
-		$publickey = $keys['publickey'];
-
-		// update the new keys or create a new pair
-		$connection = new Connection();
-		$connection->query("INSERT INTO `keys` (email, privatekey, publickey) VALUES('$email', '$privatekey', '$publickey') ON DUPLICATE KEY UPDATE privatekey='$privatekey', publickey='$publickey', last_usage=CURRENT_TIMESTAMP");
-
-		// return the new keys
-		return array("privatekey"=>$privatekey, "publickey"=>$publickey);
+		// decript message
+		return $crypto->decode($text);
 	}
 
 	/**
