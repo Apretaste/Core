@@ -245,8 +245,10 @@ class RunController extends Controller
 		$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 
 		// save Nauta password if passed
-		$encryptPass = $utils->encrypt($nautaPass);
-		if($nautaPass) $connection->query("INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android')");
+		if($nautaPass){
+			$encryptPass = $utils->encrypt($nautaPass);
+			$connection->query("INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android')");
+		}
 
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);
