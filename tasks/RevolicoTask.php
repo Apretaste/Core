@@ -12,7 +12,7 @@ use Goutte\Client;
 class revolicoTask extends \Phalcon\Cli\Task
 {
 
-	private $revolicoURL = "http://lok.myvnc.com/";
+	private $revolicoURL = "http://revolico.com/";
 	private $client;
 	private $connection;
 	public $utils;
@@ -59,12 +59,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 			// calculate the total number of posts
 			$totalPosts += count($pages);
 			
-			echo "PROCESSING URLs $url\n";
+			echo "PROCESSING URLs $url - $totalPages pages\n";
 			
 			// for every page
 			for ($i = 0; $i < $totalPages; $i ++)
 			{
 				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
+				
+				$data = false;
 				
 				// get the page's data and images
 				try 
@@ -134,7 +136,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 			
 			// get the latest page count
 			$lastPage = $crawler->filter('[title="Final"]')->attr('href');
+			echo "LAST PAGE $lastPage\n";
 			$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
+			echo "PAGES TOTAL $pagesTotal \n";
+			echo "TODAY ".$this->utils->getTodaysDateSpanishString();
 			
 			// get all valid links
 			for ($n = 1; $n < $pagesTotal; $n ++)
@@ -144,7 +149,28 @@ class revolicoTask extends \Phalcon\Cli\Task
 				// only crawl for today
 				$site = file_get_contents($url . "pagina-$n.html");
 				$exist = stripos($site, $this->utils->getTodaysDateSpanishString());
-				if ( ! $exist) return $links;
+				if ( ! $exist) {
+					$months = array(
+						"Enero",
+						"Febrero",
+						"Marzo",
+						"Abril",
+						"Mayo",
+						"Junio",
+						"Julio",
+						"Agosto",
+						"Septiembre",
+						"Octubre",
+						"Noviembre",
+						"Diciembre"
+					);
+
+					$today = explode(" ", date("j n Y", strtotime("-1 days")));
+					$sdate = $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
+					$exist = stripos($site, $sdate);
+					if ( ! $exist)
+						return $links;
+				}
 				
 				// move to the next page
 				$crawler = $this->client->request('GET', $url . "pagina-$n.html");
@@ -184,7 +210,9 @@ class revolicoTask extends \Phalcon\Cli\Task
 		// create crawler
 		try
 		{
-			$url = str_replace("//", "/", $url);
+			while (strpos($url, '//') !== false)
+				$url = str_replace("//", "/", $url);
+			
 			$url = str_replace("http:/", "http://", $url);
 			$crawler = $this->client->request('GET', $url);
 		} 
@@ -248,7 +276,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Nombre:":
 					{
-						$owner = $data;
+						$owner = str_replace("'", "",$data);
+						if (stripos($owner,'<![CDATA[')!== false)
+							$owner = "";
+						else $owner = substr($owner,0,15);
 						break;
 					}
 
@@ -260,7 +291,15 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Email:":
 					{
-						if (empty($email)) $email = $data;
+						$email = '';
+						if (empty($email)) 
+							$data = $this->utils->getEmailFromText($data);
+						    if ($data !== false)
+								$email = $data;
+							else
+								$email = 'desconocido@apretaste.com';
+							
+						echo "EMAIL $email \n";
 						break;
 					}
 			}
@@ -403,8 +442,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 		'{$data['url']}'
 		)";
 
-		// save into the database, log on error
-		$this->connection->deepQuery($sql);
+		try {
+			// save into the database, log on error
+			@$this->connection->deepQuery($sql);	
+		} catch(Exception $ex)
+		{
+			var_dump($ex);
+		}
+		
 		$timeEnd = time();
 		$timeDiff = $timeEnd - $timeStart;
 		echo "\tDB TIME: $timeDiff\n";

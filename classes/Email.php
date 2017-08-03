@@ -51,11 +51,12 @@ class Email
 		{
 			$res = $this->sendEmailViaNode();
 		}
-		// for all other Nauta emails
+		// for all Nauta emails (via app or email)
 		elseif($isNauta)
 		{
 			if( ! $this->app) $this->setContentRandom();
-			$res = $this->sendEmailViaNode();
+			$res = $this->sendEmailViaWebmail();
+			if($res->code != "200") $res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
 		else
@@ -347,6 +348,67 @@ class Email
 			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
 		}
 		return $output;
+	}
+
+	/**
+	 * Sends an email using Nauta webmail
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaWebmail()
+	{
+		// check if we have the nauta pass for the user
+		$connection = new Connection();
+		$pass = $connection->query("SELECT pass FROM authentication WHERE email = '$this->to'");
+
+		// if the password do not exist in our database, return false
+		if(empty($pass)) {
+			$output = new stdClass();
+			$output->code = "300";
+			$output->message = "No password for {$this->to}";
+			return $output;
+		}
+
+		// decript password
+		$utils = new Utils();
+		$pass = $utils->decrypt($pass[0]->pass);
+
+		// connect to the client
+		$user = explode("@", $this->to)[0];
+		$client = new NautaClient($user, $pass);
+
+		// login and send the email
+		if ($client->login())
+		{
+			// prepare the attachment
+			$attach = false;
+			if($this->attachments){
+				$attach = array(
+					"contentType" => mime_content_type($this->attachments[0]),
+					"content" => file_get_contents($this->attachments[0]),
+					"fileName" => basename($this->attachments[0])
+				);
+			}
+
+			// send email and logout
+			$client->sendEmail($this->to, $this->subject, $this->body, $attach);
+			$client->logout();
+
+			// create response
+			$output = new stdClass();
+			$output->code = "200";
+			$output->message = "Sent to {$this->to}";
+			return $output;
+		}
+		// if the client cannot login, send via Node
+		else
+		{
+			$output = new stdClass();
+			$output->code = "510";
+			$output->message = "Error connecting to Webmail";
+			return $output;
+		}
 	}
 
 	/**
