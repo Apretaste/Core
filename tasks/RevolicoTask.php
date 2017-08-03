@@ -276,7 +276,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 					}
 				case "Nombre:":
 					{
-						$owner = $data;
+						$owner = str_replace("'", "",$data);
+						if (stripos($owner,'<![CDATA[')!== false)
+							$owner = "";
+						else $owner = substr($owner,0,15);
 						break;
 					}
 
@@ -439,8 +442,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 		'{$data['url']}'
 		)";
 
-		// save into the database, log on error
-		$this->connection->deepQuery($sql);
+		try {
+			// save into the database, log on error
+			@$this->connection->deepQuery($sql);	
+		} catch(Exception $ex)
+		{
+			var_dump($ex);
+		}
+		
 		$timeEnd = time();
 		$timeDiff = $timeEnd - $timeStart;
 		echo "\tDB TIME: $timeDiff\n";
