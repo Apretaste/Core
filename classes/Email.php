@@ -56,7 +56,7 @@ class Email
 		{
 			if( ! $this->app) $this->setContentRandom();
 			$res = $this->sendEmailViaWebmail();
-			if($res->code > 200) $res = $this->sendEmailViaNode();
+			if($res->code != "200") $res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
 		else
