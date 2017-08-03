@@ -2,7 +2,6 @@
 
 use Mailgun\Mailgun;
 use abeautifulsite\SimpleImage;
-//use phpseclib\Crypt\RSA;
 use G4\Crypto\Crypt;
 use G4\Crypto\Adapter\OpenSSL;
 use Mremi\UrlShortener\Model\Link;
