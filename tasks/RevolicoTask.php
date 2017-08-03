@@ -147,7 +147,28 @@ class revolicoTask extends \Phalcon\Cli\Task
 				// only crawl for today
 				$site = file_get_contents($url . "pagina-$n.html");
 				$exist = stripos($site, $this->utils->getTodaysDateSpanishString());
-				if ( ! $exist) return $links;
+				if ( ! $exist) {
+					$months = array(
+						"Enero",
+						"Febrero",
+						"Marzo",
+						"Abril",
+						"Mayo",
+						"Junio",
+						"Julio",
+						"Agosto",
+						"Septiembre",
+						"Octubre",
+						"Noviembre",
+						"Diciembre"
+					);
+
+					$today = explode(" ", date("j n Y", strtotime("-1 days")));
+					$sdate = $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
+					$exist = stripos($site, $sdate);
+					if ( ! $exist)
+						return $links;
+				}
 				
 				// move to the next page
 				$crawler = $this->client->request('GET', $url . "pagina-$n.html");
