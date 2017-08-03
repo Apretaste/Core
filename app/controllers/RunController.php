@@ -211,7 +211,7 @@ class RunController extends Controller
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
 		$status = $utils->deliveryStatus($fromEmail, 'in');
-		if($status != 'ok') return;
+		if($status != 'ok') die('{"code":"500", "message":"Error '.$status.' verifying email"}');
 
 		// get path to the folder to save
 		$textFile = ""; $attachs = array();
@@ -242,6 +242,11 @@ class RunController extends Controller
 		$file = file("$temp/$folderName/$textFile");
 		$text = trim($file[0]);
 		$version = empty($file[1]) ? "" : trim($file[1]);
+		$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
+
+		// save Nauta password if passed
+		$encryptPass = $utils->encrypt($nautaPass);
+		if($nautaPass) $connection->query("INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android')");
 
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);
@@ -258,9 +263,10 @@ class RunController extends Controller
 		$response = $ret->responses[0];
 
 		// save the apps log
+		$hasNautaPass = $nautaPass ? 1 : 0;
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket");
+		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$version, NautaPass:$hasNautaPass");
 		$logger->close();
 
 		// create default output

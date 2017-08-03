@@ -12,6 +12,7 @@
 		"daniel-zahariev/php-aws-ses": "^0.8.9",
 		"aws/aws-php-sns-message-validator": "^1.1",
 		"mremi/url-shortener": "*",
-		"abraham/twitteroauth": "^0.6.2"
+		"abraham/twitteroauth": "^0.6.2",
+		"g4/crypto": "*"
 	}
 }
