@@ -12,7 +12,7 @@ use Goutte\Client;
 class revolicoTask extends \Phalcon\Cli\Task
 {
 
-	private $revolicoURL = "http://lok.myvnc.com/";
+	private $revolicoURL = "http://revolico.com/";
 	private $client;
 	private $connection;
 	public $utils;
