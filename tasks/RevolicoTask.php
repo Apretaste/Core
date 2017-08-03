@@ -134,6 +134,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			
 			// get the latest page count
 			$lastPage = $crawler->filter('[title="Final"]')->attr('href');
+			echo "LAST PAGE $lastPage\n";
 			$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
 			
 			// get all valid links
