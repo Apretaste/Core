@@ -45,6 +45,10 @@ body {
 	background-color: rgba(255,255,255,0.8);
 }
 
+.btn-fized-size{
+	width: 200px;
+}
+
 /* Custom Horizontal Rule */
 
 hr.small {
@@ -254,7 +258,7 @@ hr.small {
 	.text-center-xs{
 		text-align: center;
 	}
-	
+
 	#main-logo-image{
 		width: 100% !important;
 	}
@@ -451,11 +455,11 @@ footer {
 	margin-bottom: -20px;
 }
 
-#menu-donate{
+#menu-download{
 	z-index: 1;
 	position: fixed;
 	top: 0;
-	right: 105px;
+	right: 109px;
 }
 
 #menu-toggle-language {
@@ -463,6 +467,10 @@ footer {
 	position: fixed;
 	top: 0;
 	right: 51px;
+}
+
+.team-member{
+	width: 120px;
 }
 
 .contrast{
@@ -520,7 +528,7 @@ footer {
 }
 
 /*
-	MEMBERS 
+	MEMBERS
 */
 #member form{
 	display: inline-block;
