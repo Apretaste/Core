@@ -54,8 +54,8 @@
 	<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55b53cc3acee4add" async="async"></script>
 
 	<!-- Navigation -->
-	<a id="menu-toggle-language" href="bienvenido" class="btn btn-dark btn-lg toggle"><i class="fa fa-flag"></i></a>
-	<a id="menu-donate" href="#donate" class="btn btn-dark btn-lg toggle"><i class="fa fa-life-ring"></i> Donate</a>
+	<a id="menu-toggle-language" href="bienvenido" class="btn btn-dark btn-lg toggle">ES</a>
+	<a id="menu-download" href="#download" class="btn btn-dark btn-lg toggle"><i class="fa fa-android"></i> Download</a>
 	<a id="menu-toggle" href="#" class="btn btn-dark btn-lg toggle"><i class="fa fa-bars"></i></a>
 
 	<nav id="sidebar-wrapper">
@@ -69,9 +69,13 @@
 			<li><a href="#services">Services</a></li>
 			<li><a href="#testimonials">Testimonials</a></li>
 			<li><a href="#team">Our Team</a></li>
-			<li><a href="#donate">Donate</a></li>
+			<li><a href="#download">Download</a></li>
 			<li><a href="#contact">Contact Us</a></li>
+			<li><a href="https://www.meetup.com/heycuba/" target="_blank">Do you code? <i class="fa fa-medkit"></i></a></li>
+			<li><a href="bienvenido">Espa&ntilde;ol</a></li>
+<!--
 			<li><a href="http://apretaste.wordpress.com" target="_blank">Blog</a></li>
+-->
 		</ul>
 	</nav>
 
@@ -81,11 +85,11 @@
 			<div style="margin-top:-200px">
 				<img id="main-logo-image" src="<?php echo $wwwhttp; ?>/images/apretaste.logo.big.transp.png" alt="Apretaste"><br/>
 				<div id="motto">
-					<h3 class="contrast">Connecting thousands of Cubans to the Internet each month via accessible, effective and legal ways</h3>
+					<h3 class="contrast">Connecting thousands of Cubans to the internet using accessible, effective and legal ways</h3>
 				</div>
 				<br>
 				<a href="#problem" class="btn btn-dark btn-lg">Find Out More</a>
-				<a href="/invitar" class="btn btn-light btn-lg">Invite a Cuban to the Internet</a>
+				<a href="https://www.meetup.com/heycuba/" target="_blank" class="btn btn-light btn-lg">Wanna Help?</a>
 			</div>
 		</div>
 	</header>
@@ -96,11 +100,11 @@
 			<div class="row inner-space-vertical">
 				<div class="col-lg-5 col-md-5 col-sm-6">
 					<div class="blank-space-divider hidden-lg hidden-xs"></div>
-					<img class="img-responsive full-screen" src="<?php echo $wwwhttp; ?>/images/internet-in-cuba.png">
+					<img class="img-responsive" src="<?php echo $wwwhttp; ?>/images/internet-in-cuba.png"/>
 				</div>
 				<div class="col-lg-7 col-md-7 col-sm-6">
-					<p class="lead high-note"><span class="green">2,600,000</span> Cubans can only access email, while only <span class="red">400,000</span> can surf the Web without restrictions</p>
-					<p class="lead big gray hidden-sm hidden-xs">This is the strategy of the Cuban government to report large number of users online without actually granting them access to information on the web</p>
+					<p class="lead high-note"><span class="green">2,800,000</span> Cubans only access email<br/>while only <span class="red">560,000</span> can surf the Web</p>
+					<p class="lead big gray ">Most Cubans can only connect to a government email server (webmail.nauta.cu). All other webs are blocked from inside</p>
 				</div>
 			</div>
 		</div>
@@ -109,22 +113,25 @@
 	<!-- A great idea -->
 	<section id="idea" class="idea bg-customized">
 		<div class="container">
-			<div class="row inner-space-vertical">
+			<div class="row inner-space-vertical" style="padding-bottom:0px;">
 				<div class="col-lg-5 col-md-5 col-sm-6">
-					<p class="lead high-note">Our solution was to provide Cubans with the ability to surf the Web via Email</p>
-					<ul class="lead hidden-xs">
-						<li>Email is fast, legal and cheap. It is perfect for slow networks</li>
-						<li>Email is not centralized, which makes it very hard to censor</li>
+					<p class="lead high-note">Our App let's them access the internet using email</p>
+					<ul class="lead">
+						<li>Information travels inside an email</li>
+						<li>Emails are encrypted to protect the user</li>
 					</ul>
+					<div class="blank-space-divider"></div>
+					<a href="#download" class="btn btn-light"><i class="fa fa-android"></i> Download App</a>&nbsp;
+					<button class="btn btn-dark" onclick="checkVideo();"><i class="fa fa-youtube-play"></i> Check Video</button>
 				</div>
-				<div class="col-lg-7 col-md-7 col-sm-6">
-					<img class="full-screen img-responsive" src="<?php echo $wwwhttp; ?>/images/how-apretaste-works.png">
+
+				<div class="blank-space-divider"></div>
+
+				<div class="col-lg-7 col-md-7 col-sm-6 text-center">
+					<img src="<?php echo $wwwhttp; ?>/images/ap-app.png">
 				</div>
 			</div>
-			<div id="tryit-button" class="row text-center">
-				<button class="btn btn-light btn-lg" onclick="$('.tryit-show').slideDown('slow'); $('#tryit-button').slideUp('fast');">Do not just take my word for it. <b>Try it!</b></button>
-			</div>
-		<div class="blank-space-divider"></div>
+
 		</div>
 	</section>
 
@@ -135,7 +142,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-xs-12 text-center">
-					<h2>Access Wikipedia from your Email</h2>
+					<h2>Our service in motion</h2>
 					<hr class="small">
 					<div class="videoWrapper">
 					<iframe src="https://www.youtube.com/embed/xz_lxXz-Cqs?version=2&vq=hd720" frameborder="0" allowfullscreen></iframe>
@@ -163,7 +170,7 @@
 							<i class="fa fa-plug fa-stack-1x white"></i>
 						</span>
 					</div>
-					<p class="lead">Connect isolated people to the Internet and show them a whole new world of opportunities</p>
+					<p class="lead">Connect isolated people to a new world of opportunities opening online</p>
 				</div>
 				<div class="col-sm-4 col-xs-12 text-center mission-item-xs">
 					<div class="service-item">
@@ -172,7 +179,7 @@
 							<i class="fa fa-book fa-stack-1x white"></i>
 						</span>
 					</div>
-					<p class="lead">Educate the Cubans on the use of Internet to ensure a smooth transition when the time comes</p>
+					<p class="lead">Educate Cubans on the use of internet and the latests trends of technology</p>
 				</div>
 				<div class="col-sm-4 col-xs-12 text-center mission-item-xs">
 					<div class="service-item">
@@ -181,7 +188,7 @@
 							<i class="fa fa-bullhorn fa-stack-1x white"></i>
 						</span>
 					</div>
-					<p class="lead">Grant alternative sources of information to people who can only access ones chosen by the "official" media</p>
+					<p class="lead">Offer alternative information to those who only access the "official" media</p>
 				</div>
 			</div>
 
@@ -204,6 +211,7 @@
 			<div class="row text-center">
 				<div class="col-lg-10 col-lg-offset-1">
 					<h2>Most Popular Services</h2>
+					<p style="color:#c1c1c1;">Out of more than 40 other services</p>
 					<hr class="small">
 					<div class="row">
 						<div class="col-md-3 col-sm-4 col-xs-6">
@@ -263,17 +271,17 @@
 									<i class="fa fa-book fa-stack-1x text-success"></i>
 								</span>
 								<h4><strong>Wikipedia</strong></h4>
-								<p>Access Wikipedia from your email</p>
+								<p>Search the greatest encyclopedia</p>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-6 col-xs-6">
 							<div class="service-item">
 								<span class="fa-stack fa-4x">
 									<i class="fa fa-circle fa-stack-2x"></i>
-									<i class="fa fa-cloud fa-stack-1x text-success"></i>
+									<i class="fa fa-graduation-cap fa-stack-1x text-success"></i>
 								</span>
-								<h4><strong>Weather</strong></h4>
-								<p>Check the weather forecast</p>
+								<h4><strong>Education</strong></h4>
+								<p>Online classes from your phone</p>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-6 col-xs-6">
@@ -287,30 +295,6 @@
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
-
-			<!--<div class="row" style="margin: 20px; padding-bottom: 30px;">
-				<div class="col-xs-12 text-center">
-					<a class="btn btn-dark btn-lg" href="services">See All Services</a>
-				</div>
-			</div>-->
-
-			<div class="row">
-				<div class="col-lg-12 text-center">
-					<p class="lead">We will include more useful services within the next year</p>
-					<span class="label label-primary custom-label">NEWSPAPER</span>
-					<span class="label label-primary custom-label">APPS MARKET</span>
-					<span class="label label-primary custom-label">WEB PUBLISHING</span>
-					<span class="label label-primary custom-label">PHONE GUIDE</span>
-					<span class="label label-primary custom-label">SPORTS NEWS</span>
-					<span class="label label-primary custom-label">REDDIT</span>
-					<span class="label label-primary custom-label">SOCIAL NEWS</span>
-					<span class="label label-primary custom-label">TV GUIDE</span>
-					<span class="label label-primary custom-label">DICTIONARY</span>
-					<span class="label label-primary custom-label">SURVEYS</span>
-					<span class="label label-primary custom-label">TECH THREADS</span>
-					<span class="label label-primary custom-label">GOOGLE SEARCH</span>
 				</div>
 			</div>
 		</div>
@@ -509,13 +493,6 @@
 								</a>
 							</div>
 						</div>
-						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
-							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
-								<a href="https://cubanosporelmundo.com/blog/2016/02/15/hackathon-mejorara-el-acceso-internet-cuba/" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cubanosporelmundo.png">
-								</a>
-							</div>
-						</div>
 					</div>
 
 					<div class="row" id="morepressbtn">
@@ -536,23 +513,19 @@
 					<h2>Meet our team</h2>
 					<hr class="small">
 					<div class="row">
-						<div class="img-team col-sm-4 col-xs-6">
-							<a href="/welcome/aboutus#salviPascual">
-								<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/salvi.jpg"/>
-								<h4>Salvi Pascual</h4>
-							</a>
+						<div class="img-team col-md-4 col-sm-4 col-xs-6">
+							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/salvi.jpg"/>
+							<h4>Salvi Pascual</h4>
 							<p>Executive Director<br/><a href="mailto:salvi@apretaste.com">salvi@apretaste.com</a></p>
 						</div>
-						<div class="img-team col-sm-4 col-xs-6">
-							<a href="/welcome/aboutus#ibisArrastia">
-								<img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/ibis.jpeg"/>
-								<h4>Ibis Arrastia</h4>
-							</a>
+						<div class="img-team col-md-4 col-sm-4 col-xs-6">
+							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/ibis.jpeg"/>
+							<h4>Ibis Arrastia</h4>
 							<p>Program Manager<br/><a href="mailto:ibis@apretaste.com">ibis@apretaste.com</a></p>
 						</div>
-						<div class="img-team col-sm-4 col-xs-6">
-							<a href="/welcome/aboutus#daniellaBonilla"><img class="img-circle" src="<?php echo $wwwhttp; ?>/images/team/daniella.jpg"/>
-							<h4>Daniella Bonilla</h4></a>
+						<div class="img-team col-md-4 col-sm-4 col-xs-12">
+							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/daniella.jpg"/>
+							<h4>Daniella Bonilla</h4>
 							<p>Development Manager<br/><a href="mailto:daniella@apretaste.com">daniella@apretaste.com</a></p>
 						</div>
 					</div>
@@ -568,21 +541,18 @@
 	</section>
 
 	<!-- Call to Action -->
-	<section id="donate" class="call-to-action bg-customized">
+	<section id="download" class="call-to-action bg-customized">
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<h1>Join our crusade</h1>
+					<h1>Download our App</h1>
 					<hr class="small">
-					<p class="lead">Your donation is changing the lives of those who never had access to the Web; please help us keep this service alive</p>
+					<p class="lead">Use Direct Link to share it with your friends and family in Cuba</p>
 				</div>
 
 				<div class="col-sm-12 text-center">
-					<a href="https://www.paypal.me/apretaste/20" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $20</a>
-					<a href="https://www.paypal.me/apretaste/50" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $50</a>
-					<a href="https://www.paypal.me/apretaste/100" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $100</a>
-					<a href="https://www.paypal.me/apretaste/500" target="_blank" class="btn btn-lg btn-light"><i class="fa fa-credit-card"></i> Donate $500</a>
-					<p style="margin-top:10px;">Please <a class="link-inverted" href="#contact">Contact Us</a> for larger donations.</p>
+					<a href="https://play.google.com/store/apps/details?id=com.apretaste.apretaste" target="_blank" class="btn btn-lg btn-light btn-fized-size"><i class="fa fa-android"></i> Play Store</a>
+					<a href="/downloads/apretaste.apk" target="_blank" class="btn btn-lg btn-light btn-fized-size"><i class="fa fa-download"></i> Direct Link</a>
 				</div>
 			</div>
 		</div>
@@ -604,7 +574,7 @@
 					<p>261 NE 1st Street, 5th Floor<br>Miami, FL 33132</p>
 					<ul class="list-unstyled">
 						<li><i class="fa fa-phone fa-fw"></i> (305) 457-1656</li>
-						<li><i class="fa fa-envelope-o fa-fw"></i>  <a href="mailto:support@apretaste.com">support@apretaste.com</a></li>
+						<li><i class="fa fa-envelope-o fa-fw"></i>  <a href="mailto:salvi@apretaste.com">salvi@apretaste.com</a></li>
 					</ul>
 					<br>
 					<ul class="list-inline">
@@ -679,6 +649,13 @@
 
 		$('.tooltip-image').tooltip();
 	});
+
+	function checkVideo(){
+		$('.tryit-show').slideDown('slow');
+		$('html,body').animate({
+			scrollTop: $('#tryit').offset().top
+		}, 1000);
+	}
 
 	// Close Checkout on page navigation
 	$(window).on('popstate', function() {
