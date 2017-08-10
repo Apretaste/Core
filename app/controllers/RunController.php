@@ -240,7 +240,6 @@ class RunController extends Controller
 
 		// run the request and get the service and responses
 		$file = file("$temp/$folderName/$textFile");
-
 		$text = trim($file[0]);
 		$version = empty($file[1]) ? "" : trim($file[1]);
 		$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
@@ -523,12 +522,17 @@ class RunController extends Controller
 	{
 		// do not allow fake income messages
 		if( ! isset($post['From'])) return false;
-		if(empty($post['To'])) $post['To'] = "";
+
+		// check where to acquire the field "To"
+		$to = "";
+		if(isset($post['To'])) $to = $post['To'];
+		if(empty($to) && isset($post['Delivered-To'])) $to = $post['Delivered-To'];
+		if(empty($to) && isset($post['Received'])) $to = $post['Received'];
 
 		// filter email From and To
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
-		preg_match_all($pattern, strtolower($post['To']), $emailTo);
+		preg_match_all($pattern, strtolower($to), $emailTo);
 
 		// get values to the variables
 		$fromEmail = $emailFrom[0][0];
