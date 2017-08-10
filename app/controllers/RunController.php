@@ -240,14 +240,17 @@ class RunController extends Controller
 
 		// run the request and get the service and responses
 		$file = file("$temp/$folderName/$textFile");
+
 		$text = trim($file[0]);
 		$version = empty($file[1]) ? "" : trim($file[1]);
 		$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 
 		// save Nauta password if passed
-		if($nautaPass){
+		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
-			$connection->query("INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android')");
+			$connection->query("
+				DELETE FROM authentication WHERE email = '$fromEmail' AND appname = 'apretaste';
+				INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android');");
 		}
 
 		// update last access time to current and make person active
