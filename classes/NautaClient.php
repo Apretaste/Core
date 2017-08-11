@@ -102,7 +102,7 @@ class NautaClient
 			$pass = $this->pass;
 
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/login.php");
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={$user}&horde_pass={$pass}&horde_select_view=mobile&new_lang=en_US");
+        curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($user)."&horde_pass=".urlencode($pass)."&horde_select_view=mobile&new_lang=en_US");
 
 		$response = curl_exec($this->client);
 
