@@ -6,6 +6,6 @@ class IndexController extends Controller
 {
 	public function indexAction()
 	{
-		return $this->response->redirect('welcome');
+		return $this->response->redirect('bienvenido');
 	}
 }
