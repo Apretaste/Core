@@ -13,6 +13,6 @@
 		"mremi/url-shortener": "*",
 		"abraham/twitteroauth": "^0.6.2",
 		"g4/crypto": "*",
-		"matthiasnoback/microsoft-translator": "dev-master"
+		"matthiasnoback/microsoft-translator":  "dev-master"
 	}
 }
