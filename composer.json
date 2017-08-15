@@ -12,6 +12,7 @@
 		"aws/aws-php-sns-message-validator": "^1.1",
 		"mremi/url-shortener": "*",
 		"abraham/twitteroauth": "^0.6.2",
-		"g4/crypto": "*"
+		"g4/crypto": "*",
+		"matthiasnoback/microsoft-translator": "dev-master"
 	}
 }
