@@ -187,6 +187,9 @@ class RunController extends Controller
 	 */
 	public function appAction()
 	{
+		// get the time when the service started executing
+		$execStartTime = date("Y-m-d H:i:s");
+
 		// make the system react in "mode app"
 		$this->di->set('environment', function(){return "app";});
 
@@ -300,6 +303,21 @@ class RunController extends Controller
 			$email->setContentAsZipAttachment();
 			$output = $email->send();
 		}
+
+		// calculate execution time when the service stopped executing
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+
+		// get the user email domainEmail
+		$emailPieces = explode("@", $fromEmail);
+		$domain = $emailPieces[1];
+
+		// save the logs on the utilization table
+		$safeQuery = $connection->escape($service->request->query);
+		$connection->query("
+			INSERT INTO utilization	(email_id, service, subservice, query, requestor, request_time, response_time, domain)
+			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain')");
 
 		// mark as done if the email was send correctly
 		if($output->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
@@ -509,8 +527,8 @@ class RunController extends Controller
 		// save the logs on the utilization table
 		$safeQuery = $connection->escape($service->request->query);
 		$connection->query("
-			INSERT INTO utilization	(service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
-			VALUES ('{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$toEmail',$adTop,$adBottom)");
+			INSERT INTO utilization (email_id, service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
+			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain',$adTop,$adBottom)");
 		return true;
 	}
 

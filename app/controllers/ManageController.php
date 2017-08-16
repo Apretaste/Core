@@ -74,12 +74,10 @@ class ManageController extends Controller
 		$connection = new Connection();
 
 		// START weekly visitors
-		$query =
-			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(usage_id) as received, DATE(request_time) as inserted FROM utilization GROUP BY DATE(request_time) ORDER BY inserted DESC LIMIT 7) A
+		$visits = $connection->query("SELECT A.received, B.sent, A.inserted
+			FROM (SELECT count(id) as received, DATE(inserted) as inserted FROM delivery_received GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) A
 			LEFT JOIN (SELECT count(id) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
-			ON A.inserted = B.inserted";
-		$visits = $connection->query($query);
+			ON A.inserted = B.inserted");
 		$visitorsWeecly = array();
 		foreach($visits as $visit)
 		{
@@ -94,7 +92,7 @@ class ManageController extends Controller
 		// START monthly visitors
 		$query =
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(usage_id) as received, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			FROM (SELECT COUNT(id) AS received, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
 			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
@@ -112,7 +110,7 @@ class ManageController extends Controller
 		// START monthly unique visitors
 		$query =
 			"SELECT A.unique_visitors, B.new_visitors, A.inserted
-			FROM (SELECT COUNT(DISTINCT requestor) as unique_visitors, DATE_FORMAT(request_time,'%Y-%m') as inserted FROM utilization GROUP BY DATE_FORMAT(request_time,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			FROM (SELECT COUNT(DISTINCT `user`) as unique_visitors, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
 			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
@@ -124,6 +122,19 @@ class ManageController extends Controller
 		$newUsers = array_reverse($newUsers);
 		// END monthly unique visitors
 
+		// START monthly emails vs app
+		$visits = $connection->query("SELECT A.app, B.email, A.inserted
+			FROM (SELECT COUNT(id) AS app, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook = 'app' GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) A
+			JOIN (SELECT COUNT(id) AS email, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook <> 'app' OR webhook IS NULL GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) B
+			ON A.inserted = B.inserted");
+		$monthlyEmailVsApp = array();
+		foreach($visits as $visit)
+		{
+			$monthlyEmailVsApp[] = ["date"=>date("M Y", strtotime($visit->inserted)), "email"=>$visit->email, "app"=>$visit->app];
+		}
+		$monthlyEmailVsApp = array_reverse($monthlyEmailVsApp);
+		// END monthly emails vs app
+
 
 		// START current number of Users
 		$queryCurrentActiveUsers = "SELECT COUNT(email) as CountUsers FROM person WHERE active=1";
@@ -132,6 +143,17 @@ class ManageController extends Controller
 		$currentTotalUsers = $connection->query($queryCurrentTotalUsers);
 		// END Current number of Users
 
+
+		// START app versions vs no app
+		$query = "SELECT COUNT(email) AS people, appversion FROM person GROUP BY appversion";
+		$versions = $connection->query($query);
+		$emailVsAppVersions = array();
+		foreach($versions as $version)
+		{
+			$vs = empty($version->appversion) ? "Not using the app" : "Version {$version->appversion}";
+			$emailVsAppVersions[] = ["people"=>$version->people, "version"=>$vs];
+		}
+		// END app versions vs no app
 
 		// START monthly services usage
 		$query = "SELECT service, COUNT(service) as times_used FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service DESC";
@@ -188,6 +210,8 @@ class ManageController extends Controller
 		$this->view->visitorsWeecly = $visitorsWeecly;
 		$this->view->visitorsMonthly = $visitorsMonthly;
 		$this->view->newUsers = $newUsers;
+		$this->view->monthlyEmailVsApp = $monthlyEmailVsApp;
+		$this->view->emailVsAppVersions = $emailVsAppVersions;
 		$this->view->currentNumberOfActiveUsers = $currentActiveUsers[0]->CountUsers;
 		$this->view->currentNumberOfTotalUsers = $currentTotalUsers[0]->CountUsers;
 		$this->view->servicesUsageMonthly = $servicesUsageMonthly;
