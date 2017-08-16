@@ -9,11 +9,17 @@
 		<h2>Monthly unique v.s. new traffic</h2>
 		<div id="monthlyNewUsers" style="width:900px; height:300px;"></div>
 
+		<h2>Quarterly Email vs App</h2>
+		<div id="monthlyEmailVsApp" style="width:900px; height:300px;"></div>
+
 		<h2>Active users this term</h2>
 		<p><?php echo $currentNumberOfActiveUsers; ?></p>
 
 		<h2>Total number of users</h2>
 		<p><?php echo $currentNumberOfTotalUsers; ?></p>
+
+		<h2>App versions</h2>
+		<div id="emailVsAppVersions" style="width: 300px; height: 300px;"></div>
 
 		<h2>Services usage (last 30 days)</h2>
 		<div id="monthlyServicesUsage" style="width: 300px; height: 300px;"></div>
@@ -68,6 +74,34 @@
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
 		chart.draw(data, {colors:['orange','green']});
+	}
+
+	// Monthly Email vs App
+	google.setOnLoadCallback(monthlyEmailVsApp);
+	function monthlyEmailVsApp() {
+		var data = google.visualization.arrayToDataTable([
+			['Month and Year', 'Email', 'App'],
+			<?php foreach ($monthlyEmailVsApp as $data) { ?>
+				['<?php echo $data['date']; ?>',<?php echo $data['email']; ?>,<?php echo $data['app']; ?>],
+			<?php } ?>
+		]);
+		var chart = new google.visualization.BarChart(document.getElementById('monthlyEmailVsApp'));
+		chart.draw(data, {colors:['orange','green']});
+	}
+
+	// App versions vs no app
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(emailVsAppVersions);
+	function emailVsAppVersions() {
+		var data = google.visualization.arrayToDataTable([
+			['Version', 'People'],
+			<?php foreach ($emailVsAppVersions as $data) { ?>
+				['<?php echo $data['version']; ?>',<?php echo $data['people']; ?>],
+			<?php } ?>
+		]);
+		var options = {legend: 'none'};
+		var chart = new google.visualization.PieChart(document.getElementById('emailVsAppVersions'));
+		chart.draw(data, options);
 	}
 
 	// Monthly services usage
