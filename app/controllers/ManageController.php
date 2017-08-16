@@ -122,6 +122,7 @@ class ManageController extends Controller
 		$newUsers = array_reverse($newUsers);
 		// END monthly unique visitors
 
+
 		// START monthly emails vs app
 		$visits = $connection->query("SELECT A.app, B.email, A.inserted
 			FROM (SELECT COUNT(id) AS app, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook = 'app' GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) A
@@ -132,7 +133,6 @@ class ManageController extends Controller
 		{
 			$monthlyEmailVsApp[] = ["date"=>date("M Y", strtotime($visit->inserted)), "email"=>$visit->email, "app"=>$visit->app];
 		}
-		$monthlyEmailVsApp = array_reverse($monthlyEmailVsApp);
 		// END monthly emails vs app
 
 
@@ -154,6 +154,7 @@ class ManageController extends Controller
 			$emailVsAppVersions[] = ["people"=>$version->people, "version"=>$vs];
 		}
 		// END app versions vs no app
+
 
 		// START monthly services usage
 		$query = "SELECT service, COUNT(service) as times_used FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service DESC";
@@ -180,6 +181,7 @@ class ManageController extends Controller
 			$activeDomainsMonthly[] = ["domain"=>$visit->domain, "usage"=>$visit->times_used];
 		}
 		// END active domains last 4 months
+
 
 		// START updated profiles
 		$query =
