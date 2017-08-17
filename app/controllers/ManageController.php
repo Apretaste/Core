@@ -145,8 +145,7 @@ class ManageController extends Controller
 
 
 		// START app versions vs no app
-		$query = "SELECT COUNT(email) AS people, appversion FROM person GROUP BY appversion";
-		$versions = $connection->query($query);
+		$versions = $connection->query("SELECT COUNT(email) AS people, appversion FROM person WHERE appversion <> '' GROUP BY appversion");
 		$emailVsAppVersions = array();
 		foreach($versions as $version)
 		{
