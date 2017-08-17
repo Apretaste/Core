@@ -388,7 +388,7 @@ class Email
 	{
 		// check if we have the nauta pass for the user
 		$connection = new Connection();
-		$pass = $connection->query("SELECT pass FROM authentication WHERE email = '$this->to'");
+		$pass = $connection->query("SELECT pass FROM authentication WHERE email = '$this->to' AND appname = 'apretaste'");
 
 		// if the password do not exist in our database, return false
 		if(empty($pass)) {
