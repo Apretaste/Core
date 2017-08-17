@@ -79,8 +79,7 @@ class ManageController extends Controller
 			LEFT JOIN (SELECT count(id) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
 			ON A.inserted = B.inserted");
 		$visitorsWeecly = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			if( ! $visit->received) $visit->received = 0;
 			if( ! $visit->sent) $visit->sent = 0;
 			$visitorsWeecly[] = ["date"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
@@ -97,8 +96,7 @@ class ManageController extends Controller
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
 		$visitorsMonthly = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			if( ! $visit->received) $visit->received = 0;
 			if( ! $visit->sent) $visit->sent = 0;
 			$visitorsMonthly[] = ["date"=>date("M Y", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
@@ -115,8 +113,7 @@ class ManageController extends Controller
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
 		$newUsers = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			$newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "unique_visitors"=>$visit->unique_visitors, "new_visitors"=>$visit->new_visitors];
 		}
 		$newUsers = array_reverse($newUsers);
@@ -129,8 +126,7 @@ class ManageController extends Controller
 			JOIN (SELECT COUNT(id) AS email, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook <> 'app' OR webhook IS NULL GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) B
 			ON A.inserted = B.inserted");
 		$monthlyEmailVsApp = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			$monthlyEmailVsApp[] = ["date"=>date("M Y", strtotime($visit->inserted)), "email"=>$visit->email, "app"=>$visit->app];
 		}
 		// END monthly emails vs app
@@ -147,10 +143,8 @@ class ManageController extends Controller
 		// START app versions vs no app
 		$versions = $connection->query("SELECT COUNT(email) AS people, appversion FROM person WHERE appversion <> '' GROUP BY appversion");
 		$emailVsAppVersions = array();
-		foreach($versions as $version)
-		{
-			$vs = empty($version->appversion) ? "Not using the app" : "Version {$version->appversion}";
-			$emailVsAppVersions[] = ["people"=>$version->people, "version"=>$vs];
+		foreach($versions as $version) {
+			$emailVsAppVersions[] = ["people"=>$version->people, "version"=>"Version {$version->appversion}"];
 		}
 		// END app versions vs no app
 
@@ -159,8 +153,7 @@ class ManageController extends Controller
 		$query = "SELECT service, COUNT(service) as times_used FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service DESC";
 		$visits = $connection->query($query);
 		$servicesUsageMonthly = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			$servicesUsageMonthly[] = ["service"=>$visit->service, "usage"=>$visit->times_used];
 		}
 		// END monthly services usage
@@ -175,8 +168,7 @@ class ManageController extends Controller
 			ORDER BY times_used DESC";
 		$visits = $connection->query($query);
 		$activeDomainsMonthly = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			$activeDomainsMonthly[] = ["domain"=>$visit->domain, "usage"=>$visit->times_used];
 		}
 		// END active domains last 4 months
@@ -192,8 +184,7 @@ class ManageController extends Controller
 		LIMIT 30";
 		$visits = $connection->query($query);
 		$updatedProfilesMonthly = array();
-		foreach($visits as $visit)
-		{
+		foreach($visits as $visit) {
 			$updatedProfilesMonthly[] = ["date"=>date("M Y", strtotime($visit->last_update)), "profiles"=>$visit->num_profiles];
 		}
 		$updatedProfilesMonthly = array_reverse($updatedProfilesMonthly);
