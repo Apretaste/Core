@@ -8,7 +8,7 @@ mkdir public/profile
 mkdir public/raffle
 mkdir public/tienda
 mkdir public/temp
-mkdir public/downloads
+mkdir public/download
 touch logs/error.log
 touch logs/access.log
 touch logs/badqueries.log
@@ -27,7 +27,7 @@ chmod 777 public/profile
 chmod 777 public/raffle
 chmod 777 public/tienda
 chmod 777 public/temp
-chmod 777 public/downloads
+chmod 777 public/download
 chmod 777 logs/error.log
 chmod 777 logs/access.log
 chmod 777 logs/badqueries.log
