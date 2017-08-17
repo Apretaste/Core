@@ -46,6 +46,11 @@ class Email
 		{
 			$res = $this->sendEmailViaAmazon();
 		}
+		// if traying to download the app
+		elseif($this->group == 'download')
+		{
+			$res = $this->sendEmailViaMailgun();
+		}
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
@@ -231,6 +236,29 @@ class Email
 			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
 		}
 
+		return $output;
+	}
+
+	/**
+	 * Sends an email using Mailgun
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaMailgun()
+	{
+		// get the from address
+		$utils = new Utils();
+		$this->from = $utils->randomSentence(1) . "@kekistan.es";
+
+		// get the Mailgun params
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$pass = $di->get('config')['mailgun']['pass'];
+
+		// send the email using smtp
+		$host = "smtp.mailgun.org";
+		$user = "postmaster@kekistan.es";
+		$output = $this->smtp($host, $user, $pass, '465', 'ssl');
 		return $output;
 	}
 
