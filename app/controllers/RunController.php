@@ -564,6 +564,10 @@ class RunController extends Controller
 		$fromEmail = str_replace("'", "", $fromEmail);
 		$toEmail = str_replace("'", "", $toEmail);
 
+		// treat emails to download the app
+		// @TODO @HACK this is a hack and should not stay long term
+		if($toEmail == "navegacuba@gmail.com") $subject = "app";
+
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;
 		foreach($_POST as $k => $v){
