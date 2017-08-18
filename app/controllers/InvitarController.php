@@ -37,8 +37,8 @@ class InvitarController extends Controller
 		$inviter = trim($this->request->getPost('email'));
 		$guest = trim($this->request->getPost('guest'));
 
-		if ( ! isset($_SESSION['phrase']))
-			$_SESSION['phrase'] = uniqid(); // throw a die()
+		// throw a die() if no phrase in the session
+		if ( ! isset($_SESSION['phrase'])) $_SESSION['phrase'] = uniqid();
 
 		// check all values passed are valid
 		if(
@@ -52,9 +52,7 @@ class InvitarController extends Controller
 		$this->view->name = $name;
 		$this->view->email = $inviter;
 
-		// create classes needed
-		$connection = new Connection();
-		$email = new Email();
+		// create classes
 		$utils = new Utils();
 		$render = new Render();
 
@@ -65,26 +63,39 @@ class InvitarController extends Controller
 			return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
 		}
 
-		// send notification to the inviter
+		// create host response object
 		$response = new Response();
+		$response->email = $inviter;
 		$response->setResponseSubject("Gracias por darle internet a un Cubano");
 		$response->setEmailLayout("email_simple.tpl");
 		$response->createFromTemplate("invitationThankYou.tpl", array('num_notifications' => 0));
 		$response->internal = true;
 		$html = $render->renderHTML(new Service(), $response);
+
+		// send email to the host
+		$email = new Email();
 		$email->sendEmail($inviter, $response->subject, $html);
 
-		// send invitations to the guest
+		// create guest response object
 		$response = new Response();
-		$response->setResponseSubject("$name le ha invitado a revisar internet desde su email");
-		$responseContent = array("host"=>$name, "guest"=>$guest, 'num_notifications' => 0);
-		$response->createFromTemplate("invitation.tpl", $responseContent);
+		$response->email = $guest;
+		$response->setEmailLayout("email_empty.tpl");
+		$response->setResponseSubject("$name quiere que descargue nuestra app");
+		$response->createFromTemplate("invitationAbroad.tpl", array("host"=>$name));
 		$response->internal = true;
 		$html = $render->renderHTML(new Service(), $response);
-		$email->sendEmail($guest, $response->subject, $html);
+
+		// send email to the guest
+		$email = new Email();
+		$email->to = $response->email;
+		$email->subject = $response->subject;
+		$email->body = $html;
+		$email->group = 'download';
+		$email->send();
 
 		// save all the invitations into the database at the same time
-		$connection->deepQuery("INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guest','abroad')");
+		$connection = new Connection();
+		$connection->query("INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guest','abroad')");
 
 		// redirect to the invite page
 		$this->view->message = true;
