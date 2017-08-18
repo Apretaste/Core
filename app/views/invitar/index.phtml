@@ -1,8 +1,8 @@
-<?php 
+<?php
 	$wwwhttp = $this->di->get('path')['http'];
-	if( ! isset($name)) $name = ""; 
+	if( ! isset($name)) $name = "";
 	if( ! isset($email)) $email = "";
-	if(isset($message)) echo '<div class="alert alert-success" role="alert">Gracias por traer a sus amigos y familia en Cuba a disfrutar la internet. <b>Sus contactos han sido invitados correctamente.</b> Le hemos mandado un email de agradecimiento. Si&eacute;ntase libre de invitar incluso m&aacute;s personas usando este formulario.</div>'; 
+	if(isset($message)) echo '<div class="alert alert-success" role="alert">Gracias por traer a sus amigos y familia en Cuba a disfrutar la internet. <b>Sus contactos han sido invitados correctamente.</b> Le hemos mandado un email de agradecimiento. Si&eacute;ntase libre de invitar incluso m&aacute;s personas usando este formulario.</div>';
 	if(isset($already)) echo '<div class="alert alert-warning" role="alert">La persona que usted invit&oacute; ya usa Apretaste. Si&eacute;ntase libre de invitar m&aacute;s amigos o familia usando este formulario.</div>';
 ?>
 <!DOCTYPE html>
@@ -12,7 +12,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<meta name="description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a traves de esta pagina.">
+		<meta name="description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a usar nuestra app.">
 		<meta name="author" content="Salvi Pascual">
 		<link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
 
@@ -20,17 +20,17 @@
 		<meta property="og:url" content="https://apretaste.com/invitar" />
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Invite su gente en Cuba a la internet" />
-		<meta property="og:description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a traves de esta pagina." />
-		<meta property="og:image" content="<?php echo $wwwhttp; ?>/images/invitar.jpg" />
+		<meta property="og:description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a usar nuestra app." />
+		<meta property="og:image" content="<?php echo $wwwhttp; ?>/images/FeatureGraphic.png" />
 		<meta property="fb:app_id" content="1790556551215273" />
 
 		<!-- Twitter Card data -->
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:site" content="@apretaste" />
 		<meta name="twitter:title" content="Invite su gente en Cuba a la internet" />
-		<meta name="twitter:description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a traves de esta pagina." />
+		<meta name="twitter:description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a usar nuestra app." />
 		<meta name="twitter:creator" content="@apretaste" />
-		<meta name="twitter:image" content="<?php echo $wwwhttp; ?>/images/invitar.jpg" />
+		<meta name="twitter:image" content="<?php echo $wwwhttp; ?>/images/FeatureGraphic.png" />
 
 		<!-- jQuery -->
 		<script src="<?= $wwwhttp; ?>/js/jquery.js"></script>
@@ -58,7 +58,7 @@
 				font-size: large;
 				margin-top: 30px;
 			}
-			
+
 			.label-support {
 				color: gray;
 				font-size: small;
@@ -95,30 +95,31 @@
 			<div class="row">
 				<div class="col-xs-12 text-center">
 					<img src="<?= $wwwhttp ?>/images/apretaste.logo.big.transp.png" alt="Logo de Apretaste" style="width:200px;">
-					<p class="lead">INVITE A SU GENTE EN CUBA <br class="hidden-sm hidden-md hidden-lg"> A <a onclick="$('#how').slideDown();" href="#">NAVEGAR POR INTERNET</a></p>
-					<p id="how" class="label-support" style="display:none;"><a href="https://apretaste.com/bienvenido" target="_blank">Apretaste</a> permite utilizar Google, Wikipedia, Noticias, Redes Sociales y m&aacute;s de 40 otras websites desde Cuba, usando Nauta.</p>
+					<p class="lead">INVITE A SU GENTE EN CUBA A USAR LA APP</p>
 				</div>
+			</div>
 
-				<div class="col-xs-12">
+			<div class="row">
+				<div class="col-lg-9 col-md-8 col-sm-7 col-xs-12">
 					<form action="<?= $wwwhttp ?>/invitar/process" method="POST" data-toggle="validator" role="form">
 						<div class="form-group">
 							<label class="control-label" for="name"><b>Paso #1:</b> Escriba su nombre</label>
 							<p class="label-support">Usaremos su nombre para firmar la invitaci&oacute;n</p>
 							<input required id="name" class="form-control" type="text" name="name" value="<?= $name ?>" placeholder="Periquito Perez"/>
 						</div>
-			
+
 						<div class="form-group">
 							<label class="control-label" for="email"><b>Paso #2:</b> Escriba su email</label>
 							<p class="label-support">Usaremos su email para mandarle una confirmaci&oacute;n</p>
 							<input required id="email" class="form-control" type="email" name="email" value="<?= $email ?>" placeholder="yo@gmail.com" data-error="Email invalido"/>
 						</div>
-			
+
 						<div id="guest-group" class="form-group">
 							<label class="control-label" for="guest"><b>Paso #3:</b> Email del invitado en Cuba</label>
-							<p class="label-support">Este es la persona que recibir&aacute; acceso a internet</p>
+							<p class="label-support">La persona que recibir&aacute; nuestra app en Cuba</p>
 							<input required id="guest" class="form-control" type="email" name="guest" placeholder="invitado@nauta.cu" data-error="Email invalido"/>
 						</div>
-			
+
 						<div class="form-group">
 							<label class="control-label" for="captcha"><b>Paso #4:</b> Escriba el texto en la imagen</label>
 							<p id="error-captcha" class="label-support" style="display:none; color:#A94455;">El texto que escribi&oacute; no es el mismo de la imagen.</p>
@@ -132,14 +133,21 @@
 								</span>
 							</div>
 						</div>
-			
+
 						<div class="text-center">
+							<br/>
 							<button id="submitBtn" class="btn btn-success btn-lg" type="submit" onclick="return checkCaptcha();">Enviar invitaci&oacute;n</button>
 						</div>
 					</form>
 					<br/><br/><br/>
 				</div>
-				
+
+				<div class="col-lg-3 col-md-4 col-sm-5 hidden-xs">
+					<img src="<?= $wwwhttp ?>/images/AppInPhone.png" alt="Nuestra App" class="fullscreen">
+				</div>
+			</div>
+
+			<div class="row">
 				<div class="col-xs-12 text-center">
 					<p class="lead">AY&Uacute;DENOS A REGAR LA VOZ</p>
 					<p class="label-support">Comparta en Facebook y Twitter y ayude a miles de Cubanos a conocer la internet.</p>
@@ -180,7 +188,7 @@
 				}).done(function(data) {
 					ret = $.trim(data) == "true";
 					if( ! ret) $('#error-captcha').show();
-				});	
+				});
 
 				// if right, show loading
 				if(ret) {
