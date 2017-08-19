@@ -30,7 +30,7 @@ function smarty_function_link($params, $template)
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
 		$desc = isset($params["desc"]) ? $params["desc"] : ($popup == "true" ? "Inserte una palabra o frase a buscar" : "");
-		return "<a onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait);\" href='#'>$caption</a>";
+		return "<a onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\" href='#!'>$caption</a>";
 	}
 	else
 	{
