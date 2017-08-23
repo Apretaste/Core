@@ -18,12 +18,12 @@ If you like the work we do, preatty please show your support in the social media
 
 **Visit our website**  
 Find way more information about our mission and labor directly from our website.  
-<https://apretaste.com>
+<https://apretaste.com/welcome>
 
 **Invite your friends and family in Cuba to use Apretaste**  
 https://apretaste.com/invitar  
-  
-  
+
+
 Email me at salvi@apretaste.com with any questions or suggestions, or to add you to the list of contributors.
-  
+
 Thank you!
