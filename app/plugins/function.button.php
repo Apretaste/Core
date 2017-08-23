@@ -12,15 +12,12 @@ function smarty_function_button($params, $template)
 	// get params
 	$href = $params["href"];
 	$caption = $params["caption"];
+	$desc = isset($params["desc"]) ? $params["desc"] : "Inserte una palabra o frase a buscar.";
 	$color = isset($params["color"]) ? $params["color"] : "green";
 	$size = isset($params["size"]) ? $params["size"] : "medium";
 	$style = isset($params["style"]) ? $params["style"] : "";
 	$icon = isset($params["icon"]) ? "<b style='font-size: 25px;'>{$params["icon"]}</b><br/>": "";
 	$onclick = "";
-
-	// get the body if exist
-	if (isset($params["body"])) $body = $params["body"];
-	else $body = "Envie+el+correo+tal+y+como+esta,+ya+esta+preparado+para+usted";
 
 	// select the color scheema
 	switch ($color)
@@ -76,19 +73,20 @@ function smarty_function_button($params, $template)
 	if($di->get('environment') == "sandbox")
 	{
 		$wwwhttp = $di->get('path')['http'];
-		$linkto = "$wwwhttp/run/display?subject=$href&amp;body=$body";
+		$linkto = "$wwwhttp/run/display?subject=$href";
 	}
 	elseif($di->get('environment') == "app")
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
-		$desc = isset($params["desc"]) ? $params["desc"] : ($popup == "true" ? "Inserte una palabra o frase a buscar" : "");
+		if($popup == "false") $desc = "";
 		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\"";
 		$linkto = "#!";
 	}
 	else
 	{
-		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$body";
+		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
+		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$desc";
 	}
 
 	// create and return button
