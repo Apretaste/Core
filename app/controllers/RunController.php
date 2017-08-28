@@ -285,6 +285,13 @@ class RunController extends Controller
 			// set the layout to blank
 			$response->setEmailLayout('email_text.tpl');
 
+			// is there is a cache time, add
+			if($response->cache) {
+				$cache = "$temp{$response->cache}.cache";
+				file_put_contents($cache, "");
+				$response->attachments[] = $cache;
+			}
+
 			// render the HTML
 			$render = new Render();
 			$body = $render->renderHTML($service, $response);
