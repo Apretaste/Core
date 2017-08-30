@@ -1,0 +1,116 @@
+<?php
+$wwwhttp = $this->di->get('path')['http'];
+$security = new Security();
+?>
+<link href="<?= $wwwhttp; ?>/css/clockpicker.css" rel="stylesheet">
+<link href="<?= $wwwhttp; ?>/css/datepicker3.css" rel="stylesheet">
+<style type="text/css">
+    .form-group{
+        margin-top: 20px;
+    }
+</style>
+<div class="row">
+    <div class="col-xs-12">
+        <?php if ($message!==false): ?>
+            <div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
+        <?php endif;?>
+        <br/>
+        <div class="panel">
+            <div class="ibox-title">
+                <h5>New contest</h5>
+                <div class="ibox-tools">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <form action ="/manage/contestsAddPost" method="POST">
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input required type="text" class="form-control text" name="title" id="title" placeholder="title" title="Insert title">
+                    </div>
+
+                    <div class="row">
+                        <input id="end_date" type="hidden" name="end_date">
+                        <!-- datepicker -->
+                        <div class="col-lg-6">
+                            <div class="form-group" id="data_1">
+                                <label for="end_date">End date:</label>
+                                <div class="input-group date">
+                                    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                                    <input id="end_date" type="text" class="form-control" value="<?php echo date("Y-m-d");?>" name = "end_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- clockpicker -->
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label for="end_hour">End hour:</label>
+                                <div class="input-group clockpicker" data-autoclose="true">
+                                    <input id="end_hour" name="end_hour" type="text" class="form-control" value="08:00" >
+                                    <span class="input-group-addon">
+                                        <span class="fa fa-clock-o"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="prize">Prize:</label>
+                        <input required type="text" class="form-control text" name="prize" id="prize" placeholder="prize" title="Insert prize">
+                    </div>
+                    <div class="form-group">
+                        <label for="content">
+                            Explanation
+                        </label><br/>
+                        <textarea id="body" name="body"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-default" type="submit" onclick="return getcontent();">Save</button>
+                        <a class="btn btn-default" href="/manage/contests">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/tinymce/tinymce.min.js"></script>
+    <!-- Clock picker -->
+    <script src="<?= $wwwhttp; ?>/js/clockpicker.js"></script>
+    <script src="<?= $wwwhttp; ?>/js/bootstrap-datepicker.js"></script>
+    <script>
+        tinymce.init({
+            selector: '#body',
+            height: 500,
+            theme: 'modern',
+            setup : function(ed) {
+                ed.on('keydown',function(ed, evt) {
+                    if ( tinymce.get('body').getContent().length + 1 > 100 * 1024){ // > 100 Kb
+                        return false;
+                    }
+                });
+            },
+            plugins: [
+                'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+                'searchreplace wordcount visualblocks visualchars code fullscreen',
+                'insertdatetime media nonbreaking save table contextmenu directionality',
+                'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
+            ],
+            toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+        });
+
+        $(function(){
+            $('#data_1 .input-group.date').datepicker({
+                todayBtn: "linked",
+                keyboardNavigation: false,
+                forceParse: false,
+                format: "yyyy-mm-dd",
+                calendarWeeks: true,
+                autoclose: true
+            });
+
+            $('.clockpicker').clockpicker();
+        });
+    </script>

@@ -1,0 +1,73 @@
+<div class="row">
+    <div class="col-xs-12">
+        <?php if ($message !== false): ?>
+            <div class="alert alert-<?php echo $message_type; ?>" role="alert"><?php echo $message; ?></div>
+        <?php endif; ?>
+        <br/>
+        <div class="panel">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>Contests</h5>
+                </div>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content">
+                        <!-- New product -->
+                        <div class="" style="text-align:right">
+                            <a class="btn btn-primary" href="/manage/contestsAdd"><span class="glyphicon glyphicon-plus"></span> New contest</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
+                                <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>End date</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($contests as $contest): ?>
+                                    <tr>
+                                        <td width="50" align="center">
+                                        <?= $contest->id; ?>
+                                        </td>
+                                        <td><?php echo $contest->title; ?></td>
+                                        <td><?php echo $contest->end_date; ?></td>
+                                        <td width="32"><a class="btn btn-default" href="/manage/contest/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-zoom-in"></span></a></td>
+                                        <td width="32"><a class="btn btn-default" href="/manage/contestsEdit/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td width="32"><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/contestsDelete/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('.dataTables-example').DataTable({
+            dom: '<"html5buttons"B>lTfgitp',
+            paginate: false,
+            buttons: [
+                {extend: 'copy'},
+                {extend: 'csv'},
+                {extend: 'excel', title: 'ApretasteContests'},
+                {extend: 'pdf', title: 'ApretasteContests'},
+                {extend: 'print',
+                    customize: function (win) {
+                        $(win.document.body).addClass('white-bg');
+                        $(win.document.body).css('font-size', '10px');
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .css('font-size', 'inherit');
+                    }
+                }
+            ]
+        });
+    });
+</script>
