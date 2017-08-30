@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title><?= isset($title) ? $title : "Manage"; ?></title>
+		<title><?= isset($title) ? strip_tags($title) : "Manage"; ?></title>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -127,6 +127,16 @@
 							</ul>
 						</li>
 						<?php } ?>
+
+                        <!-- CONTESTS -->
+                        <?php if($security->checkAccess("contests")): ?>
+                            <li>
+                                <a href="#"><i class="fa fa-book"></i> <span class="nav-label">Contest</span> <span class="fa arrow"></span></a>
+                                <ul class="nav nav-second-level">
+                                    <li><a href="/manage/contests">All contests</a></li>
+                                </ul>
+                            </li>
+                        <?php endif; ?>
 
 						<!-- CAMPAIGNS -->
 						<?php if($security->checkAccess("campaigns")) { ?>

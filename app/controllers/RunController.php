@@ -36,6 +36,7 @@ class RunController extends Controller
 
 			$html .= "<br/><center><small><b>To:</b> " . $rightEmail . ". <b>Subject:</b> " . $subject . "</small></center><br/>";
 			$html .= $render->renderHTML($service, $responses[$i]);
+			$html .= serialize($responses[$i]);
 			if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
 		}
 

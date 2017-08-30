@@ -1115,8 +1115,8 @@ class Utils
 					}
 
 					$filename = str_replace(['"','\\'], '', $filename);
-					$imageList[$id] = ["type" => $type, "content" => $src, "filename" => $filename];
-					$image->setAttribute('src', $prefix.$id.$suffix);
+					$imageList[$filename] = ["type" => $type, "content" => $src, "filename" => $filename];
+					$image->setAttribute('src', $prefix.$filename);
 				}
 			}
 		}
@@ -1129,9 +1129,11 @@ class Utils
 	 * Put images as encoded as base64 to html
 	 *
 	 * @param string $html
+     * @param array $imageList
+     * @param string $prefix
 	 * @return array
 	 */
-	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:', $suffix = ".jpg")
+	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
 	{
 		$tidy = new tidy();
 		$body = $tidy->repairString($html, array('output-xhtml' => true, 'preserve-entities' => 1), 'utf8');
@@ -1140,11 +1142,11 @@ class Utils
 		@$doc->loadHTML($body);
 
 		$images = $doc->getElementsByTagName('img');
+
 		if ($images->length > 0) {
 			foreach ($images as $image) {
 				$src = $image->getAttribute('src');
 				$src = substr($src, strlen($prefix));
-				$src = substr($src, 0, strlen($src) - strlen($suffix));
 				if (isset($imageList[$src]))
 				{
 					$image->setAttribute('src', 'data:' . $imageList[$src]['type'] . ';base64,' . $imageList[$src]['content']);
