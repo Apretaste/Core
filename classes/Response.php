@@ -14,6 +14,7 @@ class Response
 	public $render; // false if the response should not be email to the user
 	public $ads;
 	public $layout;
+	public $cache = 0;
 
 	/**
 	 * Create default template
@@ -33,6 +34,20 @@ class Response
 		$this->internal = true;
 		$this->render = false;
 		$this->ads = array();
+	}
+
+	/**
+	 * Set the cache in minutes. If no time is passed, default will be 1 year
+	 *
+	 * @author salvipascual
+	 * @param String $cache | year, month, day, number of hours
+	 */
+	public function setCache($cache = "year")
+	{
+		if($cache == "year") $cache = 512640;
+		if($cache == "month") $cache = 43200;
+		if($cache == "day") $cache = 1440;
+		$this->cache = $cache;
 	}
 
 	/**
