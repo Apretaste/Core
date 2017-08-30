@@ -85,6 +85,7 @@ function smarty_function_button($params, $template)
 	}
 	else
 	{
+		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
 		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$desc";
 	}
