@@ -200,7 +200,13 @@ class RunController extends Controller
 		$ticket = $res->subject;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
-
+/*
+		$fromEmail = "salvi.pascual@gmail.com";
+		$toEmail = "apretaste@gmail.com";
+		$ticket = "nobligonyu";
+		$replyIdEmail = "09876543321";
+		$attachEmail = array("/home/salvipascual/SALVI4X34mc2.zip");
+*/
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
 			$attachEmail = $attachEmail[0];
@@ -276,10 +282,6 @@ class RunController extends Controller
 		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$version, NautaPass:$hasNautaPass");
 		$logger->close();
 
-		// create default output
-		$output = new stdClass();
-		$output->code = "200";
-
 		// send email if can be rendered
 		if($response->render) {
 			// set the layout to blank
@@ -309,6 +311,12 @@ class RunController extends Controller
 			$email->app = true;
 			$email->setContentAsZipAttachment();
 			$output = $email->send();
+
+			// add code & message to transaction
+			$connection->query("
+				UPDATE delivery_received SET
+				code='{$output->code}', message='{$output->message}', sent=CURRENT_TIMESTAMP
+				WHERE id='$idEmail'");
 		}
 
 		// calculate execution time when the service stopped executing
@@ -326,9 +334,7 @@ class RunController extends Controller
 			INSERT INTO utilization	(email_id, service, subservice, query, requestor, request_time, response_time, domain)
 			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain')");
 
-		// mark as done if the email was send correctly
-		if($output->code != "200") $connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
-		die(json_encode($output));
+		return true;
 	}
 
 	/**
