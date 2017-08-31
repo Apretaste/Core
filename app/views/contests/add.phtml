@@ -9,7 +9,6 @@ $security = new Security();
         margin-top: 20px;
     }
 </style>
-
 <div class="row">
     <div class="col-xs-12">
         <?php if ($message!==false): ?>
@@ -17,11 +16,19 @@ $security = new Security();
         <?php endif;?>
         <br/>
         <div class="panel">
+            <div class="ibox-title">
+                <h5>New contest</h5>
+                <div class="ibox-tools">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-wrench"></i>
+                    </a>
+                </div>
+            </div>
             <div class="panel-body">
-                <form action ="/manage/contestsEditPost/<?php echo $contest->id;?>" method="POST">
+                <form action ="/contests/addPost" method="POST">
                     <div class="form-group">
                         <label for="title">Title:</label>
-                        <input required type="text" class="form-control text" name="title" id="title" placeholder="title" title="Insert title" value="<?php echo $contest->title; ?>">
+                        <input required type="text" class="form-control text" name="title" id="title" placeholder="title" title="Insert title">
                     </div>
 
                     <div class="row">
@@ -32,7 +39,7 @@ $security = new Security();
                                 <label for="end_date">End date:</label>
                                 <div class="input-group date">
                                     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                                    <input id="end_date" type="text" class="form-control" value="<?php echo $contest->end_date; ?>" name = "end_date">
+                                    <input id="end_date" type="text" class="form-control" value="<?php echo date("Y-m-d");?>" name = "end_date">
                                 </div>
                             </div>
                         </div>
@@ -42,7 +49,7 @@ $security = new Security();
                             <div class="form-group">
                                 <label for="end_hour">End hour:</label>
                                 <div class="input-group clockpicker" data-autoclose="true">
-                                    <input id="end_hour" name="end_hour" type="text" class="form-control" value="<?php echo $contest->hour; ?>" >
+                                    <input id="end_hour" name="end_hour" type="text" class="form-control" value="08:00" >
                                     <span class="input-group-addon">
                                         <span class="fa fa-clock-o"></span>
                                     </span>
@@ -50,41 +57,28 @@ $security = new Security();
                             </div>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label for="prize">Prize 1:</label>
-                        <input required type="text" class="form-control text" name="prize1" id="prize1" placeholder="prize 1" title="Insert prize" value="<?= $contest->prize1; ?>">
+                        <input required type="text" class="form-control text" name="prize1" id="prize1" placeholder="prize 1" title="Insert prize">
                     </div>
                     <div class="form-group">
                         <label for="prize">Prize 2:</label>
-                        <input required type="text" class="form-control text" name="prize2" id="prize2" placeholder="prize 2" title="Insert prize" value="<?= $contest->prize2; ?>">
+                        <input required type="text" class="form-control text" name="prize2" id="prize2" placeholder="prize 2" title="Insert prize">
                     </div>
                     <div class="form-group">
                         <label for="prize">Prize 3:</label>
-                        <input required type="text" class="form-control text" name="prize3" id="prize3" placeholder="prize 3" title="Insert prize" value="<?= $contest->prize3; ?>">
+                        <input required type="text" class="form-control text" name="prize3" id="prize3" placeholder="prize 3" title="Insert prize">
                     </div>
                     <div class="form-group">
                         <label for="content">
                             Explanation
                         </label><br/>
-                        <textarea id="body" name="body"><?php echo $contest->body; ?></textarea>
+                        <textarea id="body" name="body"></textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label for="prize">Winner 1:</label>
-                        <input type="text" class="form-control text" name="winner1" id="winner1" placeholder="email of the winner" title="Insert winner" value="<?= $contest->winner1; ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="prize">Winner 2:</label>
-                        <input type="text" class="form-control text" name="winner2" id="winner2" placeholder="email of the winner" title="Insert winner" value="<?= $contest->winner2; ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="prize">Winner 3:</label>
-                        <input type="text" class="form-control text" name="winner3" id="winner3" placeholder="email of the winner" title="Insert winner" value="<?= $contest->winner3; ?>">
-                    </div>
-
                     <div class="form-group">
                         <button class="btn btn-default" type="submit" onclick="return getcontent();">Save</button>
-                        <a class="btn btn-default" href="/manage/contests">Cancel</a>
+                        <a class="btn btn-default" href="/contests">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -100,6 +94,13 @@ $security = new Security();
             selector: '#body',
             height: 500,
             theme: 'modern',
+            setup : function(ed) {
+                ed.on('keydown',function(ed, evt) {
+                    if ( tinymce.get('body').getContent().length + 1 > 100 * 1024){ // > 100 Kb
+                        return false;
+                    }
+                });
+            },
             plugins: [
                 'advlist autolink lists link image charmap print preview hr anchor pagebreak',
                 'searchreplace wordcount visualblocks visualchars code fullscreen',
@@ -122,4 +123,3 @@ $security = new Security();
             $('.clockpicker').clockpicker();
         });
     </script>
-

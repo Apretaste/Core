@@ -133,7 +133,7 @@
                             <li>
                                 <a href="#"><i class="fa fa-book"></i> <span class="nav-label">Contest</span> <span class="fa arrow"></span></a>
                                 <ul class="nav nav-second-level">
-                                    <li><a href="/manage/contests">All contests</a></li>
+                                    <li><a href="/contests">All contests</a></li>
                                 </ul>
                             </li>
                         <?php endif; ?>
@@ -199,7 +199,7 @@
 								<?php $active = false;?>
 								<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
 								<li <?php if ($active) echo 'class="active"';?>>
-										<a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
+										<a href="<?php if ($path[0] != "/") echo "/manage/"; ?><?php echo $path; ?>"><?php echo $caption; ?></a>
 								</li>
 								<?php endforeach;?>
 							<?php endif;?>

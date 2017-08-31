@@ -13,7 +13,7 @@
                     <div class="ibox-content">
                         <!-- New product -->
                         <div class="" style="text-align:right">
-                            <a class="btn btn-primary" href="/manage/contestsAdd"><span class="glyphicon glyphicon-plus"></span> New contest</a>
+                            <a class="btn btn-primary" href="/contests/add"><span class="glyphicon glyphicon-plus"></span> New contest</a>
                         </div>
                         <div class="table-responsive">
                             <table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
@@ -35,9 +35,9 @@
                                         </td>
                                         <td><?php echo $contest->title; ?></td>
                                         <td><?php echo $contest->end_date; ?></td>
-                                        <td width="32"><a class="btn btn-default" href="/manage/contest/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-zoom-in"></span></a></td>
-                                        <td width="32"><a class="btn btn-default" href="/manage/contestsEdit/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-pencil"></span></a></td>
-                                        <td width="32"><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/manage/contestsDelete/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                        <td width="32"><a class="btn btn-default" href="/contests/view/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-zoom-in"></span></a></td>
+                                        <td width="32"><a class="btn btn-default" href="/contests/edit/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td width="32"><a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/contests/delete/<?php echo $contest->id; ?>"><span class="glyphicon glyphicon-trash"></span></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </table>

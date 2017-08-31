@@ -2,13 +2,14 @@
 
 use Phalcon\Mvc\Controller;
 
-class ManageController extends Controller
+class ContestsController extends Controller
 {
     // do not let anonymous users pass
     public function initialize()
     {
         $security = new Security();
         $security->enforceLogin();
+        $this->view->setLayout("manage");
     }
 
 
@@ -17,7 +18,7 @@ class ManageController extends Controller
      *
      * @author kuma
      */
-    public function contestsAction()
+    public function indexAction()
     {
         $this->view->title = "Contests";
         $this->view->message = false;
@@ -25,9 +26,7 @@ class ManageController extends Controller
         $sql = "SELECT * FROM _concurso;";
 
         $connection = new Connection();
-
         $this->view->contests = $connection->deepQuery($sql);
-
         $this->view->breadcrumb = [
             "contests" => "Contests"
         ];
@@ -38,15 +37,15 @@ class ManageController extends Controller
      *
      * @author kuma
      */
-    public function contestsAddAction()
+    public function addAction()
     {
         $this->view->title = "Add contest";
         $this->view->message = false;
         $this->view->message_type = 'success';
 
         $this->view->breadcrumb = [
-            "contests" => "Contests",
-            "contestsAdd" => "New contest"
+            "/contests" => "Contests",
+            "/contests/add" => "New contest"
         ];
     }
 
@@ -55,7 +54,7 @@ class ManageController extends Controller
      *
      * @author kuma
      */
-    public function contestsAddPostAction()
+    public function addPostAction()
     {
         $wwwroot = $this->di->get('path')['root'];
         $utils = new Utils();
@@ -78,7 +77,7 @@ class ManageController extends Controller
 
         // 1. get images
         $images  = $utils->getInlineImagesFromHTML($body, 'cid:'); // $body will be modified
-        $contestFolder = $wwwroot."/public/contests/$id";
+        $contestFolder = $wwwroot."/public/contestsImages/$id";
 
         // 2. save concurso
         $body = base64_encode($body);
@@ -88,7 +87,7 @@ class ManageController extends Controller
         // 3. save images
         if (!file_exists($contestFolder))
         {
-            @mkdir($wwwroot."/public/contests");
+            @mkdir($wwwroot."/public/contestsImages");
             @mkdir($contestFolder);
         }
 
@@ -103,7 +102,7 @@ class ManageController extends Controller
             }
         }
 
-        $this->response->redirect("manage/contests");
+        $this->response->redirect("/contests");
     }
 
     private function getContestImages($id)
@@ -116,7 +115,7 @@ class ManageController extends Controller
         if ($r !== false)
         {
             foreach ($r as $row)
-            {   $imageContent = file_get_contents($wwwroot."/public/contests/$id/{$row->filename}");
+            {   $imageContent = file_get_contents($wwwroot."/public/contestsImages/$id/{$row->filename}");
                 $images[$row->filename] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
             }
         }
@@ -124,17 +123,17 @@ class ManageController extends Controller
         return $images;
     }
 
-    public function contestsDeleteAction($id)
+    public function deleteAction($id)
     {
 
         $sql = "DELETE FROM _concurso WHERE id ='$id';";
         $connection = new Connection();
         $connection->deepQuery($sql);
 
-        $this->response->redirect("manage/contests");
+        $this->response->redirect("/contests");
     }
 
-    public function contestsEditAction($id)
+    public function editAction($id)
     {
         $connection =  new Connection();
         $utils = new Utils();
@@ -157,13 +156,13 @@ class ManageController extends Controller
             $this->view->contest = $contest;
 
             $this->view->breadcrumb = [
-                "contests" => "Contests",
-                "contestEdit/{$id}" => "Edit contest #{$id}"
+                "/contests" => "Contests",
+                "/contests/edit/{$id}" => "Edit contest #{$id}"
             ];
         }
     }
 
-    public function contestsEditPostAction($id)
+    public function editPostAction($id)
     {
         $wwwroot = $this->di->get('path')['root'];
         $connection =  new Connection();
@@ -185,11 +184,11 @@ class ManageController extends Controller
             $winner3 = $this->request->getPost("winner3");
 
             // 1. clear old images
-            $utils->rmdir("$wwwroot/public/contests/$id");
+            $utils->rmdir("$wwwroot/public/contestsImages/$id");
 
             // 2. get contest images
             $images  = $utils->getInlineImagesFromHTML($body, 'cid:'); // $body will be modified
-            $contestFolder = $wwwroot."/public/contests/$id";
+            $contestFolder = $wwwroot."/public/contestsImages/$id";
             $body = base64_encode($body);
 
             // 3. save concurso
@@ -200,7 +199,7 @@ class ManageController extends Controller
             // 4. save contest images
             if (!file_exists($contestFolder))
             {
-                @mkdir($wwwroot."/public/contests");
+                @mkdir($wwwroot."/public/contestsImages");
                 @mkdir($contestFolder);
             }
 
@@ -215,11 +214,11 @@ class ManageController extends Controller
                 }
             }
 
-            $this->response->redirect("manage/contests");
+            $this->response->redirect("/contests");
         }
     }
 
-    public function contestAction($id)
+    public function viewAction($id)
     {
         $connection =  new Connection();
         $utils = new Utils();
@@ -252,8 +251,8 @@ class ManageController extends Controller
             $this->view->message_type = 'success';
 
             $this->view->breadcrumb = [
-                "contests" => "Contests",
-                "contest/{$id}" => "Contest #{$id}"
+                "/contests" => "Contests",
+                "/contests/view/{$id}" => "Contest #{$id}"
             ];
         }
     }
