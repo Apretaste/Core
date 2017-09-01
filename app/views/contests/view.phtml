@@ -1,0 +1,36 @@
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="panel">
+            <div class="panel-body">
+                <label for="title">Title:</label>
+                <?php echo $contest->title; ?>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <label for="end_date">End date:</label>
+                            <?php echo $contest->end_date; ?>
+                        </div>
+                    </div>
+
+                    <label for="prize">Prize 1:</label>
+                    <?= $contest->prize1; ?><br/>
+                    <label for="prize">Prize 2:</label>
+                    <?= $contest->prize2; ?><br/>
+                    <label for="prize">Prize 3:</label>
+                    <?= $contest->prize3; ?><br/>
+
+                    <label for="prize">Explanation:</label>
+                    <?= $contest->body; ?>
+
+                <?php if ($contest->winners !== false): ?>
+                    <br/>
+                    <label for="prize">Winners:</label>
+                    <br/>
+                    <?php foreach ($contest->winners as $winner): ?>
+                        <a href="/manage/profilesearch?email=<?php echo urlencode($winner->email); ?>"><?= $winner->email; ?></a><br/>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>

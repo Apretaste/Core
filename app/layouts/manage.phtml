@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title><?= isset($title) ? $title : "Manage"; ?></title>
+		<title><?= isset($title) ? strip_tags($title) : "Manage"; ?></title>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -128,6 +128,16 @@
 						</li>
 						<?php } ?>
 
+                        <!-- CONTESTS -->
+                        <?php if($security->checkAccess("contests")): ?>
+                            <li>
+                                <a href="#"><i class="fa fa-book"></i> <span class="nav-label">Contest</span> <span class="fa arrow"></span></a>
+                                <ul class="nav nav-second-level">
+                                    <li><a href="/contests">All contests</a></li>
+                                </ul>
+                            </li>
+                        <?php endif; ?>
+
 						<!-- CAMPAIGNS -->
 						<?php if($security->checkAccess("campaigns")) { ?>
 						<li>
@@ -189,7 +199,7 @@
 								<?php $active = false;?>
 								<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
 								<li <?php if ($active) echo 'class="active"';?>>
-										<a href="/manage/<?php echo $path; ?>"><?php echo $caption; ?></a>
+										<a href="<?php if ($path[0] != "/") echo "/manage/"; ?><?php echo $path; ?>"><?php echo $caption; ?></a>
 								</li>
 								<?php endforeach;?>
 							<?php endif;?>
