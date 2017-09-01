@@ -21,7 +21,7 @@ class CampaignsController extends Controller
 
 		// get the list of campaigns
 		$connection = new Connection();
-		$campaigns = $connection->deepQuery("
+		$campaigns = $connection->query("
 			SELECT A.id, A.subject, A.sending_date, A.status, A.sent, B.name AS list, A.bounced
 			FROM campaign A JOIN campaign_list B
 			ON A.list = B.id
@@ -45,7 +45,7 @@ class CampaignsController extends Controller
 
 		// get the list of campaigns
 		$connection = new Connection();
-		$campaign = $connection->deepQuery("
+		$campaign = $connection->query("
 			SELECT subject, content, sending_date, status, sent, opened, bounced
 			FROM campaign
 			WHERE id = $id");
@@ -86,7 +86,7 @@ class CampaignsController extends Controller
 
 		// get the lists
 		$connection = new Connection();
-		$lists = $connection->deepQuery("
+		$lists = $connection->query("
 			SELECT id, name
 			FROM campaign_list
 			WHERE `group` = '{$manager->group}'");
@@ -117,7 +117,7 @@ class CampaignsController extends Controller
 
 		// get the campaign from the database
 		$connection = new Connection();
-		$campaign = $connection->deepQuery("
+		$campaign = $connection->query("
 			SELECT * FROM campaign
 			WHERE id = $id
 			AND status = 'WAITING'
@@ -125,7 +125,7 @@ class CampaignsController extends Controller
 		$campaign = $campaign[0];
 
 		// get the lists
-		$lists = $connection->deepQuery("
+		$lists = $connection->query("
 			SELECT id, name
 			FROM campaign_list
 			WHERE `group` = '{$manager->group}'");
@@ -174,27 +174,34 @@ class CampaignsController extends Controller
 
 		// get the list of campaigns
 		$connection = new Connection();
-		$lists = $connection->deepQuery("SELECT * FROM campaign_list WHERE `group` = '{$manager->group}'");
+		$lists = $connection->query("SELECT * FROM campaign_list WHERE `group` = '{$manager->group}'");
 
 		// calculate number of subscribers for all lists
 		foreach ($lists as $list)
 		{
 			// for apretaste users in the mail list
 			if($list->id == 1) {
-				$count = $connection->deepQuery("SELECT COUNT(email) as cnt FROM person WHERE active=1 AND mail_list=1");
+				$count = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE active=1 AND mail_list=1");
 				$list->subscribers = $count[0]->cnt;
 				continue;
 			}
 
 			// for all active apretaste users
 			if($list->id == 2) {
-				$count = $connection->deepQuery("SELECT COUNT(email) as cnt FROM person WHERE active=1");
+				$count = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
+				$list->subscribers = $count[0]->cnt;
+				continue;
+			}
+
+			// for active users from the app
+			if($list->id == 3) {
+				$count = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE active=1 AND appversion <> ''");
 				$list->subscribers = $count[0]->cnt;
 				continue;
 			}
 
 			// all other lists
-			$count = $connection->deepQuery("SELECT COUNT(id) as cnt FROM campaign_subscribers WHERE list='{$list->id}'");
+			$count = $connection->query("SELECT COUNT(id) as cnt FROM campaign_subscribers WHERE list='{$list->id}'");
 			$list->subscribers = $count[0]->cnt;
 		}
 
@@ -213,7 +220,7 @@ class CampaignsController extends Controller
 
 		// get the list of campaigns
 		$connection = new Connection();
-		$subscribers = $connection->deepQuery("SELECT * FROM campaign_subscribers WHERE list = $campaignId");
+		$subscribers = $connection->query("SELECT * FROM campaign_subscribers WHERE list = $campaignId");
 
 		// send variables to the view
 		$this->view->title = "Campaign subscriptors";
@@ -233,7 +240,7 @@ class CampaignsController extends Controller
 
 		// get the last 10 campaigns
 		$connection = new Connection();
-		$campaigns = $connection->deepQuery("
+		$campaigns = $connection->query("
 			SELECT id, subject, sending_date, status, sent, opened, bounced
 			FROM campaign
 			WHERE status = 'SENT'
@@ -271,7 +278,7 @@ class CampaignsController extends Controller
 
 		// add to the database
 		$connection = new Connection();
-		$campaign = $connection->deepQuery($sql);
+		$campaign = $connection->query($sql);
 
 		// go to the list of campaigns
 		$this->response->redirect("campaigns/subscribers/?id=$list");
@@ -288,7 +295,7 @@ class CampaignsController extends Controller
 
 		// add to the database
 		$connection = new Connection();
-		$connection->deepQuery("DELETE FROM campaign_subscribers WHERE id='$subscriberId'");
+		$connection->query("DELETE FROM campaign_subscribers WHERE id='$subscriberId'");
 
 		// go to the list of campaigns
 		$this->response->redirect("campaigns/subscribers/?id=$list");
@@ -325,7 +332,7 @@ class CampaignsController extends Controller
 
 		// add to the database
 		$sql = rtrim($sql,","); // delete last comma
-		$campaign = $connection->deepQuery($sql);
+		$campaign = $connection->query($sql);
 
 		// go to the list
 		$this->response->redirect("campaigns/lists");
@@ -341,7 +348,7 @@ class CampaignsController extends Controller
 
 		// add to the database
 		$connection = new Connection();
-		$connection->deepQuery("
+		$connection->query("
 			DELETE FROM campaign_list WHERE id='$list';
 			DELETE FROM campaign_subscribers WHERE list='$list';");
 
@@ -426,7 +433,7 @@ class CampaignsController extends Controller
 
 		// remove the campaign
 		$connection = new Connection();
-		$connection->deepQuery("DELETE FROM campaign WHERE id = $id");
+		$connection->query("DELETE FROM campaign WHERE id = $id");
 
 		// remove images
 		$utils = new Utils();
