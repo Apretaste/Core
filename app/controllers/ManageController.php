@@ -2468,24 +2468,19 @@ class ManageController extends Controller
 		{
 			$connection = new Connection();
 			$utils = new Utils();
-			$imgExt = '.jpg';
 			$chapterTitle = $connection->escape($this->request->getPost('title'));
 			$chapterContent = $this->request->getPost('content');
-			$images  = $utils->getInlineImagesFromHTML($chapterContent, 'cid:', $imgExt);
+			$images  = $utils->getInlineImagesFromHTML($chapterContent, 'cid:');
 			$chapterContent = $connection->escape($chapterContent);
 			$chapterType = $this->request->getPost('type');
 			$course_id = intval($this->request->get('course'));
 			$coursesFolder = $wwwroot."/public/courses";
 
 			if ( ! file_exists($coursesFolder))
-			{
 				@mkdir($coursesFolder);
-			}
 
 			if ( ! file_exists("$coursesFolder/$course_id"))
-			{
 				@mkdir("$coursesFolder/$course_id");
-			}
 
 			$r = $connection->query("SELECT count(id) as total FROM _escuela_chapter WHERE course = '$course_id';");
 			$order = intval($r[0]->total) + 1;
@@ -2518,10 +2513,10 @@ class ManageController extends Controller
 			{
 				$connection->query("DELETE FROM _escuela_images WHERE chapter = '$id';");
 
-				foreach($images as $idimg => $img)
+				foreach($images as $img)
 				{
-					file_put_contents($chapterFolder."/$idimg{$imgExt}", base64_decode($img['content']));
-					$connection->query("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
+					file_put_contents($chapterFolder."/{$img['filename']}", base64_decode($img['content']));
+					$connection->query("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('{$img['filename']}', '{$img['filename']}','{$img['type']}','$id','$course_id');");
 				}
 			}
 
@@ -2548,7 +2543,7 @@ class ManageController extends Controller
 		{
 			$chapter = $r[0];
 			$images = $this->getChapterImages($id);
-			$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
+			$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:');
 			$this->view->chapter = $chapter;
 		}
 		else
@@ -2575,7 +2570,7 @@ class ManageController extends Controller
 		$chapter = $r[0];
 
 		$images = $this->getChapterImages($id);
-		$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
+		$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:');
 
 		$this->view->message = "The chapter <i>{$chapter->title}</i> was successful inserted";
 		$this->view->message_type = 'success';
@@ -2598,8 +2593,8 @@ class ManageController extends Controller
 		if ($r !== false)
 		{
 			foreach ($r as $row)
-			{   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
-				$images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
+			{   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->filename}");
+				$images[$row->filename] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
 			}
 		}
 		return $images;
