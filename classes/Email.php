@@ -59,7 +59,6 @@ class Email
 		// for all Nauta emails (via app or email)
 		elseif($isNauta)
 		{
-			if( ! $this->app) $this->setContentRandom();
 			$res = $this->sendEmailViaWebmail();
 			if($res->code != "200") $res = $this->sendEmailViaNode();
 		}
