@@ -2,7 +2,7 @@
 
 use Phalcon\Mvc\Controller;
 
-class CampaignsController extends Controller
+class SchoolController extends Controller
 {
 	// do not let anonymous users pass
 	public function initialize(){
@@ -93,12 +93,12 @@ class CampaignsController extends Controller
 			$connection->query($sql);
 		}
 
-		$queryCourses = "SELECT * FROM _escuela_course WHERE email = '$email' ORDER BY ID";
-		$courses = $connection->query($queryCourses);
+		$courses = $connection->query("SELECT * FROM _escuela_course ORDER BY ID");
 
 		$this->view->title = "School";
 		$this->view->courses = $courses;
 		$this->view->teachers = $teachers;
+		$this->view->setLayout('manage');
 	}
 
 	public function schoolTeachersAction()
@@ -126,7 +126,7 @@ class CampaignsController extends Controller
 				$sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
 				$this->view->message = 'The teacher was updated successful';
 				break;
-		   }
+			}
 		}
 
 		switch ($option)
@@ -146,15 +146,16 @@ class CampaignsController extends Controller
 			$connection->query($sql);
 		}
 
-		 $teachers = $connection->query("SELECT * FROM _escuela_teacher;");
+		$teachers = $connection->query("SELECT * FROM _escuela_teacher;");
 
-		 if (!is_array($teachers))
-		 {
-			 $teachers = [];
-		 }
+		if (!is_array($teachers))
+		{
+			$teachers = [];
+		}
 
-		 $this->view->teachers = $teachers;
-		 $this->view->title = "School";
+		$this->view->teachers = $teachers;
+		$this->view->title = "School";
+		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -236,6 +237,7 @@ class CampaignsController extends Controller
 		$this->view->course = $course;
 		$this->view->chapters = $chapters;
 		$this->view->title = 'Course: <i>' . $course->title . '</i>';
+		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -262,9 +264,8 @@ class CampaignsController extends Controller
 		$this->view->course = $course;
 		$this->view->type = $type;
 		$this->view->course_id = $course_id;
-		$this->view->title = $type == 'CAPITULO'?
-								'New chapter for course <i>' . $course->title . '</i>':
-								'New test for course <i>' . $course->title . '</i>';
+		$this->view->title = $type == 'CAPITULO' ? 'New chapter for course <i>' . $course->title . '</i>' : 'New test for course <i>' . $course->title . '</i>';
+		$this->view->setLayout('manage');
 	}
 
 	public function schoolNewChapterPostAction()
@@ -332,7 +333,7 @@ class CampaignsController extends Controller
 			}
 
 			$this->view->chapter_id = $id;
-			return $this->dispatcher->forward(array("controller"=> "manage", "action" => "schoolChapter"));
+			return $this->dispatcher->forward(array("controller"=> "school", "action" => "schoolChapter"));
 		}
 	}
 
@@ -356,9 +357,12 @@ class CampaignsController extends Controller
 			$images = $this->getChapterImages($id);
 			$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
 			$this->view->chapter = $chapter;
+			$this->view->setLayout('manage');
 		}
 		else
-			$this->dispatcher->forward(array("controller"=> "manage", "action" => "pageNotFound"));
+		{
+			$this->dispatcher->forward(array("controller"=> "school", "action" => "pageNotFound"));
+		}
 	}
 
 	public function schoolChapterAction()
@@ -387,23 +391,9 @@ class CampaignsController extends Controller
 		$this->view->message_type = 'success';
 		$this->view->chapter = $chapter;
 		$this->view->title = ($chapter->xtype=='CAPITULO'? "Chapter" : "Test") . ": {$chapter->title}";
+		$this->view->setLayout('manage');
 	}
 
-	private function getChapterImages($chapter_id)
-	{
-		$connection = new Connection();
-		$r = $connection->query("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
-		$wwwroot = $this->di->get('path')['root'];
-		$images = [];
-		if ($r !== false)
-		{
-			foreach ($r as $row)
-			{   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
-				$images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
-			}
-		}
-		return $images;
-	}
 	/**
 	 * Manage test's questions and answers
 	 *
@@ -475,7 +465,7 @@ class CampaignsController extends Controller
 			break;
 		}
 
-		if ($sql!=false) $connection->query($sql);
+		if ($sql != false) $connection->query($sql);
 
 		$chapter = $this->request->get('chapter');
 
@@ -497,5 +487,25 @@ class CampaignsController extends Controller
 				$this->view->questions = $questions;
 			}
 		}
+
+		$this->view->setLayout('manage');
+	}
+
+	private function getChapterImages($chapter_id)
+	{
+		$connection = new Connection();
+		$r = $connection->query("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
+
+		$wwwroot = $this->di->get('path')['root'];
+		$images = [];
+
+		if ($r !== false)
+		{
+			foreach ($r as $row)
+			{   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
+				$images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
+			}
+		}
+		return $images;
 	}
 }

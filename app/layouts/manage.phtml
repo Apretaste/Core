@@ -123,20 +123,20 @@
 							<a href="#"><i class="fa fa-book"></i> <span class="nav-label">School</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
 								<li><a href="/school">Courses</a></li>
-								<li><a href="/schoolTeachers">Teachers</a></li>
+								<li><a href="/school/schoolTeachers">Teachers</a></li>
 							</ul>
 						</li>
 						<?php } ?>
 
-                        <!-- CONTESTS -->
-                        <?php if($security->checkAccess("contests")): ?>
-                            <li>
-                                <a href="#"><i class="fa fa-book"></i> <span class="nav-label">Contest</span> <span class="fa arrow"></span></a>
-                                <ul class="nav nav-second-level">
-                                    <li><a href="/contests">All contests</a></li>
-                                </ul>
-                            </li>
-                        <?php endif; ?>
+						<!-- CONTESTS -->
+						<?php if($security->checkAccess("contests")): ?>
+							<li>
+								<a href="#"><i class="fa fa-book"></i> <span class="nav-label">Contest</span> <span class="fa arrow"></span></a>
+								<ul class="nav nav-second-level">
+									<li><a href="/contests">All contests</a></li>
+								</ul>
+							</li>
+						<?php endif; ?>
 
 						<!-- CAMPAIGNS -->
 						<?php if($security->checkAccess("campaigns")) { ?>
