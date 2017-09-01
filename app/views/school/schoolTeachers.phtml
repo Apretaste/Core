@@ -39,22 +39,19 @@
 								</tr>
 							</thead>
 							<tbody>
-								<?php foreach ($teachers as $teacher): ?>
-
-								<form action="/school/schoolTeachers?option=setTeacher&id=<?php echo $course->id; ?>" method="post">
+							<?php foreach ($teachers as $teacher): ?>
+								<form action="/school/schoolTeachers?option=set&id=<?php echo $teacher->id; ?>" method="post">
 									<tr>
 										<td width="50"><?php echo $teacher->id; ?></td>
 										<td><input class="form-control" name="techerName" placeholder="teacher name" value ="<?php echo $teacher->name; ?>"></td>
 										<td><input class="form-control" name="techerTitle" placeholder="teacher title" value ="<?php echo $teacher->title; ?>"></td>
 										<td><input class="form-control" name="techerEmail" placeholder="teacher email" value ="<?php echo $teacher->email; ?>"></td>
 										<td width="90">
-											<button class="btn btn-primary" type="submit" name="teacherSubmit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
+											<button class="btn btn-primary" type="submit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
 											<a class="btn btn-danger" onclick ="return confirm('Are you sure?');" href="/school/schoolTeachers?option=del&id=<?php echo $teacher->id; ?>"><span class="glyphicon glyphicon-trash"></span></a>
 										</td>
 									</tr>
 								</form>
-
-
 							<?php endforeach; ?>
 							</tbody>
 						</table>
