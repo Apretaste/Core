@@ -1,0 +1,175 @@
+<div class="row">
+	<div class="col-xs-12">
+		<br/>
+		<?php if ($message !== false): ?>
+			<div class="alert alert-<?php echo $message_type; ?>" role="alert"><?php echo $message; ?></div>
+		<?php endif; ?>
+
+		<div class="panel">
+			<div class="ibox float-e-margins">
+				<div class="ibox-title">
+					<h5>Courses (<?php echo count($courses); ?>)</h5>
+					<div class="ibox-tools">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+							<i class="fa fa-wrench"></i>
+						</a>
+						<ul class="dropdown-menu dropdown-user">
+							<li>
+								<a href="#" onclick="newCourse();"><span class="glyphicon glyphicon-plus"></span> New course</a>
+							</li>
+						</ul>
+						<a class="close-link">
+							&nbsp;
+						</a>
+					</div>
+				</div>
+				<div class="ibox float-e-margins">
+					<div class="ibox-content">
+						<div class="" style="text-align:right">
+							<button type="button" class="btn btn-primary" onclick="newCourse();">
+								<span class="glyphicon glyphicon-plus"></span> New course
+							</button>
+						</div>
+						<table id="marketTable" class="table table-striped table-bordered table-hover dataTables-example">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Name</th>
+									<th>Teacher</th>
+									<th></th>
+									<th></th>
+									<th></th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($courses as $course): ?>
+									<tr>
+								<form action="/school?option=set&id=<?php echo $course->id; ?>" method="post">
+									<td width="50"><?php echo $course->id; ?></td>
+									<td><input id = "courseTitle-<?php echo $course->id; ?>" class="form-control" name="courseTitle" placeholder="Course title" value ="<?php echo $course->title; ?>"></td>
+									<td>
+										<select id = "courseTeacher-<?php echo $course->id; ?>" class="form-control" name="courseTeacher">
+											<?php foreach ($teachers as $teacher): ?>
+												<option value ="<?php echo $teacher->id; ?>" <?php echo $course->teacher == $teacher->id ? 'selected' : ''; ?>><?php echo $teacher->name . ', ' . $teacher->title; ?></option>
+											<?php endforeach; ?>
+										</select>
+									</td>
+									<td><button class="btn btn-default" type="submit" name="courseSubmit"><i class="fa fa-floppy-o" aria-hidden="true"></i></button></td>
+									<textarea id = "courseContent-<?php echo $course->id; ?>" style="display:none;" name="courseContent"><?php echo $course->content;?></textarea>
+									<input type="hidden" id = "courseCategory-<?php echo $course->id; ?>" value = "<?php echo $course->category; ?>" name="courseCategory">
+								</form>
+
+								<td><a href="/school/schoolChapters?course=<?php echo $course->id; ?>" class="btn btn-default" >Chapters</a></td>
+								<td>
+									<?php if ($course->active . '' == '1'): ?>
+										<a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/school?option=disable&id=<?php echo $course->id; ?>">Disable</a>
+									<?php else: ?>
+										<a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/school?option=enable&id=<?php echo $course->id; ?>">Enable</a>
+									<?php endif; ?>
+								</td>
+								<td>
+									<button class="btn btn-success" onclick="editCourse(<?php echo $course->id;?>);"><span class="glyphicon glyphicon-edit"></span></button>
+									<a class="btn btn-danger" onclick ="return confirm('Are you sure?');" href="/school?option=del&id=<?php echo $course->id; ?>"><span class="glyphicon glyphicon-trash"></span></a>
+								</td>
+								</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+
+					<!-- New course modal form -->
+					<div class="modal fade tooltips" id="newCourseForm-modal" tabindex="-1" role="dialog" aria-labelledby="newCourseForm-label" aria-hidden="true">
+						<div class="modal-dialog" style="width:500px;">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true"> &times; </button>
+									<h4 class="modal-title" id="newCourseForm-label"><i class="fa fa-book fa-1x" aria-hidden="true"></i> <span id ="formCaption">New course</span></h4>
+								</div>
+								<div class="modal-body">
+									<form role="form" action = "/school?option=add" method = "post" id="newCourseForm" enctype="multipart" data-toggle="validator">
+										<div class="form-group">
+											<label for="courseTitle">Title</label>
+											<input required type="text" class="form-control text" name="courseTitle" id="courseTitle" placeholder="title of the course" title="Insert title of the course">
+										</div>
+
+										<div class="form-group">
+											<label for="courseTeacher">Teacher</label>
+											<select required class="form-control" name="courseTeacher" id ="courseTeacher">
+												<?php foreach ($teachers as $teacher): ?>
+													<option value ="<?php echo $teacher->id; ?>"><?php echo $teacher->name . ', ' . $teacher->title; ?></option>
+													<?php endforeach; ?>
+											</select>
+										</div>
+
+										<div class="form-group">
+											<label for="courseCategory">Category</label>
+											<select required class="form-control" name="courseCategory" id ="courseCategory">
+												<?php foreach (array('SOCIEDAD','NEGOCIOS','MEDICINA','INFORMATICA','INGENIERIA','LETRAS','ARTES','FILOSOFIA','SALUD','POLITICA','TECNICA','OTRO') as $category): ?>
+													<option value ="<?php echo $category; ?>"><?php echo ucfirst(strtolower($category)); ?></option>
+												<?php endforeach; ?>
+											</select>
+										</div>
+
+										<div class="form-group">
+											<label for="courseContent">Summary</label>
+											<textarea class="form-control" name="courseContent" id="courseContent"></textarea>
+										</div>
+										<div class="modal-footer">
+											<button type="submit" name="btnInsert" class="btn btn-success">Ok</button>
+											<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+		$('.dataTables-example').DataTable({
+			dom: '<"html5buttons"B>lTfgitp',
+			buttons: [
+				{extend: 'copy'},
+				{extend: 'csv'},
+				{extend: 'excel', title: 'ApretasteSchoolChapters'},
+				{extend: 'pdf', title: 'ApretasteSchoolChapters'},
+				{extend: 'print',
+					customize: function (win) {
+						$(win.document.body).addClass('white-bg');
+						$(win.document.body).css('font-size', '10px');
+						$(win.document.body).find('table')
+								.addClass('compact')
+								.css('font-size', 'inherit');
+					}
+				}
+			]
+		});
+	});
+
+	function newCourse()
+	{
+		$('#newCourseForm-modal').modal('show');
+		$('#courseTitle').val('');
+		$('#courseContent').val('');
+		$('#newCourseForm').attr('action','/school?option=add');
+		$('#courseCategory').val('');
+		$('#formCaption').html('New course');
+	}
+
+	function editCourse(course_id)
+	{
+		$('#newCourseForm-modal').modal('show');
+		$('#courseTitle').val($('#courseTitle-' + course_id).val());
+		$('#courseContent').val($('#courseContent-' + course_id).val());
+		$('#courseTeacher').val($('#courseTeacher-' + course_id).val());
+		$('#courseCategory').val($('#courseCategory-' + course_id).val());
+		$('#newCourseForm').attr('action','/school?option=set&id=' + course_id)
+		$('#formCaption').html('Edit course');
+	}
+</script>

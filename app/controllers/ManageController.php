@@ -2701,9 +2701,4 @@ class ManageController extends Controller
 			"schoolQuestions?chapter={$chapter->id}" => "Questions"
 		);
 	}
-
-	public function testAction()
-	{
-
-	}
 }
