@@ -1,0 +1,100 @@
+<div class="row">
+	<div class="col-xs-12">
+		<br/>
+		<a href="/school/schoolChapters?course=<?php echo $chapter->course; ?>" class="btn btn-default">&lt;&lt; Chapters</a> <br /> <br />
+		<?php if ($message !== false): ?>
+			<div class="alert alert-<?php echo $message_type; ?>" role="alert"><?php echo $message; ?></div>
+		<?php endif; ?>
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Questions</h3>
+			</div>
+			<table id="servicesTable" class="table">
+				<tbody>
+					<?php foreach ($questions as $question): ?>
+					<tr style="border-top:4px solid gray;">
+					<form action="/school/schoolQuestions?option=setQuestion&chapter=<?php echo $chapter->id; ?>&id=<?php echo $question->id ?>" method="post">
+						<input type="hidden" name="chapter" value="<?php echo $chapter->id; ?>">
+						<input id="question-answer-<?php echo $question->id;?>" type="hidden" name="answer" value="<?php echo $question->answer; ?>">
+						<td>
+							 <div class="input-group">
+							<span class="input-group-addon" style="border: none;" >
+							<i class="fa fa-question-circle fa-2x"></i>
+							</span>
+							<input class="form-control" name="chapterQuestionTitle" value="<?php echo $question->title; ?>" style="border: none; font-size: 14px; font-weight: bold;">
+							 </div>
+						</td>
+						<td width="32" class="text-center"><button class="btn btn-default" type="submit" name="chapterSubmit"><i class="fa fa-save"></i></button></td>
+					</form>
+					</td>
+					<td width="32" class="text-center"><a class="btn btn-default" href="/school/schoolQuestions?option=delQuestion&id=<?php echo $question->id; ?>&chapter=<?php echo $chapter->id; ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></a>
+					</td>
+
+					</tr>
+					<?php foreach ($question->answers as $answer): ?>
+						<tr>
+						<form action="/school/schoolQuestions?option=setAnswer&chapter=<?php echo $chapter->id; ?>&id=<?php echo $answer->id; ?>" method="post">
+							<td>
+								<div class="input-group">
+									&nbsp;&nbsp;<span class="input-group-addon" style="border: none;" >
+										<input id = "answer-<?php echo $answer->id; ?>"
+											   class="question-<?php echo $question->id; ?>"
+											   type="radio"
+											   aria-label="..."
+											   <?php if ($answer->id == $question->answer) echo 'checked=""'; ?>
+											   onclick="setRightAnswer(<?php echo $question->id;?>,<?php echo $answer->id;?>);">
+									</span>
+									<input style="border: none;" class="form-control" name="chapterAnswerTitle" placeholder="New answer title" value="<?php echo $answer->title; ?>">
+									</td>
+								</div>
+							<td width="32" class="text-center">
+								<button class="btn btn-default" type="submit" name="answerSubmit" value="Set"><i class="fa fa-save"></i></button>
+							</td>
+						</form>
+						<td width="32" class="text-center"><a class="btn btn-default" href="/school/schoolQuestions?option=delAnswer&id=<?php echo $answer->id; ?>&chapter=<?php echo $chapter->id; ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></span></a>
+						</td>
+						</tr>
+					<?php endforeach; ?>
+					<tr>
+					<form action="/school/schoolQuestions?option=addAnswer&chapter=<?php echo $chapter->id; ?>" method="post">
+						<input type="hidden" name="question" value="<?php echo $question->id; ?>">
+						<td>
+							<div class="input-group">
+								 &nbsp;&nbsp;<span style="border: none;" class="input-group-addon"> <input type="radio" aria-label="..." disabled="true"></span>
+								 <input style="border: none;"  class="form-control" name="chapterAnswerTitle" placeholder="New answer">
+							</div>
+						</td>
+						<td class="text-center"><input class="btn btn-default" type="submit" name="chapterSubmit" value="+"></td>
+					</form>
+					</tr>
+				<?php endforeach; ?>
+				<tr style="border-top:4px solid gray;">
+				<form action="/school/schoolQuestions?option=addQuestion&chapter=<?php echo $chapter->id; ?>" method="post">
+					<input type="hidden" name="chapter" value="<?php echo $chapter->id; ?>">
+					<td><div class="input-group">
+							<span class="input-group-addon" id="basic-addon3">New question:</span> <input class="form-control" name="chapterQuestionTitle"></td>
+						</div>
+					<td class="text-center"><input class="btn btn-default" type="submit" name="chapterSubmit" value="+"></td>
+				</form>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<script>
+	function setRightAnswer(question, answer)
+	{
+		$("#answer-"+answer).removeClass('question-'+question);
+		$(".question-"+question).attr('checked', false);
+		$("#answer-"+answer).addClass('question-' + question);
+		$("#question-answer-"+question).val(answer);
+	}
+
+	$(function(){
+		<?php foreach ($questions as $question): ?>
+		setRightAnswer(<?php echo $question->id;?>, <?php echo $question->answer;?>);
+		<?php endforeach; ?>
+	});
+</script>
