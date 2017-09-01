@@ -111,21 +111,21 @@ class SchoolController extends Controller
 
 		if($this->request->isPost())
 		{
-		   $name = $connection->escape($this->request->getPost("teacherName"));
-		   $title = $connection->escape($this->request->getPost("teacherTitle"));
-		   $email = $connection->escape($this->request->getPost("teacherEmail"));
+			$name = $connection->escape($this->request->getPost("teacherName"));
+			$title = $connection->escape($this->request->getPost("teacherTitle"));
+			$email = $connection->escape($this->request->getPost("teacherEmail"));
 
-		   switch ($option)
-		   {
-			case 'add':
-				$sql = "INSERT INTO _escuela_teacher (name, title, email) VALUES ('$name', '$title', '$email'); ";
-				$this->view->message = 'The teacher was inserted successful';
-				break;
-			case 'set':
-				$id = $this->request->get('id');
-				$sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
-				$this->view->message = 'The teacher was updated successful';
-				break;
+			switch ($option)
+			{
+				case 'add':
+					$sql = "INSERT INTO _escuela_teacher (name, title, email) VALUES ('$name', '$title', '$email'); ";
+					$this->view->message = 'The teacher was inserted successful';
+					break;
+				case 'set':
+					$id = $this->request->get('id');
+					$sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
+					$this->view->message = 'The teacher was updated successful';
+					break;
 			}
 		}
 
@@ -502,7 +502,7 @@ class SchoolController extends Controller
 		if ($r !== false)
 		{
 			foreach ($r as $row)
-			{   $imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
+			{	$imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
 				$images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
 			}
 		}
