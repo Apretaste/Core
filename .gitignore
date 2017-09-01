@@ -1,5 +1,6 @@
 temp/*
 public/temp/*
+public/tmp/*
 services/*
 logs/*
 nbproject/*
