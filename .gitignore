@@ -26,3 +26,4 @@ app/controllers/TestController.php
 .idea/*
 public/courses/*
 public/campaign/*
+public/contestsImages/*
