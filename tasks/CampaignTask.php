@@ -50,6 +50,16 @@ class CampaignTask extends \Phalcon\Cli\Task
 				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
 				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
 		}
+		// when we choosse ALL Apretaste active users
+		elseif($campaign->list == "3")
+		{
+			$people = $connection->query("
+				SELECT email, 'internal' as type
+				FROM person WHERE active=1 AND appversion <> ''
+				AND email IN (SELECT DISTINCT email FROM authentication WHERE appname = 'apretaste')
+				AND email NOT IN (SELECT DISTINCT email FROM campaign_sent WHERE campaign={$campaign->id})
+				AND email NOT IN (SELECT DISTINCT email FROM delivery_dropped)");
+		}
 		// all other lists
 		else
 		{
@@ -98,7 +108,6 @@ class CampaignTask extends \Phalcon\Cli\Task
 			$bounced = ""; $status = "SENT";
 			if($res->code != "200")
 			{
-//				$utils->unsubscribeFromEmailList($person->email);
 				$bounced = "bounced=bounced+1,";
 				$status = "BOUNCED";
 				$bouncedCounter++;
