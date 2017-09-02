@@ -148,6 +148,10 @@ class SupportController extends Controller
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
 
+		// send a notification to the user
+		$utils = new Utils();
+		$utils->addNotification($to, "soporte", "Hemos dado respuesta a una peticion que envio al soporte", "SOPORTE");
+
 		// save report
 		$mysqlDateToday = date('Y-m-d');
 		$connection->query("
