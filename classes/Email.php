@@ -46,21 +46,18 @@ class Email
 		{
 			$res = $this->sendEmailViaAmazon();
 		}
-		// if traying to download the app
-		elseif($this->group == 'download')
-		{
-			$res = $this->sendEmailViaMailgun();
-		}
+/*
 		// if responding to the Support
 		elseif($this->group == 'support')
 		{
 			$res = $this->sendEmailViaNode();
 		}
+*/
 		// for all Nauta emails (via app or email)
 		elseif($isNauta)
 		{
 			$res = $this->sendEmailViaWebmail();
-			if($res->code != "200") $res = $this->sendEmailViaNode();
+			if($res->code != "200") $res = $this->sendEmailViaPostmark();
 		}
 		// for all other Cuban emails
 		else
@@ -150,7 +147,7 @@ class Email
 	public function sendEmailViaAlias()
 	{
 		// list of aliases
-		$aliases = array('apre.taste+nenito','apretaste+ahora','apretaste+alfa','apretaste+aljuarismi','apretaste+angulo','apretaste+arquimedes','apretaste+beta','apretaste+bolzano','apretaste+bool','apretaste+brahmagupta','apretaste+brutal','apretaste+cantor','apretaste+cauchy','apretaste+chi','apretaste+colonia','apretaste+david','apretaste+delta','apretaste+descartes','apretaste+elias','apretaste+epsilon','apretaste+euclides','apretaste+euler','apretaste+fermat','apretaste+fibonacci','apretaste+fourier','apretaste+francisco','apretaste+gamma','apretaste+gauss','apretaste+gonzalo','apretaste+hilbert','apretaste+hipatia','apretaste+homero','apretaste+imperator','apretaste+isaac','apretaste+james','apretaste+jey','apretaste+kappa','apretaste+kepler','apretaste+key','apretaste+lambda','apretaste+leibniz','apretaste+lota','apretaste+luis','apretaste+manuel','apretaste+mu','apretaste+newton','apretaste+nombre','apretaste+nu','apretaste+ohm','apretaste+omega','apretaste+omicron','apretaste+oscar','apretaste+pablo','apretaste+peta','apretaste+phi','apretaste+pi','apretaste+poincare','apretaste+psi','apretaste+quote','apretaste+ramon','apretaste+rho','apretaste+riemann','apretaste+salomon','apretaste+sigma','apretaste+tales','apretaste+theta','apretaste+travis','apretaste+turing','apretaste+upsilon','apretaste+uva','apretaste+vacio','apretaste+viete','apretaste+weierstrass','apretaste+working','apretaste+xenon','apretaste+xi','apretaste+yeah','apretaste+zeta');
+		$aliases = array('apre.taste+nenito');//,'apretaste+ahora','apretaste+alfa','apretaste+aljuarismi','apretaste+angulo','apretaste+arquimedes','apretaste+beta','apretaste+bolzano','apretaste+bool','apretaste+brahmagupta','apretaste+brutal','apretaste+cantor','apretaste+cauchy','apretaste+chi','apretaste+colonia','apretaste+david','apretaste+delta','apretaste+descartes','apretaste+elias','apretaste+epsilon','apretaste+euclides','apretaste+euler','apretaste+fermat','apretaste+fibonacci','apretaste+fourier','apretaste+francisco','apretaste+gamma','apretaste+gauss','apretaste+gonzalo','apretaste+hilbert','apretaste+hipatia','apretaste+homero','apretaste+imperator','apretaste+isaac','apretaste+james','apretaste+jey','apretaste+kappa','apretaste+kepler','apretaste+key','apretaste+lambda','apretaste+leibniz','apretaste+lota','apretaste+luis','apretaste+manuel','apretaste+mu','apretaste+newton','apretaste+nombre','apretaste+nu','apretaste+ohm','apretaste+omega','apretaste+omicron','apretaste+oscar','apretaste+pablo','apretaste+peta','apretaste+phi','apretaste+pi','apretaste+poincare','apretaste+psi','apretaste+quote','apretaste+ramon','apretaste+rho','apretaste+riemann','apretaste+salomon','apretaste+sigma','apretaste+tales','apretaste+theta','apretaste+travis','apretaste+turing','apretaste+upsilon','apretaste+uva','apretaste+vacio','apretaste+viete','apretaste+weierstrass','apretaste+working','apretaste+xenon','apretaste+xi','apretaste+yeah','apretaste+zeta');
 
 		// select an alias based on your personal email
 		$percent = 0; $alias = NULL;
@@ -248,7 +245,7 @@ class Email
 	{
 		// get the from address
 		$utils = new Utils();
-		$this->from = $utils->randomSentence(1) . "@kekistan.es";
+		$this->from = $utils->randomSentence(1) . "@datacuba.com";
 
 		// get the Mailgun params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -256,8 +253,27 @@ class Email
 
 		// send the email using smtp
 		$host = "smtp.mailgun.org";
-		$user = "postmaster@kekistan.es";
+		$user = "postmaster@datacuba.com";
 		$output = $this->smtp($host, $user, $pass, '465', 'ssl');
+		return $output;
+	}
+
+	/**
+	 * Sends an email using Postmark
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaPostmark()
+	{
+		// get the from address
+		$utils = new Utils();
+		$this->from = $utils->randomSentence(1) . "@datacuba.com";
+
+		// send the email using smtp
+		$host = "smtp.postmarkapp.com";
+		$user = "514aaca0-4e53-4e75-abf2-499419937e1c";
+		$output = $this->smtp($host, $user, $user, '587', 'TLS');
 		return $output;
 	}
 
