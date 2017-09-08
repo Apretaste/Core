@@ -57,7 +57,7 @@ class Email
 		elseif($isNauta)
 		{
 			$res = $this->sendEmailViaWebmail();
-			if($res->code != "200") $res = $this->sendEmailViaPostmark();
+			if($res->code != "200") $res = $this->sendEmailViaNode();
 		}
 		// for all other Cuban emails
 		else
