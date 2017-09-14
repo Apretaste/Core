@@ -153,6 +153,12 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/compose.php?u={$this->composeToken}");
 		$html = curl_exec($this->client);
 
+		if (curl_errno($this->client) !== 0)
+		{
+			$this->utils->createAlert("[NautaClient] Error when load the login form: ".curl_error($this->client)." (to: $to, subject: $subject) ","ERROR");
+			return false;
+		}
+		
 		// parse action attr
 		$s  = "action=\"";
 		$p = strpos($html, $s);
@@ -241,6 +247,12 @@ class NautaClient
 		// send
 		$response = curl_exec($this->client);
 
+		if (curl_errno($this->client) !== 0)
+		{
+			$this->utils->createAlert("[NautaClient] Error when post multipart form: ".curl_error($this->client)." (to: $to, subject: $subject)", "ERROR");
+			return false;
+		}
+		
 		return $response;
 	}
 
