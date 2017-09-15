@@ -158,10 +158,16 @@ class NautaClient
 			$this->utils->createAlert("[NautaClient] Error when load the login form: ".curl_error($this->client)." (to: $to, subject: $subject) ","ERROR");
 			return false;
 		}
-		
+
+    // clear html code
+		while (strpos($html,'  ')!==false) $html = str_replace('  ',' ',$html);
+		while (strpos($html,' =')!==false) $html = str_replace(' =','=',$html);
+		while (strpos($html,'= ')!==false) $html = str_replace('= ','=',$html);
+
 		// parse action attr
-		$s  = "action=\"";
+		$s = "action=\"";
 		$p = strpos($html, $s);
+		if ($p === false) return false;
 		$p += strlen($s);
 		$p1 = strpos($html, '"', $p + 1);
 		$action = substr($html, $p, $p1 - $p);
