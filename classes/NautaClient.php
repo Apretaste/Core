@@ -153,9 +153,15 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/compose.php?u={$this->composeToken}");
 		$html = curl_exec($this->client);
 
+		// clear html code
+		while (strpos($html,'  ')!==false) $html = str_replace('  ',' ',$html);
+		while (strpos($html,' =')!==false) $html = str_replace(' =','=',$html);
+		while (strpos($html,'= ')!==false) $html = str_replace('= ','=',$html);
+
 		// parse action attr
-		$s  = "action=\"";
+		$s = "action=\"";
 		$p = strpos($html, $s);
+		if ($p === false) return false;
 		$p += strlen($s);
 		$p1 = strpos($html, '"', $p + 1);
 		$action = substr($html, $p, $p1 - $p);
