@@ -206,7 +206,7 @@ class RunController extends Controller
 		$toEmail = "apretaste@gmail.com";
 		$ticket = "nobligonyu";
 		$replyIdEmail = "09876543321";
-		$attachEmail = array("/home/salvipascual/SALVI4X34mc2.zip");
+		$attachEmail = array("/home/salvipascual/qwerty.zip");
 */
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
@@ -298,6 +298,27 @@ class RunController extends Controller
 			// render the HTML
 			$render = new Render();
 			$body = $render->renderHTML($service, $response);
+
+			// get notifications since last update
+			$notifications = $connection->query("
+				SELECT id, `text`, origin AS service, link, inserted_date AS received
+				FROM notifications
+				WHERE email='$fromEmail' AND viewed=0
+				ORDER BY inserted_date DESC LIMIT 20");
+
+			// create attached file for notifications
+			if($notifications) {
+				// mark pulled notifications as read
+				$notifID = array();
+				foreach ($notifications as $n) {$notifID[] = $n->id; unset($n->id);}
+				$notifID = implode(",", $notifID);
+				$connection->query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE id IN ($notifID)");
+
+				// create an attachment file for the notifications
+				$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ntf";
+				file_put_contents($ntfFile, json_encode($notifications));
+				$response->attachments[] = $ntfFile;
+			}
 
 			// prepare and send the email
 			$email = new Email();
