@@ -1409,7 +1409,6 @@ class Utils
 		$service->showAds = $result[0]->ads == 1;
 		$service->utils = $this;
 		$service->request = $request;
-		$service->group = $result[0]->group;
 
 		// run the service and get the Response
 		if(empty($subServiceName)) $response = $service->_main($request);
