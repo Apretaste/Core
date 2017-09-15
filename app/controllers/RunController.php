@@ -193,7 +193,7 @@ class RunController extends Controller
 
 		// make the system react in "mode app"
 		$this->di->set('environment', function(){return "app";});
-
+/*
 		// get the email params from the mailgun webhook
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
@@ -201,13 +201,13 @@ class RunController extends Controller
 		$ticket = $res->subject;
 		$replyIdEmail = $res->messageId;
 		$attachEmail = $res->attachments;
-/*
+*/
 		$fromEmail = "salvi.pascual@gmail.com";
 		$toEmail = "apretaste@gmail.com";
 		$ticket = "nobligonyu";
 		$replyIdEmail = "09876543321";
-		$attachEmail = array("/home/salvipascual/SALVI4X34mc2.zip");
-*/
+		$attachEmail = array("/home/salvipascual/qwerty.zip");
+
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
 			$attachEmail = $attachEmail[0];
@@ -256,7 +256,8 @@ class RunController extends Controller
 
 		// save Nauta password if passed
 		if($nautaPass) {
-			$encryptPass = $utils->encrypt($nautaPass);
+//			$encryptPass = $utils->encrypt($nautaPass);
+$encryptPass = "";
 			$connection->query("
 				DELETE FROM authentication WHERE email = '$fromEmail' AND appname = 'apretaste';
 				INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android');");
@@ -283,6 +284,14 @@ class RunController extends Controller
 		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$version, NautaPass:$hasNautaPass");
 		$logger->close();
 
+		// create and save the refresh JSON file
+		include_once "/var/www/Core/services/perfil/service.php";
+		$perfil = new Perfil();
+print_r($perfil); exit;
+		$status = new $perfil->_status($service->request);
+
+print_r($status); exit;
+
 		// send email if can be rendered
 		if($response->render) {
 			// set the layout to blank
@@ -298,7 +307,7 @@ class RunController extends Controller
 			// render the HTML
 			$render = new Render();
 			$body = $render->renderHTML($service, $response);
-
+die($body);
 			// prepare and send the email
 			$email = new Email();
 			$email->id = $idEmail;
