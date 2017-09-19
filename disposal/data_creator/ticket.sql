@@ -1,1 +1,0 @@
-CREATE TABLE `apretaste`.`ticket` ( `ticket_id` INT NULL , `creation_time` TIMESTAMP NOT NULL , `raffle_id` INT(11) NOT NULL , `email` VARCHAR(50) NOT NULL , `paid` BOOLEAN NOT NULL , PRIMARY KEY (`ticket_id`) ) ENGINE = InnoDB;
