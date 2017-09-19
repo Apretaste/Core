@@ -1,1 +1,0 @@
-CREATE TABLE `apretaste`.`invitations` ( `invitation_id` INT NOT NULL AUTO_INCREMENT , `invitation_time` TIMESTAMP NOT NULL , `email_inviter` VARCHAR(50) NOT NULL , `email_invited` VARCHAR(50) NOT NULL , `used` BOOLEAN NOT NULL , `used_time` TIMESTAMP NOT NULL , PRIMARY KEY (`invitation_id`) ) ENGINE = InnoDB;
