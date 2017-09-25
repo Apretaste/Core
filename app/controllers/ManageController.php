@@ -1673,6 +1673,9 @@ class ManageController extends Controller
  		$html .= '</body></html>';
 
  		//die($html);
+		$wwwroot = $this->di->get('path')['root'];
+		if (!class_exists('mPDF'))
+			include_once $wwwroot."/lib/mpdf/mpdf.php";
 
 		$mpdf = new mPDF('','A4', 0, '', 10, 10, 10, 10, 1, 1, 'P');
 		$mpdf->WriteHTML(trim($html));
