@@ -1,6 +1,6 @@
 <?php
 
-class OldusersTask extends \Phalcon\Cli\Task
+class DeactivateusersTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
 	{
