@@ -1411,11 +1411,10 @@ class Utils
 		$service->request = $request;
 
 		// run the service and get the Response
-		if(empty($subServiceName)) $response = $service->_main($request);
-		else{
-			$subserviceFunction = "_$subServiceName";
-			$response = $service->$subserviceFunction($request);
-		}
+		$subserviceFunction = "_$subServiceName";
+
+		if(empty($subServiceName) || ! method_exists($service, $subserviceFunction) ) $response = $service->_main($request);
+		else $response = $service->$subserviceFunction($request);
 
 		// make the responses to be always an array
 		$responses = is_array($response) ? $response : array($response);
