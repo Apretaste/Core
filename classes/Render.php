@@ -69,6 +69,7 @@ class Render
 		$systemVariables = array(
 			// system variables
 			"WWWROOT" => $wwwroot,
+			"APRETASTE_ENVIRONMENT" => $di->get('environment'),
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),

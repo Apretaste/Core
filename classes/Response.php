@@ -46,6 +46,7 @@ class Response
 	{
 		if($cache == "year") $cache = 512640;
 		if($cache == "month") $cache = 43200;
+		if($cache == "week") $cache = 10080;
 		if($cache == "day") $cache = 1440;
 		$this->cache = $cache;
 	}
