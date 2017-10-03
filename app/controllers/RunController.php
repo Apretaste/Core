@@ -305,7 +305,7 @@ class RunController extends Controller
 			// create the extra structure
 			$extra = new stdClass();
 			$extra->username = $person[0]->username;
-			$extra->credit = number_format($person[0]->credit, 2);
+			$extra->credit = number_format($person[0]->credit, 2, '.', '');
 
 			// get notifications since last update
 			$extra->notifications = $connection->query("
