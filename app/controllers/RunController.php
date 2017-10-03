@@ -284,7 +284,7 @@ class RunController extends Controller
 		$logger->close();
 
 		// send email if can be rendered
-		if(isset($response->render)) {
+		if(isset($response->render) && $response->render) {
 			// set the layout to blank
 			$response->setEmailLayout('email_text.tpl');
 
