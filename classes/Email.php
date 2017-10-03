@@ -335,9 +335,9 @@ class Email
 		$imagesToUpload = array();
 		foreach ($this->images as $image) {
 			$item = new stdClass();
-			$item->type = mime_content_type($image);
+			$item->type = file_exists($image) ? mime_content_type($image) : '';
 			$item->name = basename($image);
-			$item->content = base64_encode(file_get_contents($image));
+			$item->content = file_exists($image) ? base64_encode(file_get_contents($image)) : '';
 			$imagesToUpload[] = $item;
 		}
 
@@ -345,9 +345,9 @@ class Email
 		$attachmentsToUpload = array();
 		foreach ($this->attachments as $attachment) {
 			$item = new stdClass();
-			$item->type = mime_content_type($attachment);
+			$item->type = file_exists($attachment) ? mime_content_type($attachment) : '';
 			$item->name = basename($attachment);
-			$item->content = base64_encode(file_get_contents($attachment));
+			$item->content = file_exists($attachment) ? base64_encode(file_get_contents($attachment)) : '';
 			$attachmentsToUpload[] = $item;
 		}
 
@@ -533,8 +533,13 @@ class Email
 		$zip = new ZipArchive;
 		$zip->open($zipFile, ZipArchive::CREATE);
 		$zip->addFromString($htmlFile, $this->body);
-		foreach ($this->images as $i) $zip->addFile($i, basename($i));
-		foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
+
+		if (is_array($this->images))
+			foreach ($this->images as $i) $zip->addFile($i, basename($i));
+
+		if (is_array($this->attachments))
+			foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
+
 		$zip->close();
 
 		// add to the attachments and clean the body
