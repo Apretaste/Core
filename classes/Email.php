@@ -213,9 +213,6 @@ class Email
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "No active email to reach {$this->to}";
-
-			$utils = new Utils();
-			$utils->createAlert($output->message, "ERROR");
 			return $output;
 		}
 
@@ -327,7 +324,6 @@ class Email
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "NODE: No active node to email {$this->to}";
-			$utils->createAlert($output->message, "ERROR");
 			return $output;
 		}
 
@@ -510,6 +506,7 @@ class Email
 			$output->code = "500";
 			$output->message = $e->getMessage();
 
+			// log error with SMTP
 			$utils = new Utils();
 			$utils->createAlert($e->getMessage(), "ERROR");
 		}
