@@ -843,8 +843,12 @@ class Utils
 	 * Get differents statistics
 	 *
 	 * @author kuma
-	 * @param string $stat_name
+	 *
+	 * @param string $statName
 	 * @param array $params
+	 *
+	 * @throws Exception
+	 *
 	 * @return mixed
 	 */
 	public function getStat($statName = 'person.count', $params = array())
@@ -1400,13 +1404,25 @@ class Utils
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
 		$service = new $serviceName();
 		$service->serviceName = $serviceName;
-		$service->serviceDescription = $result[0]->description;
-		$service->creatorEmail = $result[0]->creator_email;
-		$service->serviceCategory = $result[0]->category;
-		$service->serviceUsage = $result[0]->usage_text;
-		$service->insertionDate = $result[0]->insertion_date;
+
+		if (isset($result[0]))
+		{
+			$service->serviceDescription = $result[0]->description;
+			$service->creatorEmail = $result[0]->creator_email;
+			$service->serviceCategory = $result[0]->category;
+			$service->serviceUsage = $result[0]->usage_text;
+			$service->insertionDate = $result[0]->insertion_date;
+			$service->showAds = $result[0]->ads == 1;
+		} else {
+			$service->serviceDescription = '';
+			$service->creatorEmail = 'soporte@apretaste.com';
+			$service->serviceCategory = 'service';
+			$service->serviceUsage = '';
+			$service->insertionDate = date('Y-m-d');
+			$service->showAds = true;
+		}
+
 		$service->pathToService = $pathToService;
-		$service->showAds = $result[0]->ads == 1;
 		$service->utils = $this;
 		$service->request = $request;
 
