@@ -843,8 +843,12 @@ class Utils
 	 * Get differents statistics
 	 *
 	 * @author kuma
-	 * @param string $stat_name
+	 *
+	 * @param string $statName
 	 * @param array $params
+	 *
+	 * @throws Exception
+	 *
 	 * @return mixed
 	 */
 	public function getStat($statName = 'person.count', $params = array())
@@ -1262,30 +1266,27 @@ class Utils
 	 */
 	public function createAlert($text, $type="NOTICE")
 	{
-		// get the group from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$to = $di->get('config')['global']['alerts'];
-
-		// get the details of the alert
-		$date = date('l jS \of F Y h:i:s A');
-		$subject = "$type: $text";
-		$body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: $date";
-
 		// save alert into the database
-		$connection = new Connection();
 		$text = str_replace("'", "", $text);
+		$connection = new Connection();
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send the alert to the error log
+		$subject = "$type: $text";
 		error_log($subject);
 
-		// send email alert to the alerts group in case of errors
-		if($text == "ERROR")
+		// if the email is an error
+		if($type == "ERROR")
 		{
+			// get the group from the configs file
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$to = $di->get('config')['global']['alerts'];
+
+			// send the alert by email
 			$email = new Email();
 			$email->to = $to;
 			$email->subject = $subject;
-			$email->body = $body;
+			$email->body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
@@ -1400,13 +1401,25 @@ class Utils
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
 		$service = new $serviceName();
 		$service->serviceName = $serviceName;
-		$service->serviceDescription = $result[0]->description;
-		$service->creatorEmail = $result[0]->creator_email;
-		$service->serviceCategory = $result[0]->category;
-		$service->serviceUsage = $result[0]->usage_text;
-		$service->insertionDate = $result[0]->insertion_date;
+
+		if (isset($result[0]))
+		{
+			$service->serviceDescription = $result[0]->description;
+			$service->creatorEmail = $result[0]->creator_email;
+			$service->serviceCategory = $result[0]->category;
+			$service->serviceUsage = $result[0]->usage_text;
+			$service->insertionDate = $result[0]->insertion_date;
+			$service->showAds = $result[0]->ads == 1;
+		} else {
+			$service->serviceDescription = '';
+			$service->creatorEmail = 'soporte@apretaste.com';
+			$service->serviceCategory = 'service';
+			$service->serviceUsage = '';
+			$service->insertionDate = date('Y-m-d');
+			$service->showAds = true;
+		}
+
 		$service->pathToService = $pathToService;
-		$service->showAds = $result[0]->ads == 1;
 		$service->utils = $this;
 		$service->request = $request;
 

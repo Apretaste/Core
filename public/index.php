@@ -72,7 +72,6 @@ try
 
 	// Handle the request
 	$application = new Application($di);
-
 	echo $application->handle()->getContent();
 }
 catch(\Phalcon\Mvc\Dispatcher\Exception $e)
