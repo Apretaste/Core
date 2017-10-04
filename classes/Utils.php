@@ -1266,30 +1266,27 @@ class Utils
 	 */
 	public function createAlert($text, $type="NOTICE")
 	{
-		// get the group from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$to = $di->get('config')['global']['alerts'];
-
-		// get the details of the alert
-		$date = date('l jS \of F Y h:i:s A');
-		$subject = "$type: $text";
-		$body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: $date";
-
 		// save alert into the database
-		$connection = new Connection();
 		$text = str_replace("'", "", $text);
+		$connection = new Connection();
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send the alert to the error log
+		$subject = "$type: $text";
 		error_log($subject);
 
-		// send email alert to the alerts group in case of errors
-		if($text == "ERROR")
+		// if the email is an error
+		if($type == "ERROR")
 		{
+			// get the group from the configs file
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$to = $di->get('config')['global']['alerts'];
+
+			// send the alert by email
 			$email = new Email();
 			$email->to = $to;
 			$email->subject = $subject;
-			$email->body = $body;
+			$email->body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
