@@ -71,8 +71,14 @@ try
 	});
 
 	// Handle the request
-	$application = new Application($di);
-	echo $application->handle()->getContent();
+	try{
+		$application = new Application($di);
+		echo $application->handle()->getContent();
+	}catch(Exception $e){
+		// log errors if exist
+		$utils = new Utils();
+		$utils->createAlert($e->getMessage(), "ERROR");
+	}
 }
 catch(\Phalcon\Mvc\Dispatcher\Exception $e)
 {
