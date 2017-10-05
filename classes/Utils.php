@@ -1285,8 +1285,8 @@ class Utils
 			// send the alert by email
 			$email = new Email();
 			$email->to = $to;
-			$email->subject = $subject;
-			$email->body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: ".date('l jS \of F Y h:i:s A');
+			$email->subject = substr($subject, 0, 80);
+			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
