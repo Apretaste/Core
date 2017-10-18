@@ -16,7 +16,6 @@ class Email
 	public $status = "new"; // new, sent, bounced
 	public $message;
 	public $tries = 0;
-	public $app = false; // if sending to email or app
 	public $created; // date
 	public $sent; // date
 
@@ -385,25 +384,36 @@ class Email
 
 		// create thumbnails for images
 		$images = array();
-		foreach ($this->images as $file) {
+		foreach ($this->images as $file)
+		{
+			// thumbnail the image or use thumbnail cache
 			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 			if( ! file_exists($thumbnail)) {
 				copy($file, $thumbnail);
 				$utils->optimizeImage($thumbnail, 100);
 			}
+
 			// use the image only if it can be compressed
 			$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
 		}
 
 		// create thumbnails for attachments
 		$attachments = array();
-		foreach ($this->attachments as $file) {
-			if(explode("/", mime_content_type($file))[0] != "image") continue; // only allow images
+		foreach ($this->attachments as $file)
+		{
+			// thumbnail only images
+			if(explode("/", mime_content_type($file))[0] != "image") {
+				$attachments[] = $file;
+				continue;
+			}
+
+			// thumbnail the image or use thumbnail cache
 			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 			if( ! file_exists($thumbnail)) {
 				copy($file, $thumbnail);
 				$utils->optimizeImage($thumbnail, 100);
 			}
+
 			// use the image only if it can be compressed
 			$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
 		}
