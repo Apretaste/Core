@@ -37,6 +37,9 @@ class Email
 			return $output;
 		}
 
+		// get images from thumbnail or optimize them
+		$this->thumbnailAllImages();
+
 		// check if the email is from Nauta or Cuba
 		$isCuba = substr($this->to, -3) === ".cu";
 		$isNauta = substr($this->to, -9) === "@nauta.cu";
@@ -369,6 +372,45 @@ class Email
 		// else decript and return the password
 		$utils = new Utils();
 		return $utils->decrypt($pass[0]->pass);
+	}
+
+	/**
+	 * Create a thumbnail of all images before sending
+	 *
+	 * @author salvipascual
+	 */
+	private function thumbnailAllImages()
+	{
+		$utils = new Utils();
+
+		// create thumbnails for images
+		$images = array();
+		foreach ($this->images as $file) {
+			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+			if( ! file_exists($thumbnail)) {
+				copy($file, $thumbnail);
+				$utils->optimizeImage($thumbnail, 80);
+			}
+			// use the image only if it can be compressed
+			$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+		}
+
+		// create thumbnails for attachments
+		$attachments = array();
+		foreach ($this->attachments as $file) {
+			if(explode("/", mime_content_type($file))[0] != "image") continue; // only allow images
+			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+			if( ! file_exists($thumbnail)) {
+				copy($file, $thumbnail);
+				$utils->optimizeImage($thumbnail, 80);
+			}
+			// use the image only if it can be compressed
+			$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+		}
+
+		// recreate the arrays of images and attachments
+		$this->images = $images;
+		$this->attachments = $attachments;
 	}
 
 	/**
