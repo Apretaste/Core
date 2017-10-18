@@ -1461,13 +1461,16 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $timestamp
-	 * @return Object
+	 * @return Array(Object, Attachments)
 	 */
 	public function getExternalAppData($email, $timestamp)
 	{
 		// get the last update date
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
+
+		// variable to store attach images
+		$attachments = array();
 
 		// get access to the configuration
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -1522,7 +1525,7 @@ class Utils
 			$res->profile->picture = basename($person->picture_internal);
 
 			// attach user picture if exist
-			if($person->picture_internal) $response->attachments[] = $person->picture_internal;
+			if($person->picture_internal) $attachments[] = $person->picture_internal;
 		}
 
 		// get unread notifications
@@ -1553,7 +1556,7 @@ class Utils
 		foreach ($services as $s) {
 			// attach user picture if exist
 			$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
-			if(file_exists($icon)) $response->attachments[] = $icon;
+			if(file_exists($icon)) $attachments[] = $icon;
 			else $icon = "";
 
 			$service = new stdClass();
@@ -1566,6 +1569,9 @@ class Utils
 			$res->services[] = $service;
 		}
 
-		return $res;
+		// convert to JSON and return array
+		return array(
+			"attachments" => $attachments,
+			"json" => json_encode($res));
 	}
 }
