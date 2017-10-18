@@ -1469,6 +1469,11 @@ class Utils
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
+		// get access to the configuration
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$appversion = $di->get('config')['global']['appversion'];
+		$wwwroot = $di->get('path')['root'];
+
 		// get the person
 		$connection = new Connection();
 		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
@@ -1478,6 +1483,7 @@ class Utils
 		$res->timestamp = time();
 		$res->username = $person[0]->username;
 		$res->credit = number_format($person[0]->credit, 2, '.', '');
+		$res->lastest = $appversion;
 
 		// add the response mailbox
 		// @TODO get mailboxes from the database and always bring the least used one
@@ -1541,10 +1547,6 @@ class Utils
 			SELECT name, description, category, creator_email, insertion_date
 			FROM service
 			WHERE listed=1 AND insertion_date > '$lastUpdateDate'");
-
-		// get the path to the www folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
 
 		// add services to the response
 		$res->services = array();

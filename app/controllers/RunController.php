@@ -206,7 +206,7 @@ class RunController extends Controller
 		$toEmail = "apretaste@gmail.com";
 		$ticket = "nobligonyu";
 		$replyIdEmail = "09876543321";
-		$attachEmail = array("/home/salvipascual/g4X34mc2.zip");
+		$attachEmail = array("/home/salvipascual/g4X34mc1.zip");
 */
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
