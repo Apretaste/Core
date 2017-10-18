@@ -206,7 +206,7 @@ class RunController extends Controller
 		$toEmail = "apretaste@gmail.com";
 		$ticket = "nobligonyu";
 		$replyIdEmail = "09876543321";
-		$attachEmail = array("/home/salvipascual/g4X34mc2.zip");
+		$attachEmail = array("/home/salvipascual/g4X34mc1.zip");
 */
 		// error if no attachment is received
 		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
@@ -323,7 +323,11 @@ class RunController extends Controller
 			// @TODO remove when we get rid of the old version
 			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
 			if($isPerfilStatus) $extra = "{}";
-			else $extra = json_encode($utils->getExternalAppData($fromEmail, $timestamp));
+			else {
+				$res = $utils->getExternalAppData($fromEmail, $timestamp);
+				$response->attachments = array_merge($response->attachments, $res["attachments"]);
+				$extra = $res["json"];
+			}
 
 			// create an attachment file for the extra structure
 			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";

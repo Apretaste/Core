@@ -1461,13 +1461,21 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $timestamp
-	 * @return Object
+	 * @return Array(Object, Attachments)
 	 */
 	public function getExternalAppData($email, $timestamp)
 	{
 		// get the last update date
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
+
+		// variable to store attach images
+		$attachments = array();
+
+		// get access to the configuration
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$appversion = $di->get('config')['global']['appversion'];
+		$wwwroot = $di->get('path')['root'];
 
 		// get the person
 		$connection = new Connection();
@@ -1478,6 +1486,7 @@ class Utils
 		$res->timestamp = time();
 		$res->username = $person[0]->username;
 		$res->credit = number_format($person[0]->credit, 2, '.', '');
+		$res->lastest = $appversion;
 
 		// add the response mailbox
 		// @TODO get mailboxes from the database and always bring the least used one
@@ -1516,7 +1525,7 @@ class Utils
 			$res->profile->picture = basename($person->picture_internal);
 
 			// attach user picture if exist
-			if($person->picture_internal) $response->attachments[] = $person->picture_internal;
+			if($person->picture_internal) $attachments[] = $person->picture_internal;
 		}
 
 		// get unread notifications
@@ -1542,16 +1551,12 @@ class Utils
 			FROM service
 			WHERE listed=1 AND insertion_date > '$lastUpdateDate'");
 
-		// get the path to the www folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-
 		// add services to the response
 		$res->services = array();
 		foreach ($services as $s) {
 			// attach user picture if exist
 			$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
-			if(file_exists($icon)) $response->attachments[] = $icon;
+			if(file_exists($icon)) $attachments[] = $icon;
 			else $icon = "";
 
 			$service = new stdClass();
@@ -1564,6 +1569,9 @@ class Utils
 			$res->services[] = $service;
 		}
 
-		return $res;
+		// convert to JSON and return array
+		return array(
+			"attachments" => $attachments,
+			"json" => json_encode($res));
 	}
 }
