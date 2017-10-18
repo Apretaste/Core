@@ -16,7 +16,6 @@ class Email
 	public $status = "new"; // new, sent, bounced
 	public $message;
 	public $tries = 0;
-	public $app = false; // if sending to email or app
 	public $created; // date
 	public $sent; // date
 
@@ -36,6 +35,9 @@ class Email
 			$output->message = "Email failed with status: $status";
 			return $output;
 		}
+
+		// get images from thumbnail or optimize them
+		$this->thumbnailAllImages();
 
 		// check if the email is from Nauta or Cuba
 		$isCuba = substr($this->to, -3) === ".cu";
@@ -369,6 +371,56 @@ class Email
 		// else decript and return the password
 		$utils = new Utils();
 		return $utils->decrypt($pass[0]->pass);
+	}
+
+	/**
+	 * Create a thumbnail of all images before sending
+	 *
+	 * @author salvipascual
+	 */
+	private function thumbnailAllImages()
+	{
+		$utils = new Utils();
+
+		// create thumbnails for images
+		$images = array();
+		foreach ($this->images as $file)
+		{
+			// thumbnail the image or use thumbnail cache
+			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+			if( ! file_exists($thumbnail)) {
+				copy($file, $thumbnail);
+				$utils->optimizeImage($thumbnail, 100);
+			}
+
+			// use the image only if it can be compressed
+			$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+		}
+
+		// create thumbnails for attachments
+		$attachments = array();
+		foreach ($this->attachments as $file)
+		{
+			// thumbnail only images
+			if(explode("/", mime_content_type($file))[0] != "image") {
+				$attachments[] = $file;
+				continue;
+			}
+
+			// thumbnail the image or use thumbnail cache
+			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+			if( ! file_exists($thumbnail)) {
+				copy($file, $thumbnail);
+				$utils->optimizeImage($thumbnail, 100);
+			}
+
+			// use the image only if it can be compressed
+			$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+		}
+
+		// recreate the arrays of images and attachments
+		$this->images = $images;
+		$this->attachments = $attachments;
 	}
 
 	/**
