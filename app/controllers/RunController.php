@@ -248,30 +248,45 @@ class RunController extends Controller
 			INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
 			VALUES ('$fromEmail', '$toEmail', '$ticket', '$replyIdEmail', '$attachStr', 'app')");
 
-		// run the request and get the service and responses
-		$file = file("$temp/$folderName/$textFile");
-		$text = trim($file[0]);
-		$version = empty($file[1]) ? "" : trim($file[1]);
-		$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
+		// get the input if the data is a JSON
+		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
+		if($input) {
+			$text = $input->text;
+			$appversion = $input->appversion;
+			$osversion = $input->osversion;
+			$nautaPass = $input->token;
+			$timestamp = $input->timestamp;
+		}
+		// get the input if the data is plain text (version <= 2.5)
+		// @TODO remove when v2.5 is not in use anymore
+		else{
+			$file = file("$temp/$folderName/$textFile");
+			$text = trim($file[0]);
+			$appversion = empty($file[1]) ? "" : trim($file[1]);
+			$osversion = false;
+			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
+			$timestamp = time(); // get only notifications
+		}
 
 		// save Nauta password if passed
 		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
 			$connection->query("
 				DELETE FROM authentication WHERE email = '$fromEmail' AND appname = 'apretaste';
-				INSERT INTO authentication (email, pass, appname, platform) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android');");
+				INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android', '$osversion');");
 		}
 
 		// update last access time to current and make person active
 		$personExist = $utils->personExist($fromEmail);
 		if ($personExist) {
-			$connection->query("UPDATE person SET active=1, appversion='$version', last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
+			$connection->query("UPDATE person SET active=1, appversion='$appversion', last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
 		} else {
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($fromEmail);
-			$connection->query("INSERT INTO person (email, username, last_access, source, appversion) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, 'app', '$version')");
+			$connection->query("INSERT INTO person (email, username, last_access, source, appversion) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, 'app', '$appversion')");
 		}
 
+		// run the request
 		$ret = $utils->runRequest($fromEmail, $text, '', $attachs);
 		$service = $ret->service;
 		$response = $ret->responses[0];
@@ -280,51 +295,39 @@ class RunController extends Controller
 		$hasNautaPass = $nautaPass ? 1 : 0;
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$version, NautaPass:$hasNautaPass");
+		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$appversion, NautaPass:$hasNautaPass");
 		$logger->close();
 
-		// send email if can be rendered
-		if(isset($response->render) && $response->render) {
+		// if the request needs an email back
+		if(isset($response->render) && $response->render)
+		{
 			// set the layout to blank
 			$response->setEmailLayout('email_text.tpl');
 
-			// is there is a cache time, add
+			// is there is a cache time, add it
 			if($response->cache) {
 				$cache = "$temp{$response->cache}.cache";
 				file_put_contents($cache, "");
 				$response->attachments[] = $cache;
 			}
 
-			// render the HTML
-			$render = new Render();
-			$body = $render->renderHTML($service, $response);
-
-			// create the json with the username and credit
-			$person = $connection->query("SELECT username, credit FROM person WHERE email='$fromEmail'");
-
-			// create the extra structure
-			$extra = new stdClass();
-			$extra->username = $person[0]->username;
-			$extra->credit = number_format($person[0]->credit, 2, '.', '');
-
-			// get notifications since last update
-			$extra->notifications = $connection->query("
-				SELECT id, `text`, origin AS service, link, inserted_date AS received
-				FROM notifications
-				WHERE email='$fromEmail' AND viewed=0
-				ORDER BY inserted_date DESC LIMIT 20");
-
-			// mark pulled notifications as read
-			if($extra->notifications) {
-				$notifID = array();
-				foreach ($extra->notifications as $n) {$notifID[] = $n->id; unset($n->id);}
-				$notifID = implode(",", $notifID);
-				$connection->query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE id IN ($notifID)");
+			// render the HTML, unless it is a status call
+			if($text == "status") $body = "{}";
+			else {
+				$render = new Render();
+				$body = $render->renderHTML($service, $response);
 			}
+
+			// get extra data for the app
+			// if the old version is calling status, do not get extra data
+			// @TODO remove when we get rid of the old version
+			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
+			if($isPerfilStatus) $extra = "{}";
+			else $extra = json_encode($utils->getExternalAppData($fromEmail, $timestamp));
 
 			// create an attachment file for the extra structure
 			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";
-			file_put_contents($ntfFile, json_encode($extra));
+			file_put_contents($ntfFile, $extra);
 			$response->attachments[] = $ntfFile;
 
 			// prepare and send the email
