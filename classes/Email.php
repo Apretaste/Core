@@ -389,7 +389,7 @@ class Email
 			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 			if( ! file_exists($thumbnail)) {
 				copy($file, $thumbnail);
-				$utils->optimizeImage($thumbnail, 80);
+				$utils->optimizeImage($thumbnail, 100);
 			}
 			// use the image only if it can be compressed
 			$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
@@ -402,7 +402,7 @@ class Email
 			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 			if( ! file_exists($thumbnail)) {
 				copy($file, $thumbnail);
-				$utils->optimizeImage($thumbnail, 80);
+				$utils->optimizeImage($thumbnail, 100);
 			}
 			// use the image only if it can be compressed
 			$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
