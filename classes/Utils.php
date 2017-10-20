@@ -1472,11 +1472,6 @@ class Utils
 		// variable to store attach images
 		$attachments = array();
 
-		// get access to the configuration
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$appversion = $di->get('config')['global']['appversion'];
-		$wwwroot = $di->get('path')['root'];
-
 		// get the person
 		$connection = new Connection();
 		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
@@ -1486,7 +1481,6 @@ class Utils
 		$res->timestamp = time();
 		$res->username = $person[0]->username;
 		$res->credit = number_format($person[0]->credit, 2, '.', '');
-		$res->lastest = $appversion;
 
 		// add the response mailbox
 		// @TODO get mailboxes from the database and always bring the least used one
@@ -1545,6 +1539,10 @@ class Utils
 		$active = $connection->query("SELECT name FROM service WHERE listed=1");
 		foreach ($active as $a) $res->active[] = $a->name;
 
+		// get access to the configuration
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
 		// get all services since last update
 		$services = $connection->query("
 			SELECT name, description, category, creator_email, insertion_date
@@ -1568,6 +1566,10 @@ class Utils
 			$service->icon = basename($icon);
 			$res->services[] = $service;
 		}
+
+		// get the latest versin from the config
+		$appversion = $di->get('config')['global']['appversion'];
+		$res->latest = "$appversion";
 
 		// convert to JSON and return array
 		return array(

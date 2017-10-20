@@ -2,6 +2,8 @@ mkdir temp
 mkdir temp/templates_c
 mkdir temp/cache
 mkdir temp/thumbnails
+mkdir temp/mails
+mkdir temp/attachments
 mkdir services
 mkdir logs
 mkdir public/ads
@@ -21,10 +23,8 @@ touch logs/crawler.log
 touch logs/campaigns.log
 touch logs/app.log
 touch logs/api.log
-chmod 777 temp
-chmod 777 temp/templates_c
-chmod 777 temp/cache
-chmod 777 temp/thumbnails
+chmod -R 777 temp
+chmod -R 777 logs
 chmod 777 services
 chmod 777 public/ads
 chmod 777 public/profile
@@ -32,14 +32,3 @@ chmod 777 public/raffle
 chmod 777 public/tienda
 chmod 777 public/temp
 chmod 777 public/download
-chmod 777 logs/error.log
-chmod 777 logs/access.log
-chmod 777 logs/badqueries.log
-chmod 777 logs/mailgun.log
-chmod 777 logs/mandrill.log
-chmod 777 logs/remarketing.log
-chmod 777 logs/webhook.log
-chmod 777 logs/crawler.log
-chmod 777 logs/campaigns.log
-chmod 777 logs/app.log
-chmod 777 logs/api.log
