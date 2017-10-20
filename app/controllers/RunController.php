@@ -136,7 +136,7 @@ class RunController extends Controller
 		{
 			// get the path for the image
 			$wwwroot = $this->di->get('path')['root'];
-			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
+			$temp = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
 
 			// clean base64 string
 			$data = explode(',', $attachment);
@@ -144,14 +144,14 @@ class RunController extends Controller
 
 			// save base64 string as a JPG image
 			$im = imagecreatefromstring(base64_decode($data));
-			imagejpeg($im, $filePath);
+			imagejpeg($im, $temp);
 			imagedestroy($im);
 
 			// optimize the image and grant full permits
-			$utils->optimizeImage($filePath);
-			chmod($filePath, 0777);
+			$utils->optimizeImage($temp);
+			chmod($temp, 0777);
 
-			$attach[] = $filePath;
+			$attach[] = $temp;
 		}
 
 		// create a new render
@@ -194,8 +194,9 @@ class RunController extends Controller
 		// make the system react in "mode app"
 		$this->di->set('environment', function(){return "app";});
 
-		// get the email params from the mailgun webhook
-		$res = $this->formatMailgunWebhook($_POST);
+		// get the email params from the webhook
+		$res = $this->formatAmazonWebhook();
+//		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
 		$toEmail = $res->toEmail;
 		$ticket = $res->subject;
@@ -578,6 +579,102 @@ class RunController extends Controller
 			INSERT INTO utilization (email_id, service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
 			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain',$adTop,$adBottom)");
 		return true;
+	}
+
+	/**
+	 * Get the POST from Amazon AWS and return the array of data
+	 */
+	private function formatAmazonWebhook()
+	{
+		// get the Bucket & KeyName from the request
+		$json = file_get_contents('php://input');
+		$notification = json_decode($json);
+		$message = json_decode($notification->Message);
+		$keyname = $message->Records[0]->s3->object->key;
+		$bucket = 'apretaste-webhook';
+
+		// get the SNS key and secret
+		$key = $this->di->get('config')['amazon']['key'];
+		$secret = $this->di->get('config')['amazon']['secret'];
+
+		// get the temp folder
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+
+		// instantiate the client
+		$s3Client = new S3Client([
+			'version' => '2006-03-01',
+			'region'  => 'us-east-1',
+			'credentials' => ['key'=>$key, 'secret'=>$secret]
+		]);
+
+		// save file from SNS to the temp folder
+		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp.$keyname));
+
+		// parse the file
+		$parser = new PhpMimeMailParser\Parser();
+		$parser->setPath($temp."mails/".$keyname);
+		$messageId = $parser->getHeader('message-id');
+		$from = $parser->getAddresses('from');
+		$fromEmail = $from[0]['address'];
+		$fromName = $from[0]['display'];
+		$toEmail = $parser->getAddresses('to')[0]['address'];
+		$subject = $parser->getHeader('subject');
+		$body = $parser->getMessageBody('text');
+		$attachs = $parser->getAttachments();
+
+		// treat emails to download the app
+		// @TODO @HACK this is a hack and should not stay long term
+		if($toEmail == "navegacuba@gmail.com") $subject = "app";
+
+		// save attachments to the temp folder
+		$attachments = array();
+		if($attachs)
+		{
+			$attachs = $parser->saveAttachments($temp."attachments/");
+			foreach ($attachs as $attach)
+			{
+				$name = $utils->generateRandomHash();
+				$mimeType = mime_content_type($attach);
+
+				// convert to JPG and optimize image
+				if(substr($mimeType, 0, strlen("image")) === "image")
+				{
+					$newFile = $temp."attachments/$name.jpg";
+					imagejpeg(imagecreatefromstring(file_get_contents($attach)), $newFile);
+					$utils->optimizeImage($newFile);
+					unlink($attach);
+				}
+				// save any other file to the temporals
+				else
+				{
+					// rename the file
+					$ext = pathinfo($attach, PATHINFO_EXTENSION);
+					$newFile = $temp."attachments/$name.$ext";
+					rename($attach, $newFile);
+				}
+
+				// add to array of attachments
+				$attachments[] = $newFile;
+			}
+		}
+
+		// remove chars that can break the SQL code
+		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+		$body = str_replace("'", "", $body);
+		$messageId = str_replace(array("<",">","'"), "", $messageId);
+
+		// respond with info
+		$response = new stdClass();
+		$response->fromEmail = $fromEmail;
+		$response->fromName = $fromName;
+		$response->toEmail = $toEmail;
+		$response->subject = $subject;
+		$response->body = $body;
+		$response->attachments = $attachments;
+		$response->messageId = $messageId;
+error_log(print_r($response, true));
+		return $response;
 	}
 
 	/**
