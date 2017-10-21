@@ -61,6 +61,7 @@ class RunController extends Controller
 	public function supportAction()
 	{
 		// format the response when comes from mailgun
+//		$res = $this->formatAmazonWebhook();
 		$response = $this->formatMailgunWebhook($_POST);
 		$fromEmail = trim($response->fromEmail);
 		$subject = str_replace("'", "", $response->subject);
@@ -195,8 +196,8 @@ class RunController extends Controller
 		$this->di->set('environment', function(){return "app";});
 
 		// get the email params from the webhook
-		$res = $this->formatAmazonWebhook();
-//		$res = $this->formatMailgunWebhook($_POST);
+//		$res = $this->formatAmazonWebhook();
+		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
 		$toEmail = $res->toEmail;
 		$ticket = $res->subject;
@@ -385,6 +386,7 @@ class RunController extends Controller
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// get the email params from the mailgun webhook
+//		$res = $this->formatAmazonWebhook();
 		$res = $this->formatMailgunWebhook($_POST);
 		$fromEmail = $res->fromEmail;
 		$toEmail = $res->toEmail;
@@ -586,30 +588,32 @@ class RunController extends Controller
 	 */
 	private function formatAmazonWebhook()
 	{
-		// get the Bucket & KeyName from the request
+		// capture a valid SNS notification
 		$json = file_get_contents('php://input');
 		$notification = json_decode($json);
+		if(empty($notification)) return false;
+
+		// get the Bucket & KeyName from the request
 		$message = json_decode($notification->Message);
 		$keyname = $message->Records[0]->s3->object->key;
 		$bucket = 'apretaste-webhook';
-
-		// get the SNS key and secret
-		$key = $this->di->get('config')['amazon']['key'];
-		$secret = $this->di->get('config')['amazon']['secret'];
 
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
 
 		// instantiate the client
-		$s3Client = new S3Client([
-			'version' => '2006-03-01',
-			'region'  => 'us-east-1',
-			'credentials' => ['key'=>$key, 'secret'=>$secret]
+		$s3Client = new Aws\S3\S3Client([
+			'version'=>'2006-03-01',
+			'region'=>'us-east-1',
+			'credentials'=>[
+				'key'=>$this->di->get('config')['sns']['key'],
+				'secret'=>$this->di->get('config')['sns']['secret']
+			]
 		]);
 
 		// save file from SNS to the temp folder
-		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp.$keyname));
+		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
 
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
@@ -673,7 +677,6 @@ class RunController extends Controller
 		$response->body = $body;
 		$response->attachments = $attachments;
 		$response->messageId = $messageId;
-error_log(print_r($response, true));
 		return $response;
 	}
 
