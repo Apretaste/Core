@@ -61,7 +61,8 @@ try
 		"host" => $config['database']['host'],
 		"username" => $config['database']['user'],
 		"password" => $config['database']['password'],
-		"dbname"   => $config['database']['database']
+		"dbname"   => $config['database']['database'],
+		"persistent" => true
 	)));
 
 	// get the environment
