@@ -75,6 +75,7 @@ class Email
 		// save a trace that the email failed and alert
 		else
 		{
+if($res->code == "515") return $res; // @TODO remove this line
 			$connection->query("INSERT INTO delivery_dropped (email,sender,reason,`code`,description) VALUES ('{$this->to}','{$this->from}','failed','{$res->code}','{$this->message}')");
 			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
 		}
