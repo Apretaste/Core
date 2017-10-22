@@ -18,12 +18,19 @@ class Utils
 	 */
 	public function getValidEmailAddress($seed="")
 	{
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
 		// get a random mailbox
 		$connection = new Connection();
-		$node = $connection->query("SELECT email FROM nodes_input WHERE active=1 ORDER BY RAND() LIMIT 1");
-		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
+		$node = $connection->query("
+			SELECT email FROM delivery_input
+			WHERE environment='$environment' AND active=1
+			ORDER BY RAND() LIMIT 1");
 
 		// add alias to the email
+		$name = $node[0]->email;
 		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
 		if(empty($seed)) $seed = $this->randomSentence(1);
 		return "$name+$seed@gmail.com";
@@ -413,9 +420,9 @@ class Utils
 		// block address with same requested service in last hour
 		$lastreceived = $connection->query(
 			"SELECT COUNT(id) as total
-			FROM delivery_received
+			FROM delivery
 			WHERE user = '$to'
-			AND TIME(timediff(CURRENT_TIMESTAMP, inserted)) <= TIME('00:30:00')");
+			AND TIME(timediff(CURRENT_TIMESTAMP, request_date)) <= TIME('00:30:00')");
 		if (isset($lastreceived[0]->total) && $lastreceived[0]->total > 30) $msg = 'loop';
 
 		// block intents from blacklisted emails @TODO create a table for emails blacklisted

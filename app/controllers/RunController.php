@@ -137,23 +137,29 @@ class RunController extends Controller
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// get data from Amazon AWS webhook
-		$res = $this->callAmazonWebhook();
-/*
+//		$this->callAmazonWebhook();
+
 		// test data
 		$this->fromEmail = "salvi.pascual@gmail.com";
-		$this->toEmail = "apretaste@gmail.com";
+		$this->toEmail = "navegacuba@gmail.com";
 		$this->subject = "nobligonyu";
 		$this->messageId = "09876543321";
 		$this->attachments = array("/home/salvipascual/g4X34mc1.zip");
-*/
+
 		// do not continue procesing the email if the sender is not valid
 		$utils = new Utils();
-		$status = $utils->deliveryStatus($this->fromEmail, 'in');
-		if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
+//@TODO uncomment
+//		$status = $utils->deliveryStatus($this->fromEmail, 'in');
+//		if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
 
-		// get the runner from the email
-		// @TODO
-		$runner = "app";
+		// get the environment from the email
+		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
+		$connection = new Connection();
+		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
+		$environment = empty($res) ? "default" : $res[0]->environment;
+
+		// update the number of emails received
+		$connection->query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// update last access time and make person active
 		$personExist = $utils->personExist($this->fromEmail);
@@ -161,41 +167,40 @@ class RunController extends Controller
 		else {
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($this->fromEmail);
-			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$runner')");
+			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
 		}
 
 		// insert a new email in the delivery table and get the ID
-		$attachStr = implode(",", $this->attachments);
-		$this->idEmail = $connection->query("INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
-			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '{$this->subject}', '{$this->messageId}', '$attachStr', '$runner')");
+		$attachs = array();
+		foreach ($this->attachments as $a) $attachs[] = basename($a);
+		$attachsStr = implode(",", $attachs);
+		$domain = explode("@", $this->fromEmail)[1];
+		$this->idEmail = $connection->query("
+			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attachsStr')");
 
 		// set the running environment
-		$this->di->set('environment', function(){return $runner;});
+		$this->di->set('environment', function() use($environment) {return $environment;});
 
-		// call the right runner type
-		if($runner == "app") $log = $this->runApp();
-		elseif($runner == "email") $log = $this->runEmail();
-		elseif($runner == "download") {$this->subject = "app"; $log = $this->runEmail();}
-		else $log = $this->runSupport();
+		// execute the right environment type
+		if($environment == "app") $log = $this->runApp();
+		elseif($environment == "email") $log = $this->runEmail();
+		elseif($environment == "download") {
+			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
+			if( ! $startWithApp) $this->subject = "app";
+			$log = $this->runEmail();
+		}else $log = $this->runSupport();
 
-		// calculate execution time when the service stopped executing
+		// save execution time to the db
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-
-		// get the user email domainEmail
-//		$emailPieces = explode("@", $this->fromEmail);
-//		$domain = $emailPieces[1];
-
-		// @TODO update values in the delivery table
-//		$connection->query("
-//			INSERT INTO utilization	(email_id, service, subservice, query, requestor, request_time, response_time, domain)
-//			VALUES ('{$this->idEmail}','TODO','TODO','TODO','{$this->fromEmail}','$execStartTime','$executionTime','$domain')");
+		$connection->query("UPDATE delivery SET process_time='$executionTime' WHERE id='{$this->idEmail}'");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("$runner | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
 		$logger->close();
 	}
 
@@ -317,19 +322,16 @@ class RunController extends Controller
 			$email->attachments = $response->attachments;
 			$email->setContentAsZipAttachment();
 			$output = $email->send();
-
-			// @TODO update values in the delivery table
-//			$connection->query("
-//				UPDATE delivery_received SET
-//				code='{$output->code}', message='{$output->message}', sent=CURRENT_TIMESTAMP
-//				WHERE id='{$this->idEmail}'");
 		}
 
-		// @TODO update values in the delivery table
-//		$safeQuery = $connection->escape($service->request->query);
-//		$connection->query("
-//			INSERT INTO utilization (email_id, service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
-//			VALUES ('{$this->idEmail}','{$service->serviceName}','{$service->request->subservice}','$safeQuery','{$this->fromEmail}','$execStartTime','$executionTime','$domain',$adTop,$adBottom)");
+		// update values in the delivery table
+		$safeQuery = $connection->escape($service->request->query);
+		$connection->query("
+			UPDATE delivery SET
+			request_service='{$service->serviceName}',
+			request_subservice='{$service->request->subservice}',
+			request_query='$safeQuery'
+			WHERE id='{$this->idEmail}'");
 
 		// return message for the log
 		$hasNautaPass = $nautaPass ? 1 : 0;
@@ -343,6 +345,7 @@ class RunController extends Controller
 	private function runEmail()
 	{
 		// run the request and get the service and response
+		$utils = new Utils();
 		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
 		$service = $ret->service;
 		$response = $ret->responses[0];
@@ -366,11 +369,15 @@ class RunController extends Controller
 			$email->send();
 		}
 
-		// @TODO update values in the delivery table
-//		$safeQuery = $connection->escape($service->request->query);
-//		$connection->query("
-//			INSERT INTO utilization (email_id, service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
-//			VALUES ('{$this->idEmail}','{$service->serviceName}','{$service->request->subservice}','$safeQuery','{$this->fromEmail}','$execStartTime','$executionTime','$domain',$adTop,$adBottom)");
+		// update values in the delivery table
+		$connection = new Connection();
+		$safeQuery = $connection->escape($service->request->query);
+		$connection->query("
+			UPDATE delivery SET
+			request_service='{$service->serviceName}',
+			request_subservice='{$service->request->subservice}',
+			request_query='$safeQuery'
+			WHERE id='{$this->idEmail}'");
 
 		// return message for the log
 		return "Email received and sent";
@@ -400,6 +407,7 @@ class RunController extends Controller
 	 */
 	private function callAmazonWebhook()
 	{
+/* @TODO uncomment
 		// capture a valid SNS notification
 		$json = file_get_contents('php://input');
 		$notification = json_decode($json);
@@ -409,11 +417,11 @@ class RunController extends Controller
 		$message = json_decode($notification->Message);
 		$keyname = $message->Records[0]->s3->object->key;
 		$bucket = 'apretaste-webhook';
-
+*/
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
-
+/*
 		// instantiate the client
 		$s3Client = new Aws\S3\S3Client([
 			'version'=>'2006-03-01',
@@ -426,6 +434,7 @@ class RunController extends Controller
 
 		// save file from SNS to the temp folder
 		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
+*/$keyname="jmcssejh1s21bbm557hg7tl5ll62v63jfa900fg1";
 
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
@@ -438,10 +447,6 @@ class RunController extends Controller
 		$subject = $parser->getHeader('subject');
 		$body = $parser->getMessageBody('text');
 		$attachs = $parser->getAttachments();
-
-		// treat emails to download the app
-		// @TODO @HACK this is a hack and should not stay long term
-		if($toEmail == "navegacuba@gmail.com") $subject = "app";
 
 		// save attachments to the temp folder
 		$attachments = array();
@@ -516,10 +521,6 @@ class RunController extends Controller
 		// clean incoming emails
 		$fromEmail = str_replace("'", "", $fromEmail);
 		$toEmail = str_replace("'", "", $toEmail);
-
-		// treat emails to download the app
-		// @TODO @HACK this is a hack and should not stay long term
-		if($toEmail == "navegacuba@gmail.com") $subject = "app";
 
 		// obtain the ID of the message to make it "respond" to the email
 		$messageID = null;

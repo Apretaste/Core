@@ -12,11 +12,7 @@ class Email
 	public $replyId; // id to reply
 	public $attachments = array(); // array of paths
 	public $images = array(); // array of paths
-	public $group = 'apretaste';
-	public $status = "new"; // new, sent, bounced
-	public $message;
-	public $tries = 0;
-	public $created; // date
+	public $method;
 	public $sent; // date
 
 	/**
@@ -49,35 +45,25 @@ class Email
 		// if is Nauta and we have the user's password
 		elseif($isNautaWithPass) $res = $this->sendEmailViaWebmail();
 		// for the Nauta accounts where we don't have the password
-		elseif($isNauta) $res = $this->sendEmailViaNode();
+		elseif($isNauta) $res = $this->sendEmailViaGmail();
 		// for all other Cuban emails
 		else $res = $this->sendEmailViaAlias();
 
-		// update the object
-		$this->tries++;
-		$this->message = str_replace("'", "", $res->message); // single quotes break the SQL
-		$this->status = $res->code == "200" ? "sent" : "error";
-		if($res->code == "200") $this->sent = date("Y-m-d H:i:s");
-
 		// update the database with the email sent
+		$res->message = str_replace("'", "", $res->message); // single quotes break the SQL
 		$connection = new Connection();
-		$sentDate = $res->code == "200" ? "sent=CURRENT_TIMESTAMP," : "";
-		$connection->query("UPDATE delivery_received SET $sentDate status='{$this->status}', message='{$this->message}', tries=tries+1 WHERE id='{$this->id}'");
+		$connection->query("
+			UPDATE delivery SET
+			delivery_code='{$res->code}',
+			delivery_message='{$res->message}',
+			delivery_method='{$this->method}',
+			delivery_date = CURRENT_TIMESTAMP
+			WHERE id='{$this->id}'");
 
-		// save a trace that the email was sent
-		if($res->code == "200")
-		{
-			$subject = str_replace("'", "", $this->subject);
-			$attachments = count($this->attachments);
-			$images = count($this->images);
-			$connection->query("INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin) VALUES ('{$this->from}','{$this->to}','$subject','$images','$attachments','{$this->group}','{$this->id}')");
-		}
-		// save a trace that the email failed and alert
-		else
-		{
-if($res->code == "515") return $res; // @TODO remove this line
-			$connection->query("INSERT INTO delivery_dropped (email,sender,reason,`code`,description) VALUES ('{$this->to}','{$this->from}','failed','{$res->code}','{$this->message}')");
-			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
+		// create an alert if the email failed
+		if($res->code != "200" && $res->code != "515") {
+			$alert = "Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}";
+			$utils->createAlert($alert, "ERROR");
 		}
 
 		// return {code, message} structure
@@ -85,7 +71,7 @@ if($res->code == "515") return $res; // @TODO remove this line
 	}
 
 	/**
-	 * Overload of the send () function for backward compatibility
+	 * Overload of the function send() for backward compatibility
 	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
@@ -120,10 +106,9 @@ if($res->code == "515") return $res; // @TODO remove this line
 		$port = '465';
 		$security = 'ssl';
 
-		// select the from part if empty
-		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
-
 		// send the email using smtp
+		if(empty($this->method)) $this->method = "amazon";
+		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
 		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
@@ -150,6 +135,7 @@ if($res->code == "515") return $res; // @TODO remove this line
 		}
 
 		// send the email using Amazon
+		$this->method = "alias";
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
 	}
@@ -160,8 +146,10 @@ if($res->code == "515") return $res; // @TODO remove this line
 	 * @author salvipascual
 	 * @return {"code", "message"}
 	 */
-	public function sendEmailViaNode()
+	public function sendEmailViaGmail()
 	{
+		$this->method = "gmail";
+
 		// every new day set the daily counter back to zero
 		$connection = new Connection();
 		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
@@ -178,7 +166,6 @@ if($res->code == "515") return $res; // @TODO remove this line
 				SELECT * FROM nodes_output A JOIN nodes B
 				ON A.node = B.`key`
 				WHERE A.active = '1'
-				AND `group` LIKE '%{$this->group}%'
 				AND A.`limit` > A.daily
 				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
 
@@ -277,6 +264,8 @@ if($res->code == "515") return $res; // @TODO remove this line
 	 */
 	public function sendEmailViaWebmail()
 	{
+		$this->method = "hillary";
+
 		// return error if the password do not exist in our database
 		$pass = $this->getNautaPassword($this->to);
 		if( ! $pass) {
@@ -313,7 +302,7 @@ if($res->code == "515") return $res; // @TODO remove this line
 			$output->message = "Sent to {$this->to}";
 			return $output;
 		}
-		// if the client cannot login, send via Node
+		// if the client cannot login show error
 		else
 		{
 			$output = new stdClass();
