@@ -15,13 +15,10 @@ mkdir public/download
 touch logs/error.log
 touch logs/access.log
 touch logs/badqueries.log
-touch logs/mailgun.log
-touch logs/mandrill.log
 touch logs/webhook.log
 touch logs/crawler.log
-touch logs/campaigns.log
-touch logs/app.log
 touch logs/api.log
+touch logs/amazon.log
 chmod -R 777 temp
 chmod -R 777 logs
 chmod 777 services

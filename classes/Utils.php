@@ -389,6 +389,7 @@ class Utils
 	public function deliveryStatus($email)
 	{
 		// check if we already have a status for the email
+		$connection = new Connection();
 		$res = $connection->query("SELECT status FROM delivery_checked WHERE email='$email'");
 		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
 
@@ -405,7 +406,6 @@ class Utils
 		) $status = 'no-reply';
 
 		// block emails sending 30+ of the same request in 5 mins
-		$connection = new Connection();
 		if(empty($status)) {
 			$received = $connection->query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
 			if ($received[0]->total > 30) $status = 'loop';
