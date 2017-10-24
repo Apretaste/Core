@@ -416,8 +416,8 @@ class RunController extends Controller
 		// get the Bucket & KeyName from the request
 		$message = json_decode($notification->Message);
 		$keyname = $message->Records[0]->s3->object->key;
-		$bucket = 'apretaste-webhook';
 
+		$bucket = 'apretaste-webhook';
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
@@ -429,8 +429,7 @@ class RunController extends Controller
 			'credentials'=>[
 				'key'=>$this->di->get('config')['sns']['key'],
 				'secret'=>$this->di->get('config')['sns']['secret']
-			]
-		]);
+			]]);
 
 		// save file from SNS to the temp folder
 		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
@@ -438,14 +437,24 @@ class RunController extends Controller
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
 		$parser->setPath($temp."mails/".$keyname);
-		$messageId = $parser->getHeader('message-id');
+		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
 		$from = $parser->getAddresses('from');
 		$fromEmail = $from[0]['address'];
 		$fromName = $from[0]['display'];
-		$toEmail = $parser->getAddresses('to')[0]['address'];
 		$subject = $parser->getHeader('subject');
 		$body = $parser->getMessageBody('text');
 		$attachs = $parser->getAttachments();
+
+		// get the TO address
+		$to = $parser->getAddresses('Delivered-To');
+		if(empty($to)) $to = $parser->getAddresses('to');
+		$toEmail = $to[0]['address'];
+
+		// display the Amazon SNS log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
+		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n\n");
+		$logger->close();
 
 		// save attachments to the temp folder
 		$attachments = array();
@@ -480,7 +489,6 @@ class RunController extends Controller
 		}
 
 		// save variables in the class
-		$this->messageId = str_replace(array("<",">","'"), "", $messageId);
 		$this->fromName = $fromName;
 		$this->fromEmail = $fromEmail;
 		$this->toEmail = $toEmail;
