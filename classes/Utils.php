@@ -29,6 +29,9 @@ class Utils
 			WHERE environment='$environment' AND active=1
 			ORDER BY RAND() LIMIT 1");
 
+		// return the default email
+		if(empty($node)) return "apretaste@gmail.com";
+
 		// add alias to the email
 		$name = $node[0]->email;
 		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
@@ -121,21 +124,6 @@ class Utils
 	{
 		$connection = new Connection();
 		$res = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
-		return count($res) > 0;
-	}
-
-	/**
-	 * Check if a person was invited by the same host and it is still pending
-	 *
-	 * @author salvipascual
-	 * @param String $host, Email of the person who is inviting
-	 * @param String $guest, Email of the person invited
-	 * @return Boolean, true if the invitation is pending
-	 */
-	public function checkPendingInvitation($host, $guest)
-	{
-		$connection = new Connection();
-		$res = $connection->query("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
 		return count($res) > 0;
 	}
 
@@ -398,141 +386,56 @@ class Utils
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 */
-	public function deliveryStatus($to, $direction="out")
+	public function deliveryStatus($email)
 	{
-		// never block emails from the team and specially the testers
-		$connection = new Connection();
-		$managers = $connection->query("SELECT email FROM manage_users");
-		foreach ($managers as $manager) if($manager->email == $to) return "ok";
-
-		// variable to save the final response message
-		$msg = "";
-
-		// block people following the example email
-		if(empty($msg) && $to == "su@amigo.cu") $msg = 'hard-bounce';
-
-		// check if the email is formatted properly
-		if (empty($msg) && ! filter_var($to, FILTER_VALIDATE_EMAIL)) $msg = 'hard-bounce';
-
-		// block email from/to our customer support
-		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
-
-		// block address with same requested service in last hour
-		$lastreceived = $connection->query(
-			"SELECT COUNT(id) as total
-			FROM delivery
-			WHERE user = '$to'
-			AND TIME(timediff(CURRENT_TIMESTAMP, request_date)) <= TIME('00:30:00')");
-		if (isset($lastreceived[0]->total) && $lastreceived[0]->total > 30) $msg = 'loop';
-
-		// block intents from blacklisted emails @TODO create a table for emails blacklisted
-		if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
+		// check if we already have a status for the email
+		$res = $connection->query("SELECT status FROM delivery_checked WHERE email='$email'");
+		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
 
 		// block no reply emails
-		if(empty($msg) && (
-			stripos($to,"not-reply")!==false ||
-			stripos($to,"notreply")!==false ||
-			stripos($to,"No_Reply")!==false ||
-			stripos($to,"Do_Not_Reply")!==false ||
-			stripos($to,"no-reply")!==false ||
-			stripos($to,"noreply")!==false ||
-			stripos($to,"no-responder")!==false ||
-			stripos($to,"noresponder")!==false)
-		) $msg = 'no-reply';
+		if(empty($status) && (
+			stripos($email,"not-reply")!==false ||
+			stripos($email,"notreply")!==false ||
+			stripos($email,"No_Reply")!==false ||
+			stripos($email,"Do_Not_Reply")!==false ||
+			stripos($email,"no-reply")!==false ||
+			stripos($email,"noreply")!==false ||
+			stripos($email,"no-responder")!==false ||
+			stripos($email,"noresponder")!==false)
+		) $status = 'no-reply';
 
-		// if the person received from Apretaste before, and he/she reaches again, unblock
-		if(empty($msg) && $direction=="in")
-		{
-			$times = $connection->query("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
-			if($times[0]->times > 0)
-			{
-				$connection->query("DELETE FROM delivery_dropped WHERE email='$to'");
+		// block emails sending 30+ of the same request in 5 mins
+		$connection = new Connection();
+		if(empty($status)) {
+			$received = $connection->query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
+			if ($received[0]->total > 30) $status = 'loop';
+		}
+
+		// validate using external tools
+		if(empty($status)) {
+			// connect to email-validator.net
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			if($di->get('tier') == "sandbox") $code = "200";
+			else {
+				$key = $di->get('config')['emailvalidator']['key'];
+				$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
+				if( ! $r) $this->createAlert("Error connecting to emailvalidator for $email", "ERROR");
+				$code = $r->status;
 			}
+
+			// return the status based on the code
+			$status = 'unknown'; // for non-recognized codes
+			if(in_array($code, array("121","200","207","305","308"))) $status = 'ok';
+			if(in_array($code, array("114","118","119","313","314","215"))) $status = 'temporal';
+			if(in_array($code, array("413","406"))) $status = 'soft-bounce';
+			if(in_array($code, array("302","314","317","401","404","410","414","420"))) $status = 'hard-bounce';
+			if($code == "303") $status = 'spam';
+			if($code == "409") $status = 'no-reply';
 		}
-
-		// do not send any email that hardfailed before
-		if(empty($msg))
-		{
-			$hardfail = $connection->query("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
-			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
-		}
-
-		// block any previouly dropped email that had already failed for 3 times
-		if(empty($msg))
-		{
-			$fail = $connection->query("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
-			if($fail[0]->fail > 3) $msg = 'failure';
-		}
-
-		// check deeper for new people. Only check deeper the outgoing emails
-		$code = "";
-		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
-		{
-			// use the cache if the email was checked before
-			$cache = $connection->query("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
-
-			// if the email hasen't been tested before or gave temporal errors
-			if(empty($cache) || $cache[0]->reason == "temporal")
-			{
-				$return = $this->deepValidateEmail($to);
-				$msg = $return[0];
-				$code = $return[1];
-			}
-			else // for emails previously tested that failed, use the cache
-			{
-				$msg = $cache[0]->reason;
-				$code = $cache[0]->code;
-			}
-		}
-
-		// return if ok
-		if (empty($msg) || $msg == "ok") return "ok";
-		else
-		{
-			$connection->query("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
-			return $msg;
-		}
-	}
-
-	/**
-	 * Validate an email to ensure we can send it to MailGun.
-	 * We pay every email validated. Please use deliveryStatus()
-	 * instead, unless you are re-validating an email previously sent.
-	 *
-	 * @author salvipascual
-	 * @param Email $email
-	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
-	 */
-	public function deepValidateEmail($email)
-	{
-		// get validation key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['emailvalidator']['key'];
-
-		$code = "200"; // code for the sandbox
-		if($di->get('environment') != "sandbox")
-		{
-			// validate using email-validator.net
-			$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
-			if( ! $r) throw new Exception("Error connecting with emailvalidator for user $email at ".date());
-
-			$code = $r->status;
-		}
-
-		// return our table status based on the code
-		$reason = 'unknown'; // for non-recognized codes
-		if(in_array($code, array("121","200","207","305","308"))) $reason = 'ok';
-		if(in_array($code, array("114","118","119","313","314","215"))) $reason = 'temporal';
-		if(in_array($code, array("413","406"))) $reason = 'soft-bounce';
-		if(in_array($code, array("302","314","317","401","404","410","414","420"))) $reason = 'hard-bounce';
-		if($code == "303") $reason = 'spam';
-		if($code == "409") $reason = 'no-reply';
 
 		// save all emails tested so we dot duplicated the check
-		$connection = new Connection();
-		$connection->query("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
-
-		return array($reason, $code);
+		$connection->query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
+		return $status;
 	}
 
 	/**
@@ -847,64 +750,6 @@ class Utils
 	}
 
 	/**
-	 * Get differents statistics
-	 *
-	 * @author kuma
-	 *
-	 * @param string $statName
-	 * @param array $params
-	 *
-	 * @throws Exception
-	 *
-	 * @return mixed
-	 */
-	public function getStat($statName = 'person.count', $params = array())
-	{
-		$sql = '';
-		$connection = new Connection();
-
-		// prepare query templates...
-		$sqls = array(
-			'person.count' => "SELECT count(email) as c FROM person;",
-			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
-			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.count' => "SELECT count(email) as c FROM person where credit > 0;",
-			'market.sells.monthly' => "SELECT count(subq.id) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
-			'utilization.count' => "SELECT count(usage_id) FROM utilization;",
-			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(_tienda_orders.id) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
-		);
-
-		if (!isset($sqls[$statName]))
-			throw new Exception('Unknown stat '.$statName);
-
-		$sql = $sqls[$statName];
-
-		// replace params
-		foreach ($params as $param => $value)
-			$sql = str_replace($param, $value, $sql);
-
-		// querying db ...
-		$r = $connection->query($sql);
-
-		if (!is_array($r))
-			return null;
-
-		// try return atomic result
-		if (count($r) === 1)
-			if (isset($r[0]))
-			{
-				$x = get_object_vars($r[0]);
-				if (count($x) === 1)
-					return array_pop($x);
-			}
-
-		// else return the entire array
-		return $r;
-	}
-
-	/**
 	 * Encript a message using the user's public key.
 	 *
 	 * @author salvipascual
@@ -1018,73 +863,6 @@ class Utils
 	{
 		$connection = new Connection();
 		$connection->query("UPDATE person SET mail_list=0 WHERE email='$email'");
-	}
-
-	/**
-	 * Return data of raffle's stars
-	 *
-	 * @author kuma
-	 * @param $email string
-	 * @param $from_today boolean
-	 * @return integer
-	 */
-	public function getRaffleStarsOf($email, $from_today = true)
-	{
-		$connection = new Connection();
-		$stars = 0;
-
-		// last win
-		$sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
-		$r = $connection->query($sql);
-		$dt = $r[0]->dt * 1;
-
-		if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
-
-		// last usages
-		$first = true;
-		$sql = "";
-		for ($d = 0; $d < 5; $d++)
-		{
-			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-			{
-				$sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
-				$first = false;
-			}
-		}
-		$last_usage = $connection->query($sql);
-
-		// count stars
-		$d = $from_today ? 0 : 1;
-		foreach ($last_usage as $lu)
-		{
-			// if use current day and not win...
-			if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
-			else
-				break; // not daily used
-			$d++;
-		}
-
-		return $stars;
-	}
-
-	/**
-	 * Get number of requests received from user today
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @return mixed
-	 */
-	public function getTotalRequestsTodayOf($email)
-	{
-		$sql = "SELECT count(usage_id) as total FROM utilization
-				WHERE date(request_time) = current_date
-				and requestor = '$email'
-				and service <> 'rememberme';";
-
-		$connection = new Connection();
-		$r = $connection->query($sql);
-
-		return $r[0]->total * 1;
 	}
 
 	/**

@@ -16,54 +16,21 @@ class ManageController extends Controller
 	public function indexAction()
 	{
 		$connection = new Connection();
-		$utils = new Utils();
-
-		// START delivery status widget
-		$delivered = $connection->query("SELECT COUNT(id) as sent FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-		$dropped = $connection->query("SELECT COUNT(id) AS number, reason FROM delivery_dropped  WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY reason");
-		$delivery = array("delivered"=>$delivered[0]->sent);
-		foreach ($dropped as $r) $delivery[$r->reason] = $r->number;
-		$failurePercentage = $delivered[0]->sent > 0 ? ((isset($delivery['hardfail']) ? $delivery['hardfail'] : 0) * 100) / $delivered[0]->sent : 0;
 
 		// tasks status widget
 		$tasks = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
-
-		// measure the effectiveness of each promoter
-		$promoters = $connection->query("
-			SELECT A.email, A.active, A.last_usage, B.total
-			FROM promoters A LEFT JOIN (SELECT source, COUNT(source) AS total FROM first_timers WHERE paid=0 GROUP BY source) B
-			ON A.email = B.source
-			ORDER BY B.total DESC");
-
-		// check all tests done
-		$tests = $connection->query("SELECT * FROM test ORDER BY inserted DESC LIMIT 5");
 
 		// get totals for support widget
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'NEW'");
 		$supportPendingCount = $connection->query("SELECT COUNT(id) AS count FROM support_tickets WHERE status = 'PENDING'");
 
-		// get info for the emails widget
-		$nodes = $connection->query("SELECT * FROM nodes_output");
-		$node = array("total" => count($nodes), "limit" => 0, "waiting" => 0, "inactive" => 0);
-		foreach ($nodes as $n) {
-			if(empty($n->active)) {$node['inactive']++; continue;}
-			if(strtotime($n->blocked_until) > strtotime(date('Y-m-d H:i:s'))) {$node['waiting']++; continue;}
-			if($n->daily >= $n->limit) {$node['limit']++; continue;}
-		}
-		$node['ok'] = $node['total'] - $node['limit'] - $node['waiting'] - $node['inactive'];
-
 		// send data to the view
-		$this->view->totalUsers = $utils->getStat('person.count');
-		$this->view->sumCredit = $utils->getStat('person.credit.sum');
-		$this->view->utilization = $utils->getStat('utilization.count');
-		$this->view->promoters = $promoters;
-		$this->view->tests = $tests;
-		$this->view->delivery = $delivery;
+		$this->view->totalUsers = "100";
+		$this->view->sumCredit = "1000";
+		$this->view->utilization = "100";
 		$this->view->supportNewCount = $supportNewCount[0]->count;
 		$this->view->supportPendingCount = $supportPendingCount[0]->count;
-		$this->view->deliveryFailurePercentage = number_format($failurePercentage, 2);
 		$this->view->tasks = $tasks;
-		$this->view->node = $node;
 	}
 
 	/**
@@ -75,8 +42,8 @@ class ManageController extends Controller
 
 		// START weekly visitors
 		$visits = $connection->query("SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(id) as received, DATE(inserted) as inserted FROM delivery_received GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) A
-			LEFT JOIN (SELECT count(id) as sent, DATE(inserted) as inserted FROM delivery_sent GROUP BY DATE(inserted) ORDER BY inserted DESC LIMIT 7) B
+			FROM (SELECT count(id) as received, DATE(request_date) as inserted FROM delivery GROUP BY DATE(request_date) ORDER BY inserted DESC LIMIT 7) A
+			LEFT JOIN (SELECT count(id) as sent, DATE(request_date) as inserted FROM delivery GROUP BY DATE(request_date) ORDER BY inserted DESC LIMIT 7) B
 			ON A.inserted = B.inserted");
 		$visitorsWeecly = array();
 		foreach($visits as $visit) {
@@ -91,8 +58,8 @@ class ManageController extends Controller
 		// START monthly visitors
 		$query =
 			"SELECT A.received, B.sent, A.inserted
-			FROM (SELECT COUNT(id) AS received, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
-			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_sent GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
+			FROM (SELECT COUNT(id) AS received, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
 		$visitorsMonthly = array();
@@ -108,7 +75,7 @@ class ManageController extends Controller
 		// START monthly unique visitors
 		$query =
 			"SELECT A.unique_visitors, B.new_visitors, A.inserted
-			FROM (SELECT COUNT(DISTINCT `user`) as unique_visitors, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
+			FROM (SELECT COUNT(DISTINCT `user`) as unique_visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
 			JOIN (SELECT COUNT(DISTINCT email) as new_visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted FROM person GROUP BY DATE_FORMAT(insertion_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
 			ON A.inserted = B.inserted";
 		$visits = $connection->query($query);
@@ -122,8 +89,8 @@ class ManageController extends Controller
 
 		// START monthly emails vs app
 		$visits = $connection->query("SELECT A.app, B.email, A.inserted
-			FROM (SELECT COUNT(id) AS app, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook = 'app' GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) A
-			JOIN (SELECT COUNT(id) AS email, DATE_FORMAT(inserted,'%Y-%m') as inserted FROM delivery_received WHERE webhook <> 'app' OR webhook IS NULL GROUP BY DATE_FORMAT(inserted,'%Y-%m') ORDER BY inserted DESC LIMIT 4) B
+			FROM (SELECT COUNT(id) AS app, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery WHERE environment = 'app' GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 4) A
+			JOIN (SELECT COUNT(id) AS email, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery WHERE environment = 'email' GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 4) B
 			ON A.inserted = B.inserted");
 		$monthlyEmailVsApp = array();
 		foreach($visits as $visit) {
@@ -751,7 +718,7 @@ class ManageController extends Controller
 		$dropped = $connection->query($sql);
 
 		// get last 7 days of emails received
-		$sql = "SELECT COUNT(id) as total FROM delivery_sent WHERE inserted > DATE_SUB(NOW(), INTERVAL 7 DAY)";
+		$sql = "SELECT COUNT(id) as total FROM delivery WHERE request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)";
 		$sent = $connection->query($sql)[0]->total;
 
 		$this->view->title = "Dropped emails (Last 7 days)";
@@ -2177,14 +2144,14 @@ class ManageController extends Controller
 	{
 		$this->updateMarketOrders();
 		$utils = new Utils();
-		$this->view->maxCredit = $utils->getStat('person.credit.max');
-		$this->view->avgCredit = $utils->getStat('person.credit.avg');
-		$this->view->sumCredit = $utils->getStat('person.credit.sum');
-		$this->view->minCredit = $utils->getStat('person.credit.min');
-		$this->view->monthlySells = $utils->getStat('market.sells.monthly');
-		$this->view->totalUsersWidthCredit = $utils->getStat('person.credit.count');
-		$this->view->totalUsers =  $utils->getStat('person.count');
-		$this->view->sellsByProduct = $utils->getStat('market.sells.byproduct.last30days');
-		$this->view->title = "Market' stats";
+		$this->view->maxCredit = "";
+		$this->view->avgCredit = "";
+		$this->view->sumCredit = "";
+		$this->view->minCredit = "";
+		$this->view->monthlySells = "";
+		$this->view->totalUsersWidthCredit = "";
+		$this->view->totalUsers =  "";
+		$this->view->sellsByProduct = "";
+		$this->view->title = "Market stats";
 	}
 }

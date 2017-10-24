@@ -80,52 +80,6 @@
 					</td>
 				</tr>
 
-				{* top ad *}
-				{if $APRETASTE_ADS|@count gt 0}
-				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
-					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
-					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[0]->title}</small></td>
-					<td bgcolor="#c3daee" align="right" valign="middle">
-						{button href="PUBLICIDAD {$APRETASTE_ADS[0]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
-					</td>
-				</tr></table></td></tr>
-				{/if}
-
-				{* the stars game *}
-				{if $requests_today == 0}
-					{if $raffle_stars > 0}
-					<tr>
-						<td align="center">
-							<big>
-								<br/>
-								{if $raffle_stars < 5}
-									Tu primer correo del d&iacute;a<br/>
-								{else}
-									<b>&iexcl;FELICIDADES!</b><br/>
-								{/if}
-								{for $i=1 to 5}
-									{if $i <= $raffle_stars}
-										<font color="black" size="5"><b>&#9733;</b></font>
-									{else}
-										<font color="black" size="5">&#9734;</font>
-									{/if}
-								{/for}
-								<br/>
-							</big>
-							<small>
-								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal<br/>
-									{if $raffle_stars > 0}<i>Ya vas por {$raffle_stars}. &iexcl;Emb&uacute;llate!</i>{/if}
-								{else}
-									Haz ganado <b>&sect;1</b> de cr&eacute;dito personal<br/>
-									Entra ma&ntilde;ana y gana incluso m&aacute;s cr&eacute;dito
-								{/if}
-							</small>
-						</td>
-					</tr>
-					{/if}
-				{/if}
-
 				{* main section to load the user template *}
 				<tr>
 					<td align="left" style="padding: 0px 5px;">
@@ -148,17 +102,6 @@
 						</tr></table></td></tr>
 					</td>
 				</tr>
-				{/if}
-
-				{* bottom ad *}
-				{if $APRETASTE_ADS|@count gt 1}
-				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
-					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
-					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[1]->title}</small></td>
-					<td bgcolor="#c3daee" align="right" valign="middle">
-						{button href="PUBLICIDAD {$APRETASTE_ADS[1]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
-					</td>
-				</tr></table></td></tr>
 				{/if}
 
 				{* services related *}

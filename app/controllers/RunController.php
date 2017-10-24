@@ -26,6 +26,9 @@ class RunController extends Controller
 		$this->subject = $this->request->get("subject");
 		$this->body = $this->request->get("body");
 
+		// set the running environment
+		$this->di->set('environment', function() {return "web";});
+
 		// run the request
 		$utils = new Utils();
 		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, []);
@@ -49,6 +52,9 @@ class RunController extends Controller
 	{
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
+
+		// set the running environment
+		$this->di->set('environment', function() {return "api";});
 
 		// get params from GET (or from the encripted API)
 		$token = $this->request->get("token");
@@ -138,25 +144,27 @@ class RunController extends Controller
 
 		// get data from Amazon AWS webhook
 //		$this->callAmazonWebhook();
-
+		$this->callMailgunWebhook();
+/*
 		// test data
 		$this->fromEmail = "salvi.pascual@gmail.com";
 		$this->toEmail = "navegacuba@gmail.com";
 		$this->subject = "nobligonyu";
 		$this->messageId = "09876543321";
 		$this->attachments = array("/home/salvipascual/g4X34mc1.zip");
-
-		// do not continue procesing the email if the sender is not valid
-		$utils = new Utils();
-//@TODO uncomment
-//		$status = $utils->deliveryStatus($this->fromEmail, 'in');
-//		if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
-
+*/
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$connection = new Connection();
 		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
+
+		// stop procesing if the sender is invalid
+		$utils = new Utils();
+		if($environment != "app") { // no need to test for the app
+			$status = $utils->deliveryStatus($this->fromEmail);
+			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
+		}
 
 		// update the number of emails received
 		$connection->query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");

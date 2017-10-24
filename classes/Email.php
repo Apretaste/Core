@@ -22,16 +22,6 @@ class Email
 	 */
 	public function send()
 	{
-		// validate email before sending
-		$utils = new Utils();
-		$status = $utils->deliveryStatus($this->to);
-		if($status != 'ok') {
-			$output = new stdClass();
-			$output->code = "500";
-			$output->message = "Email failed with status: $status";
-			return $output;
-		}
-
 		// get images from thumbnail or optimize them
 		$this->thumbnailAllImages();
 
@@ -141,7 +131,7 @@ class Email
 	}
 
 	/**
-	 * Sends an email using our of our external nodes
+	 * Sends an email using Gmail by an external node
 	 *
 	 * @author salvipascual
 	 * @return {"code", "message"}
@@ -150,49 +140,30 @@ class Email
 	{
 		$this->method = "gmail";
 
+		// get the running environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
 		// every new day set the daily counter back to zero
 		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		$connection->query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 
-		// get the node of the from address
-		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
-			if(isset($node[0])) $node = $node[0];
-		}
-		// if no from is passed, calculate
-		else {
-			// get the list of available nodes to use
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND A.`limit` > A.daily
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+		// get an available gmail account randomly
+		$gmail = $connection->query("
+			SELECT * FROM delivery_gmail
+			WHERE active = 1
+			AND `limit` > daily
+			AND environment LIKE '%$environment%'
+			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)
+			ORDER BY RAND() LIMIT 1");
 
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			if($node) $this->from = $node->email;
-		}
-
-		// alert the team if no Node could be used
-		$utils = new Utils();
-		if(empty($node)) {
+		// error if no account can be used
+		if(empty($gmail)) {
 			$output = new stdClass();
 			$output->code = "515";
-			$output->message = "NODE: No active node to email {$this->to}";
+			$output->message = "NODE: No active account to send to {$this->to}";
 			return $output;
-		}
+		} $gmail = $gmail[0];
 
 		// transform images to base64
 		$imagesToUpload = array();
@@ -215,11 +186,11 @@ class Email
 		}
 
 		// create the email array request
-		$params['key'] = $node->key;
-		$params['from'] = $node->email;
-		$params['host'] = $node->host;
-		$params['user'] = $node->user;
-		$params['pass'] = $node->pass;
+		$params['key'] = $gmail->node_key;
+		$params['from'] = $gmail->email;
+		$params['host'] = "smtp.gmail.com";
+		$params['user'] = $gmail->email;
+		$params['pass'] = $gmail->password;
 		$params['id'] = $this->id;
 		$params['messageid'] = $this->replyId;
 		$params['to'] = $this->to;
@@ -230,7 +201,7 @@ class Email
 
 		// contact the Sender to send the email
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
+		curl_setopt($ch, CURLOPT_URL, "{$gmail->node_ip}/send.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -241,18 +212,19 @@ class Email
 		if(empty($output)) {
 			$output = new stdClass();
 			$output->code = "504";
-			$output->message = "Error reaching {$node->name} to email {$this->to} with ID {$this->id}";
+			$output->message = "Error reaching Node to email {$this->to} with ID {$this->id}";
 		}
 
 		// update delivery time if OK
 		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
 		// insert in drops emails and add 24h of waiting time
 		}else{
 			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
 		}
+
 		return $output;
 	}
 
