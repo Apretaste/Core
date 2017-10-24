@@ -143,16 +143,8 @@ class RunController extends Controller
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// get data from Amazon AWS webhook
-//		$this->callAmazonWebhook();
-		$this->callMailgunWebhook();
-/*
-		// test data
-		$this->fromEmail = "salvi.pascual@gmail.com";
-		$this->toEmail = "navegacuba@gmail.com";
-		$this->subject = "nobligonyu";
-		$this->messageId = "09876543321";
-		$this->attachments = array("/home/salvipascual/g4X34mc1.zip");
-*/
+		$this->callAmazonWebhook();
+
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$connection = new Connection();
@@ -415,21 +407,21 @@ class RunController extends Controller
 	 */
 	private function callAmazonWebhook()
 	{
-/* @TODO uncomment
 		// capture a valid SNS notification
 		$json = file_get_contents('php://input');
 		$notification = json_decode($json);
+		// error_log(print_r($notification, true)); // subscribe
 		if(empty($notification)) return false;
 
 		// get the Bucket & KeyName from the request
 		$message = json_decode($notification->Message);
 		$keyname = $message->Records[0]->s3->object->key;
 		$bucket = 'apretaste-webhook';
-*/
+
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
-/*
+
 		// instantiate the client
 		$s3Client = new Aws\S3\S3Client([
 			'version'=>'2006-03-01',
@@ -442,7 +434,6 @@ class RunController extends Controller
 
 		// save file from SNS to the temp folder
 		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
-*/$keyname="jmcssejh1s21bbm557hg7tl5ll62v63jfa900fg1";
 
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
@@ -496,97 +487,5 @@ class RunController extends Controller
 		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 		$this->body = str_replace("'", "", $body);
 		$this->attachments = $attachments;
-	}
-
-	/**
-	 * Get the POST from MailGun and return the array of data
-	 */
-	private function callMailgunWebhook()
-	{
-		// do not allow fake income messages
-		$post = $_POST;
-		if( ! isset($post['From'])) return false;
-
-		// check where to acquire the field "To"
-		$to = "";
-		if(isset($post['To'])) $to = $post['To'];
-		if(empty($to) && isset($post['Delivered-To'])) $to = $post['Delivered-To'];
-		if(empty($to) && isset($post['Received'])) $to = $post['Received'];
-
-		// filter email From and To
-		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
-		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
-		preg_match_all($pattern, strtolower($to), $emailTo);
-
-		// get values to the variables
-		$fromEmail = $emailFrom[0][0];
-		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
-		$fromName = trim(explode("<", $post['From'])[0]);
-		$subject = $post['subject'];
-		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
-		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
-
-		// clean incoming emails
-		$fromEmail = str_replace("'", "", $fromEmail);
-		$toEmail = str_replace("'", "", $toEmail);
-
-		// obtain the ID of the message to make it "respond" to the email
-		$messageID = null;
-		foreach($_POST as $k => $v){
-			$k = strtolower($k);
-			if ($k == 'message-id' || $k == 'messageid' || $k == 'id'){
-				$messageID = $v;
-				break;
-			}
-		}
-
-		// download attachments to the temp folder
-		$utils = new Utils();
-		$wwwroot = $this->di->get('path')['root'];
-		$attachments = array();
-		for ($i=1; $i<=$attachmentCount; $i++)
-		{
-			// get the path for the image
-			$originFilePath = $_FILES["attachment-$i"]["tmp_name"];
-			$mimeTypePieces = explode("/", mime_content_type($originFilePath));
-			$fileNameNoExtension = $utils->generateRandomHash();
-
-			// convert images to jpg and save it to temporal
-			if($mimeTypePieces[0] == "image")
-			{
-				$tmpfilePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
-				imagejpeg(imagecreatefromstring(file_get_contents($originFilePath)), $tmpfilePath);
-				$utils->optimizeImage($tmpfilePath);
-			}
-			else // save any other file to the temporals
-			{
-				$tmpfilePath = "$wwwroot/temp/$fileNameNoExtension.$mimeTypePieces[1]";
-				copy($originFilePath, $tmpfilePath);
-			}
-
-			// grant full access to the file
-			chmod($tmpfilePath, 0777);
-			$attachments[] = $tmpfilePath;
-		}
-
-		// remove weird chars and apostrophes that break the SQL code
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
-		$body = str_replace("'", "", $body);
-		$messageID = str_replace("'", "", $messageID);
-
-		// save the mailgun log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/mailgun.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
-		$logger->close();
-
-		// respond with info
-		$this->fromName = $fromName;
-		$this->fromEmail = $fromEmail;
-		$this->toEmail = $toEmail;
-		$this->subject = $subject;
-		$this->body = $body;
-		$this->attachments = $attachments;
-		$this->messageId = $messageID;
 	}
 }
