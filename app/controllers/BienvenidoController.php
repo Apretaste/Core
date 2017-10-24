@@ -8,7 +8,7 @@ class BienvenidoController extends Controller
 	{
 		// START visitors
 		$connection = new Connection();
-		$visits = $connection->deepQuery("
+		$visits = $connection->query("
 			SELECT
 				count(id) as received,
 				DATE_FORMAT(request_date,'%Y-%m') as inserted
