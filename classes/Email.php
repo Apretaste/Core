@@ -12,11 +12,7 @@ class Email
 	public $replyId; // id to reply
 	public $attachments = array(); // array of paths
 	public $images = array(); // array of paths
-	public $group = 'apretaste';
-	public $status = "new"; // new, sent, bounced
-	public $message;
-	public $tries = 0;
-	public $created; // date
+	public $method;
 	public $sent; // date
 
 	/**
@@ -26,16 +22,6 @@ class Email
 	 */
 	public function send()
 	{
-		// validate email before sending
-		$utils = new Utils();
-		$status = $utils->deliveryStatus($this->to);
-		if($status != 'ok') {
-			$output = new stdClass();
-			$output->code = "500";
-			$output->message = "Email failed with status: $status";
-			return $output;
-		}
-
 		// get images from thumbnail or optimize them
 		$this->thumbnailAllImages();
 
@@ -49,34 +35,25 @@ class Email
 		// if is Nauta and we have the user's password
 		elseif($isNautaWithPass) $res = $this->sendEmailViaWebmail();
 		// for the Nauta accounts where we don't have the password
-		elseif($isNauta) $res = $this->sendEmailViaNode();
+		elseif($isNauta) $res = $this->sendEmailViaGmail();
 		// for all other Cuban emails
 		else $res = $this->sendEmailViaAlias();
 
-		// update the object
-		$this->tries++;
-		$this->message = str_replace("'", "", $res->message); // single quotes break the SQL
-		$this->status = $res->code == "200" ? "sent" : "error";
-		if($res->code == "200") $this->sent = date("Y-m-d H:i:s");
-
 		// update the database with the email sent
+		$res->message = str_replace("'", "", $res->message); // single quotes break the SQL
 		$connection = new Connection();
-		$sentDate = $res->code == "200" ? "sent=CURRENT_TIMESTAMP," : "";
-		$connection->query("UPDATE delivery_received SET $sentDate status='{$this->status}', message='{$this->message}', tries=tries+1 WHERE id='{$this->id}'");
+		$connection->query("
+			UPDATE delivery SET
+			delivery_code='{$res->code}',
+			delivery_message='{$res->message}',
+			delivery_method='{$this->method}',
+			delivery_date = CURRENT_TIMESTAMP
+			WHERE id='{$this->id}'");
 
-		// save a trace that the email was sent
-		if($res->code == "200")
-		{
-			$subject = str_replace("'", "", $this->subject);
-			$attachments = count($this->attachments);
-			$images = count($this->images);
-			$connection->query("INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin) VALUES ('{$this->from}','{$this->to}','$subject','$images','$attachments','{$this->group}','{$this->id}')");
-		}
-		// save a trace that the email failed and alert
-		else
-		{
-			$connection->query("INSERT INTO delivery_dropped (email,sender,reason,`code`,description) VALUES ('{$this->to}','{$this->from}','failed','{$res->code}','{$this->message}')");
-			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
+		// create an alert if the email failed
+		if($res->code != "200" && $res->code != "515") {
+			$alert = "Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}";
+			$utils->createAlert($alert, "ERROR");
 		}
 
 		// return {code, message} structure
@@ -84,7 +61,7 @@ class Email
 	}
 
 	/**
-	 * Overload of the send () function for backward compatibility
+	 * Overload of the function send() for backward compatibility
 	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
@@ -119,10 +96,9 @@ class Email
 		$port = '465';
 		$security = 'ssl';
 
-		// select the from part if empty
-		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
-
 		// send the email using smtp
+		if(empty($this->method)) $this->method = "amazon";
+		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
 		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
@@ -149,62 +125,45 @@ class Email
 		}
 
 		// send the email using Amazon
+		$this->method = "alias";
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
 	}
 
 	/**
-	 * Sends an email using our of our external nodes
+	 * Sends an email using Gmail by an external node
 	 *
 	 * @author salvipascual
 	 * @return {"code", "message"}
 	 */
-	public function sendEmailViaNode()
+	public function sendEmailViaGmail()
 	{
+		$this->method = "gmail";
+
+		// get the running environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
 		// every new day set the daily counter back to zero
 		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		$connection->query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 
-		// get the node of the from address
-		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
-			if(isset($node[0])) $node = $node[0];
-		}
-		// if no from is passed, calculate
-		else {
-			// get the list of available nodes to use
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND `group` LIKE '%{$this->group}%'
-				AND A.`limit` > A.daily
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
+		// get an available gmail account randomly
+		$gmail = $connection->query("
+			SELECT * FROM delivery_gmail
+			WHERE active = 1
+			AND `limit` > daily
+			AND environment LIKE '%$environment%'
+			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)
+			ORDER BY RAND() LIMIT 1");
 
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			if($node) $this->from = $node->email;
-		}
-
-		// alert the team if no Node could be used
-		$utils = new Utils();
-		if(empty($node)) {
+		// error if no account can be used
+		if(empty($gmail)) {
 			$output = new stdClass();
 			$output->code = "515";
-			$output->message = "NODE: No active node to email {$this->to}";
+			$output->message = "NODE: No active account to send to {$this->to}";
 			return $output;
-		}
+		} $gmail = $gmail[0];
 
 		// transform images to base64
 		$imagesToUpload = array();
@@ -227,11 +186,11 @@ class Email
 		}
 
 		// create the email array request
-		$params['key'] = $node->key;
-		$params['from'] = $node->email;
-		$params['host'] = $node->host;
-		$params['user'] = $node->user;
-		$params['pass'] = $node->pass;
+		$params['key'] = $gmail->node_key;
+		$params['from'] = $gmail->email;
+		$params['host'] = "smtp.gmail.com";
+		$params['user'] = $gmail->email;
+		$params['pass'] = $gmail->password;
 		$params['id'] = $this->id;
 		$params['messageid'] = $this->replyId;
 		$params['to'] = $this->to;
@@ -242,7 +201,7 @@ class Email
 
 		// contact the Sender to send the email
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
+		curl_setopt($ch, CURLOPT_URL, "{$gmail->node_ip}/send.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -253,18 +212,19 @@ class Email
 		if(empty($output)) {
 			$output = new stdClass();
 			$output->code = "504";
-			$output->message = "Error reaching {$node->name} to email {$this->to} with ID {$this->id}";
+			$output->message = "Error reaching Node to email {$this->to} with ID {$this->id}";
 		}
 
 		// update delivery time if OK
 		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
 		// insert in drops emails and add 24h of waiting time
 		}else{
 			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
 		}
+
 		return $output;
 	}
 
@@ -276,6 +236,8 @@ class Email
 	 */
 	public function sendEmailViaWebmail()
 	{
+		$this->method = "hillary";
+
 		// return error if the password do not exist in our database
 		$pass = $this->getNautaPassword($this->to);
 		if( ! $pass) {
@@ -312,7 +274,7 @@ class Email
 			$output->message = "Sent to {$this->to}";
 			return $output;
 		}
-		// if the client cannot login, send via Node
+		// if the client cannot login show error
 		else
 		{
 			$output = new stdClass();
