@@ -415,9 +415,9 @@ class RunController extends Controller
 
 		// get the Bucket & KeyName from the request
 		$message = json_decode($notification->Message);
+		$bucket = $message->Records[0]->s3->bucket->name;
 		$keyname = $message->Records[0]->s3->object->key;
 
-		$bucket = 'apretaste-webhook';
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
