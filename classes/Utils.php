@@ -1,11 +1,7 @@
 <?php
 
-use Mailgun\Mailgun;
-use abeautifulsite\SimpleImage;
 use G4\Crypto\Crypt;
 use G4\Crypto\Adapter\OpenSSL;
-use Mremi\UrlShortener\Model\Link;
-use Mremi\UrlShortener\Provider\Google\GoogleProvider;
 
 class Utils
 {
@@ -305,7 +301,7 @@ class Utils
 		// optimize image
 		try
 		{
-			$img = new SimpleImage();
+			$img = new \abeautifulsite\SimpleImage();
 			$img->load($imagePath);
 			if ( ! empty($width)) $img->fit_to_width($width);
 			if ( ! empty($height)) $img->fit_to_height($height);
@@ -1052,8 +1048,8 @@ class Utils
 	public function createAlert($text, $type="NOTICE")
 	{
 		// save alert into the database
-		$text = str_replace("'", "", $text);
 		$connection = new Connection();
+		$text = $connection->escape($text);
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send the alert to the error log
@@ -1066,12 +1062,13 @@ class Utils
 			// get the group from the configs file
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$to = $di->get('config')['global']['alerts'];
+			$tier = $di->get('config')['global']['tier'];
 
 			// send the alert by email
 			$email = new Email();
 			$email->to = $to;
 			$email->subject = substr($subject, 0, 80);
-			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
+			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
@@ -1097,31 +1094,6 @@ class Utils
 		$text = str_replace("¿", "&iquest;", $text);
 
 		return $text;
-	}
-
-	/**
-	 * Shorten an URL and return the new short URL
-	 *
-	 * @author salvipascual
-	 * @param String $url
-	 * @return String or false if error
-	 */
-	public function shortenUrl($url)
-	{
-		// get the Google API key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['google']['key'];
-
-		try{
-			$link = new Link;
-			$link->setLongUrl($url);
-			$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
-			$shortenUrl = $googleProvider->shorten($link);
-			return $link->getShortUrl();
-		}catch (Exception $e){
-			$this->createAlert("ERORR SHORTENING $url, ERROR:" . $e->getMessage(), "ERROR");
-			return false;
-		}
 	}
 
 	/**

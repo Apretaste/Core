@@ -442,18 +442,18 @@ class RunController extends Controller
 		$fromEmail = $from[0]['address'];
 		$fromName = $from[0]['display'];
 		$subject = $parser->getHeader('subject');
-		$body = $parser->getMessageBody('text');
+		$body = trim($parser->getMessageBody('text'));
 		$attachs = $parser->getAttachments();
 
 		// get the TO address
-		$to = $parser->getAddresses('Delivered-To');
-		if(empty($to)) $to = $parser->getAddresses('to');
+		$to = $parser->getAddresses('to');
+		if(empty($to)) $to = $parser->getAddresses('Delivered-To');
 		$toEmail = $to[0]['address'];
 
 		// display the Amazon SNS log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
-		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n\n");
+		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
 		// save attachments to the temp folder

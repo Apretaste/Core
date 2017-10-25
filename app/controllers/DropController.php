@@ -13,6 +13,7 @@ class DropController extends Controller
 	{
 		// get the message object
 		$message = Message::fromRawPostData();
+		// error_log(print_r($message,true)); // subscription
 
 		// validate the message
 		$validator = new MessageValidator();
