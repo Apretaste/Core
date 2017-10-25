@@ -301,7 +301,7 @@ class Utils
 		// optimize image
 		try
 		{
-			$img = new SimpleImage();
+			$img = new \abeautifulsite\SimpleImage();
 			$img->load($imagePath);
 			if ( ! empty($width)) $img->fit_to_width($width);
 			if ( ! empty($height)) $img->fit_to_height($height);
