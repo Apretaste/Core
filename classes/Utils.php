@@ -1052,8 +1052,8 @@ class Utils
 	public function createAlert($text, $type="NOTICE")
 	{
 		// save alert into the database
-		$text = str_replace("'", "", $text);
 		$connection = new Connection();
+		$text = $connection->escape($text);
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
 
 		// send the alert to the error log
