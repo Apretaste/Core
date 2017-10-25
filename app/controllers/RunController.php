@@ -442,12 +442,12 @@ class RunController extends Controller
 		$fromEmail = $from[0]['address'];
 		$fromName = $from[0]['display'];
 		$subject = $parser->getHeader('subject');
-		$body = $parser->getMessageBody('text');
+		$body = trim($parser->getMessageBody('text'));
 		$attachs = $parser->getAttachments();
 
 		// get the TO address
-		$to = $parser->getAddresses('Delivered-To');
-		if(empty($to)) $to = $parser->getAddresses('to');
+		$to = $parser->getAddresses('to');
+		if(empty($to)) $to = $parser->getAddresses('Delivered-To');
 		$toEmail = $to[0]['address'];
 
 		// display the Amazon SNS log
