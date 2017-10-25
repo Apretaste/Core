@@ -64,10 +64,15 @@ try
 		"dbname"   => $config['database']['database']
 	)));
 
-	// get the environment
-	$di->set('environment', function () use ($config) {
-		if(isset($config['global']['environment'])) return $config['global']['environment'];
+	// Set the tier (sandbox | stage | production)
+	$di->set('tier', function () use ($config) {
+		if(isset($config['global']['tier'])) return $config['global']['tier'];
 		else return "production";
+	});
+
+	// Set the environment (app | api | email | web | default)
+	$di->set('environment', function () use ($config) {
+		return "default";
 	});
 
 	// Handle the request

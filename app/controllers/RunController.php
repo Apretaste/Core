@@ -4,8 +4,17 @@ use Phalcon\Mvc\Controller;
 
 class RunController extends Controller
 {
+	private $fromName;
+	private $fromEmail;
+	private $toEmail;
+	private $messageId;
+	private $subject;
+	private $body;
+	private $attachments = array();
+	private $idEmail; // @TODO remove after unifiying the tables
+
 	/**
-	 * Executes an html request the outside. Display the HTML on screen
+	 * Receives an HTTP petition and display to the web
 	 *
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
@@ -13,95 +22,39 @@ class RunController extends Controller
 	 */
 	public function displayAction()
 	{
-		$email = "html@apretaste.com";
-		$subject = $this->request->get("subject");
-		$body = $this->request->get("body");
+		$this->fromEmail = "html@apretaste.com";
+		$this->subject = $this->request->get("subject");
+		$this->body = $this->request->get("body");
 
-		// run the request and get the service and responses
+		// set the running environment
+		$this->di->set('environment', function() {return "web";});
+
+		// run the request
 		$utils = new Utils();
-		$ret = $utils->runRequest($email, $subject, $body, array());
-		$service = $ret->service;
-		$responses = $ret->responses;
+		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, []);
 
-		// create a new render
+		// render the response
 		$render = new Render();
-
-		// render the template and echo on the screen
-		$html = "";
-		for ($i=0; $i<count($responses); $i++)
-		{
-			// clean the empty fields in the response
-			$rightEmail = empty($responses[$i]->email) ? $email : $responses[$i]->email;
-			$subject = empty($responses[$i]->subject) ? "Respuesta del servicio $service->serviceName" : $responses[$i]->subject;
-
-			$html .= "<br/><center><small><b>To:</b> " . $rightEmail . ". <b>Subject:</b> " . $subject . "</small></center><br/>";
-			$html .= $render->renderHTML($service, $responses[$i]);
-//			$html .= serialize($responses[$i]);
-			if($i < count($responses)-1) $html .= "<br/><hr/><br/>";
-		}
-
-		// create the footer text
-		$usage = nl2br(str_replace('{APRETASTE_EMAIL}', $service->utils->getValidEmailAddress(), $service->serviceUsage));
-		$html .= "<br/><hr><center><p><b>XML DEBUG</b></p><small>";
-		$html .= "<p><b>Owner: </b>{$service->creatorEmail}</p>";
-		$html .= "<p><b>Category: </b>{$service->serviceCategory}</p>";
-		$html .= "<p><b>Description: </b>{$service->serviceDescription}</p>";
-		$html .= "<p><b>Usage: </b><br/>$usage</p></small></center>";
-
-		// display the HTML
+		$html = $render->renderHTML($ret->service, $ret->responses[0]);
 		die($html);
 	}
 
 	/**
-	 * Send an email to the support group
+	 * Receives an HTTP petition and returns a JSON
 	 *
 	 * @author salvipascual
-	 * @param POST Multiple Values
-	 */
-	public function supportAction()
-	{
-		// format the response when comes from mailgun
-		$response = $this->formatMailgunWebhook($_POST);
-		$fromEmail = trim($response->fromEmail);
-		$subject = str_replace("'", "", $response->subject);
-		$body = str_replace("'", "", $response->body);
-
-		// do not allow empty queries
-		if(empty($fromEmail)) return false;
-
-		// save the new ticket into the database
-		$connection = new Connection();
-		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('$fromEmail', '$subject', '$body')");
-
-		// save the new ticket in the reports table
-		$mysqlDateToday = date("Y-m-d H:i:s");
-		$connection->query("
-			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
-			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
-
-		// save the support log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/support.log");
-		$logger->log("From:$fromEmail, Subject:$subject");
-		$logger->close();
-
-		// do not continue processing
-		return true;
-	}
-
-	/**
-	 * Executes an API request. Display the JSON on screen
-	 *
-	 * @author salvipascual
-	 * @get String $subject, subject line of the email
-	 * @get String $body, body of the email
-	 * @get String $attachments
 	 * @get String $token
+	 * @get String $subject
+	 * @get String $body
+	 * @get String $attachments
 	 */
 	public function apiAction()
 	{
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
+
+		// set the running environment
+		$this->di->set('environment', function() {return "api";});
 
 		// get params from GET (or from the encripted API)
 		$token = $this->request->get("token");
@@ -136,7 +89,7 @@ class RunController extends Controller
 		{
 			// get the path for the image
 			$wwwroot = $this->di->get('path')['root'];
-			$filePath = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
+			$temp = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
 
 			// clean base64 string
 			$data = explode(',', $attachment);
@@ -144,18 +97,15 @@ class RunController extends Controller
 
 			// save base64 string as a JPG image
 			$im = imagecreatefromstring(base64_decode($data));
-			imagejpeg($im, $filePath);
+			imagejpeg($im, $temp);
 			imagedestroy($im);
 
 			// optimize the image and grant full permits
-			$utils->optimizeImage($filePath);
-			chmod($filePath, 0777);
+			$utils->optimizeImage($temp);
+			chmod($temp, 0777);
 
-			$attach[] = $filePath;
+			$attach[] = $temp;
 		}
-
-		// create a new render
-		$render = new Render();
 
 		// run the request and get the service and first response
 		$ret = $utils->runRequest($email, $subject, $body, $attach);
@@ -163,6 +113,7 @@ class RunController extends Controller
 		$response = $ret->responses[0];
 
 		// respond by email, if there is an email to send
+		$render = new Render();
 		if($response->email && $response->render)
 		{
 			$sender = new Email();
@@ -181,52 +132,98 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives email from the webhook and parse it for the app
+	 * Receives an email petition and responds via email
 	 *
 	 * @author salvipascual
-	 * @param POST Multiple Values
+	 * @param POST data from webhook
 	 */
-	public function appAction()
+	public function webhookAction()
 	{
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
-		// make the system react in "mode app"
-		$this->di->set('environment', function(){return "app";});
+		// get data from Amazon AWS webhook
+		$this->callAmazonWebhook();
 
-		// get the email params from the mailgun webhook
-		$res = $this->formatMailgunWebhook($_POST);
-		$fromEmail = $res->fromEmail;
-		$toEmail = $res->toEmail;
-		$ticket = $res->subject;
-		$replyIdEmail = $res->messageId;
-		$attachEmail = $res->attachments;
-/*
-		$fromEmail = "salvi.pascual@gmail.com";
-		$toEmail = "apretaste@gmail.com";
-		$ticket = "nobligonyu";
-		$replyIdEmail = "09876543321";
-		$attachEmail = array("/home/salvipascual/g4X34mc1.zip");
-*/
+		// get the environment from the email
+		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
+		$connection = new Connection();
+		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
+		$environment = empty($res) ? "default" : $res[0]->environment;
+
+		// stop procesing if the sender is invalid
+		$utils = new Utils();
+		if($environment != "app") { // no need to test for the app
+			$status = $utils->deliveryStatus($this->fromEmail);
+			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
+		}
+
+		// update the number of emails received
+		$connection->query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
+
+		// update last access time and make person active
+		$personExist = $utils->personExist($this->fromEmail);
+		if ($personExist) $connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='{$this->fromEmail}'");
+		else {
+			// create a unique username and save the new person
+			$username = $utils->usernameFromEmail($this->fromEmail);
+			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+		}
+
+		// insert a new email in the delivery table and get the ID
+		$attachs = array();
+		foreach ($this->attachments as $a) $attachs[] = basename($a);
+		$attachsStr = implode(",", $attachs);
+		$domain = explode("@", $this->fromEmail)[1];
+		$this->idEmail = $connection->query("
+			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attachsStr')");
+
+		// set the running environment
+		$this->di->set('environment', function() use($environment) {return $environment;});
+
+		// execute the right environment type
+		if($environment == "app") $log = $this->runApp();
+		elseif($environment == "email") $log = $this->runEmail();
+		elseif($environment == "download") {
+			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
+			if( ! $startWithApp) $this->subject = "app";
+			$log = $this->runEmail();
+		}else $log = $this->runSupport();
+
+		// save execution time to the db
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+		$connection->query("UPDATE delivery SET process_time='$executionTime' WHERE id='{$this->idEmail}'");
+
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->close();
+	}
+
+	/**
+	 * Receives email from the webhook and parse it for the app
+	 */
+	private function runApp()
+	{
 		// error if no attachment is received
-		if(isset($attachEmail[0]) && file_exists($attachEmail[0])) {
-			$attachEmail = $attachEmail[0];
-		} else {
+		if(isset($this->attachments[0]) && file_exists($this->attachments[0])) {
+			$attachEmail = $this->attachments[0];
+		}else{
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "Error on attachment file";
 			die(json_encode($output));
 		}
 
-		// do not continue procesing the email if the sender is not valid
-		$utils = new Utils();
-		$status = $utils->deliveryStatus($fromEmail, 'in');
-		if($status != 'ok') die('{"code":"500", "message":"Error '.$status.' verifying email"}');
-
 		// get path to the folder to save
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
 		$textFile = ""; $attachs = array();
 		$folderName = str_replace(".zip", "", basename($attachEmail));
-		$temp = $utils->getTempDir();
 
 		// get the text file and attached files
 		$zip = new ZipArchive;
@@ -240,13 +237,6 @@ class RunController extends Controller
 		// extract file contents
 		$zip->extractTo("$temp/$folderName");
 		$zip->close();
-
-		// save the new email in the database and get the ID
-		$attachStr = implode(",", $attachs);
-		$connection = new Connection();
-		$idEmail = $connection->query("
-			INSERT INTO delivery_received (user, mailbox, subject, messageid, attachments, webhook)
-			VALUES ('$fromEmail', '$toEmail', '$ticket', '$replyIdEmail', '$attachStr', 'app')");
 
 		// get the input if the data is a JSON
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
@@ -269,37 +259,24 @@ class RunController extends Controller
 		}
 
 		// save Nauta password if passed
+		$connection = new Connection();
 		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
 			$connection->query("
-				DELETE FROM authentication WHERE email = '$fromEmail' AND appname = 'apretaste';
-				INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('$fromEmail', '$encryptPass', 'apretaste', 'android', '$osversion');");
+				DELETE FROM authentication WHERE email = '{$this->fromEmail}' AND appname = 'apretaste';
+				INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion');");
 		}
 
-		// update last access time to current and make person active
-		$personExist = $utils->personExist($fromEmail);
-		if ($personExist) {
-			$connection->query("UPDATE person SET active=1, appversion='$appversion', last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
-		} else {
-			// create a unique username and save the new person
-			$username = $utils->usernameFromEmail($fromEmail);
-			$connection->query("INSERT INTO person (email, username, last_access, source, appversion) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, 'app', '$appversion')");
-		}
+		// update the version of the app used
+		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$ret = $utils->runRequest($fromEmail, $text, '', $attachs);
+		$ret = $utils->runRequest($this->fromEmail, $text, '', $attachs);
 		$service = $ret->service;
 		$response = $ret->responses[0];
 
-		// save the apps log
-		$hasNautaPass = $nautaPass ? 1 : 0;
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/app.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Text:$text, Ticket:$ticket, Version:$appversion, NautaPass:$hasNautaPass");
-		$logger->close();
-
 		// if the request needs an email back
-		if(isset($response->render) && $response->render)
+		if($response->render)
 		{
 			// set the layout to blank
 			$response->setEmailLayout('email_text.tpl');
@@ -312,10 +289,10 @@ class RunController extends Controller
 			}
 
 			// render the HTML, unless it is a status call
-			if($text == "status") $body = "{}";
+			if($text == "status") $this->body = "{}";
 			else {
 				$render = new Render();
-				$body = $render->renderHTML($service, $response);
+				$this->body = $render->renderHTML($service, $response);
 			}
 
 			// get extra data for the app
@@ -324,7 +301,7 @@ class RunController extends Controller
 			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
 			if($isPerfilStatus) $extra = "{}";
 			else {
-				$res = $utils->getExternalAppData($fromEmail, $timestamp);
+				$res = $utils->getExternalAppData($this->fromEmail, $timestamp);
 				$response->attachments = array_merge($response->attachments, $res["attachments"]);
 				$extra = $res["json"];
 			}
@@ -336,345 +313,187 @@ class RunController extends Controller
 
 			// prepare and send the email
 			$email = new Email();
-			$email->id = $idEmail;
-			$email->to = $fromEmail;
-			$email->subject = $ticket;
-			$email->body = $body;
-			$email->replyId = $replyIdEmail;
-			$email->group = $service->group;
+			$email->id = $this->idEmail;
+			$email->to = $this->fromEmail;
+			$email->subject = $this->subject;
+			$email->body = $this->body;
+			$email->replyId = $this->messageId;
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
 			$email->setContentAsZipAttachment();
 			$output = $email->send();
-
-			// add code & message to transaction
-			$connection->query("
-				UPDATE delivery_received SET
-				code='{$output->code}', message='{$output->message}', sent=CURRENT_TIMESTAMP
-				WHERE id='$idEmail'");
 		}
 
-		// calculate execution time when the service stopped executing
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-
-		// get the user email domainEmail
-		$emailPieces = explode("@", $fromEmail);
-		$domain = $emailPieces[1];
-
-		// save the logs on the utilization table
+		// update values in the delivery table
 		$safeQuery = $connection->escape($service->request->query);
 		$connection->query("
-			INSERT INTO utilization	(email_id, service, subservice, query, requestor, request_time, response_time, domain)
-			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain')");
+			UPDATE delivery SET
+			request_service='{$service->serviceName}',
+			request_subservice='{$service->request->subservice}',
+			request_query='$safeQuery'
+			WHERE id='{$this->idEmail}'");
 
-		return true;
+		// return message for the log
+		$hasNautaPass = $nautaPass ? 1 : 0;
+		$log = "Text:$text, Ticket:{$this->subject}, Version:$appversion, NautaPass:$hasNautaPass";
+		return $log;
 	}
 
 	/**
 	 * Receives email from the webhook and parse it for the email tool
-	 *
-	 * @author salvipascual
-	 * @param POST Multiple Values
 	 */
-	public function mailgunAction()
+	private function runEmail()
 	{
-		// get the time when the service started executing
-		$execStartTime = date("Y-m-d H:i:s");
-
-		// get the email params from the mailgun webhook
-		$res = $this->formatMailgunWebhook($_POST);
-		$fromEmail = $res->fromEmail;
-		$toEmail = $res->toEmail;
-		$subjectEmail = $res->subject;
-		$bodyEmail = $res->body;
-		$replyIdEmail = $res->messageId;
-		$attachEmail = $res->attachments;
-
-		// do not continue procesing the email if the sender is not valid
+		// run the request and get the service and response
 		$utils = new Utils();
-		$status = $utils->deliveryStatus($fromEmail, 'in');
-		if($status != 'ok') return;
-
-		// save the new email in the database and get the ID
-		$connection = new Connection();
-		$attachStr = implode(",", $attachEmail);
-		$idEmail = $connection->query("
-			INSERT INTO delivery_received (user, mailbox, subject, body, messageid, attachments)
-			VALUES ('$fromEmail', '$toEmail', '$subjectEmail', '$bodyEmail', '$replyIdEmail', '$attachStr')");
-
-		// save the webhook log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("From:{$fromEmail}, To:{$toEmail}, Subject:{$subjectEmail}");
-		$logger->close();
-
-		// if the person exist in Apretaste
-		$personExist = $utils->personExist($fromEmail);
-		if ($personExist)
-		{
-			// update last access time to current and make person active
-			$connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='$fromEmail'");
-		}
-		else // if the person accessed for the first time, insert him/her
-		{
-			$inviteSource = 'alone'; // alone if the user came by himself, no invitation
-			$sql = "START TRANSACTION;"; // start the long query
-
-			// check if the person was invited to Apretaste
-			$invites = $connection->query("SELECT * FROM invitations WHERE email_invited='$fromEmail' AND used=0 ORDER BY invitation_time DESC");
-			if(count($invites)>0)
-			{
-				// check how this user came to know Apretaste, for stadistics
-				$inviteSource = $invites[0]->source;
-
-				// give prizes to the invitations via service invitar
-				// if more than one person invites X, they all get prizes
-				foreach ($invites as $invite)
-				{
-					switch($invite->source)
-					{
-						case "internal":
-						// assign tickets and credits
-						$sql .= "INSERT INTO ticket (email, origin) VALUES ('{$invite->email_inviter}', 'RAFFLE');";
-						$sql .= "UPDATE person SET credit=credit+0.25 WHERE email='{$invite->email_inviter}';";
-
-						// email the invitor
-						$newTicket = new Response();
-						$newTicket->setResponseEmail($invite->email_inviter);
-						$newTicket->setEmailLayout("email_simple.tpl");
-						$newTicket->setResponseSubject("Ha ganado un ticket para nuestra Rifa");
-						$newTicket->createFromTemplate("invitationWonTicket.tpl", array("guest"=>$fromEmail));
-						$newTicket->internal = true;
-						$responses[] = $newTicket;
-						break;
-
-						case "abroad":
-						$newGuest = new Response();
-						$newGuest->setResponseEmail($invite->email_inviter);
-						$newGuest->setResponseSubject("Tu amigo ha atendido tu invitacion");
-
-						$inviter = $utils->usernameFromEmail($invite->email_inviter);
-						$pInviter = $utils->getPerson($invite->email_inviter);
-						if (!isset($pInviter->name)) $pInviter->name = '';
-						if ($pInviter !== false) if (trim($pInviter->name) !== '') $inviter = $pInviter->name;
-
-						$pGuest = $utils->getPerson($fromEmail);
-						$guest = $fromEmail;
-						if ($pGuest) $guest = $pGuest->username;
-
-						$newGuest->createFromTemplate("invitationNewGuest.tpl", array("inviter"=>$inviter, "guest"=>$guest, "guest_email" => $fromEmail));
-						$newGuest->internal = true;
-						$responses[] = $newGuest;
-						break;
-					}
-				}
-
-				// mark all opened invitations to that email as used
-				$sql .= "UPDATE invitations SET used=1, used_time=CURRENT_TIMESTAMP WHERE email_invited='$fromEmail' AND used=0;";
-			}
-
-			// create a unique username and save the new person
-			$username = $utils->usernameFromEmail($fromEmail);
-			$sql .= "INSERT INTO person (email, username, last_access, source) VALUES ('$fromEmail', '$username', CURRENT_TIMESTAMP, '$inviteSource');";
-
-			// save details of first visit
-			$sql .= "INSERT INTO first_timers (email, source) VALUES ('$fromEmail', '$fromEmail');";
-
-			// check list of promotor's emails
-			$promoters = $connection->query("SELECT email FROM promoters WHERE email='$fromEmail' AND active=1;");
-			$prize = count($promoters)>0;
-			if ($prize)
-			{
-				// update the promotor
-				$sql .= "UPDATE promoters SET `usage`=`usage`+1, last_usage=CURRENT_TIMESTAMP WHERE email='$fromEmail';";
-				// add credit and tickets
-				$sql .= "UPDATE person SET credit=credit+5, source='promoter' WHERE email='$fromEmail';";
-				$sqlValues = "('$fromEmail', 'PROMOTER')";
-				$sql .= "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues . ",", 9) . "$sqlValues;";
-			}
-
-			// run the long query all at the same time
-			$connection->query($sql."COMMIT;");
-
-			// send the welcome email
-			$welcome = new Response();
-			$welcome->setResponseEmail($fromEmail);
-			$welcome->setEmailLayout("email_simple.tpl");
-			$welcome->setResponseSubject("Bienvenido a Apretaste");
-			$welcome->createFromTemplate("welcome.tpl", array("email"=>$fromEmail, "prize"=>$prize, "source"=>$fromEmail));
-			$welcome->internal = true;
-			$responses[] = $welcome;
-		}
-
-		// run the request and get the service and responses
-		$ret = $utils->runRequest($fromEmail, $subjectEmail, $bodyEmail, array());
+		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
 		$service = $ret->service;
-		$responses = $ret->responses;
+		$response = $ret->responses[0];
 
-		// create the new Email object
-		$email = new Email();
-		$email->id = $idEmail;
-		$email->to = $fromEmail;
-		$email->replyId = $replyIdEmail;
-		$email->group = $service->group;
-
-		// create a new Render object
-		$render = new Render();
-
-		// get params for the email and send the response emails
-		foreach($responses as $rs)
+		// if the request needs an email back
+		if($response->render)
 		{
-			// render the email
-			if($rs->render) // ommit default Response()
-			{
-				// save impressions in the database
-				$ads = $rs->getAds();
-				if($service->showAds && ! empty($ads))
-				{
-					$sql = "";
-					if( ! empty($ads[0])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[0]->id}';";
-					if( ! empty($ads[1])) $sql .= "UPDATE ads SET impresions=impresions+1 WHERE id='{$ads[1]->id}';";
-					$connection->query($sql);
-				}
+			// render the HTML body
+			$render = new Render();
+			$body = $render->renderHTML($service, $response);
 
-				// prepare and send the email
-				if($rs->email) $email->to = $rs->email;
-				$email->subject = $rs->subject;
-				$email->images = $rs->images;
-				$email->attachments = $rs->attachments;
-				$email->body = $render->renderHTML($service, $rs);
-				$email->send();
-			}
-			// for the requests that don't send emails back to the user
-			else
-			{
-				// mark email as done so we don't run it again
-				$connection->query("UPDATE delivery_received SET status='done', sent=CURRENT_TIMESTAMP WHERE id='$idEmail'");
-			}
+			// prepare and send the email
+			$email = new Email();
+			$email->id = $this->idEmail;
+			$email->to = $this->fromEmail;
+			$email->subject = $response->subject;
+			$email->body = $body;
+			$email->images = $response->images;
+			$email->attachments = $response->attachments;
+			$email->replyId = $this->messageId;
+			$email->send();
 		}
 
-		// saves the openning date if the person comes from remarketing
-		$connection->query("UPDATE remarketing SET opened=CURRENT_TIMESTAMP WHERE opened IS NULL AND email='$fromEmail'");
-
-		// calculate execution time when the service stopped executing
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-
-		// get the user email domainEmail
-		$emailPieces = explode("@", $fromEmail);
-		$domain = $emailPieces[1];
-
-		// get the top and bottom Ads
-		$ads = isset($responses[0]->ads) ? $responses[0]->ads : array();
-		$adTop = isset($ads[0]) ? $ads[0]->id : "NULL";
-		$adBottom = isset($ads[1]) ? $ads[1]->id : "NULL";
-
-		// save the logs on the utilization table
+		// update values in the delivery table
+		$connection = new Connection();
 		$safeQuery = $connection->escape($service->request->query);
 		$connection->query("
-			INSERT INTO utilization (email_id, service, subservice, query, requestor, request_time, response_time, domain, ad_top, ad_bottom)
-			VALUES ('$idEmail','{$service->serviceName}','{$service->request->subservice}','$safeQuery','$fromEmail','$execStartTime','$executionTime','$domain',$adTop,$adBottom)");
-		return true;
+			UPDATE delivery SET
+			request_service='{$service->serviceName}',
+			request_subservice='{$service->request->subservice}',
+			request_query='$safeQuery'
+			WHERE id='{$this->idEmail}'");
+
+		// return message for the log
+		return "Email received and sent";
 	}
 
 	/**
-	 * Get the POST from MailGun and return the array of data
-	 *
+	 * Send the email to the support team
 	 */
-	private function formatMailgunWebhook($post)
+	private function runSupport()
 	{
-		// do not allow fake income messages
-		if( ! isset($post['From'])) return false;
+		// save the new ticket into the database
+		$connection = new Connection();
+		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '{$this->subject}', '{$this->body}')");
 
-		// check where to acquire the field "To"
-		$to = "";
-		if(isset($post['To'])) $to = $post['To'];
-		if(empty($to) && isset($post['Delivered-To'])) $to = $post['Delivered-To'];
-		if(empty($to) && isset($post['Received'])) $to = $post['Received'];
+		// save the new ticket in the reports table
+		$mysqlDateToday = date("Y-m-d H:i:s");
+		$connection->query("
+			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
+			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
 
-		// filter email From and To
-		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
-		preg_match_all($pattern, strtolower($post['From']), $emailFrom);
-		preg_match_all($pattern, strtolower($to), $emailTo);
+		// return message for the log
+		return "Support ticket created";
+	}
 
-		// get values to the variables
-		$fromEmail = $emailFrom[0][0];
-		$toEmail = empty($emailTo[0][0]) ? "" : $emailTo[0][0];
-		$fromName = trim(explode("<", $post['From'])[0]);
-		$subject = $post['subject'];
-		$body = isset($post['body-plain']) ? $post['body-plain'] : "";
-		$attachmentCount = isset($post['attachment-count']) ? $post['attachment-count'] : 0;
+	/**
+	 * Read the email from Amazon AWS
+	 */
+	private function callAmazonWebhook()
+	{
+		// capture a valid SNS notification
+		$json = file_get_contents('php://input');
+		$notification = json_decode($json);
+		// error_log(print_r($notification, true)); // subscribe
+		if(empty($notification)) return false;
 
-		// clean incoming emails
-		$fromEmail = str_replace("'", "", $fromEmail);
-		$toEmail = str_replace("'", "", $toEmail);
+		// get the Bucket & KeyName from the request
+		$message = json_decode($notification->Message);
+		$bucket = $message->Records[0]->s3->bucket->name;
+		$keyname = $message->Records[0]->s3->object->key;
 
-		// treat emails to download the app
-		// @TODO @HACK this is a hack and should not stay long term
-		if($toEmail == "navegacuba@gmail.com") $subject = "app";
-
-		// obtain the ID of the message to make it "respond" to the email
-		$messageID = null;
-		foreach($_POST as $k => $v){
-			$k = strtolower($k);
-			if ($k == 'message-id' || $k == 'messageid' || $k == 'id'){
-				$messageID = $v;
-				break;
-			}
-		}
-
-		// download attachments to the temp folder
+		// get the temp folder
 		$utils = new Utils();
+		$temp = $utils->getTempDir();
+
+		// instantiate the client
+		$s3Client = new Aws\S3\S3Client([
+			'version'=>'2006-03-01',
+			'region'=>'us-east-1',
+			'credentials'=>[
+				'key'=>$this->di->get('config')['sns']['key'],
+				'secret'=>$this->di->get('config')['sns']['secret']
+			]]);
+
+		// save file from SNS to the temp folder
+		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
+
+		// parse the file
+		$parser = new PhpMimeMailParser\Parser();
+		$parser->setPath($temp."mails/".$keyname);
+		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
+		$from = $parser->getAddresses('from');
+		$fromEmail = $from[0]['address'];
+		$fromName = $from[0]['display'];
+		$subject = $parser->getHeader('subject');
+		$body = $parser->getMessageBody('text');
+		$attachs = $parser->getAttachments();
+
+		// get the TO address
+		$to = $parser->getAddresses('Delivered-To');
+		if(empty($to)) $to = $parser->getAddresses('to');
+		$toEmail = $to[0]['address'];
+
+		// display the Amazon SNS log
 		$wwwroot = $this->di->get('path')['root'];
-		$attachments = array();
-		for ($i=1; $i<=$attachmentCount; $i++)
-		{
-			// get the path for the image
-			$originFilePath = $_FILES["attachment-$i"]["tmp_name"];
-			$mimeTypePieces = explode("/", mime_content_type($originFilePath));
-			$fileNameNoExtension = $utils->generateRandomHash();
-
-			// convert images to jpg and save it to temporal
-			if($mimeTypePieces[0] == "image")
-			{
-				$tmpfilePath = "$wwwroot/temp/$fileNameNoExtension.jpg";
-				imagejpeg(imagecreatefromstring(file_get_contents($originFilePath)), $tmpfilePath);
-				$utils->optimizeImage($tmpfilePath);
-			}
-			else // save any other file to the temporals
-			{
-				$tmpfilePath = "$wwwroot/temp/$fileNameNoExtension.$mimeTypePieces[1]";
-				copy($originFilePath, $tmpfilePath);
-			}
-
-			// grant full access to the file
-			chmod($tmpfilePath, 0777);
-			$attachments[] = $tmpfilePath;
-		}
-
-		// remove weird chars and apostrophes that break the SQL code
-		$subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
-		$body = str_replace("'", "", $body);
-		$messageID = str_replace("'", "", $messageID);
-
-		// save the mailgun log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/mailgun.log");
-		$logger->log("From:$fromEmail, To:$toEmail, Subject:$subject\n".print_r($_POST, true)."\n\n");
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
+		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
-		// respond with info
-		$response = new stdClass();
-		$response->fromEmail = $fromEmail;
-		$response->fromName = $fromName;
-		$response->toEmail = $toEmail;
-		$response->subject = $subject;
-		$response->body = $body;
-		$response->attachments = $attachments;
-		$response->messageId = $messageID;
-		return $response;
+		// save attachments to the temp folder
+		$attachments = array();
+		if($attachs)
+		{
+			$attachs = $parser->saveAttachments($temp."attachments/");
+			foreach ($attachs as $attach)
+			{
+				$name = $utils->generateRandomHash();
+				$mimeType = mime_content_type($attach);
+
+				// convert to JPG and optimize image
+				if(substr($mimeType, 0, strlen("image")) === "image")
+				{
+					$newFile = $temp."attachments/$name.jpg";
+					imagejpeg(imagecreatefromstring(file_get_contents($attach)), $newFile);
+					$utils->optimizeImage($newFile);
+					unlink($attach);
+				}
+				// save any other file to the temporals
+				else
+				{
+					// rename the file
+					$ext = pathinfo($attach, PATHINFO_EXTENSION);
+					$newFile = $temp."attachments/$name.$ext";
+					rename($attach, $newFile);
+				}
+
+				// add to array of attachments
+				$attachments[] = $newFile;
+			}
+		}
+
+		// save variables in the class
+		$this->fromName = $fromName;
+		$this->fromEmail = $fromEmail;
+		$this->toEmail = $toEmail;
+		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+		$this->body = str_replace("'", "", $body);
+		$this->attachments = $attachments;
 	}
 }

@@ -8,12 +8,12 @@ class BienvenidoController extends Controller
 	{
 		// START visitors
 		$connection = new Connection();
-		$visits = $connection->deepQuery("
+		$visits = $connection->query("
 			SELECT
-				count(usage_id) as received,
-				DATE_FORMAT(request_time,'%Y-%m') as inserted
-			FROM utilization
-			GROUP BY DATE_FORMAT(request_time,'%Y-%m')
+				count(id) as received,
+				DATE_FORMAT(request_date,'%Y-%m') as inserted
+			FROM delivery
+			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
 			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
 			ORDER BY inserted DESC
 			LIMIT 5");

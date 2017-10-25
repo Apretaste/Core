@@ -54,9 +54,6 @@ class Render
 		$smarty->debugging = false;
 		$smarty->caching = false;
 
-		// getting the ads
-		$ads = $service->showAds ? $response->getAds() : array();
-
 		// get the person
 		$utils = new Utils();
 		$person = $utils->getPerson($response->email);
@@ -75,7 +72,6 @@ class Render
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
 			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
-			"APRETASTE_ADS" => $ads,
 			"APRETASTE_EMAIL" => $validEmailAddress,
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
@@ -89,12 +85,8 @@ class Render
 			'CURRENT_USER' => isset($person->email) ? $person : false
 		);
 
-		// play the stars game
-		if($response->html) $starsGame = array();
-		else $starsGame = $this->startsGame($response);
-
 		// merge all variable sets and assign them to Smarty
-		$templateVariables = array_merge($systemVariables, $response->content, $starsGame);
+		$templateVariables = array_merge($systemVariables, $response->content);
 		$smarty->assign($templateVariables);
 
 		// rendering and removing tabs, double spaces and break lines
@@ -147,47 +139,5 @@ class Render
 
 		// return the array
 		return $servicesRelates;
-	}
-
-	/**
-	 * Run the starts game and return the template variables
-	 *
-	 * @author Kuma/salvipascual
-	 * @return Array
-	 */
-	private function startsGame(Response $response)
-	{
-		$utils = new Utils();
-		$connection = new Connection();
-
-		// get the number of requests today
-		$requestsToday = $utils->getTotalRequestsTodayOf($response->email);
-
-		// create the array to return
-		$returnArray = array("raffle_stars" => 0, "requests_today" => $requestsToday);
-
-		// run the stars game
-		if ($requestsToday == 0)
-		{
-			$stars = $utils->getRaffleStarsOf($response->email, false);
-			if ($stars === 4) // today is the star number five
-			{
-				// insert 10 tickets for user
-				//$sqlValues = "('$email', 'GAME')";
-				//$sql = "INSERT INTO ticket(email, origin) VALUES " . str_repeat($sqlValues.",", 9) . "$sqlValues;";
-
-				// insert $1 in credits
-				$connection->deepQuery("UPDATE person SET credit = credit + 1 WHERE email = '{$response->email}'");
-				$utils->addEvent("stars-game", "win-credit", $response->email,  []);
-
-				// add notification to user
-				$utils->addNotification($response->email, "GAME", "Haz ganado 10 tickets para Rifa por utilizar Apretaste durante 5 d&iacute;as seguidos", "RIFA", "IMPORTANT");
-			}
-
-			// update number of stars for the template
-			$returnArray["raffle_stars"] = $stars+1;
-		}
-
-		return $returnArray;
 	}
 }
