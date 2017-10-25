@@ -89,6 +89,6 @@ class Connection
 		$safeStr = self::db()->escapeString($str);
 
 		// remove the ' at the beginning and end of the string
-		return substr(substr($safeStr, 0, -1), 1);
+		return substr(substr($safeStr, 0, - 1), 1);
 	}
 }
