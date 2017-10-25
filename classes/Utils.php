@@ -1,11 +1,7 @@
 <?php
 
-use Mailgun\Mailgun;
-use abeautifulsite\SimpleImage;
 use G4\Crypto\Crypt;
 use G4\Crypto\Adapter\OpenSSL;
-use Mremi\UrlShortener\Model\Link;
-use Mremi\UrlShortener\Provider\Google\GoogleProvider;
 
 class Utils
 {
@@ -1098,31 +1094,6 @@ class Utils
 		$text = str_replace("¿", "&iquest;", $text);
 
 		return $text;
-	}
-
-	/**
-	 * Shorten an URL and return the new short URL
-	 *
-	 * @author salvipascual
-	 * @param String $url
-	 * @return String or false if error
-	 */
-	public function shortenUrl($url)
-	{
-		// get the Google API key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['google']['key'];
-
-		try{
-			$link = new Link;
-			$link->setLongUrl($url);
-			$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
-			$shortenUrl = $googleProvider->shorten($link);
-			return $link->getShortUrl();
-		}catch (Exception $e){
-			$this->createAlert("ERORR SHORTENING $url, ERROR:" . $e->getMessage(), "ERROR");
-			return false;
-		}
 	}
 
 	/**
