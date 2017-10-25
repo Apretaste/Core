@@ -1066,12 +1066,13 @@ class Utils
 			// get the group from the configs file
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$to = $di->get('config')['global']['alerts'];
+			$tier = $di->get('config')['global']['tier'];
 
 			// send the alert by email
 			$email = new Email();
 			$email->to = $to;
 			$email->subject = substr($subject, 0, 80);
-			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
+			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 

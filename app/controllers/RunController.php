@@ -453,7 +453,7 @@ class RunController extends Controller
 		// display the Amazon SNS log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
-		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n\n");
+		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
 		// save attachments to the temp folder
