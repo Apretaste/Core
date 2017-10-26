@@ -81,6 +81,33 @@ class Email
 	}
 
 	/**
+	 * Load a template and send it as email
+	 *
+	 * @author salvipascual
+	 * @param String $template, path to the template
+	 * @param Array $params, variables for the template
+	 * @param String $layout, path to the layout
+	 */
+	public function sendFromTemplate($template, $params=[], $layout="email_empty.tpl")
+	{
+		// create the response object
+		$response = new Response();
+		$response->email = $this->to;
+		$response->setResponseSubject($this->subject);
+		$response->setEmailLayout($layout);
+		$response->createFromTemplate($template, $params);
+		$response->internal = true;
+
+		// get the body from the template
+		$render = new Render();
+		$html = $render->renderHTML(new Service(), $response);
+
+		// send the email
+		$this->body = $html;
+		return $this->send();
+	}
+
+	/**
 	 * Sends an email using Amazon SES
 	 *
 	 * @author salvipascual
