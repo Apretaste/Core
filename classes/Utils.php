@@ -43,15 +43,20 @@ class Utils
 	 */
 	public function getSupportEmailAddress()
 	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$support = $di->get('config')['contact']['support'];
+		// get a random support email
+		$connection = new Connection();
+		$support = $connection->query("
+			SELECT email FROM delivery_input
+			WHERE environment='support' AND active=1
+			ORDER BY RAND() LIMIT 1");
+
+		// alert if no support mailbox
+		if(empty($support)) $this->createAlert("No support email in table delivery_input", "ERROR");
+		else $support = $support[0]->email;
 
 		// add alias to the email
-		$parts = explode("@", $support);
 		$seed = $this->randomSentence(1);
-		$support = $parts[0]."+$seed@".$parts[1];
-
-		return $support;
+		return "$support+$seed@gmail.com";
 	}
 
 	/**
