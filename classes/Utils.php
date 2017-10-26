@@ -426,8 +426,8 @@ class Utils
 
 			// return the status based on the code
 			$status = 'unknown'; // for non-recognized codes
-			if(in_array($code, array("121","200","207","305","308"))) $status = 'ok';
-			if(in_array($code, array("114","118","119","313","314","215"))) $status = 'temporal';
+			if(in_array($code, array("121","200","207","305","308","215","114"))) $status = 'ok';
+			if(in_array($code, array("118","119","313","314"))) $status = 'temporal';
 			if(in_array($code, array("413","406"))) $status = 'soft-bounce';
 			if(in_array($code, array("302","314","317","401","404","410","414","420"))) $status = 'hard-bounce';
 			if($code == "303") $status = 'spam';
