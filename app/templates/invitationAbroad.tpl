@@ -3,7 +3,7 @@
 <p style="color:red;">Has recibido este mensaje porque <b>{$host}</b> le invit&oacute; a instalar nuestra app para navegar internet.</p>
 
 <h2>&iquest;Para que sirve la app?</h2>
-<p>Nuestra app <b>le permite acceder a la internet</b> y Comprar o Vender, buscar en Google, leer Noticias, compartir en nuestra Red Social, consultar Wikipedia, Traducir documentos a decenas de idiomas, ver el Estado del Tiempo, buscar su Media Naranja y mucho m&aacute;s; con solo tener una cuenta Nauta.</p>
+<p>Nuestra app <b>le permite acceder a la internet</b>, buscar en Google, entrar a Revolico, leer Noticias, compartir en nuestra Red Social, consultar Wikipedia, Traducir documentos a decenas de idiomas, ver el Estado del Tiempo, buscar su Media Naranja y mucho m&aacute;s; con solo tener una cuenta Nauta.</p>
 
 {space5}
 
