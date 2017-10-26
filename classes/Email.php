@@ -194,7 +194,7 @@ class Email
 
 		// transform images to base64
 		$imagesToUpload = array();
-		foreach ($this->images as $image) {
+		if(is_array($this->images)) foreach ($this->images as $image) {
 			$item = new stdClass();
 			$item->type = file_exists($image) ? mime_content_type($image) : '';
 			$item->name = basename($image);
@@ -328,12 +328,11 @@ class Email
 		$zip->open($zipFile, ZipArchive::CREATE);
 		$zip->addFromString($htmlFile, $this->body);
 
-		if (is_array($this->images))
-			foreach ($this->images as $i) $zip->addFile($i, basename($i));
+		// all files and attachments
+		if (is_array($this->images)) foreach ($this->images as $i) $zip->addFile($i, basename($i));
+		if (is_array($this->attachments)) foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
 
-		if (is_array($this->attachments))
-			foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
-
+		// close the zip file
 		$zip->close();
 
 		// add to the attachments and clean the body
@@ -373,8 +372,8 @@ class Email
 
 		// create thumbnails for images
 		$images = array();
-		foreach ($this->images as $file)
-		{
+		if(is_array($this->images)) foreach ($this->images as $file)
+{
 			// thumbnail the image or use thumbnail cache
 			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 			if( ! file_exists($thumbnail)) {
