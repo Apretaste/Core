@@ -1,6 +1,8 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use Aws\Sns\Message;
+use Aws\Sns\MessageValidator;
 
 class RunController extends Controller
 {
@@ -407,14 +409,14 @@ class RunController extends Controller
 	 */
 	private function callAmazonWebhook()
 	{
-		// capture a valid SNS notification
-		$json = file_get_contents('php://input');
-		$notification = json_decode($json);
-		// error_log(print_r($notification, true)); // subscribe
-		if(empty($notification)) return false;
+		// get the message object
+		$message = Message::fromRawPostData();
+		$validator = new MessageValidator();
+		if( ! $validator->isValid($message)) return false;
+		// error_log(print_r($message,true)); // subscription
 
-		// get the Bucket & KeyName from the request
-		$message = json_decode($notification->Message);
+		// get the bucket and key from message
+		$message = json_decode($message['Message']);
 		$bucket = $message->Records[0]->s3->bucket->name;
 		$keyname = $message->Records[0]->s3->object->key;
 
