@@ -1,19 +1,12 @@
 <div class="row">
-	<div class="col-xs-12 text-right">
-		<a class="btn btn-small btn-default" data-toggle="modal" data-target="#newInputEmail"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Email</a>
-		<a class="btn btn-small btn-default" href="/nodes">Output emails</a>
-		<a class="btn btn-small btn-default" href="/nodes/queque">Waiting Queque</a>
-		<a class="btn btn-small btn-default" href="/nodes/delivery">Delivery</a>
-		<br/><br/>
-	</div>
-
 	<div class="col-xs-12">
 		<table class="table">
 			<thead>
 				<tr>
 					<th class="text-center">Email</th>
 					<th class="text-center">Received</th>
-					<th class="text-center">Actions</th>
+					<th class="text-center">Environment</th>
+					<th class="text-center"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -21,9 +14,8 @@
 				<tr>
 					<td class="text-center"><?=$email->email?></td>
 					<td class="text-center"><?=$email->received?></td>
-					<td class="text-center">
-						<a class="btn btn-xs btn-danger" onclick="return confirm('Are you sure? There is no way back!');" href="/nodes/deleteInputSubmit?email=<?=$email->email?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
-					</td>
+					<td class="text-center"><?=$email->environment?></td>
+					<td class="text-center"><a class="btn btn-xs btn-default" onclick="return confirm('Are you sure to delete?');" href="/admin/submitDeleteInputEmail?email=<?=$email->email?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a></td>
 				</tr>
 			<?php } ?>
 			</tbody>
@@ -31,9 +23,12 @@
 	</div>
 </div>
 
-<!-- Modal to add/edit a can response -->
+
+<!-- MODALS -->
+
+
 <div id="newInputEmail" class="modal fade" role="dialog">
-	<form action="/nodes/saveInputSubmit" method="POST">
+	<form action="/admin/submitNewInputEmail" method="POST">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -42,8 +37,15 @@
 				</div>
 				<div class="modal-body">
 					<div class="form-group">
-						<label for="email">Input email</label>
-						<input id="email" type="email" name="email" class="form-control" required />
+						<label for="email">Email</label>
+						<div class="input-group">
+							<input id="email" type="text" name="email" class="form-control" required />
+							<span class="input-group-addon">@gmail.com</span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="environment">Environment</label>
+						<input id="environment" type="text" name="environment" class="form-control" required />
 					</div>
 				</div>
 				<div class="modal-footer">

@@ -3,7 +3,8 @@
 		<table class="table">
 			<thead>
 				<tr>
-					<th>Raffle description</th>
+					<th></th>
+					<th class="text-center">Description</th>
 					<th class="text-center">Tickets</th>
 					<th class="text-center">Start Day</th>
 					<th class="text-center">End Day</th>
@@ -12,6 +13,7 @@
 			<tbody>
 			<?php foreach($raffles as $raffle) { ?>
 				<tr>
+					<td width="50"><img src="/raffle/<?=$raffle->picture?>.jpg" width="50" height="50" alt="image"/></td>
 					<td>
 						<p><?=$raffle->item_desc?></p>
 						<?php if($raffle->winner_1) { ?>
@@ -21,7 +23,7 @@
 								<b>W3:</b> <?=$raffle->winner_3?>
 							</p>
 						<?php } else { ?>
-							<a href="/manage/getWinners?id=<?=$raffle->raffle_id?>" onclick="return confirm('Are you sure? This action is final!');">Get Raffle Winners</a>
+							<a href="/admin/submitGetWinners?id=<?=$raffle->raffle_id?>" onclick="return confirm('Are you sure? This action is final!');">Get Raffle Winners</a>
 						<?php } ?>
 					</td>
 					<td class="text-center"><?=$raffle->tickets?></td>

@@ -18,14 +18,14 @@
 			</div>
 			<?php endif; ?>
 		<?php endif; ?>
-		
+
 		<div class="ibox float-e-margins">
 			<div class="ibox-title">
 				<h5>Destination data</h5>
 			</div>
 			<div class="ibox-content">
-				
-				<form action="/manage/marketDestination/<?php echo $order->id; ?>" method="post" data-toggle="validator">
+
+				<form action="/market/marketDestination/<?php echo $order->id; ?>" method="post" data-toggle="validator">
 					<div class="form-group">
 						<label for="edtProvince">Province:</label>
 						<?php $provinces = array('PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD'); ?>
@@ -80,13 +80,12 @@
 			<?php endif;?>
 			<p><b><?php echo $product->name; ?></b>: <?php echo $product->description; ?></p>
 
-			Price: $<b><?php echo number_format($product->price,2); ?></b><br /> 
+			Price: $<b><?php echo number_format($product->price,2); ?></b><br />
 			Shipping: $<b><?php echo number_format($product->shipping_price,2); ?></b><br />
 			Credits: $<b><?php echo number_format($product->credits,2); ?></b><br />
-			Agency: <b><?php echo $product->agency; ?></b><br /> 
+			Agency: <b><?php echo $product->agency; ?></b><br />
 			Owner: <b><?php echo $product->owner; ?></b>
 			</div>
 		</div>
 	</div>
 </div>
-

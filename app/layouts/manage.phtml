@@ -44,7 +44,9 @@
 						<!-- APRETASTE LOGO -->
 						<li class="nav-header">
 							<div class="dropdown profile-element">
-								<img alt="image" src="/images/apretaste.logo.big.transp.png" width="100"/>
+								<img class="img-circle pull-left" style="margin-right:10px; width:35px;" src="https://pbs.twimg.com/profile_images/732572666482335744/WY1ij6LI.jpg" alt="image"/>
+								<strong>Salvi Pascual</strong><br/>
+								<small>Executive Director</small>
 							</div>
 						</li>
 
@@ -56,18 +58,13 @@
 						<?php } ?>
 
 						<!-- AUDIENCE -->
-						<?php if($security->checkAccess("manage")) { ?>
+						<?php if($security->checkAccess("analytics")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-bar-chart-o"></i> <span class="nav-label">Analytics</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
-								<li><a href="/manage/audience">Audience</a></li>
-								<li><a href="/manage/profile">Profile</a></li>
-								<li><a href="/manage/profilesearch">Profile search</a></li>
-								<li><a href="/manage/remarketing">Remarketing</a></li>
-								<li><a href="/manage/raffles">Raffles</a></li>
-								<li><a href="/manage/services">List of services</a></li>
-								<li><a href="/manage/ads">List of ads</a></li>
-								<li><a href="/manage/dropped">Dropped emails</a></li>
+								<li><a href="/analytics/audience">Audience</a></li>
+								<li><a href="/analytics/profile">Profile</a></li>
+								<li><a href="/analytics/profilesearch">Profile search</a></li>
 							</ul>
 						</li>
 						<?php } ?>
@@ -77,42 +74,32 @@
 						<li>
 							<a href="#"><i class="fa fa-wrench"></i> <span class="nav-label">Admin</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
-								<li><a href="/manage/createad">Create ad</a></li>
-								<li><a href="/manage/createraffle">Create raffle</a></li>
-								<li><a href="/manage/addcredit">Add credit</a></li>
-								<li><a href="/admin/synonyms">Synonyms</a></li>
-							</ul>
-						</li>
-						<?php } ?>
-
-						<!-- NODES -->
-						<?php if($security->checkAccess("nodes")) { ?>
-						<li>
-							<a href="#"><i class="fa fa-heartbeat"></i> <span class="nav-label">Emails</span> <span class="fa arrow"></span></a>
-							<ul class="nav nav-second-level">
-								<li><a href="/nodes">Output emails</a></li>
-								<li><a href="/nodes/input">Input emails</a></li>
-								<li><a href="/nodes/queque">Waiting queque</a></li>
-								<li><a href="/nodes/delivery">Delivery</a></li>
+								<li><a href="/admin/raffles">Raffles</a></li>
+								<li><a href="/admin/services">Services</a></li>
+								<li><a href="/admin/ads">Ads</a></li>
+								<li><a href="/admin/addcredit">Add credit</a></li>
+								<li><a href="/admin/dropped">Dropped emails</a></li>
+								<li><a href="/admin/delivery">Delivery</a></li>
+								<li><a href="/admin/input">Input emails</a></li>
 							</ul>
 						</li>
 						<?php } ?>
 
 						<!-- SURVEY -->
-						<?php if($security->checkAccess("manage")) { ?>
+						<?php if($security->checkAccess("survey")) { ?>
 						<li>
-							<a href="/manage/surveys"><i class="fa fa-pie-chart"></i> <span class="nav-label">Surveys</span></a>
+							<a href="/survey/surveys"><i class="fa fa-pie-chart"></i> <span class="nav-label">Surveys</span></a>
 						</li>
 						<?php } ?>
 
 						<!-- MARKET -->
-						<?php if($security->checkAccess("manage")) { ?>
+						<?php if($security->checkAccess("market")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Market</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
-								<li><a href="/manage/market">Products</a></li>
-								<li><a href="/manage/marketOrders">Orders</a></li>
-								<li><a href="/manage/marketStats">Stats</a></li>
+								<li><a href="/market/market">Products</a></li>
+								<li><a href="/market/marketOrders">Orders</a></li>
+								<li><a href="/market/marketStats">Stats</a></li>
 							</ul>
 						</li>
 						<?php } ?>
@@ -184,26 +171,26 @@
 				</div>
 			</nav>
 
-			<div id="page-wrapper" class="gray-bg dashbard-1">
-				<?php if(isset($title)): ?>
-					<div class="row wrapper border-bottom white-bg page-heading">
-						<h2><?php  echo $title; ?></h2>
-
-						<ol class="breadcrumb">
-							<li><a href="/manage">Home</a></li>
-							<?php if (isset($breadcrumb)): ?>
-								<?php foreach ($breadcrumb as $path => $caption): ?>
-								<?php $active = false;?>
-								<?php if (substr($caption, 0, 1 )== '*') {$caption = substr($caption,1); $active = true;}?>
-								<li <?php if ($active) echo 'class="active"';?>>
-										<a href="<?php if ($path[0] != "/") echo "/manage/"; ?><?php echo $path; ?>"><?php echo $caption; ?></a>
-								</li>
-								<?php endforeach;?>
-							<?php endif;?>
-						</ol>
+			<div id="page-wrapper" class="gray-bg dashbard-2">
+				<div class="row border-bottom white-bg page-heading">
+					<div class="pull-left">
+						<h1 style="margin:20px 0px 0px 0px;"><?php if(isset($title)) echo $title; ?></h1>
 					</div>
-				<?php endif;?>
-				<?php echo $this->getContent(); ?>
+					<?php if(isset($buttons) && is_array($buttons)) { ?>
+					<div class="text-right">
+						<br/>
+						<?php foreach($buttons as $btn) { ?>
+							<?php $icon = isset($btn['icon']) ? '<span class="glyphicon glyphicon-'.$btn['icon'].'" aria-hidden="true"></span> ' : ''; ?>
+							<?php $modal = isset($btn['modal']) ? 'data-toggle="modal" data-target="#'.$btn['modal'].'"' : ''; ?>
+							<?php $onclick = isset($btn['onclick']) ? 'onclick="'.$btn['onclick'].'"' : ''; ?>
+							<a class="btn btn-small btn-default" <?= $onclick ?> href="<?= $btn['href'] ?>" <?= $modal ?>><?= $icon ?><?= $btn['caption'] ?></a>
+						<?php } ?>
+					</div>
+					<?php } ?>
+				</div>
+				<div style="padding:20px 0px;">
+					<?php echo $this->getContent(); ?>
+				</div>
 			</div>
 		</div>
 

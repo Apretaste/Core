@@ -1,15 +1,11 @@
-<div class="ibox float-e-margins">
-	<br/>
-	<a class="btn btn-default" href="/school/schoolChapters?course=<?php echo $chapter->course; ?>">Chapters</a>
-	<br/>
-	<div class="ibox-title">
-		<h5><?php echo $chapter->title; ?></h5>
+<div class="row">
+	<div class="col-xs-12">
+		<b><?= $chapter->title ?></b>
+		<hr/>
+
+		<p><?= $chapter->content ?></p><br/>
+
+		<a class="btn btn-default" href="/school/schoolEditChapter/<?= $chapter->id ?>">Edit</a>
+		<a class="btn btn-default" href="/school/schoolChapters?course=<?= $chapter->course ?>">Chapters</a>
 	</div>
-	<div class="ibox-content">
-		<p>
-		<?php echo $chapter->content; ?><br/>
-		</p>
-	</div>
-	<br/>
-	<a class="btn btn-default" href="/school/schoolEditChapter/<?php echo $chapter->id; ?>">Edit</a>
 </div>

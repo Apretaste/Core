@@ -8,6 +8,7 @@ class SchoolController extends Controller
 	public function initialize(){
 		$security = new Security();
 		$security->enforceLogin();
+		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -93,12 +94,17 @@ class SchoolController extends Controller
 			$connection->query($sql);
 		}
 
-		$courses = $connection->query("SELECT * FROM _escuela_course ORDER BY ID");
+		// get list of courses
+		$courses = $connection->query("
+			SELECT A.*, B.name, B.title AS grade
+			FROM _escuela_course A
+			JOIN _escuela_teacher B
+			ON A.teacher = B.id");
 
 		$this->view->title = "School";
 		$this->view->courses = $courses;
 		$this->view->teachers = $teachers;
-		$this->view->setLayout('manage');
+		$this->view->buttons = [["caption"=>"New course", "href"=>"#", "icon"=>"plus", "onclick"=>"newCourse();"]];
 	}
 
 	public function schoolTeachersAction()
@@ -141,21 +147,15 @@ class SchoolController extends Controller
 				break;
 		}
 
-		if ($sql !== false)
-		{
-			$connection->query($sql);
-		}
+		if ($sql) $connection->query($sql);
 
 		$teachers = $connection->query("SELECT * FROM _escuela_teacher;");
 
-		if (!is_array($teachers))
-		{
-			$teachers = [];
-		}
+		if ( ! is_array($teachers)) $teachers = [];
 
 		$this->view->teachers = $teachers;
-		$this->view->title = "School";
-		$this->view->setLayout('manage');
+		$this->view->buttons = [["caption"=>"New teacher", "href"=>"#", "icon"=>"plus", "onclick"=>"$('#newTeacherForm-modal').modal('show');"]];
+		$this->view->title = "Teachers";
 	}
 
 	/**
@@ -229,15 +229,17 @@ class SchoolController extends Controller
 		$r = $connection->query("SELECT * FROM _escuela_course WHERE id = '$course_id';");
 		$course = $r[0];
 
-		if (!is_array($chapters))
-		{
-			$chapters = [];
-		}
+		if ( ! is_array($chapters)) $chapters = [];
+
+		$this->view->buttons = [
+			["caption"=>"Courses", "href"=>"/school"],
+			["caption"=>"New chapter", "href"=>"/school/schoolNewChapter?type=CAPITULO&course={$course->id}"],
+			["caption"=>"New test", "href"=>"/school/schoolNewChapter?type=PRUEBA&course={$course->id}"]
+		];
 
 		$this->view->course = $course;
 		$this->view->chapters = $chapters;
 		$this->view->title = 'Course: <i>' . $course->title . '</i>';
-		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -265,7 +267,6 @@ class SchoolController extends Controller
 		$this->view->type = $type;
 		$this->view->course_id = $course_id;
 		$this->view->title = $type == 'CAPITULO' ? 'New chapter for course <i>' . $course->title . '</i>' : 'New test for course <i>' . $course->title . '</i>';
-		$this->view->setLayout('manage');
 	}
 
 	public function schoolNewChapterPostAction()
@@ -357,7 +358,6 @@ class SchoolController extends Controller
 			$images = $this->getChapterImages($id);
 			$chapter->content = $utils->putInlineImagesToHTML($chapter->content, $images, 'cid:', '.jpg');
 			$this->view->chapter = $chapter;
-			$this->view->setLayout('manage');
 		}
 		else
 		{
@@ -391,7 +391,6 @@ class SchoolController extends Controller
 		$this->view->message_type = 'success';
 		$this->view->chapter = $chapter;
 		$this->view->title = ($chapter->xtype=='CAPITULO'? "Chapter" : "Test") . ": {$chapter->title}";
-		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -485,10 +484,9 @@ class SchoolController extends Controller
 				$this->view->title = "Test: ".$chapter->title;
 				$this->view->chapter = $chapter;
 				$this->view->questions = $questions;
+				$this->view->buttons = [["caption"=>"Chapters", "href"=>"/school/schoolChapters?course={$chapter->course}"]];
 			}
 		}
-
-		$this->view->setLayout('manage');
 	}
 
 	private function getChapterImages($chapter_id)

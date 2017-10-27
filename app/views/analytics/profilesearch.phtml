@@ -1,0 +1,52 @@
+<div class="row">
+	<div class="col-xs-12">
+		<form action="#" method="get">
+			<div class="input-group">
+				<input required type="email" class="form-control" name="email" value="<?=$email?>" placeholder="Email">
+				<span class="input-group-btn">
+					<button type="submit" class="btn btn-success">Search</button>
+				</span>
+			</div>
+		</form>
+	</div>
+
+	<?php if($profile) { ?>
+	<div class="col-xs-12">
+		<br/>
+
+		<?php if($profile->picture) { ?>
+			<p><img style="margin-bottom:10px;" width="150" src="<?= $profile->picture_public ?>"/></p>
+		<?php } ?>
+
+		<p><b>Email:</b> <?= $profile->email ?></p>
+		<p><b>Username:</b> <?= $profile->username ?></p>
+		<p><b>Credit:</b> <?= $profile->credit ?></p>
+		<p><b>Full name:</b> <?= $profile->full_name ?></p>
+		<p><b>Date of birth:</b> <?= $profile->date_of_birth ?></p>
+		<p><b>Age:</b> <?= $profile->age ?></p>
+		<p><b>Gender:</b> <?= $profile->gender ?></p>
+		<p><b>Phone:</b> <?= $profile->phone ?></p>
+		<p><b>Cellphone:</b> <?= $profile->cellphone ?></p>
+		<p><b>Eyes:</b> <?= $profile->eyes ?></p>
+		<p><b>Skin:</b> <?= $profile->skin ?></p>
+		<p><b>Body type:</b> <?= $profile->body_type ?></p>
+		<p><b>Hair:</b> <?= $profile->hair ?></p>
+		<p><b>Province:</b> <?= $profile->province ?></p>
+		<p><b>City:</b> <?= $profile->city ?></p>
+		<p><b>Highest school level:</b> <?= $profile->highest_school_level ?></p>
+		<p><b>Occupation:</b> <?= $profile->occupation ?></p>
+		<p><b>Marital status:</b> <?= $profile->marital_status ?></p>
+		<p><b>Lang:</b> <?= $profile->lang ?></p>
+		<p><b>Mail list:</b> <?= $profile->mail_list ?></p>
+		<p><b>Sexual orientation:</b> <?= $profile->sexual_orientation ?></p>
+		<p><b>Religion:</b> <?= $profile->religion ?></p>
+		<p><b>Country:</b> <?= $profile->country ?></p>
+		<p><b>US State:</b> <?= $profile->usstate ?></p>
+		<p><b>Appversion:</b> <?= $profile->appversion ?></p>
+		<p><b>Location:</b> <?= $profile->location ?></p>
+
+		<br/>
+		<a onclick="return confirm('Are you sure to exclude this user?');" href="submitExclude?email=<?= $email ?>" class="btn btn-danger">Excluir Usuario</a>
+	</div>
+	<?php } ?>
+</div>
