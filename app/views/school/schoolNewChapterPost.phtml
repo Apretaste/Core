@@ -1,18 +1,14 @@
 <div class="row">
 	<div class="col-xs-12">
-	<?php if ($message!==false): ?>
-		<div class="alert alert-<?php echo $message_type;?>" role="alert"><?php echo $message;?></div>
-	<?php endif;?>
-	<br/>
-	</div>
-	<br/>
-	<a href="/school/schoolChapters?course=<?php echo $chapter->course; ?>">View course</a>
-	<br/>
-	<div class="panel">
+		<?php if ($message) { ?>
+			<div class="alert alert-<?= $message_type ?>" role="alert"><?= $message ?></div>
+			<br/>
+		<?php } ?>
+
 		<label>Type: </label><br/>
-		<?php echo $chapter->xtype; ?><br/>
+		<?= $chapter->xtype ?><br/>
 		<label>Content: </label><br/>
 		<br/>
-		<?php echo $chapter->content; ?><br/>
+		<?= $chapter->content ?><br/>
 	</div>
 </div>

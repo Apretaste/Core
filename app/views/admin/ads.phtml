@@ -1,0 +1,34 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Owner</th>
+					<th class="text-center">Tittle</th>
+					<th class="text-center">Impressions</th>
+					<th class="text-center">Clicks</th>
+					<th class="text-center">Inserted</th>
+					<th class="text-center">Paid</th>
+					<th class="text-center">Expires</th>
+					<th colspan="3"></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($ads as $ad) { ?>
+				<tr>
+					<td class="text-left"><?= $ad->owner ?></td>
+					<td><?= $ad->title ?></td>
+					<td class="text-center"><?= $ad->impresions ?></td>
+					<td class="text-center"><?= $ad->clicks ?></td>
+					<td class="text-center"><?= date("Y/m/d H:i:s", strtotime($ad->time_inserted)) ?></td>
+					<td class="text-center"><?= date("Y/m/d H:i:s", strtotime($ad->paid_date)) ?></td>
+					<td class="text-center"><?= date("Y/m/d H:i:s", strtotime($ad->expiration_date)) ?></td>
+					<td class="text-center"><a class="btn btn-default" target="_blank" href="/run/display?subject=PUBLICIDAD <?= $ad->id ?>">View</a></td>
+					<td class="text-center"><a class="btn btn-default" href="/admin/adTagering/<?= $ad->id ?>">Target</a></td>
+					<td class="text-center"><a class="btn btn-default" href="/admin/adReport/<?= $ad->id ?>">Report</a></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

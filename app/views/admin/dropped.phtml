@@ -1,0 +1,33 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Email</th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Code</th>
+					<th class="text-center">Message</th>
+					<th class="text-center">Date</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($dropped as $email) { ?>
+				<tr>
+					<td><?=$email->email?></td>
+					<td class="text-center"><nobr><?=$email->status?></nobr></td>
+					<td class="text-center"><?=$email->code?></td>
+					<td><?=$email->message?></td>
+					<td class="text-center"><?= date("m/d h:i A", strtotime($email->inserted))?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" target="_blank" href="/admin/delivery?email=<?=$email->email?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+							<a class="btn btn-xs btn-default" onclick="return confirm('Are you sure to allow this email?');" href="submitDeleteDropped?email=<?= $email->email ?>" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

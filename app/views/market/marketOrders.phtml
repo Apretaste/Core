@@ -1,0 +1,112 @@
+<div class="row">
+	<div class="col-xs-12">
+		<?php if (isset($message) && $message) { ?>
+			<div class="alert alert-<?= $message_type ?>" role="alert"><?= $message ?></div>
+		<?php } ?>
+
+		<table class="table table-striped table-bordered table-hover">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Product</th>
+					<th>User</th>
+					<th>Date</th>
+					<th>Set as received</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ($orders as $order) { ?>
+					<tr>
+						<td><?= $order->id ?></td>
+						<td><a href="#" onclick="showProduct('<?= $order->product ?>');"><?= $order->product_name ?></a></td>
+						<td><?= $order->email ?></td>
+						<td><?= $order->inserted_date ?></td>
+						<td class="text-right">
+							<a href="/market/marketOrderReceived/<?= $order->id ?>" class = "btn btn-success" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-ok"></span></a>
+
+							<a href="/market/marketDestination/<?= $order->id ?>" <?php if ($order->ready) { ?>class="btn btn-warning"<?php } else { ?>class="btn btn-primary"<?php } ?>>
+								<?php if ($order->ready) { ?>
+									Ready to send
+								<?php } else { ?>
+									<span class="glyphicon glyphicon-edit"></span> &nbsp;Destination
+								<?php } ?>
+							</a>
+						</td>
+					</tr>
+				<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+<!-- MODELS -->
+
+
+<!-- product modal -->
+<div class="modal fade tooltips" id="product-modal" tabindex="-1" role="dialog" aria-labelledby="product-name" aria-hidden="true">
+	<div class="modal-dialog" style="width: 600px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title" id="product-name"></h4>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-5">
+						<img style="margin: 5px;" src="" id="product-picture">
+					</div>
+					<div class="col-md-7">
+						<p>
+							Price: <br /> <span id="product-price"></span><br /> Shipping price: <br /> <span id="product-shipping"></span><br /> Credits: <br /> <span id="product-credits"></span><br /> Agency: <br /> <span id="product-agency"></span><br />
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- SCRIPTS -->
+
+
+<style>
+#product-modal span {
+	font-weight: bold;
+}
+</style>
+
+<script>
+	function showProduct(code)
+	{
+		$("#product-modal").modal('show');
+		$("#product-picture").attr('src', "/products/" + code + ".jpg");
+
+		var product = {};
+
+		jQuery.ajax({
+			url: "/ajax/getMarketProduct",
+			type: "POST",
+			async: false,
+			data: {code: code},
+			complete: function(res, status){
+				if ( status == "success" || status == "notmodified" ){
+					var result = {};
+					eval('result = ' + res.responseText + ';');
+					product = result.product;
+					$("#product-price").html(product.price_friendly);
+					$("#product-shipping").html(product.shipping_price_friendly);
+					$("#product-credits").html(product.credits_friendly);
+					$("#product-name").html(product.name);
+					$("#product-agency").html(product.agency);
+				}
+			}
+		});
+
+	}
+</Script>

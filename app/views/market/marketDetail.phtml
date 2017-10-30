@@ -1,0 +1,148 @@
+<form role="form" action="/market/marketUpdate/<?= $product->code ?>" method="post" enctype="multipart/form-data" data-toggle="validator">
+	<div class="row">
+		<div class="col-md-4" id="pictureZone">
+			<input id="pictures" type="file" multiple=true data-max-file-count="1">
+			<br/>
+			<button class="btn btn-danger" onclick="removePicture();">
+				<span class="glyphicon glyphicon-trash"></span> Remove picture
+			</button>
+		</div>
+
+		<div class="col-md-8">
+			<div class="form-group">
+				<label for="edtCode">Code</label>
+				<input type="text" class="form-control text" name="edtCode" id="edtCode" value="<?= $product->code ?>" disabled>
+			</div>
+
+			<div class="form-group">
+				<label for="edtName">Name</label>
+				<input required type="text" class="form-control text" name="edtName" id="edtName" placeholder="name of the product" title="Insert name of the product" value="<?= $product->name ?>">
+			</div>
+
+			<div class="form-group">
+				<label for="edtCategory">Category</label>
+				<select required class="form-control m-b" name="edtCategory" id="edtCategory">
+					<option value="mobile" <?php if ($product->category == 'mobile') {?> SELECTED <?php } ?>>Mobile</option>
+					<option value="accessory" <?php if ($product->category == 'accessory') {?> SELECTED <?php } ?>>Accessory</option>
+					<option value="computer" <?php if ($product->category == 'computer') {?> SELECTED <?php } ?>>Computer</option>
+					<option value="peripheral" <?php if ($product->category == 'peripheral') {?> SELECTED <?php } ?>>Peripheral</option>
+					<option value="clothe" <?php if ($product->category == 'clothe') {?> SELECTED <?php } ?>>Clothe</option>
+					<option value="service" <?php if ($product->category == 'service') {?> SELECTED <?php } ?>>Service</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="edtPrice">Pricing</label>
+				<div class="row">
+					<div class="col-md-3">
+						<span>Price:</span>&nbsp;
+						<input placeholder="" value="<?= $product->price ?>" required type="text" class="form-control text" name="edtPrice" id="edtPrice">
+					</div>
+					<div class="col-md-3">
+						<span>&nbsp;Shipping:</span>&nbsp;
+						<input placeholder="" value="<?= $product->shipping_price ?>" required type="text" class="form-control text" name="edtShippingPrice" id="edtShippingPrice">
+					</div>
+					<div class="col-md-3">
+						<span>&nbsp;Credits:</span>&nbsp;
+						<input placeholder="" value="<?= $product->credits ?>" required type="text" class="form-control text" name="edtCredits" id="edtCredits">
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="edtAgency">Agency</label>
+				<input value="<?= $product->agency ?>" required type="text" class="form-control text" name="edtAgency" id="edtAgency" placeholder="name of the agency" title="Insert name of the product">
+			</div>
+
+			<div class="form-group">
+				<label for="edtOwner" class="control-label">Owner</label>
+				<input value="<?= $product->owner ?>" required type="email" class="form-control" name="edtOwner" id="edtOwner" placeholder="Email" data-error="Bruh, that email address is invalid" title="Insert the email of the product's owner">
+				<div class="help-block with-errors"></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<div class="form-group">
+				<label for="edtDesc">Description</label>
+				<textarea class="form-control" name="edtDesc" id="edtDesc"><?= $product->description ?></textarea>
+			</div>
+
+			<a class="btn btn-default" href="/market/market">Go back</a>
+			<button type="submit" class="btn btn-primary">Update product</button>
+		</div>
+	</div>
+</form>
+
+
+<!-- SCRIPTS -->
+
+
+<script src="/js/summernote.min.js"></script>
+<link href="/css/summernote.css" rel="stylesheet">
+<link href="/css/summernote-bs3.css" rel="stylesheet">
+
+<script>
+	var pictureConfig = {
+		uploadUrl: '/market/marketPicture/<?= $product->code ?>', // you must set a valid URL here else you will get an error
+		allowedFileExtensions : ['jpg', 'png','gif', 'jpeg', 'bmp'],
+		overwriteInitial: true,
+		maxFileSize: 1000,
+		maxFilesNum: 1,
+		autoReplace: false,
+		initialPreviewShowDelete: false,
+		initialPreview: ['<img src="/products/<?= $product->code ?>.jpg" class="file-preview-image">'],
+		initialPreviewConfig: {
+			caption: 'picture',
+			width: '120px',
+			key: 100,
+			extra: {id: 100}
+		},
+		allowedFileTypes: ['image'],
+		resizeImage: true,
+		maxImageWidth: 200,
+		maxImageHeight: 200,
+		resizePreference: 'width',
+		browseOnZoneClick: true,
+		removeLabel: '',
+		uploadLabel: '',
+		showClose: false,
+		showBrowse: false,
+		//allowedFileTypes: ['image', 'video', 'flash'],
+		slugCallback: function(filename) {
+			return filename.replace('(', '_').replace(']', '_');
+		}
+	};
+
+	$(function(){
+		$("#pictures").fileinput(pictureConfig);
+		$('#edtDesc').summernote();
+	});
+
+	function removePicture(){
+		jQuery.ajax({
+			url: "/market/marketPictureDelete",
+			type: "POST",
+			async: false,
+			dataType: "html",
+			data: {code: "<?= $product->code ?>"},
+			complete: function(res, status){
+				if ( status == "success" || status == "notmodified" ){
+					$("#pictureZone img").attr("src",'');
+					$.notify({
+							icon: 'glyphicon glyphicon-ok',
+							message: 'The picutre was removed'
+					},
+					{
+						type: 'success',
+						animate: {
+							enter: 'animated fadeInDown',
+							exit: 'animated fadeOutUp'
+						}
+					});
+				}
+			}
+		});
+	}
+</script>

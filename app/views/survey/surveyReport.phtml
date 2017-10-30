@@ -1,0 +1,46 @@
+<div class="row">
+	<div class="col-xs-12">
+		See results:
+		<?php foreach ($results as $field => $result) { ?>
+			<a class="btn btn-small" href="#<?= $field ?>"><?= $result['label'] ?></a>
+		<?php } ?>
+		<br/><br/>
+
+		<?php foreach ($results as $field => $result) { ?>
+			<h3 id="<?= $field ?>"><?= strtoupper($result['label']) ?></h3>
+			<table class="table table-fixedheader table-bordered table-striped">
+				<thead>
+					<th width="25%"></th>
+					<th width="50" class="text-center">Total</th>
+					<th width="50" class="text-center">%</th>
+						<?php foreach ($result['pivots'] as $pivot => $label) { ?>
+							<th width="50" class="text-center" title="<?= $label ?>"><?= isset($trans[$label])?$trans[$label]:$label ?></th>
+						<?php } ?>
+				</thead>
+				<tbody>
+					<?php foreach($result['results'] as $question) { ?>
+						<tr class="success">
+							<td id="q<?= $question['i'] ?>" colspan="<?= count($result['pivots']) + 3 ?>"><b><?= $question['t'] ?></b></td>
+						</tr>
+						<?php foreach($question['a'] as $ans) { ?>
+							<tr>
+								<td bgcolor="#eeeeee"><?= $ans['t'] ?></td>
+								<td bgcolor="#eeeeee" align="right" <?php if ( $result['totals'][$ans['i']]*1 === 0) {?> style="color: red;" <?php } ?>><?= $result['totals'][$ans['i']] ?></td>
+								<td bgcolor="#eeeeee" align="right"><?php if (isset($question['total'])) echo $question['total'] !== 0 ? number_format($result['totals'][$ans['i']] / $question['total']*100, 1):"0.0" ?>%</td>
+								<?php foreach ($result['pivots'] as $pivot => $label) { ?>
+									<td align="right">
+										<?php if (!isset($ans['p'][$pivot])) { ?>
+											<?= "0.0%" ?>
+										<?php } else { ?>
+											<?= $result['totals'][$ans['i']] == 0?"0.0":number_format($ans['p'][$pivot] / $result['totals'][$ans['i']] * 100, 1) ?>%
+										<?php } ?>
+									</td>
+								<?php } ?>
+							</tr>
+						<?php } ?>
+					<?php } ?>
+				</tbody>
+			</table>
+		<?php } ?>
+	</div>
+</div>
