@@ -387,7 +387,6 @@ class SurveyController extends Controller
 
 	/**
 	 * Download survey's results as CSV
-	 *
 	 * @author kuma
 	 */
 	public function surveyResultsCSVAction()
@@ -466,19 +465,17 @@ class SurveyController extends Controller
 
 	/**
 	 * Download survey's results as PDF
-	 *
 	 * @author kuma
 	 */
 	public function surveyReportPDFAction()
 	{
 		// getting ad's id
-		// @TODO: improve this!
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 
 		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id;");
+		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id");
 		$survey = $survey[0];
 
  		$csv = array();
@@ -488,7 +485,6 @@ class SurveyController extends Controller
  				h1 {color: #5EBB47;text-decoration: underline;font-size: 24px; margin-top: 0px;}
  				h2{ color: #5EBB47; font-size: 16px; margin-top: 0px; }
  				body{font-family:Verdana;}</style><body>';
-
  		$html .= "<br/><h1>$title</h1>";
 
 		$questions = $connection->query("SELECT * FROM _survey_question WHERE survey = $id;");
@@ -501,7 +497,7 @@ class SurveyController extends Controller
 			$answers = $connection->query("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 
 			$values = '';
-			foreach($answers as $ans){
+			foreach($answers as $ans) {
 				$values[wordwrap($ans->title,50)." ({$ans->choosen})"] = $ans->choosen;
 			}
 
@@ -519,7 +515,6 @@ class SurveyController extends Controller
 			$html .= "<table width=\"100%\">";
 			foreach($Data["Series"][$Data["Abscissa"]]["Data"] as $Key => $Value)
 			{
-
 				$R = $Palette[$Key]["R"];
 				$G = $Palette[$Key]["G"];
 				$B = $Palette[$Key]["B"];
@@ -527,18 +522,15 @@ class SurveyController extends Controller
 				$html .= "<tr><td><span style=\"width:30px;height:30px;background:rgb($R,$G,$B);\">&nbsp;&nbsp;</span></td><td>$Value</td></tr>";
 			}
 			$html .= "</table>";
-
 			$html .= "</td></tr></table><br/>";
 
 			$i++;
 			//if ($i % 4 == 0 && $i < $total) $html .= '<pagebreak />';
 		}
-
  		$html .= '</body></html>';
 
- 		//die($html);
-
-		$mpdf = new mPDF('','A4', 0, '', 10, 10, 10, 10, 1, 1, 'P');
+		// save the PDF and download
+		$mpdf = new Mpdf\Mpdf();
 		$mpdf->WriteHTML(trim($html));
 		$mpdf->Output("$title.pdf", 'D');
 		$this->view->disable();
@@ -567,11 +559,7 @@ class SurveyController extends Controller
 		$myPicture = new pImage(250,150,$MyData);
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
-			"FontSize" => 13,
-			"R" => 0,
-			"G" => 0,
-			"B" => 0
-		));
+			"FontSize" => 13, "R" => 0, "G" => 0, "B" => 0));
 
 		$myPicture->drawText(10, 23, $title, array(
 			"R" => 255,
