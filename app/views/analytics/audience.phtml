@@ -43,6 +43,16 @@
 </div>
 
 <div class="row">
+	<div class="col-xs-6">
+		<!-- LAST 30 SERVICE USAGE -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Last 30 days of service usage</div>
+			<div class="panel-body">
+				<div id="last30DaysServiceUsage" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
 	<div class="col-xs-3">
 		<!-- LAST 30 DAYS ENVIRONMENT -->
 		<div class="panel panel-default">
@@ -64,11 +74,11 @@
 	</div>
 
 	<div class="col-xs-3">
-		<!-- LAST 30 SERVICE USAGE -->
+		<!-- LAST WEEK SENT VS NOT SENT -->
 		<div class="panel panel-default">
-			<div class="panel-heading">Last 30 days of service usage</div>
+			<div class="panel-heading"><a href="/admin/dropped">Last week of emails sent and not sent</a></div>
 			<div class="panel-body">
-				<div id="last30DaysServiceUsage" style="width:100%;"></div>
+				<div id="lastWeekSentVsNotSent" style="width:100%;"></div>
 			</div>
 		</div>
 	</div>
@@ -90,43 +100,46 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
-	// Weecly visitors
+	// WEEKLY GROSS TRAFFIC
 	google.setOnLoadCallback(weeklyGrossTraffic);
 	function weeklyGrossTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Received', 'Sent'],
+			['Day of the week', 'Visitors'],
 			<?php foreach ($weeklyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['received']; ?>,<?=$data['sent']; ?>],
+				['<?=$data['date']; ?>',<?=$data['visitors']; ?>],
 			<?php } ?>
 		]);
+		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('weeklyGrossTraffic'));
-		chart.draw(data, {});
+		chart.draw(data, options);
 	}
 
-	// Monthly visitors
+	// MONTHLY GROSS TRAFFIC
 	google.setOnLoadCallback(monthlyGrossTraffic);
 	function monthlyGrossTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'Received', 'Sent'],
+			['Month and Year', 'Visitors'],
 			<?php foreach ($monthlyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['received']; ?>,<?=$data['sent']; ?>],
+				['<?=$data['date']; ?>',<?=$data['visitors']; ?>],
 			<?php } ?>
 		]);
+		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyGrossTraffic'));
-		chart.draw(data, {});
+		chart.draw(data, options);
 	}
 
 	// MONTHLY UNIQUE TRAFFIC
 	google.setOnLoadCallback(monthlyUniqueTraffic);
 	function monthlyUniqueTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'New Users'],
+			['Month and Year', 'Visitors'],
 			<?php foreach ($monthlyUniqueTraffic as $data) { ?>
-				['<?= $data['date'] ?>','<?= $data['visitors'] ?>'],
+				['<?= $data['date'] ?>',<?= $data['visitors'] ?>],
 			<?php } ?>
 		]);
+		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyUniqueTraffic'));
-		chart.draw(data, {colors:['orange','green']});
+		chart.draw(data, options);
 	}
 
 	// MONTHLY NEW USERS
@@ -135,11 +148,12 @@
 		var data = google.visualization.arrayToDataTable([
 			['Month and Year', 'New Users'],
 			<?php foreach ($montlyNewUsers as $data) { ?>
-				['<?= $data['date'] ?>','<?= $data['visitors'] ?>'],
+				['<?= $data['date'] ?>',<?= $data['visitors'] ?>],
 			<?php } ?>
 		]);
+		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
-		chart.draw(data, {colors:['orange','green']});
+		chart.draw(data, options);
 	}
 
 	// Last 30 days Environment
@@ -182,8 +196,22 @@
 				['<?= $data['service'] ?>', <?= $data['usage'] ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
+		var options = {pieHole: 0.2};
 		var chart = new google.visualization.PieChart(document.getElementById('last30DaysServiceUsage'));
+		chart.draw(data, options);
+	}
+
+	// Last week emails sent vs not sent
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(lastWeekSentVsNotSent);
+	function lastWeekSentVsNotSent() {
+		var data = google.visualization.arrayToDataTable([
+			['Label', 'Amount'],
+			['Sent', <?= $lastWeekEmailsSent ?>],
+			['Not sent', <?= $lastWeekEmailsNotSent ?>]
+		]);
+		var options = {legend: 'none'};
+		var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
 		chart.draw(data, options);
 	}
 

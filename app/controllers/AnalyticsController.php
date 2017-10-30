@@ -21,28 +21,28 @@ class AnalyticsController extends Controller
 		// weekly gross traffic
 		$weeklyGrossTraffic = array();
 		$visits = $connection->query("
-			SELECT A.received, B.sent, A.inserted
-			FROM (SELECT count(id) as received, DATE(request_date) as inserted FROM delivery GROUP BY DATE(request_date) ORDER BY inserted DESC LIMIT 7) A
-			LEFT JOIN (SELECT count(id) as sent, DATE(request_date) as inserted FROM delivery GROUP BY DATE(request_date) ORDER BY inserted DESC LIMIT 7) B
-			ON A.inserted = B.inserted");
+			SELECT COUNT(id) as visitors, DATE(request_date) as inserted
+			FROM delivery
+			GROUP BY DATE(request_date)
+			ORDER BY inserted DESC
+			LIMIT 7");
 		foreach($visits as $visit) {
-			if( ! $visit->received) $visit->received = 0;
-			if( ! $visit->sent) $visit->sent = 0;
-			$weeklyGrossTraffic[] = ["date"=>date("D jS", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
+			if( ! $visit->visitors) $visit->visitors = 0;
+			$weeklyGrossTraffic[] = ["date"=>date("D jS", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
 		}
 		$weeklyGrossTraffic = array_reverse($weeklyGrossTraffic);
 
 		// monthly gross traffic
 		$monthlyGrossTraffic = array();
 		$visits = $connection->query("
-			SELECT A.received, B.sent, A.inserted
-			FROM (SELECT COUNT(id) AS received, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) A
-			LEFT JOIN (SELECT count(id) as sent, DATE_FORMAT(request_date,'%Y-%m') as inserted FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') ORDER BY inserted DESC LIMIT 30) B
-			ON A.inserted = B.inserted");
+			SELECT COUNT(id) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
+			FROM delivery
+			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
+			ORDER BY inserted
+			DESC LIMIT 30");
 		foreach($visits as $visit) {
-			if( ! $visit->received) $visit->received = 0;
-			if( ! $visit->sent) $visit->sent = 0;
-			$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "received"=>$visit->received, "sent"=>$visit->sent];
+			if( ! $visit->visitors) $visit->visitors = 0;
+			$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
 		}
 		$monthlyGrossTraffic = array_reverse($monthlyGrossTraffic);
 
@@ -99,6 +99,10 @@ class AnalyticsController extends Controller
 			$last30DaysServiceUsage[] = ["service"=>$visit->service, "usage"=>$visit->usage];
 		}
 
+		// Last week emails sent vs not sent
+		$lastWeekEmailsSent = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$lastWeekEmailsNotSent = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+
 		// Last 30 days active domains
 		$last30DaysActiveDomains = array();
 		$visits = $connection->query("
@@ -119,6 +123,8 @@ class AnalyticsController extends Controller
 		$this->view->last30EnvironmentUsage = $last30EnvironmentUsage;
 		$this->view->appVersions = $appVersions;
 		$this->view->last30DaysServiceUsage = $last30DaysServiceUsage;
+		$this->view->lastWeekEmailsSent = $lastWeekEmailsSent[0]->cnt;
+		$this->view->lastWeekEmailsNotSent = $lastWeekEmailsNotSent[0]->cnt;
 		$this->view->last30DaysActiveDomains = $last30DaysActiveDomains;
 	}
 
