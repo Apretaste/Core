@@ -41,13 +41,23 @@ class Security
 		$res = $this->checkUserPass($email, $password);
 		if (empty($res->status)) return false;
 
+		// get the path to root folder
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$httproot = $di->get('path')['http'];
+
+		// get the profile image
+		$connection = new Connection();
+		$pic = $connection->query("SELECT picture FROM person WHERE email='$email'");
+		if($pic && $pic[0]->picture) $picture = "$httproot/profile/{$pic[0]->picture}.jpg";
+		else $picture = $picture = "$httproot/images/user.jpg";
+
 		// create the manager object in session
 		$manager = new stdClass();
 		$manager->email = $res->items->email;
 		$manager->name = $res->items->name;
 		$manager->position = $res->items->occupation;
 		$manager->pages = explode(",", $res->items->pages);
-		$manager->group = $res->items->group;
+		$manager->picture = $picture;
 		$manager->startPage = $res->items->start_page;
 
 		// login the user in the session

@@ -28,15 +28,16 @@ class MarketController extends Controller
 	 */
 	public function marketAction()
 	{
+		// get products
 		$connection = new Connection();
-		$sql = "SELECT * FROM _tienda_products ORDER BY name;";
-		$products = $connection->query($sql);
+		$products = $connection->query("SELECT * FROM _tienda_products ORDER BY name");
 
-		if (!is_array($products))
-			$products = array();
+		// add buttons
+		$this->view->buttons = [["caption"=>"New product", "href"=>"#", "modal"=>"newProductForm", "icon"=>"plus"]];
 
+		// send info to the view
 		$this->view->products = $products;
-		$this->view->title = "Market's products";
+		$this->view->title = "Products in the market";
 	}
 
 	/**
@@ -130,38 +131,19 @@ class MarketController extends Controller
 	 */
 	public function marketDetailAction()
 	{
-		$connection = new Connection();
-		$wwwroot = $this->di->get('path')['root'];
-
 		// getting ad's id
 		$url = $_GET['_url'];
 		$code =  explode("/",$url);
 		$code = $code[count($code)-1];
 
-		if ($code == 'marketNewProduct' || $code == 'marketDetail' || empty(trim($code))) $code = null;
+		// get product details
+		$connection = new Connection();
+		$product = $connection->query("SELECT * FROM _tienda_products WHERE code='$code'");
+		if(empty($product)) die("Error: Product cannot be found by its code: $code");
 
-		if (is_null($code))
-		{
-			if (isset($this->view->code)) $code = $this->view->code;
-			else
-			{
-				$this->view->message_type = "danger";
-				$this->view->message = "Missing product's code";
-				return $this->dispatcher->forward(array("controller"=> "market", "action" => "market"));
-			}
-		}
-
-		$product = $connection->query("SELECT * FROM _tienda_products WHERE code = '$code'");
-		if ( ! is_array($product))
-		{
-			$this->view->message_type = "danger";
-			$this->view->message = "Product <b>$code</b> not exists";
-			return $this->dispatcher->forward(array("controller"=> "market", "action" => "market"));
-		}
-
+		// send items to the view
 		$this->view->product = $product[0];
-		$this->view->wwwroot = $wwwroot;
-		$this->view->title = "Product's details";
+		$this->view->title = "{$product[0]->code}: {$product[0]->name}";
 	}
 
 	/**
@@ -279,10 +261,9 @@ class MarketController extends Controller
 	{
 		$this->updateMarketOrders();
 
+		// get opened orders
 		$connection = new Connection();
 		$orders = $connection->query("SELECT *, (SELECT name FROM _tienda_products WHERE code = _tienda_orders.product) as product_name FROM _tienda_orders WHERE received=0");
-
-		if ( ! is_array($orders)) $orders = array();
 
 		foreach ($orders as $k => $v)
 		{
@@ -291,7 +272,7 @@ class MarketController extends Controller
 		}
 
 		$this->view->orders = $orders;
-		$this->view->title = "Market's orders";
+		$this->view->title = "Orders in the market";
 	}
 
 	/**
@@ -305,7 +286,6 @@ class MarketController extends Controller
 		$id =  explode("/",$url);
 		$id = $id[count($id)-1];
 
-		$wwwroot = $this->di->get('path')['root'];
 		$connection = new Connection();
 
 		if ($this->request->isPost())
@@ -333,8 +313,12 @@ class MarketController extends Controller
 			if (is_array($product))
 			{
 				$product = $product[0];
+				$wwwroot = $this->di->get('path')['root'];
 				$product->image = file_exists("$wwwroot/public/products/{$product->code}.jpg");
 
+				$provinces = array('PINAR_DEL_RIO','LA_HABANA','ARTEMISA','MAYABEQUE','MATANZAS','VILLA_CLARA','CIENFUEGOS','SANCTI_SPIRITUS','CIEGO_DE_AVILA','CAMAGUEY','LAS_TUNAS','HOLGUIN','GRANMA','SANTIAGO_DE_CUBA','GUANTANAMO','ISLA_DE_LA_JUVENTUD');
+
+				$this->view->provinces = $provinces;
 				$this->view->product = $product;
 				$this->view->order = $order;
 				$this->view->title = "Product's destination";
@@ -372,13 +356,11 @@ class MarketController extends Controller
 	{
 		$this->updateMarketOrders();
 
-		$this->view->maxCredit = "";
-		$this->view->avgCredit = "";
-		$this->view->sumCredit = "";
-		$this->view->minCredit = "";
+		$this->view->maxCredit = 0;
+		$this->view->avgCredit = 0;
+		$this->view->sumCredit = 0;
+		$this->view->minCredit = 0;
 		$this->view->monthlySells = "";
-		$this->view->totalUsersWidthCredit = "";
-		$this->view->totalUsers =  "";
 		$this->view->sellsByProduct = "";
 		$this->view->title = "Market stats";
 	}

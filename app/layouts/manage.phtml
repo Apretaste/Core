@@ -1,6 +1,7 @@
 <?php
 	$wwwhttp = $this->di->get('path')['http'];
 	$security = new Security();
+	$manager = $security->getManager();
 ?>
 
 <!DOCTYPE html>
@@ -44,9 +45,9 @@
 						<!-- APRETASTE LOGO -->
 						<li class="nav-header">
 							<div class="dropdown profile-element">
-								<img class="img-circle pull-left" style="margin-right:10px; width:35px;" src="https://pbs.twimg.com/profile_images/732572666482335744/WY1ij6LI.jpg" alt="image"/>
-								<strong>Salvi Pascual</strong><br/>
-								<small>Executive Director</small>
+								<img class="img-circle pull-left" style="margin-right:10px; width:35px;" src="<?= $manager->picture ?>" alt="image"/>
+								<strong><?= $manager->name ?></strong><br/>
+								<small><?= $manager->position ?></small>
 							</div>
 						</li>
 
@@ -64,7 +65,6 @@
 							<ul class="nav nav-second-level">
 								<li><a href="/analytics/audience">Audience</a></li>
 								<li><a href="/analytics/profile">Profile</a></li>
-								<li><a href="/analytics/profilesearch">Profile search</a></li>
 							</ul>
 						</li>
 						<?php } ?>
@@ -76,6 +76,7 @@
 							<ul class="nav nav-second-level">
 								<li><a href="/admin/raffles">Raffles</a></li>
 								<li><a href="/admin/services">Services</a></li>
+								<li><a href="/admin/profilesearch">Profile search</a></li>
 								<li><a href="/admin/ads">Ads</a></li>
 								<li><a href="/admin/addcredit">Add credit</a></li>
 								<li><a href="/admin/dropped">Dropped emails</a></li>
@@ -122,18 +123,6 @@
 							</li>
 						<?php endif; ?>
 
-						<!-- CAMPAIGNS -->
-						<?php if($security->checkAccess("campaigns")) { ?>
-						<li>
-							<a href="#"><i class="fa fa-envelope-o"></i> <span class="nav-label">Campaigns</span> <span class="fa arrow"></span></a>
-							<ul class="nav nav-second-level">
-								<li><a href="/campaigns">All Campaigns</a></li>
-								<li><a href="/campaigns/lists">Lists</a></li>
-								<li><a href="/campaigns/reports">Reports</a></li>
-							</ul>
-						</li>
-						<?php } ?>
-
 						<!-- SUPPORT -->
 						<?php if($security->checkAccess("support")) { ?>
 						<li>
@@ -147,13 +136,12 @@
 						<?php } ?>
 
 						<!-- DEVELOPER -->
-						<?php if($security->checkAccess("manage")) { ?>
+						<?php if($security->checkAccess("developer")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-laptop"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
-								<li><a href="/manage/deploy">Deploy</a></li>
-								<li><a href="/manage/errors">Errors log</a></li>
-								<li><a href="/manage/sandbox">Test a service</a></li>
+								<li><a href="/developer/deploy">Deploy</a></li>
+								<li><a href="/developer/errors">Errors log</a></li>
 								<li><a target="_blank" href="/data">phpMyAdmin</a></li>
 								<li><a target="_blank" href="https://admin.google.com/pragres.com">Google Admin Console</a></li>
 								<li><a target="_blank" href="https://lightsail.aws.amazon.com">Amazon Lightsail</a></li>

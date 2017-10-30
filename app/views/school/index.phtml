@@ -15,16 +15,16 @@
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach ($courses as $course): ?>
+				<?php foreach ($courses as $course) { ?>
 				<tr>
 					<td><a href="/school/schoolChapters?course=<?= $course->id ?>"><?= $course->title ?></a></td>
 					<td><?= $course->name . ', ' . $course->grade ?></td>
 					<td><?= $course->category ?></td>
 					<td class="text-right">
 						<?php if ($course->active) { ?>
-							<a class="btn btn-xs btn-default" onclick ="return confirm('Are you sure?');" href="/school?option=disable&id=<?= $course->id ?>">Disable</a>
-						<?php }else{ ?>
-							<a class="btn btn-xs btn-default" onclick ="return confirm('Are you sure?');" href="/school?option=enable&id=<?= $course->id ?>">Enable</a>
+							<a class="btn btn-xs btn-default" href="/school?option=disable&id=<?= $course->id ?>"><span class="glyphicon glyphicon-pause"></span> Disable</a>
+						<?php } else { ?>
+							<a class="btn btn-xs btn-default" href="/school?option=enable&id=<?= $course->id ?>"><span class="glyphicon glyphicon-play"></span> Enable</a>
 						<?php } ?>
 
 						<a class="btn btn-xs btn-default" onclick="editCourse(<?= $course->id ?>);"><span class="glyphicon glyphicon-edit"></span></a>
@@ -32,7 +32,7 @@
 						<a class="btn btn-xs btn-default" onclick ="return confirm('Are you sure?');" href="/school?option=del&id=<?= $course->id ?>"><span class="glyphicon glyphicon-trash"></span></a>
 					</td>
 				</tr>
-			<?php endforeach ?>
+			<?php } ?>
 			</tbody>
 		</table>
 	</div>
@@ -57,18 +57,18 @@
 					<div class="form-group">
 						<label for="courseTeacher">Teacher</label>
 						<select required class="form-control" name="courseTeacher" id ="courseTeacher">
-							<?php foreach ($teachers as $teacher): ?>
+							<?php foreach ($teachers as $teacher) { ?>
 								<option value ="<?= $teacher->id ?>"><?= $teacher->name . ', ' . $teacher->title ?></option>
-								<?php endforeach ?>
+								<?php } ?>
 						</select>
 					</div>
 
 					<div class="form-group">
 						<label for="courseCategory">Category</label>
 						<select required class="form-control" name="courseCategory" id ="courseCategory">
-							<?php foreach (array('SOCIEDAD','NEGOCIOS','MEDICINA','INFORMATICA','INGENIERIA','LETRAS','ARTES','FILOSOFIA','SALUD','POLITICA','TECNICA','OTRO') as $category): ?>
+							<?php foreach (array('SOCIEDAD','NEGOCIOS','MEDICINA','INFORMATICA','INGENIERIA','LETRAS','ARTES','FILOSOFIA','SALUD','POLITICA','TECNICA','OTRO') as $category) { ?>
 								<option value ="<?= $category ?>"><?= ucfirst(strtolower($category)) ?></option>
-							<?php endforeach ?>
+							<?php } ?>
 						</select>
 					</div>
 

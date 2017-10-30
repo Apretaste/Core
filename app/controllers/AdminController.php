@@ -423,7 +423,7 @@ class AdminController extends Controller
 				$this->view->message = "User's credit updated successfull";
 
 				// show ok message
-				$this->view->message = "Credito agregado correctamente";
+				$this->view->message = "Credito agregado correctamente. <a href='/admin/profilesearch?email=$email'>Check user profile</a>.";
 				$this->view->messageType = 'success';
 			}
 		}
@@ -549,5 +549,50 @@ class AdminController extends Controller
 
 		// go back
 		$this->response->redirect('admin/input');
+	}
+
+	/**
+	 * Profile search
+	 * @author salvipascual
+	 */
+	public function profilesearchAction()
+	{
+		$email = $this->request->get("email");
+
+		// get the user profile
+		$utils = new Utils();
+		$profile = $utils->getPerson($email);
+
+		$this->view->email = $email;
+		$this->view->profile = $profile;
+		$this->view->title = "Search for a profile";
+	}
+
+	/**
+	 * Exclude an user from Apretaste
+	 * @author salvipascual
+	 * @param String $email
+	 */
+	public function submitExcludeAction()
+	{
+		$email = $this->request->get("email");
+
+		// unsubscribe from the emails
+		$utils = new Utils();
+		$utils->unsubscribeFromEmailList($email);
+
+		// mark the user inactive in the database
+		$connection = new Connection();
+		$connection->query("UPDATE person SET active=0 WHERE email='$email'");
+
+		// email the user user letting him know
+		$sender = new Email();
+		$sender->to = $email;
+		$sender->subject = "Siento ver que se nos va";
+		$sender->body = "Hola. A peticion suya le he excluido y ahora no debera recibir mas nuestra correspondencia. Si desea volver a usar Aprtate en un futuro, acceda a la plataforma y sera automaticamente incluido. Disculpa si le hemos causamos alguna molestia, y gracias por usar nuestra app. Siempre es bienvenido nuevamente.";
+		$sender->send();
+
+		// redirect back
+		header("Location: profilesearch?email=$email");
 	}
 }

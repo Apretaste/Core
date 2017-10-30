@@ -111,48 +111,45 @@ class SchoolController extends Controller
 	{
 		$connection = new Connection();
 		$this->view->message = false;
-		$this->view->message_type = 'success';
+
+		// get the variables if exist
 		$option = $this->request->get('option');
-		$sql = false;
+		$id = $this->request->get('id');
+		$name = $connection->escape($this->request->get("teacherName"));
+		$title = $connection->escape($this->request->get("teacherTitle"));
+		$email = $connection->escape($this->request->get("teacherEmail"));
 
-		if($this->request->isPost())
-		{
-			$name = $connection->escape($this->request->getPost("teacherName"));
-			$title = $connection->escape($this->request->getPost("teacherTitle"));
-			$email = $connection->escape($this->request->getPost("teacherEmail"));
-
-			switch ($option)
-			{
-				case 'add':
-					$sql = "INSERT INTO _escuela_teacher (name, title, email) VALUES ('$name', '$title', '$email'); ";
-					$this->view->message = 'The teacher was inserted successful';
-					break;
-				case 'set':
-					$id = $this->request->get('id');
-					$sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
-					$this->view->message = 'The teacher was updated successful';
-					break;
-			}
-		}
-
+		// get SQL query if needed
 		switch ($option)
 		{
+			case 'add':
+				$this->view->message = 'The teacher was inserted successful';
+				$sql = "INSERT INTO _escuela_teacher (name, title, email) VALUES ('$name', '$title', '$email'); ";
+				break;
+
+			case 'set':
+				$id = $this->request->get('id');
+				$this->view->message = 'The teacher was updated successful';
+				$sql = "UPDATE _escuela_teacher SET name = '$name', title = '$title', email = '$email' WHERE id = '$id'; ";
+				break;
+
 			case "del":
 				$id = $this->request->get('id');
+				$this->view->message = "The teacher #$id was deleted successful";
 				$sql = "START TRANSACTION;
 						DELETE FROM _escuela_teacher WHERE id = '$id';
 						UPDATE _escuela_course SET teacher = null WHERE teacher = '$id';
 						COMMIT;";
-				$this->view->message = "The teacher #$id was deleted successful";
 				break;
 		}
 
-		if ($sql) $connection->query($sql);
+		// run SQL if needed
+		if (isset($sql)) $connection->query($sql);
 
-		$teachers = $connection->query("SELECT * FROM _escuela_teacher;");
+		// get the list of teachers
+		$teachers = $connection->query("SELECT * FROM _escuela_teacher");
 
-		if ( ! is_array($teachers)) $teachers = [];
-
+		// send info to the view
 		$this->view->teachers = $teachers;
 		$this->view->buttons = [["caption"=>"New teacher", "href"=>"#", "icon"=>"plus", "onclick"=>"$('#newTeacherForm-modal').modal('show');"]];
 		$this->view->title = "Teachers";
@@ -232,9 +229,9 @@ class SchoolController extends Controller
 		if ( ! is_array($chapters)) $chapters = [];
 
 		$this->view->buttons = [
-			["caption"=>"Courses", "href"=>"/school"],
-			["caption"=>"New chapter", "href"=>"/school/schoolNewChapter?type=CAPITULO&course={$course->id}"],
-			["caption"=>"New test", "href"=>"/school/schoolNewChapter?type=PRUEBA&course={$course->id}"]
+			["caption"=>"New chapter", "href"=>"/school/schoolNewChapter?type=CAPITULO&course={$course->id}", "icon"=>"plus"],
+			["caption"=>"New test", "href"=>"/school/schoolNewChapter?type=PRUEBA&course={$course->id}", "icon"=>"plus"],
+			["caption"=>"Courses", "href"=>"/school"]
 		];
 
 		$this->view->course = $course;

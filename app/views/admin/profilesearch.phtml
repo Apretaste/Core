@@ -8,12 +8,15 @@
 				</span>
 			</div>
 		</form>
+		<br/>
 	</div>
+
+	<?php if(empty($profile) && $email) { ?>
+		<p style="color:#B4524B; margin-top:20px;">User <?=$email?> do not exist.</p>
+	<?php } ?>
 
 	<?php if($profile) { ?>
 	<div class="col-xs-12">
-		<br/>
-
 		<?php if($profile->picture) { ?>
 			<p><img style="margin-bottom:10px;" width="150" src="<?= $profile->picture_public ?>"/></p>
 		<?php } ?>

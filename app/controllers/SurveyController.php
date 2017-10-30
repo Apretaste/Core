@@ -21,33 +21,29 @@ class SurveyController extends Controller
 	{
 		$connection = new Connection();
 		$this->view->message = false;
-		$this->view->message_type = 'success';
 		$option = $this->request->get('option');
 		$sql = false;
 
-		if($this->request->isPost())
+		// if dats is passed, run a query
+		switch ($option)
 		{
-			switch ($option){
-				case 'addSurvey':
-					$customer = $this->request->getPost("surveyCustomer");
-					$title = $this->request->getPost("surveyTitle");
-					$deadline = $this->request->getPost("surveyDeadline");
-					$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
-					$this->view->message = 'The survey was inserted successfull';
+			case 'addSurvey':
+				$customer = $this->request->getPost("surveyCustomer");
+				$title = $this->request->getPost("surveyTitle");
+				$deadline = $this->request->getPost("surveyDeadline");
+				$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
+				$this->view->message = 'The survey was inserted successfull';
+				break;
 
-					break;
-				case 'setSurvey':
-					$customer = $this->request->getPost("surveyCustomer");
-					$title = $this->request->getPost("surveyTitle");
-					$deadline = $this->request->getPost("surveyDeadline");
-					$id = $this->request->get('id');
-					$sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
-					$this->view->message = 'The survey was updated successfull';
-					break;
-			}
-		}
+			case 'setSurvey':
+				$customer = $this->request->getPost("surveyCustomer");
+				$title = $this->request->getPost("surveyTitle");
+				$deadline = $this->request->getPost("surveyDeadline");
+				$id = $this->request->get('id');
+				$sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
+				$this->view->message = 'The survey was updated successfull';
+				break;
 
-		switch ($option){
 			case "delSurvey":
 				$id = $this->request->get('id');
 				$sql = "START TRANSACTION;
@@ -55,25 +51,27 @@ class SurveyController extends Controller
 						DELETE FROM _survey_question WHERE survey = '$id';
 						DELETE FROM _survey WHERE id = '$id';
 						COMMIT;";
-				$this->view->message = 'The survey #'.$delete.' was deleted successfull';
+				$this->view->message = 'The survey was deleted successfully';
 				break;
 
 			case "disable":
 				$id = $this->request->get('id');
 				$sql = "UPDATE _survey SET active = 0 WHERE id ='$id';";
 				break;
+
 			case "enable":
 				$id = $this->request->get('id');
 				$sql = "UPDATE _survey SET active = 1 WHERE id ='$id';";
 				break;
 		}
 
-		if ($sql!==false) $connection->query($sql);
+		// commit SQL if exist
+		if ($sql) $connection->query($sql);
 
-		$querySurveys = "SELECT * FROM _survey ORDER BY ID";
+		// get all surveys
+		$surveys = $connection->query("SELECT * FROM _survey ORDER BY ID");
 
-		$surveys = $connection->query($querySurveys);
-
+		// send variables to the view
 		$this->view->title = "List of surveys (".count($surveys).")";
 		$this->view->surveys = $surveys;
 	}
@@ -88,6 +86,7 @@ class SurveyController extends Controller
 		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';
+		$this->view->buttons = [["caption"=>"Back", "href"=>"/survey/surveys"]];
 
 		$option = $this->request->get('option');
 		$sql = false;
@@ -156,7 +155,7 @@ class SurveyController extends Controller
 					$questions[$k]->answers=$answers;
 				}
 
-				$this->view->title = "Survey's questions";
+				$this->view->title = $survey->title;
 				$this->view->survey = $survey;
 				$this->view->questions = $questions;
 			}
@@ -168,27 +167,53 @@ class SurveyController extends Controller
 	 */
 	public function surveyReportAction(){
 		// getting ad's id
-		// @TODO: improve this!
 		$url = $_GET['_url'];
 		$id =  explode("/",$url);
 		$id = intval($id[count($id)-1]);
 
+		// get the report
 		$report = $this->getSurveyResults($id);
 
-		if ($report !== false){
-			$connection = new Connection();
-			$survey = $connection->query("SELECT * FROM _survey WHERE id = $id;");
-			$this->view->results = $report;
-			$this->view->survey = $survey[0];
-			$this->view->title = 'Survey report';
-		} else {
-			$this->survey = false;
-		}
+		// get the survey
+		$connection = new Connection();
+		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id")[0];
+
+		// get codes for each province
+		$trans = array(
+			'LA HABANA' => 'CH',
+			'PINAR DEL RIO' => 'PR',
+			'MATANZAS' => 'MA',
+			'MAYABEQUE' => 'MY',
+			'ARTEMISA' => 'AR',
+			'VILLA CLARA' => 'VC',
+			'SANCTI SPIRITUS' => 'SS',
+			'CIEGO DE AVILA' => 'CA',
+			'CIENFUEGOS' => 'CF',
+			'CAMAGUEY' => 'CM',
+			'LAS TUNAS' => 'LT',
+			'HOLGUIN' => 'HL',
+			'GRANMA' => 'GR',
+			'SANTIAGO DE CUBA' => 'SC',
+			'GUANTANAMO' => 'GU',
+			'ISLA DE LA JUVENTUD' => 'IJ'
+		);
+
+		// add buttons to the header
+		$this->view->buttons = [
+			["caption"=>"PDF", "href"=>"/survey/surveyReportPDF/{$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"CSV", "href"=>"/survey/surveyResultsCSV/{$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"Back", "href"=>"/survey/surveys"]
+		];
+
+		// send data to the view
+		$this->view->results = $report;
+		$this->view->survey = $survey;
+		$this->view->title = $survey->title;
+		$this->view->trans = $trans;
 	}
 
 	/**
 	 * Calculate and return survey's results
-	 *
 	 * @author kuma
 	 * @param integer $id
 	 */
@@ -437,32 +462,6 @@ class SurveyController extends Controller
 		echo $csvtext;
 
 		$this->view->disable();
-	}
-
-	public function surveyWhoUnfinishedAction()
-	{
-		// getting ad's id
-		$url = $_GET['_url'];
-		$id = explode("/",$url);
-		$id = intval($id[count($id)-1]);
-
-		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id");
-
-		if($survey)
-		{
-			$survey = $survey[0];
-			$r = $connection->query("
-				SELECT * FROM (SELECT email, survey, (SELECT count(_survey_question.id)
-				FROM _survey_question
-				WHERE _survey_question.survey = _survey_answer_choosen.survey) as total,
-				COUNT(question) as choosen from _survey_answer_choosen GROUP BY email, survey) subq
-				WHERE subq.total>subq.choosen AND subq.survey = $id;");
-
-			$this->view->results = $r;
-			$this->view->title = "Who unfinished the survey";
-			$this->view->survey = $survey;
-		}
 	}
 
 	/**

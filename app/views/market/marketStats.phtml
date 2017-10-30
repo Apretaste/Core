@@ -1,3 +1,64 @@
+<div class="row">
+	<div class="col-lg-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Sells by product <small>(last 30 days)</small></div>
+			<div class="panel-body">
+				<div class="flot-chart">
+					<div class="flot-chart-pie-content" id="flot-pie-chart"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-lg-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Total credit</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($sumCredit,2) ?></h1>
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">Users with credits</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($minCredit,2) ?></h1>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Max credit</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($maxCredit,2) ?></h1>
+			</div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">Credit average</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($avgCredit,2) ?></h1>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading">Monthly sells <small>(last year)</small></div>
+			<div class="panel-body">
+				<div>
+					<canvas id="lineChart" height="70"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- SCRIPTS -->
+
+
+<script src="/js/Chart.min.js"></script>
 <script src="/js/jquery.flot.js"></script>
 <script src="/js/jquery.flot.tooltip.min.js"></script>
 <script src="/js/jquery.flot.spline.js"></script>
@@ -7,91 +68,17 @@
 <script src="/js/jquery.flot.time.js"></script>
 <script src="/js/curvedLines.js"></script>
 
-<div class="row">
-	<div class="col-lg-6">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>
-					Sells by product <small>(last 30 days)</small>
-				</h5>
-			</div>
-			<div class="ibox-content">
-				<div class="flot-chart">
-					<div class="flot-chart-pie-content" id="flot-pie-chart"></div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-lg-3">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<span class="label label-info pull-right"><?php echo $totalUsersWidthCredit; ?> / <?php echo $totalUsers; ?> users</span>
-				<h5>Total credit</h5>
-			</div>
-
-			<div class="ibox-content">
-				<h1 class="no-margins">$<?php echo number_format($sumCredit,2);?></h1>
-			</div>
-		</div>
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<span class="label label-info pull-right">Users with credits</span>
-				<h5>Min credit</h5>
-			</div>
-			<div class="ibox-content">
-				<h1 class="no-margins">$<?php echo number_format($minCredit,2);?></h1>
-			</div>
-		</div>
-	</div>
-	<div class="col-lg-3">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>Max credit</h5>
-			</div>
-			<div class="ibox-content">
-				<h1 class="no-margins">$<?php echo number_format($maxCredit,2);?></h1>
-			</div>
-		</div>
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>Credit average</h5>
-			</div>
-			<div class="ibox-content">
-				<h1 class="no-margins">$<?php echo number_format($avgCredit,2);?></h1>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="row">
-	<div class="col-lg-12">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-			<h5>Monthly sells <small>(last year)</small></h5>
-			</div>
-			<div class="ibox-content">
-				<div>
-					<canvas id="lineChart" height="70"></canvas>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
- <!-- ChartJS-->
-<script src="/js/Chart.min.js"></script>
-
 <script>
 	$(function(){
 		var previousPoint = null, previousLabel = null;
 		var dataPie = [
 			<?php if (is_array($sellsByProduct)) foreach($sellsByProduct as $p): ?>
 			{
-				label: "<?php echo $p->name; ?>",
-				data: <?php echo $p->total; ?>,
+				label: "<?= $p->name ?>",
+				data: <?= $p->total ?>,
 				color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)
 			}
-			<?php endforeach; ?>];
+			<?php endforeach ?>];
 
 		var plotObj = $.plot($("#flot-pie-chart"), dataPie, {
 			series: {
@@ -114,7 +101,7 @@
 		});
 
 		var lineData = {
-			labels: [<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>'<?php echo date("M", (new DateTime("{$m->y}-{$m->m}-01"))->getTimestamp()).' '.$m->y; ?>',<?php endforeach;?>],
+			labels: [<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>'<?= date("M", (new DateTime("{$m->y}-{$m->m}-01"))->getTimestamp()).' '.$m->y ?>',<?php endforeach ?>],
 			datasets: [
 				{
 					label: "Monthly sells",
@@ -126,8 +113,8 @@
 					pointHighlightStroke: "rgba(220,220,220,1)",
 					data: [
 						<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
-						<?php echo "{$m->total},"; ?>
-						<?php endforeach;?>
+						<?= "{$m->total}," ?>
+						<?php endforeach ?>
 					]
 				},
 				{
@@ -139,9 +126,9 @@
 					pointHighlightFill: "#fff",
 					pointHighlightStroke: "rgba(26,179,148,1)",
 					data: [
-							<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
-						<?php echo "{$m->pays},"; ?>
-						<?php endforeach;?>
+						<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
+						<?= "{$m->pays}," ?>
+						<?php endforeach ?>
 
 					]
 				}

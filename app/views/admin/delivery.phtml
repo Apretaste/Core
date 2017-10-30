@@ -9,6 +9,10 @@
 			</div>
 		</form>
 
+		<?php if(empty($delivery) && $email) { ?>
+			<p style="color:#B4524B; margin-top:20px;">User <?=$email?> do not exist.</p>
+		<?php } ?>
+
 		<?php if($delivery) { ?>
 		<br/><br/>
 		<table class="table table-striped table-bordered table-hover">
