@@ -12,6 +12,7 @@ mkdir public/raffle
 mkdir public/tienda
 mkdir public/temp
 mkdir public/download
+mkdir public/products
 touch logs/error.log
 touch logs/access.log
 touch logs/badqueries.log
@@ -28,3 +29,4 @@ chmod 777 public/raffle
 chmod 777 public/tienda
 chmod 777 public/temp
 chmod 777 public/download
+chmod 777 public/products

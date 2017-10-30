@@ -1,28 +1,83 @@
-<div class="row  border-bottom white-bg dashboard-header">
-	<div class="col-sm-12">
-		<div class="row text-left">
-			<div class="col-xs-4">
-				<div class=" m-l-md">
-					<span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
-				</div>
+
+<!-- BLOCKS -->
+
+<div class="row">
+	<!-- ACTIVE USERS BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-user pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($numberActiveUsers, 0) ?></big><small>/<?= number_format($numberTotalUsers, 0) ?></small><br/>
+				<small>Active/Total users</small>
 			</div>
-			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
+		</div>
+	</div>
+
+	<!-- USER PROFILES BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-thumbs-up pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($numberUserProfiles, 0) ?></big><br/>
+				<small>Users with profile</small>
 			</div>
-			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
+		</div>
+	</div>
+
+	<!-- TOTAL CREDITS BLOCK -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($creditsOffered, 2) ?></big><br/>
+				<small>Total credits</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- NUMBER OF ADS RUNNING -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($queryRunningAds, 0) ?></big><br/>
+				<small>Ads running</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- CUSTOMER SUPPORT BLOCK -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-headphones pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?> <small>Tickets</small></big><br/>
+				<small>Open/Pending</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- MAIL LIST REGISTRERED USERS -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-envelope pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($mailListRegisteredUsers, 0) ?></big><br/>
+				<small>Mail list size</small>
 			</div>
 		</div>
 	</div>
 </div>
-<br/>
+
+<!-- WIDGETS -->
+
 <div class="row">
+	<!-- COLUMN #1 -->
 	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			 <div class="ibox-title">
-				<h5><a href="/manage/remarketing">Tasks status</a></h5>
-			</div>
-			<div class="ibox-content">
+		<!-- TASK STATUS WIDGET -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Tasks status</div>
+			<div class="panel-body">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>
@@ -32,7 +87,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($tasks as $task) { ?>
+						<?php foreach ($tasksWidget as $task) { ?>
 						<tr class="<?= $task->days > $task->frequency ? "danger" : "success"?>">
 							<td><?= $task->task ?></td>
 							<td class="text-center"><?= $task->days ?></td>
@@ -45,27 +100,11 @@
 		</div>
 	</div>
 
+	<!-- COLUMN #2 -->
 	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			 <div class="ibox-title">
-				<h5><a href="/support/reports">Customer Support</a></h5>
-			</div>
-			<div class="ibox-content">
-				<table class="fullscreen">
-					<tr>
-						<td>New Tickets</td>
-						<td class="text-center"><?=$supportNewCount?></td>
-					</tr>
-					<tr>
-						<td>Pending Tickets</td>
-						<td class="text-center"><?=$supportPendingCount?></td>
-					</tr>
-				</table>
-			</div>
-		</div>
 	</div>
 
+	<!-- COLUMN #3 -->
 	<div class="col-xs-4">
-
 	</div>
 </div>

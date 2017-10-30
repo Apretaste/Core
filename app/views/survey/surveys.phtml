@@ -1,0 +1,53 @@
+<div class="row">
+	<div class="col-xs-12">
+		<?php if ($message) { ?>
+			<div class="alert alert-success" role="alert"><?= $message ?></div>
+		<?php } ?>
+
+		<table id="servicesTable" class="table">
+			<thead>
+				<tr>
+					<th>Survey</th>
+					<th>Customer</th>
+					<th>Deadline</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ($surveys as $survey) {?>
+				<tr>
+					<form action="/survey/surveys?option=setSurvey&id=<?= $survey->id ?>" method="post">
+						<td><input class="form-control" name="surveyTitle" placeholder="Survey title" value ="<?= $survey->title ?>"></td>
+						<td><input class="form-control" name="surveyCustomer" placeholder="Customer email" value ="<?= $survey->customer ?>"></td>
+						<td><input class="form-control" name="surveyDeadline" placeholder="Dead line date" value ="<?= date("Y/m/d", strtotime($survey->deadline)) ?>"></td>
+						<td><input class="btn btn-default" type="submit" name="surveySubmit" value="Set"></td>
+					</form>
+
+					<td class="text-right">
+						<a class="btn btn-default" href="/survey/surveyQuestions?survey=<?= $survey->id ?>">Questions</a>
+						<a class="btn btn-default" href="/survey/surveyReport/<?= $survey->id ?>">Report</a>
+
+						<?php if ($survey->active) { ?>
+							<a class="btn btn-default" href="/survey/surveys?option=disable&id=<?= $survey->id ?>"><span class="glyphicon glyphicon-pause"></a>
+						<?php } else { ?>
+							<a class="btn btn-default" href="/survey/surveys?option=enable&id=<?= $survey->id ?>"><span class="glyphicon glyphicon-play"></a>
+						<?php } ?>
+
+						<a class="btn btn-default" onclick ="return confirm('Are you sure?');" href="/survey/surveys?option=delSurvey&id=<?= $survey->id ?>"><span class="glyphicon glyphicon-trash"></span></a>
+					</td>
+				</tr>
+				<?php } ?>
+<!--
+				<tr>
+					<form action="/survey/surveys?option=addSurvey" method="post">
+						<td><span class="glyphicon glyphicon-asterisk"></span></td>
+						<td><input class="form-control" name="surveyTitle" placeholder="Survey title"></td>
+						<td><input class="form-control" name="surveyCustomer" placeholder="Customer email"></td>
+						<td><input class="form-control" name="surveyDeadline" placeholder="Dead line date"></td>
+						<td><input class="btn btn-default" type="submit" name="surveySubmit" value="+"></td>
+					</form>
+				</tr>
+-->
+			</tbody>
+		</table>
+	</div>
+</div>
