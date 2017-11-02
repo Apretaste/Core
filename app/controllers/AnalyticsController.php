@@ -59,10 +59,11 @@ class AnalyticsController extends Controller
 		// monthly new users
 		$montlyNewUsers = array();
 		$visits = $connection->query("
-			SELECT COUNT(DISTINCT email) as visitors, DATE_FORMAT(insertion_date,'%Y-%m') as inserted
+			SELECT COUNT(DISTINCT email) AS visitors, DATE_FORMAT(insertion_date,'%Y-%m') AS inserted
 			FROM person
 			GROUP BY DATE_FORMAT(insertion_date,'%Y-%m')
 			ORDER BY inserted DESC LIMIT 30");
+
 		foreach($visits as $visit) $newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
 		$montlyNewUsers = array_reverse($newUsers);
 
@@ -142,21 +143,23 @@ class AnalyticsController extends Controller
 
 		// Profile completion
 		$profileData = $connection->query("
-			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL)
+			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL) AND active=1
 			UNION
-			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL
+			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL AND active=1
 			UNION
-			SELECT 'Gender' AS Caption, COUNT(gender) AS Number FROM person WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL
+			SELECT 'Gender' AS Caption, COUNT(gender) AS Number FROM person WHERE updated_by_user IS NOT NULL AND gender IS NOT NULL AND active=1
 			UNION
-			SELECT 'Phone' AS Caption, COUNT(phone) AS Number FROM person WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL
+			SELECT 'Phone' AS Caption, COUNT(phone) AS Number FROM person WHERE updated_by_user IS NOT NULL AND phone IS NOT NULL AND active=1
 			UNION
-			SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number FROM person WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL
+			SELECT 'Eyes' AS Caption, COUNT(eyes) AS Number FROM person WHERE updated_by_user IS NOT NULL AND eyes IS NOT NULL AND active=1
 			UNION
-			SELECT 'Skin' AS Caption, COUNT(skin) AS Number FROM person WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL
+			SELECT 'Skin' AS Caption, COUNT(skin) AS Number FROM person WHERE updated_by_user IS NOT NULL AND skin IS NOT NULL AND active=1
 			UNION
-			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person
+			SELECT 'Body' AS Caption, COUNT(body_type) AS Number FROM person WHERE active=1
 			UNION
-			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1");
+			SELECT 'Province' AS Caption, COUNT(province) AS Number FROM person WHERE active=1
+			UNION
+			SELECT 'Picture' AS Picture, COUNT(picture) AS Number FROM person WHERE picture=1 AND active=1");
 
 		foreach($profileData as $profilesList)
 		{
