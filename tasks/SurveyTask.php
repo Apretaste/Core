@@ -2,7 +2,6 @@
 
 /**
  * Survey Reminder Task
- *
  * @author kuma
  */
 class SurveyTask extends \Phalcon\Cli\Task
@@ -31,8 +30,11 @@ class SurveyTask extends \Phalcon\Cli\Task
 			AND DATEDIFF(B.deadline, B.date_created) > 0");
 
 		// send notifications to users
+		$utils = new Utils();
 		foreach ($unfinishedSurveys as $us) {
-			// @TODO
+			$text = "Has dejado una encuesta sin terminar. Completala y gana §{$us->value}";
+			$link = "ENCUESTA {$us->survey}";
+			$utils->addNotification($us->email, "Encuesta", $text, $link);
 		}
 	}
 }
