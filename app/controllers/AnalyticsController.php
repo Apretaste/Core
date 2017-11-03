@@ -53,8 +53,8 @@ class AnalyticsController extends Controller
 			FROM delivery
 			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
 			ORDER BY inserted DESC LIMIT 30");
-		foreach($visits as $visit) $newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		$monthlyUniqueTraffic = array_reverse($newUsers);
+		foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+		$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
 
 		// monthly new users
 		$monthlyNewUsers = array();
@@ -63,9 +63,8 @@ class AnalyticsController extends Controller
 			FROM person
 			GROUP BY DATE_FORMAT(insertion_date,'%Y-%m')
 			ORDER BY inserted DESC LIMIT 30");
-
-		foreach($visits as $visit) $newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		$monthlyNewUsers = array_reverse($newUsers);
+		foreach($visits as $visit) $monthlyNewUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+		$monthlyNewUsers = array_reverse($monthlyNewUsers);
 
 		// last 30 days environment usage
 		$last30EnvironmentUsage = array();
