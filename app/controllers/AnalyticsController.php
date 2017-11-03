@@ -57,7 +57,7 @@ class AnalyticsController extends Controller
 		$monthlyUniqueTraffic = array_reverse($newUsers);
 
 		// monthly new users
-		$montlyNewUsers = array();
+		$monthlyNewUsers = array();
 		$visits = $connection->query("
 			SELECT COUNT(DISTINCT email) AS visitors, DATE_FORMAT(insertion_date,'%Y-%m') AS inserted
 			FROM person
@@ -65,7 +65,7 @@ class AnalyticsController extends Controller
 			ORDER BY inserted DESC LIMIT 30");
 
 		foreach($visits as $visit) $newUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		$montlyNewUsers = array_reverse($newUsers);
+		$monthlyNewUsers = array_reverse($newUsers);
 
 		// last 30 days environment usage
 		$last30EnvironmentUsage = array();
@@ -120,7 +120,7 @@ class AnalyticsController extends Controller
 		$this->view->weeklyGrossTraffic = $weeklyGrossTraffic;
 		$this->view->monthlyGrossTraffic = $monthlyGrossTraffic;
 		$this->view->monthlyUniqueTraffic = $monthlyUniqueTraffic;
-		$this->view->montlyNewUsers = $montlyNewUsers;
+		$this->view->monthlyNewUsers = $monthlyNewUsers;
 		$this->view->last30EnvironmentUsage = $last30EnvironmentUsage;
 		$this->view->appVersions = $appVersions;
 		$this->view->last30DaysServiceUsage = $last30DaysServiceUsage;
