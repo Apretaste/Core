@@ -147,7 +147,7 @@
 	function monthlyNewUsers() {
 		var data = google.visualization.arrayToDataTable([
 			['Month and Year', 'New Users'],
-			<?php foreach ($montlyNewUsers as $data) { ?>
+			<?php foreach ($monthlyNewUsers as $data) { ?>
 				['<?= $data['date'] ?>',<?= $data['visitors'] ?>],
 			<?php } ?>
 		]);
