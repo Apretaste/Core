@@ -32,6 +32,7 @@ class DropController extends Controller
 		$code = explode(" ", $message)[1];
 
 		// save it into the database
+		$connection = new Connection();
 		$connection->query("
 			INSERT INTO delivery_checked (email, status, code, message)
 			VALUES ('$email', 'bounce', '$code', '$message')");
