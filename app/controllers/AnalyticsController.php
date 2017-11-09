@@ -39,7 +39,7 @@ class AnalyticsController extends Controller
 			FROM delivery
 			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
 			ORDER BY inserted
-			DESC LIMIT 30");
+			DESC LIMIT 12");
 		foreach($visits as $visit) {
 			if( ! $visit->visitors) $visit->visitors = 0;
 			$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
@@ -52,7 +52,7 @@ class AnalyticsController extends Controller
 			SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
 			FROM delivery
 			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-			ORDER BY inserted DESC LIMIT 30");
+			ORDER BY inserted DESC LIMIT 12");
 		foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
 		$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
 
