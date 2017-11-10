@@ -76,18 +76,18 @@ try
 	});
 
 	// Handle the request
-	try{
-		$application = new Application($di);
-		echo $application->handle()->getContent();
-	}catch(Exception $e){
-		// log errors if exist
-		$utils = new Utils();
-		$utils->createAlert($e->getMessage(), "ERROR");
-	}
+	$application = new Application($di);
+	echo $application->handle()->getContent();
 }
 catch(\Phalcon\Mvc\Dispatcher\Exception $e)
 {
-	echo "PhalconException: ", $e->getMessage(); exit;
+	// log errors
+	$message = $e->getMessage();
+	$severity = (strpos($message, 'handler class cannot be loaded') !== false) ? 'NOTICE' : 'ERROR';
+	$utils = new Utils();
+	$utils->createAlert($message, $severity);
+
+	// show 404 page
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
 }

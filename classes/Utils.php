@@ -982,14 +982,6 @@ class Utils
 		}
 	}
 
-	public function addEvent($origin, $type, $email, $data)
-	{
-		$strData = serialize($data);
-		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
-		$connection = new Connection();
-		$connection->query($sql);
-	}
-
 	/**
 	 * Get the completion percentage of a profile
 	 *
@@ -1050,15 +1042,15 @@ class Utils
 	 * @param String $text
 	 * @param Enum $type: NOTICE,WARNING,ERROR
 	 */
-	public function createAlert($text, $type="NOTICE")
+	public function createAlert($text, $severity="NOTICE")
 	{
 		// save alert into the database
 		$connection = new Connection();
 		$text = $connection->escape($text);
-		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
+		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
 
 		// send the alert to the error log
-		$subject = "$type: $text";
+		$subject = "$severity: $text";
 		error_log($subject);
 
 		// get the tier from the configs file
@@ -1066,13 +1058,13 @@ class Utils
 		$tier = $di->get('config')['global']['tier'];
 
 		// if the email is an error
-		if($type == "ERROR" && $tier == "production")
+		if($severity == "ERROR" && $tier == "production")
 		{
 			// send the alert by email
 			$email = new Email();
 			$email->to = $di->get('config')['global']['alerts'];
 			$email->subject = substr($subject, 0, 80);
-			$email->body = "<b>SEVERITY:</b> $type<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
+			$email->body = "<b>SEVERITY:</b> $severity<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
@@ -1243,14 +1235,15 @@ class Utils
 		$res->username = $person[0]->username;
 		$res->credit = number_format($person[0]->credit, 2, '.', '');
 
+		// get the list of mailboxes
+		$connection = new Connection();
+		$inboxes = $connection->query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
+
 		// add the response mailbox
-		// @TODO get mailboxes from the database and always bring the least used one
-		$mb = array("interwebcuba","apserviciogratis","alebertogoldstein","alexandergiogustino","alisenwestbrook","alongpathtohome","evy2017b","evy2017c","evy2017d","gustavhotel06","haloychin","horaciogermanico","manuelgustav818","rondonorigoberto","aparentesoledad","gonzalezhomstall","rumianteapartado","josefinakallma","holsamoller","goulsmaloy","lafonsehorrs");
-		$mailbox = $mb[array_rand($mb)];
-		$pos = rand(1, strlen($mailbox)-1);
-		$mailbox = substr_replace($mailbox, ".", $pos, 0);
-		$mailbox = "$mailbox+{$person[0]->username}@gmail.com";
-		$res->mailbox = $mailbox;
+		$max90Percent = intval((count($inboxes)-1) * 0.9);
+		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
+		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
+		$res->mailbox = "$inbox+{$person[0]->username}@gmail.com";
 
 		// check if there is any change in the profile
 		$res->profile = new stdClass();

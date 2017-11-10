@@ -41,11 +41,8 @@ class VersionTask extends \Phalcon\Cli\Task
 			$utils->addNotification($person->email, "App", $text);
 		}
 
-		// get final delay
-		$timeEnd = time();
-		$timeDiff = $timeEnd - $timeStart;
-
 		// save the status in the database
+		$timeDiff = time() - $timeStart;
 		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='version'");
 	}
 }
