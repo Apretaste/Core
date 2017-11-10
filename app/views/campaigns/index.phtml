@@ -1,0 +1,35 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">Inserted</th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Subject</th>
+					<th class="text-center">Sent</th>
+					<th class="text-center">Failed</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($campaigns as $campaign) { ?>
+				<tr>
+					<td class="text-center"><?=date("M d h:i A", strtotime($campaign->inserted))?></td>
+					<td class="text-center"><?=$campaign->status?></td>
+					<td class="text-center"><?=$campaign->subject?></td>
+					<td class="text-center"><?=$campaign->sent?></td>
+					<td class="text-center"><?=$campaign->failed?></td>
+					<td class="text-center">
+						<nobr>
+							<a class="btn btn-xs btn-default" href="/campaigns/view?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+							<?php if($campaign->status == "WAITING") { ?>
+								<a class="btn btn-xs btn-default" onclick="return confirm('Are you sure?');" href="/campaigns/deleteSubmit?id=<?=$campaign->id?>"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+							<?php } ?>
+						</nobr>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

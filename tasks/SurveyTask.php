@@ -8,6 +8,8 @@ class SurveyTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
 	{
+		$timeStart = time();
+
 		// get people with unfinished surveys
 		$connection = new Connection();
 		$unfinishedSurveys = $connection->query("
@@ -36,5 +38,9 @@ class SurveyTask extends \Phalcon\Cli\Task
 			$link = "ENCUESTA {$us->survey}";
 			$utils->addNotification($us->email, "Encuesta", $text, $link);
 		}
+
+		// save the status in the database
+		$timeDiff = time() - $timeStart;
+		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='survey'");
 	}
 }

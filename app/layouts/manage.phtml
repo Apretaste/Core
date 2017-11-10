@@ -93,6 +93,13 @@
 						</li>
 						<?php } ?>
 
+						<!-- SURVEY -->
+						<?php if($security->checkAccess("campaigns")) { ?>
+						<li>
+							<a href="/campaigns"><i class="fa fa-paper-plane-o"></i> <span class="nav-label">Campaigns</span></a>
+						</li>
+						<?php } ?>
+
 						<!-- MARKET -->
 						<?php if($security->checkAccess("market")) { ?>
 						<li>
