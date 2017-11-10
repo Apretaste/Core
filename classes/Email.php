@@ -23,7 +23,7 @@ class Email
 	public function send()
 	{
 		// get images from thumbnail or optimize them
-		$this->thumbnailAllImages();
+		$this->adjustImageQuality();
 
 		// check if the email is from Nauta or Cuba
 		$isCuba = substr($this->to, -3) === ".cu";
@@ -364,53 +364,70 @@ class Email
 	}
 
 	/**
-	 * Create a thumbnail of all images before sending
+	 * Adjust the image quality before sending an email
 	 *
 	 * @author salvipascual
 	 */
-	private function thumbnailAllImages()
+	private function adjustImageQuality()
 	{
-		$utils = new Utils();
+		// get the image quality
+		$connection = new Connection();
+		$quality = $connection->query("SELECT img_quality FROM person WHERE email='{$this->to}'");
+		if(empty($quality)) $quality = "ORIGINAL";
+		else $quality = $quality[0]->img_quality;
 
-		// create thumbnails for images
-		$images = array();
-		if(is_array($this->images)) foreach ($this->images as $file)
-{
-			// thumbnail the image or use thumbnail cache
-			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
-			if( ! file_exists($thumbnail)) {
-				copy($file, $thumbnail);
-				$utils->optimizeImage($thumbnail, 100);
-			}
-
-			// use the image only if it can be compressed
-			$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
-		}
-
-		// create thumbnails for attachments
-		$attachments = array();
-		foreach ($this->attachments as $file)
+		// change images by text
+		if($quality == "SIN_IMAGEN")
 		{
-			// thumbnail only images
-			if(explode("/", mime_content_type($file))[0] != "image") {
-				$attachments[] = $file;
-				continue;
-			}
-
-			// thumbnail the image or use thumbnail cache
-			$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
-			if( ! file_exists($thumbnail)) {
-				copy($file, $thumbnail);
-				$utils->optimizeImage($thumbnail, 100);
-			}
-
-			// use the image only if it can be compressed
-			$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+			$this->images = array();
+			$this->attachments = array();
 		}
 
-		// recreate the arrays of images and attachments
-		$this->images = $images;
-		$this->attachments = $attachments;
+		// reduce images
+		if($quality == "REDUCED")
+		{
+			$utils = new Utils();
+
+			// create thumbnails for images
+			$images = array();
+			if(is_array($this->images)) foreach ($this->images as $file)
+			{
+				// thumbnail the image or use thumbnail cache
+				$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+				if( ! file_exists($thumbnail)) {
+					copy($file, $thumbnail);
+					$utils->optimizeImage($thumbnail, 100);
+				}
+
+				// use the image only if it can be compressed
+				$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+			}
+
+			// create thumbnails for attachments
+			$attachments = array();
+			foreach ($this->attachments as $file)
+			{
+				// thumbnail only images
+				if(explode("/", mime_content_type($file))[0] != "image") {
+					$attachments[] = $file;
+					continue;
+				}
+
+				// thumbnail the image or use thumbnail cache
+				$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+				if( ! file_exists($thumbnail)) {
+					copy($file, $thumbnail);
+					$utils->optimizeImage($thumbnail, 100);
+				}
+
+				// use the image only if it can be compressed
+				$attachments[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+			}
+
+			// recreate the arrays of images and attachments
+			$this->images = $images;
+			$this->attachments = $attachments;
+		}
 	}
 
 	/**
