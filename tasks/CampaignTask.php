@@ -21,7 +21,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 
 		// get the receipients
 		$people = $connection->query("
-			SELECT A.email, B.pass
+			SELECT A.email
 			FROM person A JOIN authentication B
 			ON A.email = B.email
 			WHERE A.mail_list = 1
@@ -68,7 +68,7 @@ class CampaignTask extends \Phalcon\Cli\Task
 				// save log
 				$utils = new Utils();
 				$utils->createAlert("Campaign with ID {$campaign->id} is having failure percent too high", "ERROR");
-				die($msg);
+				exit;
 			}
 		}
 
