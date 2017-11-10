@@ -358,7 +358,7 @@ class Email
 		}
 
 		// create thumbnails for images
-		if($quality == "REDUCED")
+		if($quality == "REDUCIDA")
 		{
 			$utils = new Utils();
 			$images = array();
