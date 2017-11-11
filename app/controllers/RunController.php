@@ -243,7 +243,7 @@ class RunController extends Controller
 		// get the input if the data is a JSON
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
 		if($input) {
-			$text = $input->text;
+			$text = $input->command;
 			$appversion = $input->appversion;
 			$osversion = $input->osversion;
 			$nautaPass = $input->token;
@@ -251,7 +251,7 @@ class RunController extends Controller
 		}
 		// get the input if the data is plain text (version <= 2.5)
 		// @TODO remove when v2.5 is not in use anymore
-		else{
+		else {
 			$file = file("$temp/$folderName/$textFile");
 			$text = trim($file[0]);
 			$appversion = empty($file[1]) ? "" : trim($file[1]);
