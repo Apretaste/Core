@@ -4,13 +4,13 @@
 			<!-- Subject of the email -->
 			<div class="form-group">
 				<label for="subject">Subject of the email</label>
-				<input id="subject" type="text" value="" class="form-control" name="subject" required />
+				<input id="subject" type="text" class="form-control" name="subject" required />
 			</div>
 
 			<!-- Create the editor container -->
 			<div class="form-group">
 				<label for="content">Content of the email</label>
-				<textarea id="content" name="content"></textarea>
+				<textarea id="content" name="content" class="form-control" rows="20" required></textarea>
 			</div>
 
 			<!-- List where to send the email -->
@@ -33,21 +33,10 @@
 	</div>
 </div>
 
-<!-- Initialize the editor -->
-<script src="/js/tinymce/tinymce.min.js"></script>
-<script>
-	tinymce.init({
-		selector: '#content',
-		height: 500,
-		theme: 'modern',
-		plugins: [
-			'example advlist autolink lists link charmap print preview hr anchor pagebreak',
-			'searchreplace wordcount visualblocks visualchars code fullscreen',
-			'emoticons template paste textcolor colorpicker textpattern codesample toc bdesk_photo'
-		],
-		toolbar1: 'undo redo | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
-	});
 
+<!-- SCRIPTS -->
+
+<script>
 	function testEmail(){
 		var email = $('#test').val();
 		var subject = "TEST " + $('#subject').val();
