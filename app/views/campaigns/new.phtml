@@ -40,7 +40,7 @@
 	function testEmail(){
 		var email = $('#test').val();
 		var subject = "TEST " + $('#subject').val();
-		var content = tinyMCE.activeEditor.getContent();
+		var content = $('#content').val();
 
 		$.ajax({
 			url: "/campaigns/testAsync",
