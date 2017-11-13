@@ -17,7 +17,7 @@ function smarty_function_img($params, $template)
 
 	$file = basename($href);
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if($di->get('environment') == "sandbox")
+	if($di->get('environment') == "web")
 	{
 		$wwwroot = $di->get('path')['root'];
 		$wwwhttp = $di->get('path')['http'];
