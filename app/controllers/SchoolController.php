@@ -213,7 +213,6 @@ class SchoolController extends Controller
 					"UPDATE _escuela_chapter SET xorder = xorder - 1 WHERE xorder > {$chapter->xorder} AND course = {$chapter->course};" .
 					"DELETE FROM _escuela_chapter WHERE id = '$id';" .
 					"DELETE FROM _escuela_question WHERE chapter = '$id';" .
-					"DELETE FROM _escuela_images WHERE chapter = '$id';" .
 					"COMMIT;";
 
 					$connection->query($sql);
@@ -316,17 +315,14 @@ class SchoolController extends Controller
 
 			// save images
 			$chapterFolder = $coursesFolder."/$course_id/$id";
-			if (!file_exists($chapterFolder))
-				@mkdir($chapterFolder);
+
+			if ( ! file_exists($chapterFolder)) @mkdir($chapterFolder);
 
 			if (file_exists($chapterFolder))
 			{
-				$connection->query("DELETE FROM _escuela_images WHERE chapter = '$id';");
-
 				foreach($images as $idimg => $img)
 				{
-					file_put_contents($chapterFolder."/$idimg{$imgExt}", base64_decode($img['content']));
-					$connection->query("INSERT INTO _escuela_images (id, filename, mime_type, chapter, course) VALUES ('$idimg','{$img['filename']}','{$img['type']}','$id','$course_id');");
+					file_put_contents("$chapterFolder/$idimg{$imgExt}", base64_decode($img['content']));
 				}
 			}
 
@@ -486,21 +482,42 @@ class SchoolController extends Controller
 		}
 	}
 
-	private function getChapterImages($chapter_id)
+	/**
+	 * Return a list of chapter's images paths
+	 *
+	 * @param integer $chapter
+	 * @return array
+	 */
+	private function getChapterImages($chapter)
 	{
-		$connection = new Connection();
-		$r = $connection->query("SELECT * FROM _escuela_images WHERE chapter = '$chapter_id';");
+		// get course and content
+		$chapterText = Connection::query("SELECT content, course FROM _escuela_chapter WHERE id=$chapter");
+		$content = $chapterText[0]->content;
+		$course = $chapterText[0]->course;
 
-		$wwwroot = $this->di->get('path')['root'];
-		$images = [];
+		// get all images from the content
+		$dom = new DOMDocument();
+		$dom->loadHTML($content);
+		$imgs = $dom->getElementsByTagName('img');
 
-		if ($r !== false)
+		// get path to root folder
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// get images
+		$images = []
+		foreach ($imgs as $img)
 		{
-			foreach ($r as $row)
-			{	$imageContent = file_get_contents($wwwroot."/public/courses/{$row->course}/$row->chapter/{$row->id}.jpg");
-				$images[$row->id] = ['filename' => $row->filename, 'type' => $row->mime_type, 'content' => base64_encode($imageContent)];
-			}
+			$src = $img->getAttribute('src');
+			$filename = str_replace("cid:", "", $src);
+			$parts = explode(".", $filename);
+			$name = $parts[0];
+			$ext = $parts[1];
+
+			$imageContent = file_get_contents("$wwwroot/public/courses/$course/$chapter/$filename");
+			$images[$name] = ['filename' => $filename, 'type' => "image/$ext", 'content' => base64_encode($imageContent)];
 		}
+
 		return $images;
 	}
 }
