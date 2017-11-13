@@ -170,6 +170,9 @@ class RunController extends Controller
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($this->fromEmail);
 			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+
+			// add the welcome notification
+			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
 		}
 
 		// insert a new email in the delivery table and get the ID
