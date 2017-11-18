@@ -138,7 +138,7 @@ class AnalyticsController extends Controller
 		$usersWithProfile = $connection->query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
 
 		//Users without profiles
-		$usersWithOutProfile = $connection->query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=1 AND active=1");
+		$usersWithOutProfile = $connection->query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=0 AND active=1");
 
 		// Profile completion
 		$profileData = $connection->query("
