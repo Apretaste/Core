@@ -24,16 +24,21 @@ class RunController extends Controller
 	 */
 	public function displayAction()
 	{
-		$this->fromEmail = "html@apretaste.com";
+		// get the service to load
 		$this->subject = $this->request->get("subject");
-		$this->body = $this->request->get("body");
+
+		// get the email from the session or redirect to login
+		$security = new Security();
+		$user = $security->getUser();
+		if($user) $this->fromEmail = $user->email;
+		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
 		// set the running environment
 		$this->di->set('environment', function() {return "web";});
 
 		// run the request
 		$utils = new Utils();
-		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, []);
+		$ret = $utils->runRequest($this->fromEmail, $this->subject, '', []);
 
 		// render the response
 		$render = new Render();
