@@ -49,16 +49,7 @@
 						<small>
 							{link href="SERVICIOS" caption="Servicios"}{separator}
 							{link href="PERFIL" caption="&#9817; Perfil"}{separator}
-							{link href="NOTIFICACIONES" caption="&#9888; Alertas"}
-							{if $num_notifications > 0}
-								<!--[if mso]>
-								<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' style='v-text-anchor:middle;' arcsize='5%' strokecolor='$stroke' fillcolor='#FF0000'>
-								<w:anchorlock/>
-								<center style='color:#FFFFFF;font-family:Helvetica, Arial,sans-serif;font-size:9px;'><strong>{$num_notifications}</strong></center>
-								</v:roundrect>
-								<![endif]-->
-								<a style='background-color:#FF0000;border-radius:3px;color:#FFFFFF;display:inline-block;font-family:sans-serif;font-size:9px;text-align:center;text-decoration:none;line-height:20px;padding-left:2px;padding-right:2px;-webkit-text-size-adjust:none;mso-hide:all;'><b>{$num_notifications}</b></a>
-							{/if}
+							{link href="NOTIFICACIONES" caption="&#9888; Alertas ({$num_notifications})"}
 							{if $APRETASTE_ENVIRONMENT eq "web"}
 								&nbsp;<a style="background-color:#D9534F; text-decoration:none; padding:3px; color:white;" href="/logout">Logout</a>
 							{/if}
