@@ -135,10 +135,10 @@ class AnalyticsController extends Controller
 	{
 		//Users with profiles
 		$connection = new Connection();
-		$usersWithProfile = $connection->query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user = 1");
+		$usersWithProfile = $connection->query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
 
 		//Users without profiles
-		$usersWithOutProfile = $connection->query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user = 0");
+		$usersWithOutProfile = $connection->query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=1 AND active=1");
 
 		// Profile completion
 		$profileData = $connection->query("
@@ -189,45 +189,47 @@ class AnalyticsController extends Controller
 					WHEN 'GUANTANAMO' THEN 'Guantánamo'
 					WHEN 'ISLA_DE_LA_JUVENTUD' THEN 'Isla de la Juventud'
 				END as NewProv
-			FROM (SELECT count(b.province) as ProvCount, a.mnth
-					FROM(
-						SELECT 'PINAR_DEL_RIO' mnth
-						UNION ALL
-						SELECT 'LA_HABANA' mnth
-						UNION ALL
-						SELECT 'ARTEMISA' mnth
-						UNION ALL
-						SELECT 'MAYABEQUE' mnth
-						UNION ALL
-						SELECT 'MATANZAS' mnth
-						UNION ALL
-						SELECT 'VILLA_CLARA' mnth
-						UNION ALL
-						SELECT 'CIENFUEGOS' mnth
-						UNION ALL
-						SELECT 'SANCTI_SPIRITUS' mnth
-						UNION ALL
-						SELECT 'CIEGO_DE_AVILA' mnth
-						UNION ALL
-						SELECT 'CAMAGUEY' mnth
-						UNION ALL
-						SELECT 'LAS_TUNAS' mnth
-						UNION ALL
-						SELECT 'HOLGUIN' mnth
-						UNION ALL
-						SELECT 'GRANMA' mnth
-						UNION ALL
-						SELECT 'SANTIAGO_DE_CUBA' mnth
-						UNION ALL
-						SELECT 'GUANTANAMO' mnth
-						UNION ALL
-						SELECT 'ISLA_DE_LA_JUVENTUD' mnth
-					) a
-					LEFT JOIN person b
-						ON BINARY a.mnth = BINARY b.province AND
-							b.province IS not NULL AND
-							b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD')
-				GROUP  BY b.province) as c");
+			FROM (
+				SELECT COUNT(b.province) as ProvCount, a.mnth
+				FROM(
+					SELECT 'PINAR_DEL_RIO' mnth
+					UNION ALL
+					SELECT 'LA_HABANA' mnth
+					UNION ALL
+					SELECT 'ARTEMISA' mnth
+					UNION ALL
+					SELECT 'MAYABEQUE' mnth
+					UNION ALL
+					SELECT 'MATANZAS' mnth
+					UNION ALL
+					SELECT 'VILLA_CLARA' mnth
+					UNION ALL
+					SELECT 'CIENFUEGOS' mnth
+					UNION ALL
+					SELECT 'SANCTI_SPIRITUS' mnth
+					UNION ALL
+					SELECT 'CIEGO_DE_AVILA' mnth
+					UNION ALL
+					SELECT 'CAMAGUEY' mnth
+					UNION ALL
+					SELECT 'LAS_TUNAS' mnth
+					UNION ALL
+					SELECT 'HOLGUIN' mnth
+					UNION ALL
+					SELECT 'GRANMA' mnth
+					UNION ALL
+					SELECT 'SANTIAGO_DE_CUBA' mnth
+					UNION ALL
+					SELECT 'GUANTANAMO' mnth
+					UNION ALL
+					SELECT 'ISLA_DE_LA_JUVENTUD' mnth
+				) a
+				LEFT JOIN person b
+				ON BINARY a.mnth = BINARY b.province
+				AND b.province IS not NULL
+				AND b.active = 1
+				AND b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD')
+			GROUP BY b.province) as c");
 
 		foreach($prefilesPerPravinceList as $profilesList)
 		{
@@ -237,7 +239,7 @@ class AnalyticsController extends Controller
 
 		// START updated profiles
 		$visits = $connection->query("
-			SELECT count(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
+			SELECT COUNT(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
 			FROM person
 			WHERE last_update_date IS NOT NULL
 			GROUP BY last_update
