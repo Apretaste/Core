@@ -153,7 +153,7 @@ class SupportController extends Controller
 
 		// get the manager information
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 
 		// save response in the database
 		$connection->query("
@@ -226,7 +226,7 @@ class SupportController extends Controller
 
 		// add manager name and position
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 		$content = str_replace('{MANAGER_NAME}', $manager->name, $content);
 		$content = str_replace('{MANAGER_POSITION}', $manager->position, $content);
 		$content = str_replace('{USER_NAME}', $name, $content);

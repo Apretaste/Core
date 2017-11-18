@@ -68,7 +68,7 @@ class CampaignsController extends Controller
 	{
 		// get details of the person logged
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 
 		// send variables to the view
 		$this->view->title = "New campaign";

@@ -114,12 +114,7 @@ class AdminController extends Controller
 	public function servicesAction()
 	{
 		$connection = new Connection();
-		$services = $connection->query("
-			SELECT A.name, A.description, A.creator_email, A.category, A.insertion_date, A.listed, A.group, B.times_used, B.avg_latency
-			FROM service A
-			LEFT JOIN (SELECT service, COUNT(service) as times_used, AVG(response_time) as avg_latency FROM utilization WHERE request_time > DATE_SUB(NOW(), INTERVAL 1 MONTH) GROUP BY service) B
-			ON A.name = B.service
-			ORDER BY B.times_used DESC");
+		$services = $connection->query("SELECT * FROM service");
 
 		$this->view->title = "List of services (".count($services).")";
 		$this->view->services = $services;
