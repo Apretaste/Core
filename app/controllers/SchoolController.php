@@ -20,7 +20,7 @@ class SchoolController extends Controller
 	{
 		// get the current user's email
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 		$email = $manager->email;
 
 		$connection = new Connection();

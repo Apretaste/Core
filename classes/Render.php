@@ -70,7 +70,6 @@ class Render
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
-			"APRETASTE_SERVICE_RELATED" => $this->getServicesRelatedArray($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_EMAIL" => $validEmailAddress,
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
@@ -89,9 +88,16 @@ class Render
 		$templateVariables = array_merge($systemVariables, $response->content);
 		$smarty->assign($templateVariables);
 
-		// rendering and removing tabs, double spaces and break lines
+		// render the template
 		$renderedTemplate = $smarty->fetch($response->layout);
-		$renderedTemplate = str_replace("{APRETASTE_EMAIL}", $validEmailAddress, $renderedTemplate);
+
+		// add link popups for the web
+		if($di->get('environment') == "web") {
+			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_link_popup.phtml");
+			$renderedTemplate = str_replace("</body>", "$linkPopup</body>", $renderedTemplate);
+		}
+
+		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $renderedTemplate);
 	}
 
@@ -106,38 +112,5 @@ class Render
 	{
 		if(empty($response->json)) return json_encode($response->content, JSON_PRETTY_PRINT);
 		else return $response->json;
-	}
-
-	/**
-	 * Get up to five services related and return an array with them
-	 *
-	 * @author salvipascual
-	 * @param String $serviceName, name of the service
-	 * @return Array
-	 */
-	private function getServicesRelatedArray($serviceName)
-	{
-		// harcoded return for the sandbox
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') == "sandbox") return array('ayuda','nota','tienda','traducir','publicidad');
-
-		// get last 5 services inserted with the same category
-		$query = "
-			SELECT name FROM service
-			WHERE category = (SELECT category FROM service WHERE name='$serviceName')
-			AND name <> '$serviceName'
-			AND name <> 'excluyeme'
-			AND listed = 1
-			ORDER BY RAND()
-			LIMIT 5";
-		$connection = new Connection();
-		$result = $connection->deepQuery($query);
-
-		// create returning array
-		$servicesRelates = array();
-		foreach($result as $res) $servicesRelates[] = $res->name;
-
-		// return the array
-		return $servicesRelates;
 	}
 }

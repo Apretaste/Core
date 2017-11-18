@@ -68,14 +68,9 @@ function smarty_function_button($params, $template)
 			break;
 	}
 
-	// create different type of links depending the environment
+	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if($di->get('environment') == "sandbox")
-	{
-		$wwwhttp = $di->get('path')['http'];
-		$linkto = "$wwwhttp/run/display?subject=$href";
-	}
-	elseif($di->get('environment') == "app")
+	if(in_array($di->get('environment'), array("app", "web")))
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
@@ -83,6 +78,7 @@ function smarty_function_button($params, $template)
 		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\"";
 		$linkto = "#!";
 	}
+	// create link for the email system
 	else
 	{
 		$desc = str_replace("|", " y seguido ", $desc);
