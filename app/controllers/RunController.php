@@ -20,7 +20,6 @@ class RunController extends Controller
 	 *
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
-	 * @get String $body, body of the email
 	 */
 	public function displayAction()
 	{
