@@ -99,20 +99,12 @@ class NautaClient
 	{
 		if (is_null($user)) $user = $this->user;
 		if (is_null($pass)) $pass = $this->pass;
-/*
-		// download the login page
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
-		$loginPage = curl_exec($this->client);
-die($loginPage);
-		// get the path to the captcha image
-		$doc = new DOMDocument();
-		$doc->loadHTML($loginPage);
-		$imageSrc = $doc->getElementById('captcha')->attributes->getNamedItem('src')->nodeValue;
-*/
+
 		// save the captcha image in the temp folder
 		$utils = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
-		file_put_contents($captchaImage, file_get_contents("{$this->baseUrl}/securimage/securimage_show.php"));
+		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}/securimage/securimage_show.php");
+		file_put_contents($captchaImage, curl_exec($this->client));
 
 		// break the captcha
 		$captcha = $this->breakCaptcha($captchaImage);
