@@ -14,7 +14,7 @@ class NautaClient
 	private $user = null;
 	private $pass = null;
 
-	private $baseUrl = "http://webmail.nauta.cu/";
+	private $baseUrl = "https://webmail.nauta.cu/";
 
 	private $client = null;
 	private $cookieFile = "";
@@ -30,20 +30,25 @@ class NautaClient
 	 */
 	public function __construct($user = null, $pass = null)
 	{
+		// save global user/pass
 		$this->user = $user;
 		$this->pass = $pass;
 
+		// get root folder
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
-		$this->client = curl_init();
+		// save tmp files
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+		@mkdir ("{$temp}nautaclient");
+		$cookieFile = "{$temp}nautaclient/{$this->user}.cookie";
 
+		// init curl
+		$this->client = curl_init();
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-
-		@mkdir ("$wwwroot/temp/nautaclient");
-
-		$cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
+		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($this->client, CURLOPT_COOKIEJAR, $cookieFile);
 		curl_setopt($this->client, CURLOPT_COOKIEFILE, $cookieFile);
 
@@ -93,29 +98,40 @@ class NautaClient
 	 * @param string $pass
 	 * @return bool
 	 */
-	public function login($user = null, $pass = null)
+	public function login($user=null, $pass=null)
 	{
-		if (is_null($user))
-			$user = $this->user;
+		if (is_null($user)) $user = $this->user;
+		if (is_null($pass)) $pass = $this->pass;
 
-		if (is_null($pass))
-			$pass = $this->pass;
+		// download the login page
+		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
+		$loginPage = curl_exec($this->client);
 
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/login.php");
+		// get the path to the captcha image
+		$doc = new DOMDocument();
+		$doc->loadHTML($loginPage);
+		$imageSrc = $doc->getElementById('captcha')->attributes->getNamedItem('src')->nodeValue;
+
+		// save the captcha image in the temp folder
+		$utils = new Utils();
+		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
+		file_put_contents($captchaImage, file_get_contents("{$this->baseUrl}{$imageSrc}"));
+
+		// break the captcha
+		$captchaText = $this->breakCaptcha($captchaImage);
+
+		// send datails to login
+		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($user)."&horde_pass=".urlencode($pass)."&horde_select_view=mobile&new_lang=en_US");
-
 		$response = curl_exec($this->client);
-
-		if ($response === false)
-			return false;
+		if ($response === false) return false;
 
 		$this->logoutToken = "";
 		$this->composeToken = "";
 
 		// parse logout token
 		$p = strpos($response, "horde_logout_token");
-		if ($p !== false)
-		{
+		if ($p !== false) {
 			$t = substr($response, $p);
 			$t = explode("&", $t);
 			$t = $t[0];
@@ -150,7 +166,7 @@ class NautaClient
 	public function sendEmail($to, $subject, $body, $attachment = false, $cc = "", $bcc = "", $priority = "normal")
 	{
 		// get send form
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/compose.php?u={$this->composeToken}");
+		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/compose.php?u={$this->composeToken}");
 		$html = curl_exec($this->client);
 
 		if (curl_errno($this->client) !== 0)
@@ -273,7 +289,7 @@ class NautaClient
 	{
 		if (!is_null($this->client))
 		{
-			curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}horde/imp/login.php?horde_logout_token={$this->logoutToken}");
+			curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/login.php?horde_logout_token={$this->logoutToken}");
 			$response = curl_exec($this->client);
 			curl_close($this->client);
 			return $response;
@@ -289,8 +305,8 @@ class NautaClient
 	 * @param $boundary
 	 * @return string
 	 */
-	function buildMultipart($fields, $boundary){
-
+	function buildMultipart($fields, $boundary)
+	{
 		$retval = '';
 		foreach($fields as $key => $value){
 			$filename = false;
@@ -309,5 +325,51 @@ class NautaClient
 		return $retval;
 	}
 
+	/**
+	 * Breaks an image captcha using human labor. Takes ~15sec to return
+	 *
+	 * @author salvipascual
+	 * @param String $image
+	 * @return String
+	 */
+	function breakCaptcha($image)
+	{
+		// get path to root and the key from the configs
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$key = $di->get('config')['anticaptcha']['key'];
 
+		// include captcha libs
+		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
+		require_once("$wwwroot/lib/anticaptcha-php/imagetotext.php");
+
+		// set the file
+		$api = new ImageToText();
+		$api->setVerboseMode(true);
+		$api->setKey($key);
+		$api->setFile($image);
+
+		// create the task
+		if ( ! $api->createTask()) {
+			$ret = new stdClass();
+			$ret->code = "500";
+			$ret->message = "API v2 send failed: ".$api->getErrorMessage();
+			return $ret;
+		}
+
+		// wait for results
+		$taskId = $api->getTaskId();
+		if ( ! $api->waitForResult()) {
+			$ret = new stdClass();
+			$ret->code = "510";
+			$ret->message = "Could not solve captcha: ".$api->getErrorMessage();
+			return $ret;
+		}
+
+		// return the solution
+		$ret = new stdClass();
+		$ret->code = "200";
+		$ret->message = $api->getTaskSolution();
+		return $ret;
+	}
 }
