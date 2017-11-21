@@ -118,11 +118,19 @@ class NautaClient
 		file_put_contents($captchaImage, file_get_contents("{$this->baseUrl}{$imageSrc}"));
 
 		// break the captcha
-		$captchaText = $this->breakCaptcha($captchaImage);
+		$captcha = $this->breakCaptcha($captchaImage);
+		if($captcha->code == "200") {
+			$captchaText = $captcha->message;
+			rename($captchaImage, $utils->getTempDir()."capcha/$captchaText.jpg");
+		} else {
+			$text = "Captcha error " . $captcha->code . " with message " . $captcha->message;
+			$utils->createAlert($text, "ERROR");
+			return false;
+		}
 
 		// send datails to login
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($user)."&horde_pass=".urlencode($pass)."&horde_select_view=mobile&new_lang=en_US");
+		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($user)."&horde_pass=".urlencode($pass)."&captcha_code=".urlencode($captchaText)."&horde_select_view=mobile&new_lang=en_US");
 		$response = curl_exec($this->client);
 		if ($response === false) return false;
 
@@ -145,9 +153,7 @@ class NautaClient
 		$tk2 = '">New Message<';
 		$p1 = strpos($response, $tk1);
 		$p2 = strpos($response, $tk2, $p1);
-		if ($p1 !== false && $p2 !== false)
-			$this->composeToken = substr($response, $p1 + strlen($tk1), $p2 - ($p1 + strlen($tk1)));
-
+		if ($p1 !== false && $p2 !== false) $this->composeToken = substr($response, $p1 + strlen($tk1), $p2 - ($p1 + strlen($tk1)));
 		return true;
 	}
 
