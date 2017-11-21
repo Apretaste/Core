@@ -14,7 +14,7 @@ class NautaClient
 	private $user = null;
 	private $pass = null;
 
-	private $baseUrl = "http://webmail.nauta.cu/";
+	private $baseUrl = "https://webmail.nauta.cu/";
 
 	private $client = null;
 	private $cookieFile = "";
@@ -40,7 +40,8 @@ class NautaClient
 
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-
+		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, 0);
+		
 		@mkdir ("$wwwroot/temp/nautaclient");
 
 		$cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
