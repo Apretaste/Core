@@ -34,7 +34,7 @@ class NautaClient
 		$this->user = $user;
 		$this->pass = $pass;
 
-		// save tmp files
+		// save cookie file
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
 		@mkdir ("{$temp}nautaclient");
@@ -99,20 +99,20 @@ class NautaClient
 	{
 		if (is_null($user)) $user = $this->user;
 		if (is_null($pass)) $pass = $this->pass;
-
+/*
 		// download the login page
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
 		$loginPage = curl_exec($this->client);
-
+die($loginPage);
 		// get the path to the captcha image
 		$doc = new DOMDocument();
 		$doc->loadHTML($loginPage);
 		$imageSrc = $doc->getElementById('captcha')->attributes->getNamedItem('src')->nodeValue;
-
+*/
 		// save the captcha image in the temp folder
 		$utils = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
-		file_put_contents($captchaImage, file_get_contents("{$this->baseUrl}{$imageSrc}"));
+		file_put_contents($captchaImage, file_get_contents("{$this->baseUrl}/securimage/securimage_show.php"));
 
 		// break the captcha
 		$captcha = $this->breakCaptcha($captchaImage);
@@ -125,7 +125,7 @@ class NautaClient
 			return false;
 		}
 
-		// send datails to login
+		// send details to login
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($user)."&horde_pass=".urlencode($pass)."&captcha_code=".urlencode($captchaText)."&horde_select_view=mobile&new_lang=en_US");
 		$response = curl_exec($this->client);
