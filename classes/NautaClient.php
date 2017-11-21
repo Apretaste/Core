@@ -49,6 +49,11 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, 0);
+
+		@mkdir ("$wwwroot/temp/nautaclient");
+
+		$cookieFile = $wwwroot."/temp/nautaclient/{$this->user}.cookie";
 		curl_setopt($this->client, CURLOPT_COOKIEJAR, $cookieFile);
 		curl_setopt($this->client, CURLOPT_COOKIEFILE, $cookieFile);
 
