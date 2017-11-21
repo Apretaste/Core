@@ -51,6 +51,7 @@ class Email
 		if($res->code != "200" && $res->code != "515") {
 			$utils = new Utils();
 			$alert = "Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}";
+			$utils = new Utils();
 			$utils->createAlert($alert, "ERROR");
 		}
 
