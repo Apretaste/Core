@@ -18,7 +18,7 @@ function smarty_function_select($params, $template)
 	{
 		// create select for the web
 		$select = '<select class="dropdown" onchange="apretaste.onSelect(this.value);">';
-		foreach($options as $key=>$option) {
+		foreach($options as $option) {
 			$optionSelected = (strtoupper($option->caption) == strtoupper($selected)) ? "selected='selected'" : "";
 			$select .= "<option value='{$option->href}' $optionSelected>{$option->caption}</option>";
 		}
@@ -28,8 +28,9 @@ function smarty_function_select($params, $template)
 	else
 	{
 		// create select for the email and app
+		$i = 0; $len = count($options)-1;
 		$select = '<small>';
-		foreach($options as $key=>$option) {
+		foreach($options as $option) {
 			// get the selected option
 			if(strtoupper($option->caption) == strtoupper($selected)) $select .= "<b>{$option->caption}</b>";
 
@@ -37,7 +38,8 @@ function smarty_function_select($params, $template)
 			else $select .= smarty_function_link(["href"=>$option->href, "caption"=>$option->caption, "wait"=>"false"], $template);
 
 			// add the separator between each value (unless is the last one)
-			if (end(array_keys($options)) != $key) $select .= " ".smarty_function_separator([], $template)." ";
+			if ($i != $len) $select .= " ".smarty_function_separator([], $template)." ";
+			$i++;
 		}
 		$select .= '</small>';
 	}

@@ -81,9 +81,12 @@ function smarty_function_button($params, $template)
 	// create link for the email system
 	else
 	{
+		$utils = new Utils();
+		$apEmail = $utils->getValidEmailAddress();
+
 		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
-		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$desc";
+		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
 	// create and return button
