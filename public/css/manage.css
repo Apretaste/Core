@@ -8227,3 +8227,6 @@ body.md-skin {
     margin: 0;
   }
 }
+.nobr{
+	white-space:nowrap;
+}

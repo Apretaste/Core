@@ -22,7 +22,19 @@ class SuggestionController extends Controller
 	 */
 	public function indexAction()
 	{
-		$this->show();
+		// get list of new suggestions
+		$list = Connection::query("SELECT * FROM _sugerencias_list WHERE status='NEW' ORDER BY inserted DESC LIMIT 200");
+
+		// show buttons
+		$this->view->buttons = [
+			["caption"=>"New", "href"=>"/suggestion"],
+			["caption"=>"Approved", "href"=>"/suggestion/approved"],
+			["caption"=>"Discarded", "href"=>"/suggestion/discarded"]
+		];
+
+		// send data to the view
+		$this->view->title = "New suggestions";
+		$this->view->list = $list;
 	}
 
 	/**
@@ -30,7 +42,19 @@ class SuggestionController extends Controller
 	 */
 	public function approvedAction()
 	{
-		$this->show('APPROVED', "Approved suggestions");
+		// get list of new suggestions
+		$list = Connection::query("SELECT * FROM _sugerencias_list WHERE status='APPROVED' ORDER BY inserted DESC LIMIT 200");
+
+		// show buttons
+		$this->view->buttons = [
+			["caption"=>"New", "href"=>"/suggestion"],
+			["caption"=>"Approved", "href"=>"/suggestion/approved"],
+			["caption"=>"Discarded", "href"=>"/suggestion/discarded"]
+		];
+
+		// send data to the view
+		$this->view->title = "Approved suggestions";
+		$this->view->list = $list;
 	}
 
 	/**
@@ -38,52 +62,38 @@ class SuggestionController extends Controller
 	 */
 	public function discardedAction()
 	{
-		$this->show('DISCARDED', "Discarded suggestions");
-	}
+		// get list of new suggestions
+		$list = Connection::query("SELECT * FROM _sugerencias_list WHERE status='DISCARDED' ORDER BY inserted DESC LIMIT 200");
 
-	/**
-	 * Generic method for show suggestions
-	 *
-	 * @param string $status
-	 * @param string $title
-	 */
-	public function show($status = 'NEW', $title = "New suggestions")
-	{
-		$this->view->title   = '<i class="fa fa-comments"></i>&nbsp; ' . $title;
-		$list                = Connection::query("SELECT * FROM _sugerencias_list WHERE status = '$status' ORDER BY inserted;");
-		$this->view->list    = $list;
-		$this->view->message = false;
-	}
+		// show buttons
+		$this->view->buttons = [
+			["caption"=>"New", "href"=>"/suggestion"],
+			["caption"=>"Approved", "href"=>"/suggestion/approved"],
+			["caption"=>"Discarded", "href"=>"/suggestion/discarded"]
+		];
 
-	/**
-	 * Discard suggestion by id
-	 *
-	 * @param $id
-	 */
-	public function discardAction($id)
-	{
-		$r = Connection::query("SELECT * FROM _sugerencias_list WHERE id = $id;");
-		if(isset($r[0]))
-		{
-			$email          = new Email();
-			$email->to      = $r[0]->user;
-			$email->subject = "Tu sugerencia ha sido rechazada";
-			$email->sendFromTemplate("empty.tpl", ["text" => "Tu sugerencia <b>{$r[0]->text}</b> has sido rechazada por los moderadores."]);
-
-			Connection::query("UPDATE _sugerencias_list SET status = 'DISCARDED', updated = now() WHERE id = $id;");
-		}
-
-		$this->response->redirect("/suggestion");
+		// send data to the view
+		$this->view->title = "Discarded suggestions";
+		$this->view->list = $list;
 	}
 
 	/**
 	 * Approve suggestion by id
-	 *
 	 * @param $id
 	 */
 	public function approveAction($id)
 	{
-		Connection::query("UPDATE _sugerencias_list SET status = 'APPROVED', updated = now() WHERE id = $id;");
-		$this->response->redirect("/suggestion");
+		Connection::query("UPDATE _sugerencias_list SET status='APPROVED', updated=CURRENT_TIMESTAMP WHERE id=$id;");
+		$this->response->redirect("suggestion/index");
+	}
+
+	/**
+	 * Discard suggestion by id
+	 * @param $id
+	 */
+	public function discardAction($id)
+	{
+		Connection::query("UPDATE _sugerencias_list SET status='DISCARDED', updated=CURRENT_TIMESTAMP WHERE id=$id;");
+		$this->response->redirect("suggestion/index");
 	}
 }
