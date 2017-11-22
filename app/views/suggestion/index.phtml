@@ -1,44 +1,27 @@
 <div class="row">
-    <div class="col-xs-12">
-		<?php if($message) { ?>
-            <div class="alert alert-success" role="alert"><?= $message ?></div>
+	<div class="col-xs-12">
+		<?php if(count($list) < 1) { ?>
+			<p>No suggestions</p>
+		<?php } else { ?>
+			<table class="table table-striped table-bordered table-hover">
+				<tr>
+					<th>Date</th>
+					<th>Text</th>
+					<th>User</th>
+					<th>Actions</th>
+				</tr>
+				<?php foreach($list as $item) { ?>
+					<tr>
+						<td class="nobr"><?= date("m/d/Y H:i:s", strtotime($item->inserted)) ?></td>
+						<td><?= $item->text ?></td>
+						<td><?= $item->user ?></td>
+						<td class="nobr">
+							<a href="/suggestion/approve/<?= $item->id ?>" class="btn btn-xs btn-default" onclick="return confirm('Are you sure to approve?');"><span class="glyphicon glyphicon-ok"></span></a>
+							<a href="/suggestion/discard/<?= $item->id ?>" class="btn btn-xs btn-default" onclick="return confirm('Are you sure to discard?');"><span class="glyphicon glyphicon-remove"></span></a>
+						</td>
+					</tr>
+				<?php } ?>
+			</table>
 		<?php } ?>
-
-		<?php if(count($list) < 1): ?>
-            <p>No new suggestions</p>
-		<?php else: ?>
-            <table id="servicesTable" class="table table-striped table-bordered table-hover">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Text</th>
-                    <th>User</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-
-				<?php foreach($list as $item): ?>
-                    <tr>
-                        <td><?php echo $item->inserted; ?></td>
-                        <td><?php echo $item->text; ?></td>
-                        <td><?php echo $item->user; ?></td>
-                        <td><?php echo $item->status; ?></td>
-                        <td>
-							<?php if($item->status == 'NEW'): ?>
-                                <a href="/suggestion/approve/<?php echo $item->id; ?>" class="btn btn-success"
-                                   onclick="return confirm('Are you sure?');">Approve</a>
-                                <a href="/suggestion/discard/<?php echo $item->id; ?>" class="btn btn-danger"
-                                   onclick="return confirm('Are you sure?');">Discard</a>
-							<?php endif; ?>
-                        </td>
-                    </tr>
-				<?php endforeach; ?>
-                </tbody>
-            </table>
-		<?php endif; ?>
-
-
-    </div>
+	</div>
 </div>

@@ -131,7 +131,7 @@ class NautaClient
 		$data['subject'] = $subject;
 		$data['priority'] = "normal";
 		$data['message'] = $body;
-		if($attachment) $data['upload_1'] = "@$attachment";
+		if($attachment) $data['upload_1'] = new CURLFile($attachment);
 		$data['a'] = 'Send';
 
 		// set headers
@@ -139,6 +139,7 @@ class NautaClient
 
 		// send email
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u=$action");
+		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
 		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, $data);
 		$response = curl_exec($this->client);
