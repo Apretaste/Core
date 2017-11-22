@@ -206,8 +206,8 @@ class NautaClient
 		$key = $di->get('config')['anticaptcha']['key'];
 
 		// include captcha libs
-		require_once("$wwwroot/lib/anticaptcha/anticaptcha.php");
-		require_once("$wwwroot/lib/anticaptcha/imagetotext.php");
+		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
+		require_once("$wwwroot/lib/anticaptcha-php/imagetotext.php");
 
 		// set the file
 		$api = new ImageToText();
