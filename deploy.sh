@@ -4,6 +4,8 @@ mkdir temp/cache
 mkdir temp/thumbnails
 mkdir temp/mails
 mkdir temp/attachments
+mkdir temp/nautaclient
+mkdir temp/capcha
 mkdir services
 mkdir logs
 mkdir public/ads

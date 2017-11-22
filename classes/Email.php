@@ -50,9 +50,7 @@ class Email
 		// create an alert if the email failed
 		if($res->code != "200" && $res->code != "515") {
 			$utils = new Utils();
-			$alert = "Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}";
-			$utils = new Utils();
-			$utils->createAlert($alert, "ERROR");
+			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
 		}
 
 		// return {code, message} structure
@@ -281,17 +279,10 @@ class Email
 		if ($client->login())
 		{
 			// prepare the attachment
-			$attach = false;
-			if($this->attachments){
-				$attach = array(
-					"contentType" => mime_content_type($this->attachments[0]),
-					"content" => file_get_contents($this->attachments[0]),
-					"fileName" => basename($this->attachments[0])
-				);
-			}
+			$attach = empty($this->attachments) ? false : $this->attachments[0];
 
 			// send email and logout
-			$client->sendEmail($this->to, $this->subject, $this->body, $attach);
+			$client->send($this->to, $this->subject, $this->body, $attach);
 			$client->logout();
 
 			// create response
