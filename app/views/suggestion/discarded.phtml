@@ -1,31 +1,22 @@
 <div class="row">
 	<div class="col-xs-12">
-		<?php if($message) { ?>
-			<div class="alert alert-success" role="alert"><?= $message ?></div>
-		<?php } ?>
-
-		<?php if (count($list) < 1): ?>
-			<p>No discarded suggestions</p>
-		<?php else: ?>
-			<table id="servicesTable" class="table table-striped table-bordered table-hover">
-				<thead>
+		<?php if (count($list) < 1) { ?>
+			<p>No suggestions</p>
+		<?php } else { ?>
+			<table class="table table-striped table-bordered table-hover">
 				<tr>
 					<th>Date</th>
 					<th>Text</th>
 					<th>User</th>
 				</tr>
-				</thead>
-				<tbody>
-
-				<?php foreach($list as $item): ?>
+				<?php foreach($list as $item) { ?>
 					<tr>
-						<td><?php echo $item->inserted; ?></td>
-						<td><?php echo $item->text; ?></td>
-						<td><?php echo $item->user; ?></td>
+						<td class="nobr"><?= date("m/d/Y H:i:s", strtotime($item->inserted)) ?></td>
+						<td><?= $item->text ?></td>
+						<td><?= $item->user ?></td>
 					</tr>
-				<?php endforeach; ?>
-				</tbody>
+				<?php } ?>
 			</table>
-		<?php endif; ?>
+		<?php } ?>
 	</div>
 </div>

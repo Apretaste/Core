@@ -124,26 +124,25 @@
 						<?php } ?>
 
 						<!-- CONTESTS -->
-						<?php if($security->checkAccess("contests")): ?>
+						<?php if($security->checkAccess("contests")) { ?>
 							<li>
 								<a href="/contests"><i class="fa fa-trophy"></i> <span class="nav-label">Contests</span></a>
 							</li>
-						<?php endif; ?>
+						<?php } ?>
 
-                        <!-- SUGGESTIONS -->
-						<?php if($security->checkAccess("suggestions")): ?>
-                            <li>
-                                <a href="/suggestion"><i class="fa fa-comments"></i> <span class="nav-label">Suggestions</span></a>
-                                <ul class="nav nav-second-level">
-                                    <li><a href="/suggestion">New</a></li>
-                                    <li><a href="/suggestion/approved">Approved</a></li>
-                                    <li><a href="/suggestion/discarded">Discarded</a></li>
-                                </ul>
-                            </li>
-						<?php endif; ?>
+						<!-- SUGGESTIONS -->
+						<?php if($security->checkAccess("suggestions")) { ?>
+							<li>
+								<a href="/suggestion"><i class="fa fa-comments"></i> <span class="nav-label">Suggestions</span></a>
+								<ul class="nav nav-second-level">
+									<li><a href="/suggestion">New</a></li>
+									<li><a href="/suggestion/approved">Approved</a></li>
+									<li><a href="/suggestion/discarded">Discarded</a></li>
+								</ul>
+							</li>
+						<?php } ?>
 
-
-                        <!-- SUPPORT -->
+						<!-- SUPPORT -->
 						<?php if($security->checkAccess("support")) { ?>
 						<li>
 							<a href="#"><i class="fa fa-support"></i> <span class="nav-label">Support</span> <span class="fa arrow"></span></a>
