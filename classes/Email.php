@@ -279,17 +279,10 @@ class Email
 		if ($client->login())
 		{
 			// prepare the attachment
-			$attach = false;
-			if($this->attachments){
-				$attach = array(
-					"contentType" => mime_content_type($this->attachments[0]),
-					"content" => file_get_contents($this->attachments[0]),
-					"fileName" => basename($this->attachments[0])
-				);
-			}
+			$attach = empty($this->attachments) ? false : $this->attachments[0];
 
 			// send email and logout
-			$client->sendEmail($this->to, $this->subject, $this->body, $attach);
+			$client->send($this->to, $this->subject, $this->body, $attach);
 			$client->logout();
 
 			// create response
