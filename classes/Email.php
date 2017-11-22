@@ -25,14 +25,14 @@ class Email
 		// check if the email is from Nauta or Cuba
 		$isCuba = substr($this->to, -3) === ".cu";
 		$isNauta = substr($this->to, -9) === "@nauta.cu";
-		$isNautaWithPass = $isNauta ? $this->getNautaPassword($this->to) : false;
 
 		// respond via Amazon to people outside Cuba
 		if( ! $isCuba) $res = $this->sendEmailViaAmazon();
 		// if is Nauta and we have the user's password
-		elseif($isNautaWithPass) $res = $this->sendEmailViaWebmail();
-		// for the Nauta accounts where we don't have the password
-		elseif($isNauta) $res = $this->sendEmailViaGmail();
+		elseif($isNauta) {
+			$res = $this->sendEmailViaWebmail();
+			if($res->code != "200") $res = $this->sendEmailViaGmail();
+		}
 		// for all other Cuban emails
 		else $res = $this->sendEmailViaAlias();
 
@@ -164,10 +164,6 @@ class Email
 	{
 		$this->method = "gmail";
 
-		// get the running environment
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$environment = $di->get('environment');
-
 		// every new day set the daily counter back to zero
 		$connection = new Connection();
 		$connection->query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
@@ -177,7 +173,6 @@ class Email
 			SELECT * FROM delivery_gmail
 			WHERE active = 1
 			AND `limit` > daily
-			AND environment LIKE '%$environment%'
 			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)
 			ORDER BY RAND() LIMIT 1");
 
@@ -262,14 +257,21 @@ class Email
 	{
 		$this->method = "hillary";
 
-		// return error if the password do not exist in our database
-		$pass = $this->getNautaPassword($this->to);
-		if( ! $pass) {
+		// check if we have the nauta password for the user
+		$connection = new Connection();
+		$pass = $connection->query("SELECT pass FROM authentication WHERE email='{$this->to}' AND appname='apretaste'");
+
+		// error if we don't have the password
+		if(empty($pass)) {
 			$output = new stdClass();
 			$output->code = "300";
 			$output->message = "No password for {$this->to}";
 			return $output;
 		}
+
+		// decript the password
+		$utils = new Utils();
+		$pass = $utils->decrypt($pass[0]->pass);
 
 		// connect to the client
 		$user = explode("@", $this->to)[0];
@@ -368,27 +370,6 @@ class Email
 			}
 			$this->images = $images;
 		}
-	}
-
-	/**
-	 * Get a person's Nauta password or false
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return String | false
-	 */
-	private function getNautaPassword($email)
-	{
-		// check if we have the nauta pass for the user
-		$connection = new Connection();
-		$pass = $connection->query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
-
-		// return false if the password do not exist
-		if(empty($pass)) return false;
-
-		// else decript and return the password
-		$utils = new Utils();
-		return $utils->decrypt($pass[0]->pass);
 	}
 
 	/**
