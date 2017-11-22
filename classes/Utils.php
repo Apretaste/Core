@@ -1330,4 +1330,22 @@ class Utils
 			"attachments" => $attachments,
 			"json" => json_encode($res));
 	}
+
+	/**
+	 * Returns a subString delimited by two other strings
+	 *
+	 * @author salvipascual
+	 * @param String $text
+	 * @param String $start
+	 * @param String $end
+	 * @return String | Boolean
+	 */
+	function substring($txt, $start, $end) {
+		$r = explode($start, $txt);
+		if (isset($r[1])) {
+			$r = explode($end, $r[1]);
+			return $r[0];
+		}
+		return false;
+	}
 }

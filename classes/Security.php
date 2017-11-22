@@ -14,7 +14,7 @@ class Security
 	{
 		// check if the user/pin is ok
 		$connection = new Connection();
-		$person = $connection->query("SELECT first_name, picture FROM person WHERE email='$email' and pin='$pin'");
+		$person = $connection->query("SELECT first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
 		if(empty($person)) return false; else $person = $person[0];
 
 		// get the path to root folder
