@@ -41,7 +41,7 @@ class RunController extends Controller
 
 		// render the response
 		$render = new Render();
-		$html = $render->renderHTML($ret->service, $ret->responses[0]);
+		$html = $render->renderHTML($ret->service, $ret->response);
 		die($html);
 	}
 
@@ -116,7 +116,7 @@ class RunController extends Controller
 		// run the request and get the service and first response
 		$ret = $utils->runRequest($email, $subject, $body, $attach);
 		$service = $ret->service;
-		$response = $ret->responses[0];
+		$response = $ret->response;
 
 		// respond by email, if there is an email to send
 		$render = new Render();
@@ -135,6 +135,105 @@ class RunController extends Controller
 		// respond to the API
 		if($response->render) die($render->renderJSON($response));
 		else die('{"code":"ok"}');
+	}
+
+	/**
+	 * Receives an email petition and responds via email
+	 *
+	 * @author salvipascual
+	 * @param POST data from webhook
+	 */
+	public function appAction()
+	{
+		$this->fromEmail = $this->request->get("email");
+		$text = $this->request->get("command");
+		$appversion = $this->request->get("appversion");
+		$osversion = $this->request->get("osversion");
+		$timestamp = $this->request->get("timestamp");
+		$token = $this->request->get("token"); // base64 nauta pass
+		$this->attachments = []; // @TODO find the way to upload files
+
+		// ensure the person has access
+		// @TODO
+
+		// update the version of the app used
+		$connection = new Connection();
+		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
+
+		// run the request
+		$utils = new Utils();
+		$ret = $utils->runRequest($this->fromEmail, $text, '', $this->attachments);
+		$service = $ret->service;
+		$response = $ret->response;
+
+		// if the request needs an email back
+		if($response->render)
+		{
+			// set the layout to blank
+			$response->setEmailLayout('email_text.tpl');
+			$temp = $utils->getTempDir();
+
+			// is there is a cache time, add it
+			if($response->cache) {
+				$cache = "{$temp}{$response->cache}.cache";
+				file_put_contents($cache, "");
+				$response->attachments[] = $cache;
+			}
+
+			// render the HTML, unless it is a status call
+			if($text == "status") $this->body = "{}";
+			else {
+				$render = new Render();
+				$this->body = $render->renderHTML($service, $response);
+			}
+
+			// get extra data for the app
+			// if the old version is calling status, do not get extra data
+			// @TODO remove when we get rid of the old version
+			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
+			if($isPerfilStatus) $extra = "{}";
+			else {
+				$res = $utils->getExternalAppData($this->fromEmail, $timestamp);
+				$response->attachments = array_merge($response->attachments, $res["attachments"]);
+				$extra = $res["json"];
+			}
+
+			// create an attachment file for the extra structure
+			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";
+			file_put_contents($ntfFile, $extra);
+			$response->attachments[] = $ntfFile;
+
+			// get a random name for the file and folder
+			$fileName = substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+			$zipFile = $utils->getPublicTempDir() . $fileName;
+			$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
+
+			// create the zip file
+			$zip = new ZipArchive;
+			$zip->open($zipFile, ZipArchive::CREATE);
+			$zip->addFromString($htmlFile, $this->body);
+
+			// add all attachments to the zip and close it
+			foreach ($response->attachments as $a) $zip->addFile($a, basename($a));
+			$zip->close();
+		}
+
+		// update values in the delivery table
+		$safeQuery = $connection->escape($service->request->query);
+		$connection->query("
+			INSERT INTO delivery SET
+			user='{$this->fromEmail}',
+			request_service='{$service->serviceName}',
+			request_subservice='{$service->request->subservice}',
+			request_query='$safeQuery',
+			environment='app',
+			delivery_code='200',
+			delivery_method='internet',
+			delivery_date=CURRENT_TIMESTAMP");
+
+		// display ok response
+		$path = $response->render ? $utils->getPublicTempDir('http').$fileName : "";
+		die('{"code":"200", "render":"'.$response->render.'", "file":"'.$path.'"}');
 	}
 
 	/**
@@ -231,7 +330,7 @@ class RunController extends Controller
 		// get path to the folder to save
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
-		$textFile = ""; $attachs = array();
+		$textFile = ""; $attachs = [];
 		$folderName = str_replace(".zip", "", basename($attachEmail));
 
 		// get the text file and attached files
@@ -282,7 +381,7 @@ class RunController extends Controller
 		// run the request
 		$ret = $utils->runRequest($this->fromEmail, $text, '', $attachs);
 		$service = $ret->service;
-		$response = $ret->responses[0];
+		$response = $ret->response;
 
 		// if the request needs an email back
 		if($response->render)
@@ -358,7 +457,7 @@ class RunController extends Controller
 		$utils = new Utils();
 		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
 		$service = $ret->service;
-		$response = $ret->responses[0];
+		$response = $ret->response;
 
 		// if the request needs an email back
 		if($response->render)
