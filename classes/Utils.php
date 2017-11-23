@@ -453,6 +453,23 @@ class Utils
 	}
 
 	/**
+	 * Return path to the public temp folder
+	 *
+	 * @author salvipascual
+	 * @param Enum $path root|http
+	 * @return string
+	 */
+	public function getPublicTempDir($path='root')
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')[$path];
+
+		if($path == 'root') return "$wwwroot/public/temp/";
+		elseif($path == 'http') return "$wwwroot/temp/";
+		else return false;
+	}
+
+	/**
 	 * Check token and retrieve the user that is logged
 	 *
 	 * @author salvipascual
@@ -1182,13 +1199,14 @@ class Utils
 		if(empty($subServiceName) || ! method_exists($service, $subserviceFunction) ) $response = $service->_main($request);
 		else $response = $service->$subserviceFunction($request);
 
-		// make the responses to be always an array
-		$responses = is_array($response) ? $response : array($response);
+		// get only the first response
+		// @TODO remove when services send only one response
+		if(is_array($response)) $response = $response[0];
 
 		// create and return the response
 		$return = new stdClass();
 		$return->service = $service;
-		$return->responses = $responses;
+		$return->response = $response;
 		return $return;
 	}
 

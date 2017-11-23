@@ -20,4 +20,4 @@
 {space5}
 
 <h2>&iquest;Necesita ayuda?</h2>
-<p>Si tiene cualquier pregunta o sugerencia, escr&iacute;banos a <a href="mailto:{APRETASTE_SUPPORT_EMAIL}">{APRETASTE_SUPPORT_EMAIL}</a>.</p>
+<p>Si tiene cualquier pregunta o sugerencia, escr&iacute;banos a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a>.</p>
