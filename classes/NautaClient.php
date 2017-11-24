@@ -177,7 +177,9 @@ class NautaClient
 			"Cache-Control" => "max-age=0",
 			"Origin" => "{$this->baseUrl}",
 			"User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
-			"Content-Type" => "application/x-www-form-urlencoded"
+			"Content-Type" => "application/x-www-form-urlencoded",
+			"Connection" => "Keep-Alive",
+			"Keep-Alive" => 300
 		];
 
 		// add custom headers
