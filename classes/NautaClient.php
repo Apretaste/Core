@@ -94,8 +94,8 @@ class NautaClient
 		if ($response === false) return false;
 
 		// get tokens
-		$this->logoutToken = $utils->substring($response, 'horde_logout_token=', '&');
-		$this->composeToken = $utils->substring($response, 'u=', '">New');
+		$this->logoutToken = php::substring($response, 'horde_logout_token=', '&');
+		$this->composeToken = php::substring($response, 'u=', '">New');
 		return true;
 	}
 
@@ -116,10 +116,10 @@ class NautaClient
 
 		// get the value of hidden fields from the HTML
 		$utils = new Utils();
-		$action = $utils->substring($html, 'u=', '"');
-		$composeCache = $utils->substring($html, 'composeCache" value="', '"');
-		$composeHmac = $utils->substring($html, 'composeHmac" value="', '"');
-		$user = $utils->substring($html, 'user" value="', '"');
+		$action = php::substring($html, 'u=', '"');
+		$composeCache = php::substring($html, 'composeCache" value="', '"');
+		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
+		$user = php::substring($html, 'user" value="', '"');
 
 		// create the body of the image
 		$data['composeCache'] = $composeCache;

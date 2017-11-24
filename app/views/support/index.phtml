@@ -17,7 +17,7 @@
 					<td class="text-center"><a href="/support/view?email=<?=$ticketEmail?>"><?=$ticketEmail?></a></td>
 					<td class="text-center"><?=$ticket->subject?></td>
 					<td class="text-center"><span class="badge <?=$badgeColor?>"><?=$ticket->status?></span></td>
-					<td class="text-center"><nobr><?=date("m/d h:i A", strtotime($ticket->creation_date))?></nobr></td>
+					<td class="text-center nobr"><?=date("m/d h:i A", strtotime($ticket->creation_date))?></td>
 				</tr>
 			<?php } ?>
 			</tbody>
