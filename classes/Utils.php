@@ -811,6 +811,26 @@ class Utils
 	}
 
 	/**
+	 * Get a person's Nauta password
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String | false
+	 */
+	public function getNautaPassword($email)
+	{
+		// check if we have the nauta pass for the user
+		$connection = new Connection();
+		$pass = $connection->query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
+
+		// return false if the password do not exist
+		if(empty($pass)) return false;
+
+		// else decript and return the password
+		return $this->decrypt($pass[0]->pass);
+	}
+
+	/**
 	 * Regenerate a sentense with random Spanish words
 	 *
 	 * @author salvipascual
@@ -936,8 +956,8 @@ class Utils
 	 * Put images as encoded as base64 to html
 	 *
 	 * @param string $html
-     * @param array $imageList
-     * @param string $prefix
+	 * @param array $imageList
+	 * @param string $prefix
 	 * @return array
 	 */
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
@@ -1347,23 +1367,5 @@ class Utils
 		return array(
 			"attachments" => $attachments,
 			"json" => json_encode($res));
-	}
-
-	/**
-	 * Returns a subString delimited by two other strings
-	 *
-	 * @author salvipascual
-	 * @param String $text
-	 * @param String $start
-	 * @param String $end
-	 * @return String | Boolean
-	 */
-	function substring($txt, $start, $end) {
-		$r = explode($start, $txt);
-		if (isset($r[1])) {
-			$r = explode($end, $r[1]);
-			return $r[0];
-		}
-		return false;
 	}
 }

@@ -17,7 +17,7 @@
 			<?php foreach ($chats as $chat) { ?>
 				<?php $badgeColor = $chat->status=="NEW" ? "badge-info" : ($chat->status=="PENDING" ? "badge-warning" : ($chat->status=="CLOSED" ? "badge-danger" : "")); ?>
 				<tr id="<?=$chat->id?>" class="<?php if($chat->requester!="") echo "warning";?>" style="cursor:pointer;" onclick="toggleRequestBody(<?=$chat->id?>);">
-					<td width="10" style="color:gray;"><small><nobr><?=date("m/d/Y h:i A", strtotime($chat->creation_date))?></nobr></small></td>
+					<td width="10" style="color:gray;" class="nobr"><small><?=date("m/d/Y h:i A", strtotime($chat->creation_date))?></small></td>
 					<td><?=$chat->subject?></td>
 					<td class="text-right">
 						<?php if($chat->requester!=""){ ?><small><?=$chat->from?></small><?php } ?>

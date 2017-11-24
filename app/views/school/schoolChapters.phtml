@@ -19,8 +19,7 @@
 						<td><?= $chapter->xtype ?></td>
 						<td class="text-center"><?= $chapter->xorder ?></td>
 						<td><?= $chapter->title ?></td>
-						<td class="text-right">
-							<nobr>
+						<td class="text-right nobr">
 							<?php if ($chapter->xtype == 'PRUEBA') { ?>
 								<a class="btn btn-xs btn-default" href="/school/schoolQuestions?chapter=<?= $chapter->id ?>">Questions <span class="label label-info"><?= $chapter->questions ?></span></a>
 							<?php } ?>
@@ -28,7 +27,6 @@
 							<a class="btn btn-xs btn-default" href="/school/schoolChapters?option=up&course=<?= $chapter->course ?>&id=<?= $chapter->id ?>"><span class="glyphicon glyphicon-arrow-up"></span></a>
 							<a class="btn btn-xs btn-default" href="/school/schoolChapters?option=down&course=<?= $chapter->course ?>&id=<?= $chapter->id ?>"><span class="glyphicon glyphicon-arrow-down"></span></a>
 							<a class="btn btn-xs btn-default" onclick ="return confirm('Are you sure?');" href="/school/schoolChapters?option=del&course=<?= $chapter->course ?>&id=<?= $chapter->id ?>"><span class="glyphicon glyphicon-trash"></span></a>
-							</nobr>
 						</td>
 					</tr>
 				<?php } ?>
