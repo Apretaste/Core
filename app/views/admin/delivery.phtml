@@ -27,7 +27,7 @@
 			<tbody>
 			<?php foreach ($delivery as $d) { ?>
 				<tr>
-					<td><?=date("m/d h:i A", strtotime($d->request_date))?></td>
+					<td class="nobr"><?=date("m/d h:i A", strtotime($d->request_date))?></td>
 					<td><?=$d->request_service?> <?=$d->request_subservice?> <?=$d->request_query?></td>
 					<td><?=$d->environment?></td>
 					<td><?=$d->delivery_code?></td>
