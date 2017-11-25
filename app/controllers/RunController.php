@@ -141,7 +141,7 @@ class RunController extends Controller
 	 * Receives an email petition and responds via email
 	 *
 	 * @author salvipascual
-	 * @param POST data from webhook
+	 * @param GET data from app
 	 */
 	public function appAction()
 	{
@@ -154,11 +154,31 @@ class RunController extends Controller
 		$this->attachments = []; // @TODO find the way to upload files
 
 		// ensure the person has access
-		// @TODO
+		$utils = new Utils();
+		$pass = $utils->getNautaPassword($this->fromEmail);
+		if($pass != base64_decode($token)) die('{"code":"300", "message":"El token es incorrecto o el usuario no existe"}');
 
-		// update the version of the app used
+		// error if we don't have the password
+		if(empty($pass)) {
+			$output = new stdClass();
+			$output->code = "300";
+			$output->message = "No password for {$this->to}";
+			return $output;
+		}
+
+		// set the running environment
+		$this->di->set('environment', function() {return 'app';});
+
+		// update last access time and make person active
 		$connection = new Connection();
-		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
+		$personExist = $utils->personExist($this->fromEmail);
+		if ($personExist) $connection->query("UPDATE person SET active=1, appversion='$appversion', last_access=CURRENT_TIMESTAMP WHERE email='{$this->fromEmail}'");
+		else {
+			// create a unique username, save the new person and add a notification
+			$username = $utils->usernameFromEmail($this->fromEmail);
+			$connection->query("INSERT INTO person (email, username, last_access, appversion, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$appversion', 'app')");
+			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
+		}
 
 		// run the request
 		$utils = new Utils();
@@ -233,7 +253,7 @@ class RunController extends Controller
 
 		// display ok response
 		$path = $response->render ? $utils->getPublicTempDir('http').$fileName : "";
-		die('{"code":"200", "render":"'.$response->render.'", "file":"'.$path.'"}');
+		die('{"code":"200", "message":"", "render":"'.$response->render.'", "file":"'.$path.'"}');
 	}
 
 	/**

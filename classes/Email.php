@@ -257,21 +257,15 @@ class Email
 	{
 		$this->method = "hillary";
 
-		// check if we have the nauta password for the user
-		$connection = new Connection();
-		$pass = $connection->query("SELECT pass FROM authentication WHERE email='{$this->to}' AND appname='apretaste'");
-
-		// error if we don't have the password
-		if(empty($pass)) {
+		// get the user's Nauta password
+		$utils = new Utils();
+		$pass = $utils->getNautaPassword($this->to);
+		if( ! $pass) {
 			$output = new stdClass();
 			$output->code = "300";
 			$output->message = "No password for {$this->to}";
 			return $output;
 		}
-
-		// decript the password
-		$utils = new Utils();
-		$pass = $utils->decrypt($pass[0]->pass);
 
 		// connect to the client
 		$user = explode("@", $this->to)[0];
