@@ -285,7 +285,6 @@ class Email
 
 			// send email and logout
 			$client->send($this->to, $this->subject, $this->body, $attach);
-			$client->logout();
 
 			// create response
 			$output = new stdClass();
