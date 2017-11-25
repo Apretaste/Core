@@ -3,7 +3,7 @@
 		"smarty/smarty": "~3.1",
 		"fabpot/goutte": "3.2.1",
 		"gregwar/captcha": "1.*",
-		"mpdf/mpdf": "7.*",
+		"abeautifulsite/simpleimage": "2.6.0",
 		"nette/mail": "2.2.0",
 		"daniel-zahariev/php-aws-ses": "^0.8.9",
 		"aws/aws-php-sns-message-validator": "^1.4",
