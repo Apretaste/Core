@@ -5,9 +5,9 @@
  *
  * Client for horde webmail
  *
- * @author kumahacker
- * @author salvipascual
- * @version 1.0
+ * @author  kumahacker
+ * @author  salvipascual
+ * @version 2.0
  */
 
 class NautaClient
@@ -16,6 +16,7 @@ class NautaClient
 	private $pass = null;
 	private $client = null;
 	private $cookieFile = "";
+	private $sessionFile = "";
 	private $logoutToken = "";
 	private $composeToken = "";
 	private $baseUrl = 'https://webmail.nauta.cu/';
@@ -26,15 +27,19 @@ class NautaClient
 	 * @param string $user
 	 * @param string $pass
 	 */
-	public function __construct($user=null, $pass=null)
+	public function __construct($user = null, $pass = null)
 	{
+
 		// save global user/pass
 		$this->user = $user;
 		$this->pass = $pass;
 
 		// save cookie file
-		$utils = new Utils();
-		$this->cookieFile = $utils->getTempDir() . "nautaclient/{$this->user}.cookie";
+		$utils             = new Utils();
+		$this->sessionFile = $utils->getTempDir() . "nautaclient/{$this->user}.session";
+		$this->cookieFile  = $utils->getTempDir() . "nautaclient/{$this->user}.cookie";
+
+		$this->loadSession();
 
 		// init curl
 		$this->client = curl_init();
@@ -53,9 +58,9 @@ class NautaClient
 	 * Set proxy
 	 *
 	 * @param string $host
-	 * @param int $type
+	 * @param int    $type
 	 */
-	public function setProxy($host="localhost:8082", $type=CURLPROXY_SOCKS5)
+	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
 	{
 		curl_setopt($this->client, CURLOPT_PROXY, $host);
 		curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
@@ -64,39 +69,114 @@ class NautaClient
 	/**
 	 * Login webmail
 	 *
-	 * @param string $user
-	 * @param string $pass
+	 * @param bool $cliOfflineTest
+	 *
 	 * @return bool
 	 */
-	public function login()
+	public function login($cliOfflineTest = false)
 	{
+		if ($this->checkLogin())
+			return true;
+
 		// save the captcha image in the temp folder
-		$utils = new Utils();
+		$utils        = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}/securimage/securimage_show.php");
 		file_put_contents($captchaImage, curl_exec($this->client));
 
-		// break the captcha
-		$captcha = $this->breakCaptcha($captchaImage);
-		if($captcha->code == "200") {
-			$captchaText = $captcha->message;
-			rename($captchaImage, $utils->getTempDir()."capcha/$captchaText.jpg");
-		} else {
-			$text = "Captcha error " . $captcha->code . " with message " . $captcha->message;
-			$utils->createAlert($text, "ERROR");
-			return false;
+		if($cliOfflineTest)
+		{
+			echo "[INFO] Captcha image store in: $captchaImage \n";
+			echo "Please enter captcha test:";
+			$cli         = fopen("php://stdin", "r");
+			$captchaText = fgets($cli);
+		}
+		else
+		{
+			// break the captcha
+			$captcha = $this->breakCaptcha($captchaImage);
+			if($captcha->code == "200")
+			{
+				$captchaText = $captcha->message;
+				rename($captchaImage, $utils->getTempDir() . "capcha/$captchaText.jpg");
+			}
+			else
+			{
+				$text = "Captcha error " . $captcha->code . " with message " . $captcha->message;
+				$utils->createAlert($text, "ERROR");
+
+				return false;
+			}
 		}
 
 		// send details to login
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=".urlencode($this->user)."&horde_pass=".urlencode($this->pass)."&captcha_code=".urlencode($captchaText)."&horde_select_view=mobile&new_lang=en_US");
+		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=" . urlencode($this->user) . "&horde_pass=" . urlencode($this->pass) . "&captcha_code=" . urlencode($captchaText) . "&horde_select_view=mobile&new_lang=en_US");
 		$response = curl_exec($this->client);
-		if ($response === false) return false;
+
+		if($response === false) return false;
+
+		if (stripos($response, 'digo de verificaci') !== false &&
+		    stripos($response, 'n incorrecto') !== false)
+			return false;
 
 		// get tokens
-		$this->logoutToken = $utils->substring($response, 'horde_logout_token=', '&');
+		$this->logoutToken  = $utils->substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = $utils->substring($response, 'u=', '">New');
+
+		$this->saveSession();
+
 		return true;
+	}
+
+	/**
+	 * Check keep alive
+	 *
+	 * @return bool
+	 */
+	public function checkLogin()
+	{
+		$this->loadSession();
+
+		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u={$this->composeToken}");
+		$html = curl_exec($this->client);
+
+		if (stripos($html, 'Message Composition') === false)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Save session
+	 */
+	public function saveSession()
+	{
+		$sessionData = [
+			'logoutToken' => $this->logoutToken,
+			'composeToken' => $this->composeToken
+		];
+
+		file_put_contents($this->sessionFile, serialize($sessionData));
+	}
+
+	/**
+	 * Load session
+	 *
+	 * @return mixed
+	 */
+	public function loadSession()
+	{
+		if( ! file_exists($this->sessionFile)) $this->saveSession();
+
+		$sessionData = unserialize(file_get_contents($this->sessionFile));
+
+		$this->logoutToken  = $sessionData['logoutToken'];
+		$this->composeToken = $sessionData['composeToken'];
+
+		return $sessionData;
 	}
 
 	/**
@@ -105,32 +185,33 @@ class NautaClient
 	 * @param String $to
 	 * @param String $subject
 	 * @param String $body
-	 * @param String $attachment
-	 * @return Mixed
+	 * @param mixed  $attachment
+	 *
+	 * @return mixed
 	 */
-	public function send($to, $subject, $body, $attachment=false)
+	public function send($to, $subject, $body, $attachment = false)
 	{
 		// get the HTML of the compose window
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u={$this->composeToken}");
 		$html = curl_exec($this->client);
 
 		// get the value of hidden fields from the HTML
-		$utils = new Utils();
-		$action = $utils->substring($html, 'u=', '"');
+		$utils        = new Utils();
+		$action       = $utils->substring($html, 'u=', '"');
 		$composeCache = $utils->substring($html, 'composeCache" value="', '"');
-		$composeHmac = $utils->substring($html, 'composeHmac" value="', '"');
-		$user = $utils->substring($html, 'user" value="', '"');
+		$composeHmac  = $utils->substring($html, 'composeHmac" value="', '"');
+		$user         = $utils->substring($html, 'user" value="', '"');
 
 		// create the body of the image
 		$data['composeCache'] = $composeCache;
-		$data['composeHmac'] = $composeHmac;
-		$data['user'] = $user;
-		$data['to'] = $to;
-		$data['cc'] = "";
-		$data['bcc'] = "";
-		$data['subject'] = $subject;
-		$data['priority'] = "normal";
-		$data['message'] = $body;
+		$data['composeHmac']  = $composeHmac;
+		$data['user']         = $user;
+		$data['to']           = $to;
+		$data['cc']           = "";
+		$data['bcc']          = "";
+		$data['subject']      = $subject;
+		$data['priority']     = "normal";
+		$data['message']      = $body;
 		if($attachment) $data['upload_1'] = new CURLFile($attachment);
 		$data['a'] = 'Send';
 
@@ -145,9 +226,11 @@ class NautaClient
 		$response = curl_exec($this->client);
 
 		// alert if there are errors
-		if (curl_errno($this->client)) {
+		if(curl_errno($this->client))
+		{
 			$utils = new Utils();
-			return $utils->createAlert("[NautaClient] Error sending email: ".curl_error($this->client)." (to: $to, subject: $subject)", "ERROR");
+
+			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)", "ERROR");
 		}
 
 		return $response;
@@ -158,7 +241,7 @@ class NautaClient
 	 */
 	public function logout()
 	{
-		if ($this->client)
+		if($this->client)
 		{
 			curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php?horde_logout_token={$this->logoutToken}&logout_reason=4");
 			curl_exec($this->client);
@@ -171,7 +254,7 @@ class NautaClient
 	 *
 	 * @param array $headers
 	 */
-	private function setHttpHeaders($headers=[])
+	private function setHttpHeaders($headers = [])
 	{
 		// set default headers
 		$default_headers = [
@@ -180,7 +263,7 @@ class NautaClient
 			"User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
 			"Content-Type" => "application/x-www-form-urlencoded",
 			"Connection" => "Keep-Alive",
-			"Keep-Alive" => 300
+			"Keep-Alive" => 86400 //secs
 		];
 
 		// add custom headers
@@ -188,7 +271,7 @@ class NautaClient
 
 		// convert headers array into string
 		$headerStr = [];
-		foreach ($default_headers as $key => $val) $headerStr[] = "$key:$val";
+		foreach($default_headers as $key => $val) $headerStr[] = "$key:$val";
 
 		// add headers to cURL
 		curl_setopt($this->client, CURLOPT_HTTPHEADER, $headerStr);
@@ -198,15 +281,17 @@ class NautaClient
 	 * Breaks an image captcha using human labor. Takes ~15sec to return
 	 *
 	 * @author salvipascual
+	 *
 	 * @param String $image
+	 *
 	 * @return String
 	 */
 	private function breakCaptcha($image)
 	{
 		// get path to root and the key from the configs
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di      = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		$key = $di->get('config')['anticaptcha']['key'];
+		$key     = $di->get('config')['anticaptcha']['key'];
 
 		// include captcha libs
 		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
@@ -219,26 +304,31 @@ class NautaClient
 		$api->setFile($image);
 
 		// create the task
-		if ( ! $api->createTask()) {
-			$ret = new stdClass();
-			$ret->code = "500";
-			$ret->message = "API v2 send failed: ".$api->getErrorMessage();
+		if( ! $api->createTask())
+		{
+			$ret          = new stdClass();
+			$ret->code    = "500";
+			$ret->message = "API v2 send failed: " . $api->getErrorMessage();
+
 			return $ret;
 		}
 
 		// wait for results
 		$taskId = $api->getTaskId();
-		if ( ! $api->waitForResult()) {
-			$ret = new stdClass();
-			$ret->code = "510";
-			$ret->message = "Could not solve captcha: ".$api->getErrorMessage();
+		if( ! $api->waitForResult())
+		{
+			$ret          = new stdClass();
+			$ret->code    = "510";
+			$ret->message = "Could not solve captcha: " . $api->getErrorMessage();
+
 			return $ret;
 		}
 
 		// return the solution
-		$ret = new stdClass();
-		$ret->code = "200";
+		$ret          = new stdClass();
+		$ret->code    = "200";
 		$ret->message = $api->getTaskSolution();
+
 		return $ret;
 	}
 }
