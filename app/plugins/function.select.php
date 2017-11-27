@@ -27,10 +27,15 @@ function smarty_function_select($params, $template)
 	// create select for the email and app
 	else
 	{
+		// include the function to create a link
+		$wwwroot = $di->get('path')['root'];
+		require_once "$wwwroot/app/plugins/function.link.php";
+
 		// create select for the email and app
 		$i = 0; $len = count($options)-1;
 		$select = '<small>';
-		foreach($options as $option) {
+		foreach($options as $option)
+		{
 			// get the selected option
 			if(strtoupper($option->caption) == strtoupper($selected)) $select .= "<b>{$option->caption}</b>";
 

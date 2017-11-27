@@ -29,13 +29,12 @@ class NautaClient
 	 */
 	public function __construct($user = null, $pass = null)
 	{
-
 		// save global user/pass
 		$this->user = $user;
 		$this->pass = $pass;
 
 		// save cookie file
-		$utils             = new Utils();
+		$utils = new Utils();
 		$this->sessionFile = $utils->getTempDir() . "nautaclient/{$this->user}.session";
 		$this->cookieFile  = $utils->getTempDir() . "nautaclient/{$this->user}.cookie";
 
@@ -58,7 +57,7 @@ class NautaClient
 	 * Set proxy
 	 *
 	 * @param string $host
-	 * @param int    $type
+	 * @param int $type
 	 */
 	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
 	{
@@ -75,11 +74,10 @@ class NautaClient
 	 */
 	public function login($cliOfflineTest = false)
 	{
-		if ($this->checkLogin())
-			return true;
+		if ($this->checkLogin()) return true;
 
 		// save the captcha image in the temp folder
-		$utils        = new Utils();
+		$utils = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}/securimage/securimage_show.php");
 		file_put_contents($captchaImage, curl_exec($this->client));
@@ -88,7 +86,7 @@ class NautaClient
 		{
 			echo "[INFO] Captcha image store in: $captchaImage \n";
 			echo "Please enter captcha test:";
-			$cli         = fopen("php://stdin", "r");
+			$cli = fopen("php://stdin", "r");
 			$captchaText = fgets($cli);
 		}
 		else
@@ -104,7 +102,6 @@ class NautaClient
 			{
 				$text = "Captcha error " . $captcha->code . " with message " . $captcha->message;
 				$utils->createAlert($text, "ERROR");
-
 				return false;
 			}
 		}
@@ -117,7 +114,7 @@ class NautaClient
 		if($response === false) return false;
 
 		if (stripos($response, 'digo de verificaci') !== false &&
-		    stripos($response, 'n incorrecto') !== false)
+			stripos($response, 'n incorrecto') !== false)
 			return false;
 
 		// get tokens
@@ -174,7 +171,6 @@ class NautaClient
 
 		$this->logoutToken  = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
-
 		return $sessionData;
 	}
 
@@ -195,22 +191,22 @@ class NautaClient
 		$html = curl_exec($this->client);
 
 		// get the value of hidden fields from the HTML
-		$utils        = new Utils();
-		$action       = php::substring($html, 'u=', '"');
+		$utils = new Utils();
+		$action = php::substring($html, 'u=', '"');
 		$composeCache = php::substring($html, 'composeCache" value="', '"');
-		$composeHmac  = php::substring($html, 'composeHmac" value="', '"');
-		$user         = php::substring($html, 'user" value="', '"');
+		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
+		$user = php::substring($html, 'user" value="', '"');
 
 		// create the body of the image
 		$data['composeCache'] = $composeCache;
-		$data['composeHmac']  = $composeHmac;
-		$data['user']         = $user;
-		$data['to']           = $to;
-		$data['cc']           = "";
-		$data['bcc']          = "";
-		$data['subject']      = $subject;
-		$data['priority']     = "normal";
-		$data['message']      = $body;
+		$data['composeHmac'] = $composeHmac;
+		$data['user'] = $user;
+		$data['to'] = $to;
+		$data['cc'] = "";
+		$data['bcc'] = "";
+		$data['subject'] = $subject;
+		$data['priority'] = "normal";
+		$data['message'] = $body;
 		if($attachment) $data['upload_1'] = new CURLFile($attachment);
 		$data['a'] = 'Send';
 
@@ -228,7 +224,6 @@ class NautaClient
 		if(curl_errno($this->client))
 		{
 			$utils = new Utils();
-
 			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)", "ERROR");
 		}
 
@@ -280,17 +275,15 @@ class NautaClient
 	 * Breaks an image captcha using human labor. Takes ~15sec to return
 	 *
 	 * @author salvipascual
-	 *
 	 * @param String $image
-	 *
 	 * @return String
 	 */
 	private function breakCaptcha($image)
 	{
 		// get path to root and the key from the configs
-		$di      = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		$key     = $di->get('config')['anticaptcha']['key'];
+		$key = $di->get('config')['anticaptcha']['key'];
 
 		// include captcha libs
 		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
@@ -305,10 +298,9 @@ class NautaClient
 		// create the task
 		if( ! $api->createTask())
 		{
-			$ret          = new stdClass();
-			$ret->code    = "500";
+			$ret = new stdClass();
+			$ret->code = "500";
 			$ret->message = "API v2 send failed: " . $api->getErrorMessage();
-
 			return $ret;
 		}
 
@@ -316,18 +308,16 @@ class NautaClient
 		$taskId = $api->getTaskId();
 		if( ! $api->waitForResult())
 		{
-			$ret          = new stdClass();
-			$ret->code    = "510";
+			$ret = new stdClass();
+			$ret->code = "510";
 			$ret->message = "Could not solve captcha: " . $api->getErrorMessage();
-
 			return $ret;
 		}
 
 		// return the solution
-		$ret          = new stdClass();
-		$ret->code    = "200";
+		$ret = new stdClass();
+		$ret->code = "200";
 		$ret->message = $api->getTaskSolution();
-
 		return $ret;
 	}
 }
