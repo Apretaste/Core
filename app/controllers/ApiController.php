@@ -258,4 +258,31 @@ class ApiController extends Controller
 		// return ok response
 		die('{"code":"ok", "newuser":"'.$newUser.'"}');
 	}
+
+	/**
+	 * Uploades a file via ajax to the temp folder to be process by the web
+	 *
+	 * @author salvipascual
+	 * @param POST file
+	 * @return String, URL of the file uploaded
+	 */
+	public function uploadAction()
+	{
+		$utils = new Utils();
+
+		// if there is an error upload the file
+		if ($_FILES['file']['error'] > 0)
+		{
+			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
+			$utils->createAlert($msg);
+			die('{"status":"error", "message":"'.$msg.'"}');
+		}
+		// else upload the file and return the path
+		else
+		{
+			$file = $utils->getTempDir() . $_FILES['file']['name'];
+			move_uploaded_file($_FILES['file']['tmp_name'], $file);
+			die('{"status":"ok", "message":"'.$file.'"}');
+		}
+	}
 }
