@@ -27,9 +27,10 @@ function smarty_function_select($params, $template)
 	// create select for the email and app
 	else
 	{
-		// include the function to create a link
+		// include the functions to create links and separators
 		$wwwroot = $di->get('path')['root'];
 		require_once "$wwwroot/app/plugins/function.link.php";
+		require_once "$wwwroot/app/plugins/function.separator.php";
 
 		// create select for the email and app
 		$i = 0; $len = count($options)-1;
