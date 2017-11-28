@@ -16,6 +16,18 @@
 	</div>
 </div>
 
+<!-- modal window to attach a file -->
+<div id="modalUploadFile" class="modal">
+	<div class="body">
+		<div style="text-align:left; margin-bottom:20px;">
+			<small><label for="attachment"></label></small>
+			<input id="attachment" type="file" name="attachment"/>
+		</div>
+		<button type="button" onclick="modalClose('modalUploadFile');">Cerrar</button>
+		<button type="button" onclick="apretaste.uploadFile();">Enviar</button>
+	</div>
+</div>
+
 <style type="text/css">
 	body {
 		padding: 10px 0px;
@@ -67,7 +79,11 @@
 			apretaste.url = "/run/display?subject=" + href;
 			apretaste.wait = Boolean(wait);
 
-			if(Boolean(popup)) {
+			if(popup == "upload") {
+				$('#modalUploadFile label').html(desc);
+				modalOpen('modalUploadFile');
+			}
+			else if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
 				$.each(desc.split("|"), function(i, val){
 					$('#modalRequestMoreDataBody').append('
@@ -100,6 +116,29 @@
 				modalClose('modalRequestMoreData');
 				apretaste.send();
 			}
+		},
+
+		uploadFile: function() {
+			var file = $("#attachment").prop("files")[0];
+			var form = new FormData();
+			form.append("file", file);
+
+			$.ajax({
+				url: "/api/upload",
+				dataType: 'json',
+				cache: false,
+				contentType: false,
+				processData: false,
+				data: form,
+				type: 'post',
+				success: function(data) {
+					if(data.code == "ok") {
+						apretaste.url += " " + data.message;
+						modalClose('modalUploadFile');
+						apretaste.send();
+					}
+				}
+			});
 		},
 
 		send: function() {
@@ -136,6 +175,4 @@
 	function modalClose(id) {
 		$('#'+id).css('visibility', 'hidden');
 	}
-
-
 </script>
