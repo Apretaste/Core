@@ -12,9 +12,9 @@ class Response
 	public $attachments;
 	public $internal; // false if the user provides the template
 	public $render; // false if the response should not be email to the user
-	public $ads;
 	public $layout;
 	public $cache = 0;
+	public $service = false;
 
 	/**
 	 * Create default template
@@ -24,16 +24,23 @@ class Response
 	public function __construct()
 	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>"<b>Warning:</b> Default responses will never be emailed to the user.");
+		$this->content = array("text"=>"Empty response");
 		$this->images = array();
 		$this->attachments = array();
-		$this->layout = "email_default.tpl";
-
 		$this->json = null;
 		$this->html = null;
 		$this->internal = true;
 		$this->render = false;
-		$this->ads = array();
+
+		// get the service that is calling me, if the object was created from inside a service
+		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		$file = isset($trace[0]['file']) ? $trace[0]['file'] : "";
+		if(php::endsWith($file, "/service.php")) $this->service = php::substring($file, "services/", "/service.php");
+
+		// load the layout from the session, or pick default
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$layout = $di->getShared("session")->get("layout");
+		$this->layout = empty($layout) ? "email_default.tpl" : $layout;
 	}
 
 	/**
@@ -75,27 +82,26 @@ class Response
 	}
 
 	/**
-	 * Set the global layout to control how the email looks
-	 * All layouts are from app/controller/layouts
+	 * Set the layout of the response
 	 *
 	 * @author salvipascual
-	 * @param String $layout
+	 * @param String $layout, empty to set default layout
 	 */
-	public function setEmailLayout($layout)
+	public function setEmailLayout($layout="")
 	{
-		$this->layout = $layout;
-	}
+		// get the layout file
+		$utils = new Utils();
+		$layout = $utils->getPathToService($this->service) . "/layouts/$layout";
 
-	/**
-	 * Get the array of ads selected to be displayed
-	 *
-	 * @author salvipascual
-	 * @return Object[]
-	 */
-	public function getAds()
-	{
-		if (is_null($this->ads) || empty($this->ads)) $this->ads = $this->getAdsToShow();
-		return $this->ads;
+		// save the layout in the session
+		if(file_exists($layout)) {
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$di->getShared("session")->set("layout", $layout);
+		}
+		// set the default layout
+		else $layout = "email_default.tpl";
+
+		$this->layout = $layout;
 	}
 
 	/**
@@ -112,7 +118,6 @@ class Response
 		$this->content = array("code"=>$code, "message"=>$message, "text"=>$text);
 		$this->internal = true;
 		$this->render = true;
-		$this->ads = $this->getAdsToShow();
 		return $this;
 	}
 
@@ -129,7 +134,6 @@ class Response
 		$this->json = $json;
 		$this->internal = true;
 		$this->render = true;
-		$this->ads = array();
 		return $this;
 	}
 
@@ -152,7 +156,6 @@ class Response
 		$this->attachments = $attachments;
 		$this->internal = false;
 		$this->render = true;
-		$this->ads = $this->getAdsToShow();
 		return $this;
 	}
 
@@ -171,66 +174,5 @@ class Response
 		$this->attachments = $attachments;
 		$this->render = true;
 		return $this;
-	}
-
-	/**
-	 * Automatically select two ads to be displayed
-	 *
-	 * @author salvipascual
-	 */
-	private function getAdsToShow()
-	{
-		// get the array of ads from the database
-		$connection = new Connection();
-		$utils = new Utils();
-
-		// get the person from the current email
-		$person = $utils->getPerson($this->email);
-		if ($person == false) $person = new stdClass();
-		if ( ! isset($person->age)) $person->age = null;
-		if ( ! isset($person->gender)) $person->gender = null;
-		if ( ! isset($person->eyes)) $person->eyes = null;
-		if ( ! isset($person->skin)) $person->skin = null;
-		if ( ! isset($person->body_type)) $person->body_type = null;
-		if ( ! isset($person->hair)) $person->hair = null;
-		if ( ! isset($person->province)) $person->province = null;
-		if ( ! isset($person->highest_school_level)) $person->highest_school_level = null;
-		if ( ! isset($person->marital_status)) $person->marital_status = null;
-		if ( ! isset($person->sexual_orientation)) $person->sexual_orientation = null;
-		if ( ! isset($person->religion)) $person->religion = null;
-
-		// select the ads to show
-		$sql = "
-			SELECT * FROM ads WHERE active=1
-			AND expiration_date > CURRENT_TIMESTAMP
-			AND (SELECT credit FROM person WHERE person.email = ads.owner) >= ads.price
-			AND ads.owner <> '{$this->email}' ";
-		if ( ! empty($person->age)) $sql .= " AND (from_age * 1 <= {$person->age} OR from_age = 'ALL') AND (to_age * 1 >= {$person->age} OR to_age = 'ALL') ";
-		if ( ! empty($person->gender)) $sql .= " AND (gender = '{$person->gender}' OR gender = 'ALL') ";
-		if ( ! empty($person->eyes)) $sql .= " AND (eyes = '{$person->eyes}' OR eyes = 'ALL') ";
-		if ( ! empty($person->skin)) $sql .= " AND (skin = '{$person->skin}' OR skin = 'ALL') ";
-		if ( ! empty($person->body_type)) $sql .= " AND (body_type = '{$person->body_type}' OR body_type = 'ALL') ";
-		if ( ! empty($person->hair)) $sql .= " AND (hair = '{$person->hair}' OR hair = 'ALL') ";
-		if ( ! empty($person->province)) $sql .= " AND (province = '{$person->province}' OR province = 'ALL') ";
-		if ( ! empty($person->highest_school_level)) $sql .= " AND (highest_school_level = '{$person->highest_school_level}' OR highest_school_level = 'ALL') ";
-		if ( ! empty($person->marital_status)) $sql .= " AND (marital_status = '{$person->marital_status}' OR marital_status = 'ALL') ";
-		if ( ! empty($person->sexual_orientation)) $sql .= " AND (sexual_orientation = '{$person->sexual_orientation}' OR sexual_orientation = 'ALL') ";
-		if ( ! empty($person->religion)) $sql .= " AND (religion = '{$person->religion}' OR religion = 'ALL') ";
-		$sql .= " ORDER BY last_usage LIMIT 2;";
-		$ads = $connection->deepQuery($sql);
-
-		// if there are not active ads stop processing here
-		if(count($ads)==0) return array();
-
-		// get top and bottom ads
-		$topAd = $ads[0];
-		if (isset($ads[1])) $bottomAd = $ads[1];
-		else $bottomAd = $topAd;
-
-		// save last usage date for the selected ads in the database
-		$connection->deepQuery("UPDATE ads SET last_usage = CURRENT_TIMESTAMP WHERE id = {$topAd->id};");
-		$connection->deepQuery("UPDATE ads SET last_usage = CURRENT_TIMESTAMP WHERE id = {$bottomAd->id};");
-
-		return array($topAd, $bottomAd);
 	}
 }
