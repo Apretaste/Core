@@ -7,7 +7,6 @@ class Response
 	public $template;
 	public $content;
 	public $json; // NULL unless the return is an email API
-	public $html; // NULL unless passing a whole HTML
 	public $images;
 	public $attachments;
 	public $internal; // false if the user provides the template
@@ -28,7 +27,6 @@ class Response
 		$this->images = array();
 		$this->attachments = array();
 		$this->json = null;
-		$this->html = null;
 		$this->internal = true;
 		$this->render = false;
 
@@ -87,21 +85,25 @@ class Response
 	 * @author salvipascual
 	 * @param String $layout, empty to set default layout
 	 */
-	public function setEmailLayout($layout="")
+	public function setEmailLayout($layout=false)
 	{
-		// get the layout file
+		// check if a public layout is passed
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$file = "$wwwroot/app/layouts/$layout";
+		if(file_exists($file)) {$this->layout = $file; goto save_session;}
+
+		// else, check if is a service layout
 		$utils = new Utils();
-		$layout = $utils->getPathToService($this->service) . "/layouts/$layout";
+		$file = $utils->getPathToService($this->service) . "/layouts/$layout";
+		if(file_exists($file)) {$this->layout = $file; goto save_session;}
 
-		// save the layout in the session
-		if(file_exists($layout)) {
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$di->getShared("session")->set("layout", $layout);
-		}
-		// set the default layout
-		else $layout = "email_default.tpl";
+		// else select the default layout
+		$this->layout = "$wwwroot/app/layouts/email_default.tpl";
 
-		$this->layout = $layout;
+		// save the layout in session
+		save_session:
+		$di->getShared("session")->set("layout", $this->layout);
 	}
 
 	/**
@@ -155,23 +157,6 @@ class Response
 		$this->images = $images;
 		$this->attachments = $attachments;
 		$this->internal = false;
-		$this->render = true;
-		return $this;
-	}
-
-	/**
-	 * Build a response using a custom HTML instead of a template file
-	 *
-	 * @author salvipascual
-	 * @param String $html
-	 */
-	public function createFromHTML($html, $images=array(), $attachments=array())
-	{
-		if(empty($content['code'])) $content['code'] = "ok"; // for the API
-
-		$this->html = $html;
-		$this->images = $images;
-		$this->attachments = $attachments;
 		$this->render = true;
 		return $this;
 	}
