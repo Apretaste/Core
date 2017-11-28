@@ -29,14 +29,6 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "{$service->pathToService}/templates/{$response->template}";
 
-		// if we are rendering the whole HTML
-		if ($response->html)
-		{
-			$tempTemp = "$wwwroot/temp/layout-".uniqid().".tpl";
-			file_put_contents($tempTemp, $response->html);
-			$response->layout = $tempTemp;
-		}
-
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
 		$smarty->addPluginsDir("$wwwroot/app/plugins/");
