@@ -37,10 +37,6 @@ class Render
 			$response->layout = $tempTemp;
 		}
 
-		// get the internal layout if exit
-		$internalLayoutPath = "{$service->pathToService}/layouts/{$response->layout}";
-		if(file_exists($internalLayoutPath)) $response->layout = $internalLayoutPath;
-
 		// creating and configuring a new Smarty object
 		$smarty = new Smarty;
 		$smarty->addPluginsDir("$wwwroot/app/plugins/");
