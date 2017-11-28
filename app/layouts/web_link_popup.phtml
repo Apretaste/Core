@@ -131,8 +131,8 @@
 				processData: false,
 				data: form,
 				type: 'post',
-				success: function(data){
-					if(data.status == "ok") {
+				success: function(data) {
+					if(data.code == "ok") {
 						apretaste.url += " " + data.message;
 						modalClose('modalUploadFile');
 						apretaste.send();

@@ -275,14 +275,14 @@ class ApiController extends Controller
 		{
 			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
 			$utils->createAlert($msg);
-			die('{"status":"error", "message":"'.$msg.'"}');
+			die('{"code":"error", "message":"'.$msg.'"}');
 		}
 		// else upload the file and return the path
 		else
 		{
 			$file = $utils->getTempDir() . $_FILES['file']['name'];
 			move_uploaded_file($_FILES['file']['tmp_name'], $file);
-			die('{"status":"ok", "message":"'.$file.'"}');
+			die('{"code":"ok", "message":"'.$file.'"}');
 		}
 	}
 }
