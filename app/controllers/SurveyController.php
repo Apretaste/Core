@@ -530,7 +530,12 @@ class SurveyController extends Controller
  		$html .= '</body></html>';
 
 		// save the PDF and download
-		$mpdf = new Mpdf\Mpdf();
+		$wwwroot = $this->di->get('path')['root'];
+
+		if (!class_exists('mPDF'))
+			include_once $wwwroot."/lib/mpdf/mpdf.php";
+
+		$mpdf = new Mpdf();
 		$mpdf->WriteHTML(trim($html));
 		$mpdf->Output("$title.pdf", 'D');
 		$this->view->disable();

@@ -72,9 +72,12 @@ function smarty_function_button($params, $template)
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
 	if(in_array($di->get('environment'), array("app", "web")))
 	{
+		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
+		if($type != "input") $popup = "'$type'"; // set the type of popup
 		if($popup == "false") $desc = "";
+
 		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\"";
 		$linkto = "#!";
 	}
