@@ -61,6 +61,9 @@ class NautaClient
 	 */
 	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
 	{
+		// @TODO add a SOCKS proxy
+		// https://www.privateinternetaccess.com/pages/buy-vpn/
+		// https://www.socks-proxy.net/
 		curl_setopt($this->client, CURLOPT_PROXY, $host);
 		curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
 	}
