@@ -87,23 +87,24 @@ class Response
 	 */
 	public function setEmailLayout($layout=false)
 	{
-		// check if a public layout is passed
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
+
+		// check if a public layout is passed
 		$file = "$wwwroot/app/layouts/$layout";
-		if(file_exists($file)) {$this->layout = $file; goto save_session;}
+		if(file_exists($file)) {$this->layout = $file; return true;}
 
 		// else, check if is a service layout
 		$utils = new Utils();
 		$file = $utils->getPathToService($this->service) . "/layouts/$layout";
-		if(file_exists($file)) {$this->layout = $file; goto save_session;}
+		if(file_exists($file)) {
+			$this->layout = $file;
+			$di->getShared("session")->set("layout", $file);
+			return true;
+		}
 
 		// else select the default layout
 		$this->layout = "$wwwroot/app/layouts/email_default.tpl";
-
-		// save the layout in session
-		save_session:
-		$di->getShared("session")->set("layout", $this->layout);
 	}
 
 	/**
