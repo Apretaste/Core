@@ -5,19 +5,12 @@
 				<tr>
 					<th>Details</th>
 					<th class="text-center">Category</th>
-					<th class="text-center" style="text-decoration: underline;" title="Last 30 days">Usage</th>
-					<th class="text-center" style="text-decoration: underline;" title="Average of the last 30 days, in seconds">Latency</th>
 					<th class="text-center">Inserted</th>
 					<th class="text-center">Actions</th>
 				</tr>
 			</thead>
 			<tbody>
-			<?php
-				foreach ($services as $service) {
-					// set the color for the latency alert
-					$latencyWarning = "";
-					if($service->avg_latency > 5) $latencyWarning = "warning";
-					if($service->avg_latency > 10) $latencyWarning = "danger";
+			<?php foreach ($services as $service) {
 				?>
 				<tr>
 					<td>
@@ -27,8 +20,6 @@
 						<?=$service->creator_email?>
 					</td>
 					<td class="text-center"><?=$service->category?></td>
-					<td class="text-center"><?=$service->times_used?></td>
-					<td class="text-center <?=$latencyWarning?>"><?=number_format($service->avg_latency, 2)?></td>
 					<td class="text-center"><?=date("Y/m/d H:i:s", strtotime($service->insertion_date))?></td>
 					<td class="text-center">
 						<a class="btn btn-default" target="_blank" href="/run/display?subject=<?=$service->name?>">Run</a>
