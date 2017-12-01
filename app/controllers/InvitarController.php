@@ -19,14 +19,12 @@ class InvitarController extends Controller
 	 * @author kuma
 	 * @version 1.0
 	 */
-	public function indexAction()
-	{
-	}
+	public function indexAction(){}
 
 	/**
 	 * Process the page when its submitted
 	 *
-	 * @author kuma, salvipascual
+	 * @author salvipascual
 	 * @version 1.0
 	 * */
 	public function processAction()
@@ -34,7 +32,7 @@ class InvitarController extends Controller
 		// get the values from the post
 		$captcha = trim($this->request->getPost('captcha'));
 		$name = trim($this->request->getPost('name'));
-		$inviter = trim($this->request->getPost('email'));
+		$host = trim($this->request->getPost('email'));
 		$guest = trim($this->request->getPost('guest'));
 
 		// throw a die() if no phrase in the session
@@ -44,58 +42,37 @@ class InvitarController extends Controller
 		if(
 			strtoupper($captcha) != strtoupper($_SESSION['phrase']) ||
 			$name == "" ||
-			! filter_var($inviter, FILTER_VALIDATE_EMAIL) ||
+			! filter_var($host, FILTER_VALIDATE_EMAIL) ||
 			! filter_var($guest, FILTER_VALIDATE_EMAIL)
 		) die("Error procesando, por favor valla atras y comience nuevamente.");
 
 		// params for the response
 		$this->view->name = $name;
-		$this->view->email = $inviter;
-
-		// create classes
-		$utils = new Utils();
-		$render = new Render();
+		$this->view->email = $host;
 
 		// do not invite people who are already using Apretaste
+		$utils = new Utils();
 		if($utils->personExist($guest))
 		{
 			$this->view->already = true;
 			return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
 		}
 
-		// create host response object
-		$response = new Response();
-		$response->email = $inviter;
-		$response->setResponseSubject("Gracias por darle internet a un Cubano");
-		$response->setEmailLayout("email_simple.tpl");
-		$response->createFromTemplate("invitationThankYou.tpl", array('num_notifications' => 0));
-		$response->internal = true;
-		$html = $render->renderHTML(new Service(), $response);
-
 		// send email to the host
 		$email = new Email();
-		$email->sendEmail($inviter, $response->subject, $html);
-
-		// create guest response object
-		$response = new Response();
-		$response->email = $guest;
-		$response->setEmailLayout("email_empty.tpl");
-		$response->setResponseSubject("$name quiere que descargue nuestra app");
-		$response->createFromTemplate("invitationAbroad.tpl", array("host"=>$name));
-		$response->internal = true;
-		$html = $render->renderHTML(new Service(), $response);
+		$email->to = $host;
+		$email->subject = "Gracias por darle internet a un Cubano";
+		$email->sendFromTemplate("invitationThankYou.tpl", array('num_notifications'=>0), "email_empty.tpl");
 
 		// send email to the guest
 		$email = new Email();
-		$email->to = $response->email;
-		$email->subject = $response->subject;
-		$email->body = $html;
-		$email->group = 'download';
-		$email->send();
+		$email->to = $guest;
+		$email->subject = "$name quiere que descargue nuestra app";
+		$email->sendFromTemplate("invitationAbroad.tpl", array("host"=>$name));
 
 		// save all the invitations into the database at the same time
 		$connection = new Connection();
-		$connection->query("INSERT INTO invitations (email_inviter,email_invited,source) VALUES ('$inviter','$guest','abroad')");
+		$connection->query("INSERT INTO invitations (host,guest) VALUES ('$host','$guest')");
 
 		// redirect to the invite page
 		$this->view->message = true;

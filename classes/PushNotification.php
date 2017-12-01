@@ -34,6 +34,24 @@ class PushNotification
 	}
 
 	/**
+	 * Get a person based on an AppId
+	 *
+	 * @author salvipascual
+	 * @param String
+	 * @return Person
+	 */
+	public function getPersonFromAppId($appid)
+	{
+		$connection = new Connection();
+		$email = $connection->query("SELECT email FROM authentication WHERe appid='$appid'");
+		if(empty($email)) return false;
+
+		// return the person object
+		$utils = new Utils();
+		return $utils->getPerson($email[0]->email);
+	}
+
+	/**
 	 * Send a text only push notification
 	 *
 	 * @author salvipascual
@@ -102,8 +120,11 @@ class PushNotification
 	 */
 	public function piropazoLikePush($appid, $person)
 	{
-		// translate message
-		if($person->lang == "en") $body = "@{$person->username} likes your profile";
+		// get the person who will receive the push
+		$personReceiver = $this->getPersonFromAppId($appid);
+
+		// translate the message
+		if($personReceiver && $personReceiver->lang == "en") $body = "@{$person->username} likes your profile";
 		else $body = "A @{$person->username} le ha gustado su perfil";
 
 		// prepare de data structure
@@ -133,8 +154,11 @@ class PushNotification
 	 */
 	public function piropazoFlowerPush($appid, $person)
 	{
-		// translate messages
-		if($person->lang == "en")
+		// get the person who will receive the push
+		$personReceiver = $this->getPersonFromAppId($appid);
+
+		// translate the message
+		if($personReceiver && $personReceiver->lang == "en")
 		{
 			$header = "Hurray, @{$person->username} sent you a flower";
 			$text = "@{$person->username} has seen something different in you, and this flower it is a call to chat and get to know each other better. Would you accept?";

@@ -40,26 +40,18 @@
 			}
 		</style>
 	</head>
-	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family: Arial;">
+	<body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family:Arial;">
 		<center>
-			<table id="container" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600">
+			<table id="container" border="0" cellpadding="0" cellspacing="0" valign="top" align="center" width="600" bgcolor="white">
 				{* top links *}
 				<tr>
 					<td align="right" bgcolor="#D0D0D0" style="padding: 5px;">
 						<small>
-							{link href="AYUDA" caption="Ayuda"}{separator}
-							{link href="INVITAR escriba aqui las direcciones email de sus amigos" caption="Invitar" body=""}{separator}
-							{link href="PERFIL" caption="Profile"}{separator}
 							{link href="SERVICIOS" caption="Servicios"}{separator}
-							{link href="NOTIFICACIONES" caption="Alertas"}
-							{if $num_notifications > 0}
-								<!--[if mso]>
-								<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' style='v-text-anchor:middle;' arcsize='5%' strokecolor='$stroke' fillcolor='#FF0000'>
-								<w:anchorlock/>
-								<center style='color:#FFFFFF;font-family:Helvetica, Arial,sans-serif;font-size:9px;'><strong>{$num_notifications}</strong></center>
-								</v:roundrect>
-								<![endif]-->
-								<a style='background-color:#FF0000;border-radius:3px;color:#FFFFFF;display:inline-block;font-family:sans-serif;font-size:9px;text-align:center;text-decoration:none;line-height:20px;padding-left:2px;padding-right:2px;-webkit-text-size-adjust:none;mso-hide:all;'><b>{$num_notifications}</b></a>
+							{link href="PERFIL" caption="&#9817; Perfil"}{separator}
+							{link href="NOTIFICACIONES" caption="&#9888; Alertas ({$num_notifications})"}
+							{if $APRETASTE_ENVIRONMENT eq "web"}
+								&nbsp;<a style="background-color:#D9534F; text-decoration:none; padding:3px; color:white;" href="/logout">Logout</a>
 							{/if}
 						</small>
 					</td>
@@ -79,52 +71,6 @@
 						</table>
 					</td>
 				</tr>
-
-				{* top ad *}
-				{if $APRETASTE_ADS|@count gt 0}
-				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
-					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
-					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[0]->title}</small></td>
-					<td bgcolor="#c3daee" align="right" valign="middle">
-						{button href="PUBLICIDAD {$APRETASTE_ADS[0]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
-					</td>
-				</tr></table></td></tr>
-				{/if}
-
-				{* the stars game *}
-				{if $requests_today == 0}
-					{if $raffle_stars > 0}
-					<tr>
-						<td align="center">
-							<big>
-								<br/>
-								{if $raffle_stars < 5}
-									Tu primer correo del d&iacute;a<br/>
-								{else}
-									<b>&iexcl;FELICIDADES!</b><br/>
-								{/if}
-								{for $i=1 to 5}
-									{if $i <= $raffle_stars}
-										<font color="black" size="5"><b>&#9733;</b></font>
-									{else}
-										<font color="black" size="5">&#9734;</font>
-									{/if}
-								{/for}
-								<br/>
-							</big>
-							<small>
-								{if $raffle_stars < 5}
-									Por 5 d&iacute;as consecutivos ganar&aacute;s &sect;1 de cr&eacute;dito personal<br/>
-									{if $raffle_stars > 0}<i>Ya vas por {$raffle_stars}. &iexcl;Emb&uacute;llate!</i>{/if}
-								{else}
-									Haz ganado <b>&sect;1</b> de cr&eacute;dito personal<br/>
-									Entra ma&ntilde;ana y gana incluso m&aacute;s cr&eacute;dito
-								{/if}
-							</small>
-						</td>
-					</tr>
-					{/if}
-				{/if}
 
 				{* main section to load the user template *}
 				<tr>
@@ -150,41 +96,14 @@
 				</tr>
 				{/if}
 
-				{* bottom ad *}
-				{if $APRETASTE_ADS|@count gt 1}
-				<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
-					<td bgcolor="#c3daee" valign="middle" width="1"><font color="#337AB7"><big><b>&#9733;</b>&nbsp;</big></font></td>
-					<td bgcolor="#c3daee"><small>{$APRETASTE_ADS[1]->title}</small></td>
-					<td bgcolor="#c3daee" align="right" valign="middle">
-						{button href="PUBLICIDAD {$APRETASTE_ADS[1]->id}" caption="Ver m&aacute;s" size="small" color="blue"}
-					</td>
-				</tr></table></td></tr>
-				{/if}
-
-				{* services related *}
-				{if $APRETASTE_SERVICE_RELATED|@count gt 0}
-				<tr bgcolor="#e6e6e6">
-					<td align="left" style="padding: 0px 5px;">
-						{space5}
-						<small>
-							Otros servicios:
-							{foreach $APRETASTE_SERVICE_RELATED as $APRETASTE_SERVICE}
-								{link href="{$APRETASTE_SERVICE}" caption="{$APRETASTE_SERVICE}"}
-								{if not $APRETASTE_SERVICE@last}{separator}{/if}
-							{/foreach}
-						</small>
-						{space5}
-					</td>
-				</tr>
-				{/if}
-
 				{* footer *}
 				<tr>
 					<td align="center" bgcolor="#F2F2F2">
 						{space5}
 						<small>
-							&iquest;Tiene dudas? Escriba a <a href="mailto:{$APRETASTE_SUPPORT_EMAIL}">{$APRETASTE_SUPPORT_EMAIL}</a><br/>
-							Mire los {link href="TERMINOS" caption="T&eacute;rminos de uso"}<br/>
+							Apretaste &copy; {$smarty.now|date_format:"%Y"}; All rights reserved.<br/>
+							{link href="SOPORTE" caption="Soporte"} {separator}
+							{link href="TERMINOS" caption="T&eacute;rminos de uso"}
 						</small>
 						{space5}
 					</td>

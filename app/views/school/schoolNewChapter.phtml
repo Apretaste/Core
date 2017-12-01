@@ -1,0 +1,49 @@
+<div class="row">
+	<div class="col-xs-12">
+		<?php if ($message) { ?>
+			<div class="alert alert-<?= $message_type ?>" role="alert"><?= $message ?></div>
+			<br/>
+		<?php } ?>
+
+		<form action ="/school/schoolNewChapterPost?course=<?= $course->id ?>" method="POST">
+			<input type="hidden" value="<?= $type ?>" name="type">
+			<div class="form-group">
+				<label for="title">Title:</label>
+				<input required type="text" class="form-control text" name="title" id="title" placeholder="title" title="Insert title">
+			</div>
+			<div class="form-group">
+				<label for="content">
+					<?= $type=='CAPITULO'? 'Content of the chapter' : 'Explanation' ?>
+				</label><br/>
+				<textarea id="content" name="content"></textarea>
+			</div>
+			<div class="form-group">
+				<a class="btn btn-default" href="/school/schoolChapters?course=<?= $course->id ?>">Cancel</a>
+				<button class="btn btn-primary" type="submit" onclick="return getcontent();">Save</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="/js/tinymce/tinymce.min.js"></script>
+<script>
+	tinymce.init({
+		selector: '#content',
+		height: 500,
+		theme: 'modern',
+		setup : function(ed) {
+			ed.on('keydown',function(ed, evt) {
+				if ( tinymce.get('content').getContent().length + 1 > 100 * 1024){ // > 100 Kb
+					return false;
+				}
+			});
+		},
+		plugins: [
+				'advlist autolink lists link image charmap print preview hr anchor pagebreak',
+				'searchreplace wordcount visualblocks visualchars code fullscreen',
+				'insertdatetime media nonbreaking save table contextmenu directionality',
+				'emoticons template paste textcolor colorpicker textpattern imagetools codesample toc bdesk_photo'
+		],
+		toolbar1: 'undo redo | insert | forecolor backcolor bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | link emoticons codesample'
+	});
+</script>

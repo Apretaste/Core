@@ -14,6 +14,13 @@ setlocale(LC_TIME, "es_ES");
 // include composer
 include_once "../vendor/autoload.php";
 
+/* @TODO antes de poner este code hay que probarlo con cada uno de los servicios
+// handle php errors as exceptions
+function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+	throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+} set_error_handler("exception_error_handler");
+*/
+
 try
 {
 	//Register autoLoader for Analytics
@@ -64,20 +71,50 @@ try
 		"dbname"   => $config['database']['database']
 	)));
 
-	// get the environment
-	$di->set('environment', function () use ($config) {
-		if(isset($config['global']['environment'])) return $config['global']['environment'];
+	// Set the tier (sandbox | stage | production)
+	$di->set('tier', function () use ($config) {
+		if(isset($config['global']['tier'])) return $config['global']['tier'];
 		else return "production";
+	});
+
+	// Set the environment (app | api | email | web | default)
+	$di->set('environment', function () use ($config) {
+		return "default";
+	});
+
+	// Set the routes
+	$di->set('router', function () {
+		require __DIR__ . '/../configs/routes.php';
+		return $router;
 	});
 
 	// Handle the request
 	$application = new Application($di);
-
 	echo $application->handle()->getContent();
 }
-catch(\Phalcon\Mvc\Dispatcher\Exception $e)
+catch(Exception $e)
 {
-	echo "PhalconException: ", $e->getMessage(); exit;
+	$message = $e->getMessage();
+	$utils = new Utils();
+
+	// we assume is traying to access a service
+	if ($e instanceof Phalcon\Mvc\Dispatcher\Exception)
+	{
+		// get the service name from the error message
+		$service = strtolower(substr($message, 0, strpos($message, "Controller")));
+
+		// check if the service or alias exists
+		$service = $utils->serviceExist($service);
+		if(empty($service)) $service = "servicios";
+
+		// redirect to the service or to the services page
+		header("Location:/run/display?subject=$service"); exit;
+	}
+
+	// log error
+	$utils->createAlert($message, 'ERROR');
+
+	// show 404 page
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
 }

@@ -1,0 +1,16 @@
+<?php if (isset($message)) { ?>
+	<div class="alert alert-<?= $messageType ?>" role="alert"><?= $message ?></div>
+<?php } ?>
+
+<form role="form" action="/admin/addcredit" method="POST">
+	<div class="form-group">
+		<label for="edtEmail">Email address</label><br/>
+		<input type="email" class="form-control" id="edtEmail" placeholder="Enter email" name="email">
+	</div>
+	<div class="form-group">
+		<label for="edtCredit">Credit:</label><br/>
+		<input type="number" class="form-control" placeholder="Credit" id = "edtCredit" name="credit">
+	</div>
+
+	<button type="submit" class="btn btn-default">Add credit</button>
+</form>

@@ -1,0 +1,190 @@
+<!-- modal window for request sent -->
+<div id="modalRequestSent" class="modal">
+	<div class="body">
+		<p style="color:#5EBB47; font-size:50px; margin:0px;">&#x2714;</p>
+		<p style="margin-top:0px;">Su peticion ha sido enviada</p>
+		<button type="button" onclick="modalClose('modalRequestSent'); location.reload();">Cerrar</button>
+	</div>
+</div>
+
+<!-- modal window asking for extra data -->
+<div id="modalRequestMoreData" class="modal">
+	<div class="body">
+		<div id="modalRequestMoreDataBody" class="modal-body"></div>
+		<button type="button" onclick="modalClose('modalRequestMoreData');">Cerrar</button>
+		<button type="button" onclick="apretaste.sendMoreData();">Enviar</button>
+	</div>
+</div>
+
+<!-- modal window to attach a file -->
+<div id="modalUploadFile" class="modal">
+	<div class="body">
+		<div style="text-align:left; margin-bottom:20px;">
+			<small><label for="attachment"></label></small>
+			<input id="attachment" type="file" name="attachment"/>
+		</div>
+		<button type="button" onclick="modalClose('modalUploadFile');">Cerrar</button>
+		<button type="button" onclick="apretaste.uploadFile();">Enviar</button>
+	</div>
+</div>
+
+<style type="text/css">
+	body {
+		padding: 10px 0px;
+		background: #E3E7D0 url("/images/background3.jpg") no-repeat fixed center;
+		background-size: 100%;
+	}
+
+	.dropdown {
+		background-color: #E6E6E6;
+		border:1px solid #CCCCCC;
+		color: #000000;
+		border-radius: 3px;
+		height: 22px;
+		font-size: 12px;
+		line-height:20px;
+		text-align: center;
+		text-decoration:none;
+		min-width: 82px;
+	}
+
+	.modal {
+		visibility: hidden;
+		position: fixed;
+		left: 0px;
+		top: 0px;
+		width:100%;
+		height:100%;
+		text-align:center;
+		z-index: 1000;
+	}
+
+	.modal .body {
+		width:300px;
+		margin: 100px auto;
+		background-color: #fff;
+		border:1px solid #000;
+		padding:15px;
+		text-align:center;
+	}
+</style>
+
+<script src="/js/jquery-2.1.1.js"></script>
+<script type="text/javascript">
+	var apretaste = {
+		url: "",
+		wait: false,
+
+		doaction: function (href, popup, desc, wait) {
+			apretaste.url = "/run/display?subject=" + href;
+			apretaste.wait = Boolean(wait);
+
+			if(popup == "upload") {
+				$('#modalUploadFile label').html(desc);
+				modalOpen('modalUploadFile');
+			}
+			else if(Boolean(popup)) {
+				$('#modalRequestMoreDataBody').empty();
+				$.each(desc.split("|"), function(i, val){
+					$('#modalRequestMoreDataBody').append('
+						<div style="text-align:left; margin-bottom:15px;">\
+							<small><label for="field'+i+'">'+val+'</label></small><br/>\
+							<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" style="width:100%;" type="text" class="form-control"/>\
+						</div>');
+				});
+				modalOpen('modalRequestMoreData');
+				$('#field0').focus();
+			}
+			else apretaste.send();
+		},
+
+		sendMoreData: function() {
+			var params = "";
+			var redirect = true;
+			$('#modalRequestMoreDataBody input').each(function(){
+				$(this).css("border", "1px solid #A9A9A9");
+				var value = this.value.trim();
+				if(value == "") {
+					$(this).css("border", "1px solid red");
+					redirect = false;
+				}
+				params += value + " ";
+			});
+
+			if(redirect) {
+				apretaste.url += " " + params;
+				modalClose('modalRequestMoreData');
+				apretaste.send();
+			}
+		},
+
+		uploadFile: function() {
+			var file = $("#attachment").prop("files")[0];
+			var form = new FormData();
+			form.append("file", file);
+
+			$.ajax({
+				url: "/api/upload",
+				dataType: 'json',
+				cache: false,
+				contentType: false,
+				processData: false,
+				data: form,
+				type: 'post',
+				success: function(data) {
+					if(data.code == "ok") {
+						apretaste.url += " " + data.message;
+						modalClose('modalUploadFile');
+						apretaste.send();
+					}
+				}
+			});
+		},
+
+		send: function() {
+			if(apretaste.wait) {
+				window.location = apretaste.url;
+			}else{
+				$.get(apretaste.url, function(data) {
+					modalOpen('modalRequestSent');
+				});
+			}
+		},
+
+		onSelect: function(href) {
+			apretaste.wait = false;
+			apretaste.url = "/run/display?subject=" + href;
+			apretaste.send();
+		},
+
+		onEnter: function(e) {
+			if(e.keyCode === 13) {
+				e.preventDefault();
+				apretaste.sendMoreData();
+			}
+			if (e.keyCode == 27) {
+				modalClose('modalRequestMoreData');
+			}
+		}
+	};
+
+	function modalOpen(id) {
+		$('#'+id).css('visibility', 'visible');
+	}
+
+	function modalClose(id) {
+		$('#'+id).css('visibility', 'hidden');
+	}
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-49715278-1"></script>
+<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'UA-49715278-1', {
+		'custom_map': {'dimension1': 'service'}
+	});
+	gtag('event', 'push_service', {'service': '{$APRETASTE_SERVICE_NAME}'});
+</script>

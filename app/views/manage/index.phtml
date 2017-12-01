@@ -1,60 +1,83 @@
-<div class="row  border-bottom white-bg dashboard-header">
-	<div class="col-sm-12">
-		<div class="row text-left">
-			<div class="col-xs-4">
-				<div class=" m-l-md">
-					<span class="h4 font-bold m-t block"><?php echo $totalUsers;?></span> <small class="text-muted m-b block">Total users</small>
-				</div>
+
+<!-- BLOCKS -->
+
+<div class="row">
+	<!-- ACTIVE USERS BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-user pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($numberActiveUsers, 0) ?></big><small>/<?= number_format($numberTotalUsers, 0) ?></small><br/>
+				<small>Active/Total users</small>
 			</div>
-			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block">$ <?php echo number_format($sumCredit, 2);?></span> <small class="text-muted m-b block">Total of credit</small>
+		</div>
+	</div>
+
+	<!-- USER PROFILES BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-thumbs-up pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($numberUserProfiles, 0) ?></big><br/>
+				<small>Users with profile</small>
 			</div>
-			<div class="col-xs-4">
-				<span class="h4 font-bold m-t block"><?php echo $utilization; ?></span> <small class="text-muted m-b block">Utilization</small>
+		</div>
+	</div>
+
+	<!-- TOTAL CREDITS BLOCK -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($creditsOffered, 2) ?></big><br/>
+				<small>Total credits</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- NUMBER OF ADS RUNNING -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($queryRunningAds, 0) ?></big><br/>
+				<small>Ads running</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- CUSTOMER SUPPORT BLOCK -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-headphones pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?> <small>Tickets</small></big><br/>
+				<small>Open/Pending</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- MAIL LIST REGISTRERED USERS -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-envelope pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($mailListRegisteredUsers, 0) ?></big><br/>
+				<small>Mail list size</small>
 			</div>
 		</div>
 	</div>
 </div>
-<br/>
-<div class="row">
-	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			 <div class="ibox-title">
-				<h5><a href="/nodes">Output emails</a></h5>
-			</div>
-			<div class="ibox-content">
-				<table class="table table-condensed fullscreen">
-					<tbody>
-						<tr>
-							<td>Total number of emails</td>
-							<td class="text-center"><?=$node['total']?></td>
-						</tr>
-						<tr>
-							<td><span class='glyphicon glyphicon-ok alert-success' aria-hidden='true'></span> Running emails</td>
-							<td class="text-center"><?=$node['ok']?></td>
-						</tr>
-						<tr>
-							<td><span class='glyphicon glyphicon-alert alert-info' aria-hidden='true'></span> Emails limited</td>
-							<td class="text-center"><?=$node['limit']?></td>
-						</tr>
-						<tr>
-							<td><span class='glyphicon glyphicon-time alert-warning' aria-hidden='true'></span> Emails waiting</td>
-							<td class="text-center"><?=$node['waiting']?></td>
-						</tr>
-						<tr>
-							<td><span class='glyphicon glyphicon-remove alert-danger' aria-hidden='true'></span> Emails inactive</td>
-							<td class="text-center"><?=$node['inactive']?></td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
 
-		<div class="ibox float-e-margins">
-			 <div class="ibox-title">
-				<h5><a href="/manage/remarketing">Tasks status</a></h5>
-			</div>
-			<div class="ibox-content">
+<!-- WIDGETS -->
+
+<div class="row">
+	<!-- COLUMN #1 -->
+	<div class="col-xs-4">
+		<!-- TASK STATUS WIDGET -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Tasks status</div>
+			<div class="panel-body">
 				<table class="table table-condensed fullscreen">
 					<thead>
 						<tr>
@@ -64,7 +87,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($tasks as $task) { ?>
+						<?php foreach ($tasksWidget as $task) { ?>
 						<tr class="<?= $task->days > $task->frequency ? "danger" : "success"?>">
 							<td><?= $task->task ?></td>
 							<td class="text-center"><?= $task->days ?></td>
@@ -77,114 +100,11 @@
 		</div>
 	</div>
 
+	<!-- COLUMN #2 -->
 	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5><a href="/manage/dropped">Delivery status</a> <small>(Last 7 days)</small></h5>
-				<?php if ($deliveryFailurePercentage > 2): ?>
-				<div class="ibox-tools">
-					 <span class="label label-danger pull-right">ALERT !!!</span>
-				</div>
-				<?php endif; ?>
-			</div>
-			<div class="ibox-content">
-				<table class="fullscreen">
-					<tr>
-						<td width="50%">delivered: <?= number_format($delivery['delivered']); ?></td>
-						<td>hardfail: <?= isset($delivery['hardfail']) ? $delivery['hardfail'] : 0; ?> (<?= $deliveryFailurePercentage; ?>%)</td>
-					</tr>
-					<tr>
-						<td width="50%">hard-bounce: <?= isset($delivery['hard-bounce']) ? $delivery['hard-bounce'] : 0; ?></td>
-						<td>soft-bounce: <?= isset($delivery['soft-bounce']) ? $delivery['soft-bounce'] : 0; ?></td>
-					</tr>
-					<tr>
-						<td width="50%">spam: <?= isset($delivery['span']) ? $delivery['span'] : 0; ?></td>
-						<td>no-reply: <?= isset($delivery['no-reply']) ? $delivery['no-reply'] : 0; ?></td>
-					</tr>
-					<tr>
-						<td width="50%">loop: <?= isset($delivery['loop']) ? $delivery['loop'] : 0; ?></td>
-						<td>temporal: <?= isset($delivery['temporal']) ? $delivery['temporal'] : 0; ?></td>
-					</tr>
-					<tr>
-						<td width="50%">failure: <?= isset($delivery['failure']) ? $delivery['failure'] : 0; ?></td>
-						<td>unknown: <?= isset($delivery['unknown']) ? $delivery['unknown'] : 0; ?></td>
-					</tr>
-				</table>
-			</div>
-		</div>
-
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>Latest tests</h5>
-			</div>
-			<div class="ibox-content">
-				<table class="table table-condensed fullscreen">
-					<thead>
-						<tr>
-							<th>Tester</th>
-							<th class="text-center">Domains</th>
-							<th class="text-center">Date</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ($tests as $test) { ?>
-						<?php $daysElapsed = (time() - strtotime($test->inserted))/60/60/24; ?>
-						<tr <?php if($daysElapsed > 2) echo 'class="warning"'; ?> title="<?=$test->domains?>">
-							<td><?= $test->tester ?></td>
-							<td class="text-center"><?= $test->count ?></td>
-							<td class="text-center"><?= date("m/d H:i", strtotime($test->inserted)) ?></td>
-						</tr>
-						<?php } ?>
-					</tbody>
-				</table>
-			</div>
-		</div>
-
-		<div class="ibox float-e-margins">
-			 <div class="ibox-title">
-				<h5><a href="/support/reports">Customer Support</a></h5>
-			</div>
-			<div class="ibox-content">
-				<table class="fullscreen">
-					<tr>
-						<td>New Tickets</td>
-						<td class="text-center"><?=$supportNewCount?></td>
-					</tr>
-					<tr>
-						<td>Pending Tickets</td>
-						<td class="text-center"><?=$supportPendingCount?></td>
-					</tr>
-				</table>
-			</div>
-		</div>
 	</div>
+
+	<!-- COLUMN #3 -->
 	<div class="col-xs-4">
-		<div class="ibox float-e-margins">
-			<div class="ibox-title">
-				<h5>Promoters <small>(unpaid)</small></h5>
-			</div>
-			<div class="ibox-content">
-				<table class="table table-condensed fullscreen">
-					<thead>
-						<tr>
-							<th>Promoter</th>
-							<th class="text-center">Unpaid</th>
-							<th class="text-center">Last</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ($promoters as $promoter): ?>
-						<?php $daysElapsed = (time() - strtotime($promoter->last_usage))/60/60/24; ?>
-						<?php if( ! $promoter->total) $promoter->total = 0; ?>
-						<tr <?php if($promoter->active == 0) echo 'class="danger"'; else if($daysElapsed > 31) echo 'class="warning"'; ?>>
-							<td><?= $promoter->email ?></td>
-							<td class="text-center"><?= $promoter->total ?></td>
-							<td class="text-center"><?= date("m/d/y", strtotime($promoter->last_usage)) ?></td>
-						</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			</div>
-		</div>
 	</div>
 </div>

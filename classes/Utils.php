@@ -1,11 +1,7 @@
 <?php
 
-use Mailgun\Mailgun;
-use abeautifulsite\SimpleImage;
 use G4\Crypto\Crypt;
 use G4\Crypto\Adapter\OpenSSL;
-use Mremi\UrlShortener\Model\Link;
-use Mremi\UrlShortener\Provider\Google\GoogleProvider;
 
 class Utils
 {
@@ -18,12 +14,22 @@ class Utils
 	 */
 	public function getValidEmailAddress($seed="")
 	{
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
 		// get a random mailbox
 		$connection = new Connection();
-		$node = $connection->query("SELECT email FROM nodes_input WHERE active=1 ORDER BY RAND() LIMIT 1");
-		$name = str_replace(".", "", explode("@", $node[0]->email)[0]);
+		$node = $connection->query("
+			SELECT email FROM delivery_input
+			WHERE environment='$environment' AND active=1
+			ORDER BY RAND() LIMIT 1");
+
+		// return the default email
+		if(empty($node)) return "apretaste@gmail.com";
 
 		// add alias to the email
+		$name = $node[0]->email;
 		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
 		if(empty($seed)) $seed = $this->randomSentence(1);
 		return "$name+$seed@gmail.com";
@@ -37,15 +43,20 @@ class Utils
 	 */
 	public function getSupportEmailAddress()
 	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$support = $di->get('config')['contact']['support'];
+		// get a random support email
+		$connection = new Connection();
+		$support = $connection->query("
+			SELECT email FROM delivery_input
+			WHERE environment='support' AND active=1
+			ORDER BY RAND() LIMIT 1");
+
+		// alert if no support mailbox
+		if(empty($support)) $this->createAlert("No support email in table delivery_input", "ERROR");
+		else $support = $support[0]->email;
 
 		// add alias to the email
-		$parts = explode("@", $support);
 		$seed = $this->randomSentence(1);
-		$support = $parts[0]."+$seed@".$parts[1];
-
-		return $support;
+		return "$support+$seed@gmail.com";
 	}
 
 	/**
@@ -114,21 +125,6 @@ class Utils
 	{
 		$connection = new Connection();
 		$res = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
-		return count($res) > 0;
-	}
-
-	/**
-	 * Check if a person was invited by the same host and it is still pending
-	 *
-	 * @author salvipascual
-	 * @param String $host, Email of the person who is inviting
-	 * @param String $guest, Email of the person invited
-	 * @return Boolean, true if the invitation is pending
-	 */
-	public function checkPendingInvitation($host, $guest)
-	{
-		$connection = new Connection();
-		$res = $connection->query("SELECT id FROM invitations WHERE email_inviter='$host' AND email_invited='$guest' AND used=0");
 		return count($res) > 0;
 	}
 
@@ -310,7 +306,7 @@ class Utils
 		// optimize image
 		try
 		{
-			$img = new SimpleImage();
+			$img = new \abeautifulsite\SimpleImage();
 			$img->load($imagePath);
 			if ( ! empty($width)) $img->fit_to_width($width);
 			if ( ! empty($height)) $img->fit_to_height($height);
@@ -391,141 +387,56 @@ class Utils
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 */
-	public function deliveryStatus($to, $direction="out")
+	public function deliveryStatus($email)
 	{
-		// never block emails from the team and specially the testers
+		// check if we already have a status for the email
 		$connection = new Connection();
-		$managers = $connection->query("SELECT email FROM manage_users");
-		foreach ($managers as $manager) if($manager->email == $to) return "ok";
-
-		// variable to save the final response message
-		$msg = "";
-
-		// block people following the example email
-		if(empty($msg) && $to == "su@amigo.cu") $msg = 'hard-bounce';
-
-		// check if the email is formatted properly
-		if (empty($msg) && ! filter_var($to, FILTER_VALIDATE_EMAIL)) $msg = 'hard-bounce';
-
-		// block email from/to our customer support
-		if(empty($msg) && in_array($to, array("soporte@apretaste.com","comentarios@apretaste.com","contacto@apretaste.com","soporte@apretastes.com","comentarios@apretastes.com","contacto@apretastes.com","support@apretaste.zendesk.com" ,"support@apretaste.com","apretastesoporte@gmail.com"))) $msg = "loop";
-
-		// block address with same requested service in last hour
-		$lastreceived = $connection->query(
-			"SELECT COUNT(id) as total
-			FROM delivery_received
-			WHERE user = '$to'
-			AND TIME(timediff(CURRENT_TIMESTAMP, inserted)) <= TIME('00:30:00')");
-		if (isset($lastreceived[0]->total) && $lastreceived[0]->total > 30) $msg = 'loop';
-
-		// block intents from blacklisted emails @TODO create a table for emails blacklisted
-		if(empty($msg) && stripos($to,"bachecubano.com")!==false) $msg = 'loop';
+		$res = $connection->query("SELECT status FROM delivery_checked WHERE email='$email'");
+		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
 
 		// block no reply emails
-		if(empty($msg) && (
-			stripos($to,"not-reply")!==false ||
-			stripos($to,"notreply")!==false ||
-			stripos($to,"No_Reply")!==false ||
-			stripos($to,"Do_Not_Reply")!==false ||
-			stripos($to,"no-reply")!==false ||
-			stripos($to,"noreply")!==false ||
-			stripos($to,"no-responder")!==false ||
-			stripos($to,"noresponder")!==false)
-		) $msg = 'no-reply';
+		if(empty($status) && (
+			stripos($email,"not-reply")!==false ||
+			stripos($email,"notreply")!==false ||
+			stripos($email,"No_Reply")!==false ||
+			stripos($email,"Do_Not_Reply")!==false ||
+			stripos($email,"no-reply")!==false ||
+			stripos($email,"noreply")!==false ||
+			stripos($email,"no-responder")!==false ||
+			stripos($email,"noresponder")!==false)
+		) $status = 'no-reply';
 
-		// if the person received from Apretaste before, and he/she reaches again, unblock
-		if(empty($msg) && $direction=="in")
-		{
-			$times = $connection->query("SELECT COUNT(id) as times FROM delivery_sent WHERE `user`='$to'");
-			if($times[0]->times > 0)
-			{
-				$connection->query("DELETE FROM delivery_dropped WHERE email='$to'");
+		// block emails sending 30+ of the same request in 5 mins
+		if(empty($status)) {
+			$received = $connection->query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
+			if ($received[0]->total > 30) $status = 'loop';
+		}
+
+		// validate using external tools
+		if(empty($status)) {
+			// connect to email-validator.net
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			if($di->get('tier') == "sandbox") $code = "200";
+			else {
+				$key = $di->get('config')['emailvalidator']['key'];
+				$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
+				if( ! $r) $this->createAlert("Error connecting to emailvalidator for $email", "ERROR");
+				$code = $r->status;
 			}
+
+			// return the status based on the code
+			$status = 'unknown'; // for non-recognized codes
+			if(in_array($code, array("121","200","207","305","308","215","114"))) $status = 'ok';
+			if(in_array($code, array("118","119","313","314"))) $status = 'temporal';
+			if(in_array($code, array("413","406"))) $status = 'soft-bounce';
+			if(in_array($code, array("302","314","317","401","404","410","414","420"))) $status = 'hard-bounce';
+			if($code == "303") $status = 'spam';
+			if($code == "409") $status = 'no-reply';
 		}
-
-		// do not send any email that hardfailed before
-		if(empty($msg))
-		{
-			$hardfail = $connection->query("SELECT COUNT(email) as hardfails FROM delivery_dropped WHERE reason='hardfail' AND email='$to'");
-			if($hardfail[0]->hardfails > 0) $msg = 'hard-bounce';
-		}
-
-		// block any previouly dropped email that had already failed for 3 times
-		if(empty($msg))
-		{
-			$fail = $connection->query("SELECT count(email) as fail FROM delivery_dropped WHERE reason <> 'loop' AND reason <> 'spam' AND email='$to'");
-			if($fail[0]->fail > 3) $msg = 'failure';
-		}
-
-		// check deeper for new people. Only check deeper the outgoing emails
-		$code = "";
-		if(empty($msg) && ! $this->personExist($to) && $direction=="out")
-		{
-			// use the cache if the email was checked before
-			$cache = $connection->query("SELECT reason, code FROM delivery_checked WHERE email='$to' ORDER BY inserted DESC LIMIT 1");
-
-			// if the email hasen't been tested before or gave temporal errors
-			if(empty($cache) || $cache[0]->reason == "temporal")
-			{
-				$return = $this->deepValidateEmail($to);
-				$msg = $return[0];
-				$code = $return[1];
-			}
-			else // for emails previously tested that failed, use the cache
-			{
-				$msg = $cache[0]->reason;
-				$code = $cache[0]->code;
-			}
-		}
-
-		// return if ok
-		if (empty($msg) || $msg == "ok") return "ok";
-		else
-		{
-			$connection->query("INSERT INTO delivery_dropped(email,reason,code,description) VALUES ('$to','$msg','$code','$direction')");
-			return $msg;
-		}
-	}
-
-	/**
-	 * Validate an email to ensure we can send it to MailGun.
-	 * We pay every email validated. Please use deliveryStatus()
-	 * instead, unless you are re-validating an email previously sent.
-	 *
-	 * @author salvipascual
-	 * @param Email $email
-	 * @return Array [status, code]: ok,temporal,soft-bounce,hard-bounce,spam,no-reply,unknown
-	 */
-	public function deepValidateEmail($email)
-	{
-		// get validation key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['emailvalidator']['key'];
-
-		$code = "200"; // code for the sandbox
-		if($di->get('environment') != "sandbox")
-		{
-			// validate using email-validator.net
-			$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
-			if( ! $r) throw new Exception("Error connecting with emailvalidator for user $email at ".date());
-
-			$code = $r->status;
-		}
-
-		// return our table status based on the code
-		$reason = 'unknown'; // for non-recognized codes
-		if(in_array($code, array("121","200","207","305","308"))) $reason = 'ok';
-		if(in_array($code, array("114","118","119","313","314","215"))) $reason = 'temporal';
-		if(in_array($code, array("413","406"))) $reason = 'soft-bounce';
-		if(in_array($code, array("302","314","317","401","404","410","414","420"))) $reason = 'hard-bounce';
-		if($code == "303") $reason = 'spam';
-		if($code == "409") $reason = 'no-reply';
 
 		// save all emails tested so we dot duplicated the check
-		$connection = new Connection();
-		$connection->query("INSERT INTO delivery_checked (email,reason,code) VALUES ('$email','$reason','$code')");
-
-		return array($reason, $code);
+		$connection->query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
+		return $status;
 	}
 
 	/**
@@ -539,6 +450,23 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		return "$wwwroot/temp/";
+	}
+
+	/**
+	 * Return path to the public temp folder
+	 *
+	 * @author salvipascual
+	 * @param Enum $path root|http
+	 * @return string
+	 */
+	public function getPublicTempDir($path='root')
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')[$path];
+
+		if($path == 'root') return "$wwwroot/public/temp/";
+		elseif($path == 'http') return "$wwwroot/temp/";
+		else return false;
 	}
 
 	/**
@@ -840,60 +768,6 @@ class Utils
 	}
 
 	/**
-	 * Get differents statistics
-	 *
-	 * @author kuma
-	 * @param string $stat_name
-	 * @param array $params
-	 * @return mixed
-	 */
-	public function getStat($statName = 'person.count', $params = array())
-	{
-		$sql = '';
-		$connection = new Connection();
-
-		// prepare query templates...
-		$sqls = array(
-			'person.count' => "SELECT count(email) as c FROM person;",
-			'person.credit.max' => "SELECT max(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.min' => "SELECT min(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%' AND credit > 0;",
-			'person.credit.avg' => "SELECT avg(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.sum' => "SELECT sum(credit) as c from person where email <> 'salvi.pascual@gmail.com' AND email not like '%@apretaste.com' and email not like 'apretaste@%';",
-			'person.credit.count' => "SELECT count(email) as c FROM person where credit > 0;",
-			'market.sells.monthly' => "SELECT count(subq.id) total, sum(credits) as pays, year(inserted_date) as y, month(inserted_date) as m from (select *, (select credits from _tienda_products where _tienda_orders.product = _tienda_products.code) as credits from _tienda_orders) as subq where datediff(current_timestamp,inserted_date) <= 365 group by y,m order by y,m;",
-			'utilization.count' => "SELECT count(usage_id) FROM utilization;",
-			'market.sells.byproduct.last30days' => "SELECT _tienda_products.name as name, count(_tienda_orders.id) as total FROM _tienda_orders INNER JOIN _tienda_products ON _tienda_products.code = _tienda_orders.product WHERE datediff(CURRENT_TIMESTAMP, _tienda_orders.inserted_date) <= 30 GROUP by name;"
-		);
-
-		if (!isset($sqls[$statName]))
-			throw new Exception('Unknown stat '.$statName);
-
-		$sql = $sqls[$statName];
-
-		// replace params
-		foreach ($params as $param => $value)
-			$sql = str_replace($param, $value, $sql);
-
-		// querying db ...
-		$r = $connection->query($sql);
-
-		if (!is_array($r))
-			return null;
-
-		// try return atomic result
-		if (count($r) === 1)
-			if (isset($r[0]))
-			{
-				$x = get_object_vars($r[0]);
-				if (count($x) === 1)
-					return array_pop($x);
-			}
-
-		// else return the entire array
-		return $r;
-	}
-
-	/**
 	 * Encript a message using the user's public key.
 	 *
 	 * @author salvipascual
@@ -934,6 +808,26 @@ class Utils
 
 		// decript message
 		return $crypto->decode($text);
+	}
+
+	/**
+	 * Get a person's Nauta password
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @return String | false
+	 */
+	public function getNautaPassword($email)
+	{
+		// check if we have the nauta pass for the user
+		$connection = new Connection();
+		$pass = $connection->query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
+
+		// return false if the password do not exist
+		if(empty($pass)) return false;
+
+		// else decript and return the password
+		return $this->decrypt($pass[0]->pass);
 	}
 
 	/**
@@ -1010,73 +904,6 @@ class Utils
 	}
 
 	/**
-	 * Return data of raffle's stars
-	 *
-	 * @author kuma
-	 * @param $email string
-	 * @param $from_today boolean
-	 * @return integer
-	 */
-	public function getRaffleStarsOf($email, $from_today = true)
-	{
-		$connection = new Connection();
-		$stars = 0;
-
-		// last win
-		$sql = "SELECT coalesce(datediff(current_date, max(event_date)), -1) as dt FROM events WHERE origin = 'stars-game' AND event_type = 'win-credit' AND email = '$email';";
-		$r = $connection->query($sql);
-		$dt = $r[0]->dt * 1;
-
-		if ($dt == -1 || $dt > 5) $dt = 9999; // never win or long time ago
-
-		// last usages
-		$first = true;
-		$sql = "";
-		for ($d = 0; $d < 5; $d++)
-		{
-			if ($from_today === true || ($from_today === false && $d > 0)) // ignoring utilization of today or not
-			{
-				$sql .= ($first?"":" UNION ")."select current_date - $d, (select count(usage_id) from utilization WHERE requestor = '{$email}' AND service <> 'rememberme' and date(request_time) = current_date - $d) as uses";
-				$first = false;
-			}
-		}
-		$last_usage = $connection->query($sql);
-
-		// count stars
-		$d = $from_today ? 0 : 1;
-		foreach ($last_usage as $lu)
-		{
-			// if use current day and not win...
-			if ($lu->uses * 1 > 0 && $d < $dt) $stars++;
-			else
-				break; // not daily used
-			$d++;
-		}
-
-		return $stars;
-	}
-
-	/**
-	 * Get number of requests received from user today
-	 *
-	 * @author kuma
-	 * @param $email
-	 * @return mixed
-	 */
-	public function getTotalRequestsTodayOf($email)
-	{
-		$sql = "SELECT count(usage_id) as total FROM utilization
-				WHERE date(request_time) = current_date
-				and requestor = '$email'
-				and service <> 'rememberme';";
-
-		$connection = new Connection();
-		$r = $connection->query($sql);
-
-		return $r[0]->total * 1;
-	}
-
-	/**
 	 * Parsing all line images encoded as base64
 	 *
 	 * @param string $html
@@ -1129,8 +956,8 @@ class Utils
 	 * Put images as encoded as base64 to html
 	 *
 	 * @param string $html
-     * @param array $imageList
-     * @param string $prefix
+	 * @param array $imageList
+	 * @param string $prefix
 	 * @return array
 	 */
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
@@ -1190,14 +1017,6 @@ class Utils
 			}
 			rmdir($path);
 		}
-	}
-
-	public function addEvent($origin, $type, $email, $data)
-	{
-		$strData = serialize($data);
-		$sql = "INSERT INTO events (origin, event_type, email, event_data) VALUES ('$origin', '$type', '$email', '$strData');";
-		$connection = new Connection();
-		$connection->query($sql);
 	}
 
 	/**
@@ -1260,32 +1079,29 @@ class Utils
 	 * @param String $text
 	 * @param Enum $type: NOTICE,WARNING,ERROR
 	 */
-	public function createAlert($text, $type="NOTICE")
+	public function createAlert($text, $severity="NOTICE")
 	{
-		// get the group from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$to = $di->get('config')['global']['alerts'];
-
-		// get the details of the alert
-		$date = date('l jS \of F Y h:i:s A');
-		$subject = "$type: $text";
-		$body = "SEVERITY: $type<br/>TEXT: $text<br/>DATE: $date";
-
 		// save alert into the database
 		$connection = new Connection();
-		$text = str_replace("'", "", $text);
-		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$type','$text')");
+		$text = $connection->escape($text);
+		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
 
 		// send the alert to the error log
+		$subject = "$severity: $text";
 		error_log($subject);
 
-		// send email alert to the alerts group in case of errors
-		if($text == "ERROR")
+		// get the tier from the configs file
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$tier = $di->get('config')['global']['tier'];
+
+		// if the email is an error
+		if($severity == "ERROR" && $tier == "production")
 		{
+			// send the alert by email
 			$email = new Email();
-			$email->to = $to;
-			$email->subject = $subject;
-			$email->body = $body;
+			$email->to = $di->get('config')['global']['alerts'];
+			$email->subject = substr($subject, 0, 80);
+			$email->body = "<b>SEVERITY:</b> $severity<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
@@ -1311,31 +1127,6 @@ class Utils
 		$text = str_replace("¿", "&iquest;", $text);
 
 		return $text;
-	}
-
-	/**
-	 * Shorten an URL and return the new short URL
-	 *
-	 * @author salvipascual
-	 * @param String $url
-	 * @return String or false if error
-	 */
-	public function shortenUrl($url)
-	{
-		// get the Google API key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$key = $di->get('config')['google']['key'];
-
-		try{
-			$link = new Link;
-			$link->setLongUrl($url);
-			$googleProvider = new GoogleProvider($key, array('connect_timeout'=>1, 'timeout'=>1));
-			$shortenUrl = $googleProvider->shorten($link);
-			return $link->getShortUrl();
-		}catch (Exception $e){
-			$this->createAlert("ERORR SHORTENING $url, ERROR:" . $e->getMessage(), "ERROR");
-			return false;
-		}
 	}
 
 	/**
@@ -1400,31 +1191,42 @@ class Utils
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
 		$service = new $serviceName();
 		$service->serviceName = $serviceName;
-		$service->serviceDescription = $result[0]->description;
-		$service->creatorEmail = $result[0]->creator_email;
-		$service->serviceCategory = $result[0]->category;
-		$service->serviceUsage = $result[0]->usage_text;
-		$service->insertionDate = $result[0]->insertion_date;
-		$service->pathToService = $pathToService;
-		$service->showAds = $result[0]->ads == 1;
-		$service->utils = $this;
-		$service->request = $request;
-		$service->group = $result[0]->group;
 
-		// run the service and get the Response
-		if(empty($subServiceName)) $response = $service->_main($request);
-		else{
-			$subserviceFunction = "_$subServiceName";
-			$response = $service->$subserviceFunction($request);
+		if (isset($result[0]))
+		{
+			$service->serviceDescription = $result[0]->description;
+			$service->creatorEmail = $result[0]->creator_email;
+			$service->serviceCategory = $result[0]->category;
+			$service->serviceUsage = $result[0]->usage_text;
+			$service->insertionDate = $result[0]->insertion_date;
+			$service->showAds = $result[0]->ads == 1;
+		} else {
+			$service->serviceDescription = '';
+			$service->creatorEmail = 'soporte@apretaste.com';
+			$service->serviceCategory = 'service';
+			$service->serviceUsage = '';
+			$service->insertionDate = date('Y-m-d');
+			$service->showAds = true;
 		}
 
-		// make the responses to be always an array
-		$responses = is_array($response) ? $response : array($response);
+		$service->pathToService = $pathToService;
+		$service->utils = $this;
+		$service->request = $request;
+
+		// run the service and get the Response
+		$subserviceFunction = "_$subServiceName";
+
+		if(empty($subServiceName) || ! method_exists($service, $subserviceFunction) ) $response = $service->_main($request);
+		else $response = $service->$subserviceFunction($request);
+
+		// get only the first response
+		// @TODO remove when services send only one response
+		if(is_array($response)) $response = $response[0];
 
 		// create and return the response
 		$return = new stdClass();
 		$return->service = $service;
-		$return->responses = $responses;
+		$return->response = $response;
 		return $return;
 	}
 
@@ -1442,5 +1244,128 @@ class Utils
 		$text = str_ireplace('update ', '', $text);
 		$text = str_ireplace('drop ', '', $text);
 		return $text;
+	}
+
+	/**
+	 * Get external data for the app
+	 *
+	 * @author salvipascual
+	 * @param String $email
+	 * @param String $timestamp
+	 * @return Array(Object, Attachments)
+	 */
+	public function getExternalAppData($email, $timestamp)
+	{
+		// get the last update date
+		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
+		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
+
+		// variable to store attach images
+		$attachments = array();
+
+		// get the person
+		$connection = new Connection();
+		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
+
+		// create the response
+		$res = new stdClass();
+		$res->timestamp = time();
+		$res->username = $person[0]->username;
+		$res->credit = number_format($person[0]->credit, 2, '.', '');
+
+		// get the list of mailboxes
+		$connection = new Connection();
+		$inboxes = $connection->query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
+
+		// add the response mailbox
+		$max90Percent = intval((count($inboxes)-1) * 0.9);
+		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
+		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
+		$res->mailbox = "$inbox+{$person[0]->username}@gmail.com";
+
+		// check if there is any change in the profile
+		$res->profile = new stdClass();
+		if($lastUpdateTime < strtotime($person[0]->last_update_date))
+		{
+			// get the full profile
+			$social = new Social();
+			$person = $social->prepareUserProfile($person[0]);
+
+			// add user profile to the response
+			$res->profile->full_name = $person->full_name;
+			$res->profile->date_of_birth = $person->date_of_birth;
+			$res->profile->gender = $person->gender;
+			$res->profile->phone = empty($person->cellphone) ? $person->phone : $person->cellphone;
+			$res->profile->eyes = $person->eyes;
+			$res->profile->skin = $person->skin;
+			$res->profile->body_type = $person->body_type;
+			$res->profile->hair = $person->hair;
+			$res->profile->province = $person->province;
+			$res->profile->city = $person->city;
+			$res->profile->highest_school_level = $person->highest_school_level;
+			$res->profile->occupation = $person->occupation;
+			$res->profile->marital_status = $person->marital_status;
+			$res->profile->interests = $person->interests;
+			$res->profile->sexual_orientation = $person->sexual_orientation;
+			$res->profile->religion = $person->religion;
+			$res->profile->picture = basename($person->picture_internal);
+
+			// attach user picture if exist
+			if($person->picture_internal) $attachments[] = $person->picture_internal;
+		}
+
+		// get unread notifications
+		$res->notifications = $connection->query("
+			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
+			FROM notifications
+			WHERE email='$email' AND viewed = 0
+			ORDER BY inserted_date DESC");
+
+		// mark notifications as read
+		if($res->notifications) $connection->query("
+			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
+			WHERE email='$email' AND viewed = 0");
+
+		// get list of active services
+		$res->active = array();
+		$active = $connection->query("SELECT name FROM service WHERE listed=1");
+		foreach ($active as $a) $res->active[] = $a->name;
+
+		// get access to the configuration
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+
+		// get all services since last update
+		$services = $connection->query("
+			SELECT name, description, category, creator_email, insertion_date
+			FROM service
+			WHERE listed=1 AND insertion_date > '$lastUpdateDate'");
+
+		// add services to the response
+		$res->services = array();
+		foreach ($services as $s) {
+			// attach user picture if exist
+			$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
+			if(file_exists($icon)) $attachments[] = $icon;
+			else $icon = "";
+
+			$service = new stdClass();
+			$service->name = $s->name;
+			$service->description = $s->description;
+			$service->category = $s->category;
+			$service->creator = $s->creator_email;
+			$service->updated = $s->insertion_date;
+			$service->icon = basename($icon);
+			$res->services[] = $service;
+		}
+
+		// get the latest versin from the config
+		$appversion = $di->get('config')['global']['appversion'];
+		$res->latest = "$appversion";
+
+		// convert to JSON and return array
+		return array(
+			"attachments" => $attachments,
+			"json" => json_encode($res));
 	}
 }

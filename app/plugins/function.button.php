@@ -68,26 +68,28 @@ function smarty_function_button($params, $template)
 			break;
 	}
 
-	// create different type of links depending the environment
+	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if($di->get('environment') == "sandbox")
+	if(in_array($di->get('environment'), array("app", "web")))
 	{
-		$wwwhttp = $di->get('path')['http'];
-		$linkto = "$wwwhttp/run/display?subject=$href";
-	}
-	elseif($di->get('environment') == "app")
-	{
+		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
+		if($type != "input") $popup = "'$type'"; // set the type of popup
 		if($popup == "false") $desc = "";
+
 		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\"";
 		$linkto = "#!";
 	}
+	// create link for the email system
 	else
 	{
+		$utils = new Utils();
+		$apEmail = $utils->getValidEmailAddress();
+
 		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
-		$linkto = "mailto:{APRETASTE_EMAIL}?subject=$href&amp;body=$desc";
+		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
 	// create and return button

@@ -1,0 +1,108 @@
+<div class="row">
+	<div class="col-xs-5">
+		<!-- PROFILE VS NO PROFILE -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Profile vs no profile</div>
+			<div class="panel-body">
+				<div id="chart_pie_profiles" style="width:100%;"></div>
+			</div>
+		</div>
+
+		<!-- UPDATED PROFILES -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Updated Profiles</div>
+			<div class="panel-body">
+				<div id="updatedProfiles" style="width:100%;"></div>
+			</div>
+		</div>
+
+		<!-- PROFILE COMPLETION -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Profile completion</div>
+			<div class="panel-body">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Caption</th>
+							<th class="text-center">Number</th>
+							<th class="text-center">Percent</th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ($profilesData as $data) { ?>
+						<tr>
+							<td><?php echo $data['caption']; ?></td>
+							<td class="text-center"><?php echo $data['number']; ?></td>
+							<td class="text-center"><?php echo $data['percent']; ?>%</td>
+						</tr>
+					<?php } ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<!-- PROFILES PER PROVINCE -->
+	<div class="col-xs-7">
+		<div class="panel panel-default">
+			<div class="panel-heading">Profiles per province</div>
+			<div class="panel-body">
+				<div id="chart_map_profiles" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- JS TO LOAD CHARTS -->
+
+
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+	// PROFILE VS NO PROFILE
+	google.load("visualization", "1", {packages:["corechart"]});
+	google.setOnLoadCallback(drawChart);
+	function drawChart() {
+		var data = google.visualization.arrayToDataTable([
+			['Caption', 'Number'],
+			['Users with profile', <?php echo $usersWithProfile; ?>],
+			['Users without profile', <?php echo $usersWithoutProfile; ?>]
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_profiles'));
+		chart.draw(data, options);
+	}
+
+	// PROFILE COMPLETION
+	google.load('visualization', '1', {'packages': ['geochart']});
+	google.setOnLoadCallback(drawRegionsMap);
+	function drawRegionsMap() {
+		var data = google.visualization.arrayToDataTable([
+			['Province', 'Profiles'],
+			<?php foreach ($profilesPerProvince as $provinces) { ?>
+				['<?php echo $provinces['region']; ?>',<?php echo $provinces['profiles']; ?>],
+			<?php } ?>
+		]);
+		var options = {
+			region: 'CU',
+			resolution: 'provinces',
+			displayMode: 'regions'
+		};
+		var chart = new google.visualization.GeoChart(document.getElementById('chart_map_profiles'));
+		chart.draw(data, options);
+	}
+
+	// Updated Profiles
+	google.setOnLoadCallback(updatedProfiles);
+	function updatedProfiles() {
+		var data = google.visualization.arrayToDataTable([
+			['Year and Month', 'Number of Profiles Updated'],
+			<?php foreach ($updatedProfilesMonthly as $data) { ?>
+				['<?php echo $data['date']; ?>',<?php echo $data['profiles']; ?>],
+			<?php } ?>
+		]);
+		var options = {legend: 'none', orientation: 'horizontal'};
+		var chart = new google.visualization.BarChart(document.getElementById('updatedProfiles'));
+		chart.draw(data, options);
+	}
+</script>

@@ -1,12 +1,4 @@
 <div class="row">
-	<div class="col-xs-12 text-right">
-		<a class="btn btn-small btn-default" data-toggle="modal" data-target="#newTicket"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Ticket</a>
-		<a class="btn btn-small btn-default" data-toggle="modal" data-target="#searchTickets"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Search</a>
-		<a class="btn btn-small btn-default" href="/support/cans">Can Responses</a>
-		<a class="btn btn-small btn-default" href="/support/reports">Reports</a>
-		<br/><br/>
-	</div>
-
 	<div class="col-xs-12">
 		<table class="table">
 			<thead>
@@ -25,7 +17,7 @@
 					<td class="text-center"><a href="/support/view?email=<?=$ticketEmail?>"><?=$ticketEmail?></a></td>
 					<td class="text-center"><?=$ticket->subject?></td>
 					<td class="text-center"><span class="badge <?=$badgeColor?>"><?=$ticket->status?></span></td>
-					<td class="text-center"><nobr><?=date("m/d h:i A", strtotime($ticket->creation_date))?></nobr></td>
+					<td class="text-center nobr"><?=date("m/d h:i A", strtotime($ticket->creation_date))?></td>
 				</tr>
 			<?php } ?>
 			</tbody>
@@ -33,7 +25,10 @@
 	</div>
 </div>
 
-<!-- Modal to search -->
+
+<!-- MODALS -->
+
+
 <div id="searchTickets" class="modal fade" role="dialog">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -55,7 +50,6 @@
 	</div>
 </div>
 
-<!-- Modal to add/edit a can response -->
 <div id="newTicket" class="modal fade" role="dialog">
 	<form action="/support/saveTicketSubmit" method="POST">
 		<div class="modal-dialog">

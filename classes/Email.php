@@ -12,12 +12,7 @@ class Email
 	public $replyId; // id to reply
 	public $attachments = array(); // array of paths
 	public $images = array(); // array of paths
-	public $group = 'apretaste';
-	public $status = "new"; // new, sent, bounced
-	public $message;
-	public $tries = 0;
-	public $app = false; // if sending to email or app
-	public $created; // date
+	public $method;
 	public $sent; // date
 
 	/**
@@ -27,71 +22,34 @@ class Email
 	 */
 	public function send()
 	{
-		// validate email before sending
-		$utils = new Utils();
-		$status = $utils->deliveryStatus($this->to);
-		if($status != 'ok') {
-			$output = new stdClass();
-			$output->code = "500";
-			$output->message = "Email failed with status: $status";
-			return $output;
-		}
-
 		// check if the email is from Nauta or Cuba
-		$isNauta = substr($this->to, -9) === "@nauta.cu";
 		$isCuba = substr($this->to, -3) === ".cu";
+		$isNauta = substr($this->to, -9) === "@nauta.cu";
 
 		// respond via Amazon to people outside Cuba
-		if( ! $isCuba)
-		{
-			$res = $this->sendEmailViaAmazon();
-		}
-		// if traying to download the app
-		elseif($this->group == 'download')
-		{
-			$res = $this->sendEmailViaMailgun();
-		}
-		// if responding to the Support
-		elseif($this->group == 'support')
-		{
-			$res = $this->sendEmailViaNode();
-		}
-		// for all Nauta emails (via app or email)
-		elseif($isNauta)
-		{
-			if( ! $this->app) $this->setContentRandom();
+		if( ! $isCuba) $res = $this->sendEmailViaAmazon();
+		// if is Nauta and we have the user's password
+		elseif($isNauta) {
 			$res = $this->sendEmailViaWebmail();
-			if($res->code != "200") $res = $this->sendEmailViaNode();
+			if($res->code != "200") $res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
-		else
-		{
-			$res = $this->sendEmailViaAlias();
-		}
-
-		// update the object
-		$this->tries++;
-		$this->message = str_replace("'", "", $res->message); // single quotes break the SQL
-		$this->status = $res->code == "200" ? "sent" : "error";
-		if($res->code == "200") $this->sent = date("Y-m-d H:i:s");
+		else $res = $this->sendEmailViaAlias();
 
 		// update the database with the email sent
+		$res->message = str_replace("'", "", $res->message); // single quotes break the SQL
 		$connection = new Connection();
-		$sentDate = $res->code == "200" ? "sent=CURRENT_TIMESTAMP," : "";
-		$connection->query("UPDATE delivery_received SET $sentDate status='{$this->status}', message='{$this->message}', tries=tries+1 WHERE id='{$this->id}'");
+		$connection->query("
+			UPDATE delivery SET
+			delivery_code='{$res->code}',
+			delivery_message='{$res->message}',
+			delivery_method='{$this->method}',
+			delivery_date = CURRENT_TIMESTAMP
+			WHERE id='{$this->id}'");
 
-		// save a trace that the email was sent
-		if($res->code == "200")
-		{
-			$subject = str_replace("'", "", $this->subject);
-			$attachments = count($this->attachments);
-			$images = count($this->images);
-			$connection->query("INSERT INTO delivery_sent (mailbox, user, subject, images, attachments, `group`, origin) VALUES ('{$this->from}','{$this->to}','$subject','$images','$attachments','{$this->group}','{$this->id}')");
-		}
-		// save a trace that the email failed and alert
-		else
-		{
-			$connection->query("INSERT INTO delivery_dropped (email,sender,reason,`code`,description) VALUES ('{$this->to}','{$this->from}','failed','{$res->code}','{$this->message}')");
+		// create an alert if the email failed
+		if($res->code != "200" && $res->code != "515") {
+			$utils = new Utils();
 			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
 		}
 
@@ -100,7 +58,7 @@ class Email
 	}
 
 	/**
-	 * Overload of the send () function for backward compatibility
+	 * Overload of the function send() for backward compatibility
 	 *
 	 * @author salvipascual
 	 * @param String $to, email address of the receiver
@@ -120,6 +78,33 @@ class Email
 	}
 
 	/**
+	 * Load a template and send it as email
+	 *
+	 * @author salvipascual
+	 * @param String $template, path to the template
+	 * @param Array $params, variables for the template
+	 * @param String $layout, path to the layout
+	 */
+	public function sendFromTemplate($template, $params=[], $layout="email_empty.tpl")
+	{
+		// create the response object
+		$response = new Response();
+		$response->email = $this->to;
+		$response->setResponseSubject($this->subject);
+		$response->setEmailLayout($layout);
+		$response->createFromTemplate($template, $params);
+		$response->internal = true;
+
+		// get the body from the template
+		$render = new Render();
+		$html = $render->renderHTML(new Service(), $response);
+
+		// send the email
+		$this->body = $html;
+		return $this->send();
+	}
+
+	/**
 	 * Sends an email using Amazon SES
 	 *
 	 * @author salvipascual
@@ -135,10 +120,9 @@ class Email
 		$port = '465';
 		$security = 'ssl';
 
-		// select the from part if empty
-		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
-
 		// send the email using smtp
+		if(empty($this->method)) $this->method = "amazon";
+		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
 		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
@@ -165,164 +149,48 @@ class Email
 		}
 
 		// send the email using Amazon
+		$this->method = "alias";
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
 	}
 
 	/**
-	 * Sends an email using Gmail
+	 * Sends an email using Gmail by an external node
 	 *
 	 * @author salvipascual
 	 * @return {"code", "message"}
 	 */
 	public function sendEmailViaGmail()
 	{
+		$this->method = "gmail";
+
 		// every new day set the daily counter back to zero
 		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		$connection->query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 
-		// get the node of the from address
-		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output WHERE email = '{$this->from}'");
-			if(isset($node[0])) $node = $node[0];
-		}
-		// if no from is passed, calculate
-		else {
-			// get the list of available nodes to use
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output
-				WHERE active = '1'
-				AND `limit` > daily
-				AND `group` LIKE '%{$this->group}%'
-				AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)");
+		// get an available gmail account randomly
+		$gmail = $connection->query("
+			SELECT * FROM delivery_gmail
+			WHERE active = 1
+			AND `limit` > daily
+			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)
+			ORDER BY RAND() LIMIT 1");
 
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			if($node) $this->from = $node->email;
-		}
-
-		// alert the team if no email can be used
-		if(empty($node)) {
+		// error if no account can be used
+		if(empty($gmail)) {
 			$output = new stdClass();
 			$output->code = "515";
-			$output->message = "No active email to reach {$this->to}";
-
-			$utils = new Utils();
-			$utils->createAlert($output->message, "ERROR");
+			$output->message = "NODE: No active account to send to {$this->to}";
 			return $output;
-		}
-
-		// send the email using smtp
-		$output = $this->smtp($node->host, $node->user, $node->pass, '', 'ssl');
-
-		// update delivery time if OK
-		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
-		// insert in drops emails and add 24h of waiting time
-		}else{
-			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
-			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
-		}
-
-		return $output;
-	}
-
-	/**
-	 * Sends an email using Mailgun
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaMailgun()
-	{
-		// get the from address
-		$utils = new Utils();
-		$this->from = $utils->randomSentence(1) . "@kekistan.es";
-
-		// get the Mailgun params
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$pass = $di->get('config')['mailgun']['pass'];
-
-		// send the email using smtp
-		$host = "smtp.mailgun.org";
-		$user = "postmaster@kekistan.es";
-		$output = $this->smtp($host, $user, $pass, '465', 'ssl');
-		return $output;
-	}
-
-	/**
-	 * Sends an email using our of our external nodes
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaNode()
-	{
-		// every new day set the daily counter back to zero
-		$connection = new Connection();
-		$connection->query("UPDATE nodes_output SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
-
-		// get the node of the from address
-		if($this->from) {
-			$node = $connection->query("SELECT * FROM nodes_output A JOIN nodes B ON A.node = B.key WHERE A.email = '{$this->from}'");
-			if(isset($node[0])) $node = $node[0];
-		}
-		// if no from is passed, calculate
-		else {
-			// get the list of available nodes to use
-			$nodes = $connection->query("
-				SELECT * FROM nodes_output A JOIN nodes B
-				ON A.node = B.`key`
-				WHERE A.active = '1'
-				AND `group` LIKE '%{$this->group}%'
-				AND A.`limit` > A.daily
-				AND (A.blocked_until IS NULL OR CURRENT_TIMESTAMP >= A.blocked_until)");
-
-			// get your personal email
-			$percent = 0; $node = false;
-			$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-			foreach ($nodes as $n) {
-				$temp = str_replace(array(".","+"), "", explode("@", $n->email)[0]);
-				similar_text ($temp, $user, $p);
-				if($p > $percent) {
-					$percent = $p;
-					$node = $n;
-				}
-			}
-
-			// save the from part in the object
-			if($node) $this->from = $node->email;
-		}
-
-		// alert the team if no Node could be used
-		$utils = new Utils();
-		if(empty($node)) {
-			$output = new stdClass();
-			$output->code = "515";
-			$output->message = "NODE: No active node to email {$this->to}";
-			$utils->createAlert($output->message, "ERROR");
-			return $output;
-		}
+		} $gmail = $gmail[0];
 
 		// transform images to base64
 		$imagesToUpload = array();
-		foreach ($this->images as $image) {
+		if(is_array($this->images)) foreach ($this->images as $image) {
 			$item = new stdClass();
-			$item->type = mime_content_type($image);
+			$item->type = file_exists($image) ? mime_content_type($image) : '';
 			$item->name = basename($image);
-			$item->content = base64_encode(file_get_contents($image));
+			$item->content = file_exists($image) ? base64_encode(file_get_contents($image)) : '';
 			$imagesToUpload[] = $item;
 		}
 
@@ -330,18 +198,18 @@ class Email
 		$attachmentsToUpload = array();
 		foreach ($this->attachments as $attachment) {
 			$item = new stdClass();
-			$item->type = mime_content_type($attachment);
+			$item->type = file_exists($attachment) ? mime_content_type($attachment) : '';
 			$item->name = basename($attachment);
-			$item->content = base64_encode(file_get_contents($attachment));
+			$item->content = file_exists($attachment) ? base64_encode(file_get_contents($attachment)) : '';
 			$attachmentsToUpload[] = $item;
 		}
 
 		// create the email array request
-		$params['key'] = $node->key;
-		$params['from'] = $node->email;
-		$params['host'] = $node->host;
-		$params['user'] = $node->user;
-		$params['pass'] = $node->pass;
+		$params['key'] = $gmail->node_key;
+		$params['from'] = $gmail->email;
+		$params['host'] = "smtp.gmail.com";
+		$params['user'] = $gmail->email;
+		$params['pass'] = $gmail->password;
 		$params['id'] = $this->id;
 		$params['messageid'] = $this->replyId;
 		$params['to'] = $this->to;
@@ -352,7 +220,7 @@ class Email
 
 		// contact the Sender to send the email
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$node->ip}/send.php");
+		curl_setopt($ch, CURLOPT_URL, "{$gmail->node_ip}/send.php");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -363,18 +231,19 @@ class Email
 		if(empty($output)) {
 			$output = new stdClass();
 			$output->code = "504";
-			$output->message = "Error reaching {$node->name} to email {$this->to} with ID {$this->id}";
+			$output->message = "Error reaching Node to email {$this->to} with ID {$this->id}";
 		}
 
 		// update delivery time if OK
 		if($output->code == "200") {
-			$connection->query("UPDATE nodes_output SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
 		// insert in drops emails and add 24h of waiting time
 		}else{
 			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE nodes_output SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$node->email}'");
+			$connection->query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
 		}
+
 		return $output;
 	}
 
@@ -386,21 +255,17 @@ class Email
 	 */
 	public function sendEmailViaWebmail()
 	{
-		// check if we have the nauta pass for the user
-		$connection = new Connection();
-		$pass = $connection->query("SELECT pass FROM authentication WHERE email = '$this->to' AND appname = 'apretaste'");
+		$this->method = "hillary";
 
-		// if the password do not exist in our database, return false
-		if(empty($pass)) {
+		// get the user's Nauta password
+		$utils = new Utils();
+		$pass = $utils->getNautaPassword($this->to);
+		if( ! $pass) {
 			$output = new stdClass();
 			$output->code = "300";
 			$output->message = "No password for {$this->to}";
 			return $output;
 		}
-
-		// decript password
-		$utils = new Utils();
-		$pass = $utils->decrypt($pass[0]->pass);
 
 		// connect to the client
 		$user = explode("@", $this->to)[0];
@@ -410,18 +275,10 @@ class Email
 		if ($client->login())
 		{
 			// prepare the attachment
-			$attach = false;
-			if($this->attachments){
-				$attach = array(
-					"contentType" => mime_content_type($this->attachments[0]),
-					"content" => file_get_contents($this->attachments[0]),
-					"fileName" => basename($this->attachments[0])
-				);
-			}
+			$attach = empty($this->attachments) ? false : $this->attachments[0];
 
 			// send email and logout
-			$client->sendEmail($this->to, $this->subject, $this->body, $attach);
-			$client->logout();
+			$client->send($this->to, $this->subject, $this->body, $attach);
 
 			// create response
 			$output = new stdClass();
@@ -429,13 +286,82 @@ class Email
 			$output->message = "Sent to {$this->to}";
 			return $output;
 		}
-		// if the client cannot login, send via Node
+		// if the client cannot login show error
 		else
 		{
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
 			return $output;
+		}
+	}
+
+	/**
+	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
+	 *
+	 * @author salvipascual
+	 */
+	public function setContentAsZipAttachment()
+	{
+		// get a random name for the file and folder
+		$utils = new Utils();
+		$zipFile = $utils->getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+		$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
+
+		// create the zip file
+		$zip = new ZipArchive;
+		$zip->open($zipFile, ZipArchive::CREATE);
+		$zip->addFromString($htmlFile, $this->body);
+
+		// all files and attachments
+		if (is_array($this->images)) foreach ($this->images as $i) $zip->addFile($i, basename($i));
+		if (is_array($this->attachments)) foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
+
+		// close the zip file
+		$zip->close();
+
+		// add to the attachments and clean the body
+		$this->attachments = array($zipFile);
+		$this->body = "";
+	}
+
+	/**
+	 * Adjust the quality of the images on the email body
+	 *
+	 * @author salvipascual
+	 */
+	public function setImageQuality()
+	{
+		// get the image quality
+		$connection = new Connection();
+		$quality = $connection->query("SELECT img_quality FROM person WHERE email='{$this->to}'");
+		if(empty($quality)) $quality = "ORIGINAL";
+		else $quality = $quality[0]->img_quality;
+
+		// get rid of images
+		if($quality == "SIN_IMAGEN")
+		{
+			$this->images = array();
+		}
+
+		// create thumbnails for images
+		if($quality == "REDUCIDA")
+		{
+			$utils = new Utils();
+			$images = array();
+			if(is_array($this->images)) foreach ($this->images as $file)
+			{
+				// thumbnail the image or use thumbnail cache
+				$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+				if( ! file_exists($thumbnail)) {
+					copy($file, $thumbnail);
+					$utils->optimizeImage($thumbnail, 100);
+				}
+
+				// use the image only if it can be compressed
+				$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+			}
+			$this->images = $images;
 		}
 	}
 
@@ -495,103 +421,11 @@ class Email
 			$output->code = "500";
 			$output->message = $e->getMessage();
 
+			// log error with SMTP
 			$utils = new Utils();
 			$utils->createAlert($e->getMessage(), "ERROR");
 		}
 
 		return $output;
-	}
-
-	/**
-	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
-	 *
-	 * @author salvipascual
-	 */
-	public function setContentAsZipAttachment()
-	{
-		// get a random name for the file and folder
-		$utils = new Utils();
-		$zipFile = $utils->getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
-		$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
-
-		// create the zip file
-		$zip = new ZipArchive;
-		$zip->open($zipFile, ZipArchive::CREATE);
-		$zip->addFromString($htmlFile, $this->body);
-		foreach ($this->images as $i) $zip->addFile($i, basename($i));
-		foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
-		$zip->close();
-
-		// add to the attachments and clean the body
-		$this->attachments = array($zipFile);
-		$this->body = "";
-	}
-
-	/**
-	 * Configures the contents to be sent as a PDF attached to the body
-	 *
-	 * @author salvipascual
-	 */
-	public function setContentAsPdfAttachment()
-	{
-		// get path to the root folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwRoot = $di->get('path')['root'];
-
-		// create a new path to save the pdf
-		$utils = new Utils();
-		$tmpFile = "$wwwRoot/temp/" . $utils->generateRandomHash() . ".pdf";
-
-		// download the website as pdf
-		$mpdf = new mPDF();
-		$mpdf->WriteHTML($this->body);
-		$mpdf->Output($tmpFile, 'F');
-
-		// create the body part and attachments
-		$this->body = "";
-		$this->attachments[] = $tmpFile;
-	}
-
-	/**
-	 * Randomize the subject and body of an email
-	 *
-	 * @author salvipascual
-	 */
-	public function setContentRandom()
-	{
-		// replace accents in the body by unicode chars
-		$utils = new Utils();
-		$this->body = $utils->removeTildes($this->body);
-
-		// get the synonyms dictionary
-		$connection = new Connection();
-		$synonyms = $connection->query("SELECT * FROM synonyms");
-
-		// get the service aliases
-		$aliases = $connection->query("SELECT service as word, GROUP_CONCAT(alias) as synonyms FROM service_alias GROUP BY service");
-		$synonyms = array_merge($synonyms, $aliases);
-
-		// replace words in the body
-		foreach ($synonyms as $key) {
-			// get word and synonyms
-			$regexp = "/\b{$key->word}\b/ui";
-			$values = explode(",", $key->synonyms);
-			$replacement = $values[rand(0, count($values)-1)];
-
-			// do not replace the word 2/10 of the time
-			if(rand(1, 10) <= 2) continue;
-
-			// replace in the body
-			$this->body = preg_replace($regexp, $replacement, $this->body);
-		}
-
-		// make the subject random as well
-		$this->subject = $utils->randomSentence();
-
-		// randomize the word Apretaste
-		$apretaste = substr_replace("Apretaste", ".", rand(1,8), 0); // insert random dot
-		$apretaste = substr_replace($apretaste, ".", rand(1,9), 0); // insert random dot
-		$apretaste = substr_replace($apretaste, ".", rand(1,10), 0); // insert random dot
-		$this->body = str_ireplace("Apretaste", $apretaste, $this->body);
 	}
 }

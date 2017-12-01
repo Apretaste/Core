@@ -8,6 +8,7 @@ class SupportController extends Controller
 	public function initialize(){
 		$security = new Security();
 		$security->enforceLogin();
+		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -27,11 +28,18 @@ class SupportController extends Controller
 		// get the list of can responses
 		$cans = $connection->query("SELECT id, name FROM support_cans");
 
+		// create top buttons
+		$this->view->buttons = [
+			["caption"=>"New ticket", "href"=>"#", "icon"=>"plus", "modal"=>"newTicket"],
+			["caption"=>"Search", "href"=>"#", "modal"=>"searchTickets"],
+			["caption"=>"Can responses", "href"=>"/support/cans"],
+			["caption"=>"Reports", "href"=>"/support/reports"]
+		];
+
 		// send variables to the view
 		$this->view->title = "Open tickets";
 		$this->view->tickets = $tickets;
 		$this->view->cans = $cans;
-		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -43,10 +51,15 @@ class SupportController extends Controller
 		$connection = new Connection();
 		$cans = $connection->query("SELECT * FROM support_cans");
 
+		// create top buttons
+		$this->view->buttons = [
+			["caption"=>"New can response", "href"=>"#", "onclick"=>"newCanResponse();", "icon"=>"plus"],
+			["caption"=>"Open tickets", "href"=>"/support"]
+		];
+
 		// send variables to the view
 		$this->view->title = "Can responses";
 		$this->view->cans = $cans;
-		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -118,7 +131,6 @@ class SupportController extends Controller
 		$this->view->person = $person;
 		$this->view->subject = "Re: " . $chats[count($chats)-1]->subject;
 		$this->view->cans = $cans;
-		$this->view->setLayout('manage');
 	}
 
 	/**
@@ -141,12 +153,16 @@ class SupportController extends Controller
 
 		// get the manager information
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 
 		// save response in the database
 		$connection->query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
+
+		// send a notification to the user
+		$utils = new Utils();
+		$utils->addNotification($to, "soporte", "Hemos dado respuesta a una peticion que envio al soporte", "SOPORTE");
 
 		// save report
 		$mysqlDateToday = date('Y-m-d');
@@ -210,7 +226,7 @@ class SupportController extends Controller
 
 		// add manager name and position
 		$security = new Security();
-		$manager = $security->getManager();
+		$manager = $security->getUser();
 		$content = str_replace('{MANAGER_NAME}', $manager->name, $content);
 		$content = str_replace('{MANAGER_POSITION}', $manager->position, $content);
 		$content = str_replace('{USER_NAME}', $name, $content);
@@ -233,20 +249,20 @@ class SupportController extends Controller
 	{
 		// get total of new tickets
 		$connection = new Connection();
-		$newCount = $connection->deepQuery("
+		$newCount = $connection->query("
 			SELECT COUNT(id) AS count
 			FROM support_tickets
 			WHERE status = 'NEW'");
 
 		// get total of pending tickets
-		$pendingCount = $connection->deepQuery("
+		$pendingCount = $connection->query("
 			SELECT COUNT(id) AS count
 			FROM support_tickets
 			WHERE status = 'PENDING'");
 
 		// get the last 30 days of tickets
 		$mysqlDateLastMonth = date('Y-m-d', strtotime('last month'));
-		$tickets = $connection->deepQuery("
+		$tickets = $connection->query("
 			SELECT *
 			FROM support_reports
 			WHERE inserted > '$mysqlDateLastMonth'
@@ -256,7 +272,7 @@ class SupportController extends Controller
 		$this->view->title = "Tickets reports";
 		$this->view->newCount = $newCount[0]->count;
 		$this->view->pendingCount = $pendingCount[0]->count;
+		$this->view->buttons = [["caption"=>"Open Tickets", "href"=>"/support"]];
 		$this->view->tickets = $tickets;
-		$this->view->setLayout('manage');
 	}
 }

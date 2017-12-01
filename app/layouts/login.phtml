@@ -1,34 +1,66 @@
-<?php $wwwhttp = $this->di->get('path')['http']; ?>
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Access the manager</title>
+		<title>Inicia tu sesion</title>
 
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<meta name="description" content="Home-Made Analytics system and management tools for Apretaste">
+		<meta name="description" content="Inicia tu sesion en Apretaste">
 		<meta name="author" content="Salvi Pascual">
 
-		<link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
-		<link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
-		<script src="<?= $wwwhttp; ?>/js/jquery.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
+		<link rel="icon" href="images/apretaste.icon.png">
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<script src="/js/jquery.js"></script>
+		<script src="/js/jquery-ui.min.js"></script>
+		<link href="/css/jquery-ui.min.css" rel="stylesheet">
 	</head>
-	<body class="gray-bg">
-		<div class="middle-box text-center loginscreen">
-			<img src = "<?= $wwwhttp; ?>/images/apretaste.logo.big.transp.png" width="300">
-			<h3>Management tool</h3>
-			<form role="form" method="post" action="/login/loginSubmit">
-				<div class="form-group">
-					<input type="email" name="email" class="form-control" placeholder="email@apretaste.com" required />
+	<body>
+		<div class="container">
+			<div class="row" style="margin-top:100px;">
+				<div class="col-xs-4 col-xs-offset-4 text-center">
+					<img src="/images/apretaste.logo.big.transp.png" width="250">
+					<br/><br/><br/>
+
+					<form id="shake" action="/login/<?=$phase?>Submit" method="get">
+						<input type="hidden" name="email" value="<?=$email?>">
+						<input type="hidden" name="redirect" value="<?=$redirect?>">
+
+						<?php if($phase == "email") { ?>
+							<label for="email">ESCRIBA SU EMAIL</label>
+							<input id="email" type="email" name="email" value="<?=$email?>" class="form-control input-lg" placeholder="email@apretaste.com" required/>
+							<br/><br/>
+							<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-menu-right"></span></button>
+						<?php } ?>
+
+						<?php if($phase == "code") { ?>
+							<label for="pin">ESCRIBA EL CODIGO</label>
+							<input id="pin" type="text" name="pin" class="form-control input-lg text-center" style="letter-spacing:16px;" maxlength="4" placeholder="****" required/>
+							<small>Le mandamos el c&oacute;digo a <?=$email?></small>
+							<br/><br/>
+							<a class="btn btn-default" href="/login?email=<?=$email?>&redirect=<?=$redirect?>"><span class="glyphicon glyphicon-menu-left"></span></a>
+							<button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-menu-right"></span></button>
+						<?php } ?>
+					</form>
 				</div>
-				<div class="form-group">
-					<input type="password" name="password" class="form-control" placeholder="Password" required />
-				</div>
-				<button type="submit" class="btn btn-primary block full-width">Login</button>
-			</form>
+			</div>
 		</div>
 	</body>
 </html>
+
+<style>
+	body {
+		background: #E3E7D0 url("/images/background3.jpg") no-repeat fixed center;
+		background-size: 100%;
+	}
+</style>
+
+<script>
+	$(document).ready(function(){
+		$('.form-control').focus();
+
+		<?php if($shake == "true") { ?>
+			$('#shake').effect('shake');
+		<?php } ?>
+	});
+</script>

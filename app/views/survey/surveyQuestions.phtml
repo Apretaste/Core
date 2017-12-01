@@ -1,0 +1,63 @@
+<div class="row">
+	<div class="col-xs-12">
+		<?php if ($message) { ?>
+			<div class="alert alert-<?= $message_type ?>" role="alert"><?= $message ?></div>
+		<?php } ?>
+
+		<table class="table">
+			<tbody>
+				<?php foreach ($questions as $question) { ?>
+					<tr>
+						<form action="/survey/surveyQuestions?option=setQuestion&survey=<?= $survey->id ?>&id=<?= $question->id?>" method="post">
+							<input type="hidden" name="survey" value="<?= $survey->id ?>">
+							<td><input class="form-control" name="surveyQuestionTitle" value="<?= $question->title ?>"></td>
+							<td class="text-left"><input class="btn btn-default" type="submit" name="surveySubmit" value="Set"></td>
+						</form>
+						</td>
+						<td class="text-right"><a class="btn btn-default" href="/survey/surveyQuestions?option=delQuestion&id=<?= $question->id ?>&survey=<?= $survey->id ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></a></td>
+					</tr>
+
+					<?php foreach($question->answers as $answer) { ?>
+					<tr>
+						<form action="/survey/surveyQuestions?option=setAnswer&survey=<?= $survey->id ?>&id=<?= $answer->id ?>" method="post">
+							<td>
+								<div class="input-group">
+									<span class="input-group-addon"> <input type="radio" aria-label="..." disabled="true"></span>
+									<input class="form-control" name="surveyAnswerTitle" placeholder="New answer title" value="<?= $answer->title ?>">
+								</div>
+							</td>
+							<td class="text-left"><input class="btn btn-default" type="submit" name="surveySubmit" value="Set"></td>
+						</form>
+						<td class="text-right"><a class="btn btn-default" href="/survey/surveyQuestions?option=delAnswer&id=<?= $answer->id ?>&survey=<?= $survey->id ?>" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-trash"></span></a></td>
+					</tr>
+					<?php } ?>
+
+					<tr>
+						<form action="/survey/surveyQuestions?option=addAnswer&survey=<?= $survey->id ?>" method="post">
+							<input type="hidden" name="question" value="<?= $question->id ?>">
+							<td>
+								<div class="input-group">
+									<span class="input-group-addon"> <input type="radio" aria-label="..." disabled="true">
+									</span> <input class="form-control" name="surveyAnswerTitle" placeholder="New answer">
+								</div>
+							</td>
+							<td class="text-left"><input class="btn btn-default" type="submit" name="surveySubmit" value="Add"></td>
+						</form>
+					</tr>
+				<?php } ?>
+
+				<tr>
+					<form action="/survey/surveyQuestions?option=addQuestion&survey=<?= $survey->id ?>" method="post">
+						<input type="hidden" name="survey" value="<?= $survey->id ?>">
+						<td>
+							<div class="input-group">
+								<span class="input-group-addon" id="basic-addon3">New question:</span> <input class="form-control" name="surveyQuestionTitle">
+							</div>
+						</td>
+						<td class="text-left"><input class="btn btn-default" type="submit" name="surveySubmit" value="Add"></td>
+					</form>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>

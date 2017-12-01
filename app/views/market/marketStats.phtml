@@ -1,0 +1,157 @@
+<div class="row">
+	<div class="col-lg-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Sells by product <small>(last 30 days)</small></div>
+			<div class="panel-body">
+				<div class="flot-chart">
+					<div class="flot-chart-pie-content" id="flot-pie-chart"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-lg-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Total credit</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($sumCredit,2) ?></h1>
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">Users with credits</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($minCredit,2) ?></h1>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Max credit</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($maxCredit,2) ?></h1>
+			</div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">Credit average</div>
+			<div class="panel-body">
+				<h1 class="no-margins">$<?= number_format($avgCredit,2) ?></h1>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading">Monthly sells <small>(last year)</small></div>
+			<div class="panel-body">
+				<div>
+					<canvas id="lineChart" height="70"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- SCRIPTS -->
+
+
+<script src="/js/Chart.min.js"></script>
+<script src="/js/jquery.flot.js"></script>
+<script src="/js/jquery.flot.tooltip.min.js"></script>
+<script src="/js/jquery.flot.spline.js"></script>
+<script src="/js/jquery.flot.resize.js"></script>
+<script src="/js/jquery.flot.pie.js"></script>
+<script src="/js/jquery.flot.symbol.js"></script>
+<script src="/js/jquery.flot.time.js"></script>
+<script src="/js/curvedLines.js"></script>
+
+<script>
+	$(function(){
+		var previousPoint = null, previousLabel = null;
+		var dataPie = [
+			<?php if (is_array($sellsByProduct)) foreach($sellsByProduct as $p): ?>
+			{
+				label: "<?= $p->name ?>",
+				data: <?= $p->total ?>,
+				color: '#'+(Math.random()*0xFFFFFF<<0).toString(16)
+			}
+			<?php endforeach ?>];
+
+		var plotObj = $.plot($("#flot-pie-chart"), dataPie, {
+			series: {
+				pie: {
+					show: true
+				}
+			},
+			grid: {
+				hoverable: true
+			},
+			tooltip: true,
+			tooltipOpts: {
+				content: "%p.0%, %s", // show percentages, rounding to 2 decimal places
+				shifts: {
+					x: 20,
+					y: 0
+				},
+				defaultTheme: false
+			}
+		});
+
+		var lineData = {
+			labels: [<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>'<?= date("M", (new DateTime("{$m->y}-{$m->m}-01"))->getTimestamp()).' '.$m->y ?>',<?php endforeach ?>],
+			datasets: [
+				{
+					label: "Monthly sells",
+					fillColor: "rgba(220,220,220,0.5)",
+					strokeColor: "rgba(220,220,220,1)",
+					pointColor: "rgba(220,220,220,1)",
+					pointStrokeColor: "#fff",
+					pointHighlightFill: "#fff",
+					pointHighlightStroke: "rgba(220,220,220,1)",
+					data: [
+						<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
+						<?= "{$m->total}," ?>
+						<?php endforeach ?>
+					]
+				},
+				{
+					label: "Example dataset",
+					fillColor: "rgba(26,179,148,0.5)",
+					strokeColor: "rgba(26,179,148,0.7)",
+					pointColor: "rgba(26,179,148,1)",
+					pointStrokeColor: "#fff",
+					pointHighlightFill: "#fff",
+					pointHighlightStroke: "rgba(26,179,148,1)",
+					data: [
+						<?php if (is_array($monthlySells)) foreach($monthlySells as $k=> $m): ?>
+						<?= "{$m->pays}," ?>
+						<?php endforeach ?>
+
+					]
+				}
+			]
+		};
+
+		var lineOptions = {
+			scaleShowGridLines: true,
+			scaleGridLineColor: "rgba(0,0,0,.05)",
+			scaleGridLineWidth: 1,
+			bezierCurve: true,
+			bezierCurveTension: 0.4,
+			pointDot: true,
+			pointDotRadius: 4,
+			pointDotStrokeWidth: 1,
+			pointHitDetectionRadius: 20,
+			datasetStroke: true,
+			datasetStrokeWidth: 2,
+			datasetFill: true,
+			responsive: true,
+		};
+
+		var ctx = document.getElementById("lineChart").getContext("2d");
+		var myNewChart = new Chart(ctx).Line(lineData, lineOptions);
+	});
+</script>

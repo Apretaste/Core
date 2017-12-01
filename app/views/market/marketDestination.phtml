@@ -1,0 +1,80 @@
+<?php if (isset($message) && $message) { ?>
+	<div class="row">
+		<div class="col-md-12">
+			<div class="alert alert-<?= $message_type ?>" role="alert"><?= $message ?></div>
+		</div>
+	</div>
+<?php } ?>
+
+<div class="row border-bottom dashboard-header">
+	<div class="col-sm-6">
+		<?php if ($order->received) { ?>
+			<div class="alert alert-success">
+				<span class="glyphicon glyphicon-ok"></span> This product was received by the user
+			</div>
+		<?php } elseif ($order->ready) { ?>
+			<div class="alert alert-warning">
+				<span class="glyphicon glyphicon-ok"></span> This order is ready to send
+			</div>
+		<?php } ?>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">Destination data</div>
+			<div class="panel-body">
+				<form action="/market/marketDestination/<?= $order->id ?>" method="post" data-toggle="validator">
+					<div class="form-group">
+						<label for="edtProvince">Province:</label>
+						<select id="edtProvince" name="edtProvince" class="form-control">
+							<?php foreach($provinces as $prov) { ?>
+							<option value="<?= $prov ?>" <?php if ($prov == $order->province) {?> selected <?php } ?>><?= ucwords(strtolower(str_replace("_"," ",$prov))) ?></option>
+							<?php } ?>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="edtCI">CI:</label>
+						<input type="text" class="form-control" id="edtCI" name="edtCI" value="<?= $order->ci ?>">
+					</div>
+					<div class="form-group">
+						<label for="edtName">Full name:</label>
+						<input type="text" class="form-control" id="edtName" name="edtName" value="<?= $order->name ?>">
+					</div>
+					<div class="form-group">
+						<label for="edtAddress">Address:</label>
+						<input type="text" class="form-control" id="edtAddress" name="edtAddress" value="<?= $order->address ?>">
+					</div>
+					<div class="form-group">
+						<label for="edtPhone">Phone:</label>
+						<input type="text" class="form-control" id="edtPhone" name="edtPhone" value="<?= $order->phone ?>">
+					</div>
+					<div class="form-group">
+						<button type="submit" name="btnUpdate" class="btn btn-primary">Update</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Order</div>
+			<div class="panel-body">
+				User's email: <b><?= $order->email ?></b><br/>
+				Inserted date: <b><?= $order->inserted_date ?></b>
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">Product information</div>
+			<div class="panel-body">
+				<?php if ($product->image) { ?>
+					<img style="float: left;margin: 10px;" src="/products/<?= $product->code ?>.jpg" width="140">
+				<?php } ?>
+				<b><?= $product->name ?></b>: <?= $product->description ?><br/>
+				Price: $<b><?= number_format($product->price,2) ?></b><br/>
+				Shipping: $<b><?= number_format($product->shipping_price,2) ?></b><br/>
+				Credits: $<b><?= number_format($product->credits,2) ?></b><br/>
+				Agency: <b><?= $product->agency ?></b><br/>
+				Owner: <b><?= $product->owner ?></b>
+			</div>
+		</div>
+	</div>
+</div>

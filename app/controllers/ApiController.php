@@ -260,69 +260,29 @@ class ApiController extends Controller
 	}
 
 	/**
-	 * Sends an email using the anti-censorship engine
+	 * Uploades a file via ajax to the temp folder to be process by the web
 	 *
 	 * @author salvipascual
-	 * @param String64 $key: Base64 of "$to:$pass"
-	 * @param String $to
-	 * @param String $subject
-	 * @param String $body
+	 * @param POST file
+	 * @return String, URL of the file uploaded
 	 */
-	public function sendEmailAction()
+	public function uploadAction()
 	{
-		// get params from GET (or from the encripted API)
-		$key = $this->request->get("key");
-		$to = $this->request->get("email");
-		$subject = $this->request->get("subject");
-		$asZip = $this->request->get("zip");
-		$content = file_get_contents("php://input");
-
-		// do not allow empty emails
-		if(empty($to)) die('{"status":"0", "message":"Empty email"}');
-
-		// create a random subject if empty
 		$utils = new Utils();
-		if(empty($subject)) $subject = $utils->randomSentence();
 
-		// check user pass combination
-		$loginInfo = explode(":", base64_decode($key));
-		$security = new Security();
-		$res =  $security->checkUserPass($loginInfo[0], $loginInfo[1]);
-
-		// check is the user has permissions to forward
-		$pages = explode(",", $res->items->pages);
-		if( ! (in_array("*", $pages) || in_array("forward", $pages))) {
-			die('{"status":"0", "message":"No permissions"}');
+		// if there is an error upload the file
+		if ($_FILES['file']['error'] > 0)
+		{
+			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
+			$utils->createAlert($msg);
+			die('{"code":"error", "message":"'.$msg.'"}');
 		}
-
-		// get the body and attachments
-		$content = unserialize($content);
-		$body = isset($content['body']) ? $content['body'] : "";
-		$atts = isset($content['attachments']) ? $content['attachments'] : array();
-
-		// save attachments to the filesystem
-		$attachments = array();
-		foreach($atts as $a){
-			$filename = $utils->getTempDir() . $a['filename'];
-			file_put_contents($filename, base64_decode($a['content']));
-			$attachments[] = $filename;
+		// else upload the file and return the path
+		else
+		{
+			$file = $utils->getTempDir() . $_FILES['file']['name'];
+			move_uploaded_file($_FILES['file']['tmp_name'], $file);
+			die('{"code":"ok", "message":"'.$file.'"}');
 		}
-
-		// forward the email
-		$email = new Email();
-		$email->to = $to;
-		$email->subject = $subject;
-		$email->body = $body;
-		$email->attachments = $attachments;
-		$email->group = $res->items->group;
-		if($asZip) {
-			$email->app = true;
-			$email->setContentAsZipAttachment();
-		}
-		$res = $email->send();
-
-		// display message
-		$res->status = ($res->code == "200") ? "1" : "0";
-		die(json_encode($res));
 	}
 }

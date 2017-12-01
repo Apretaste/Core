@@ -14,10 +14,11 @@ function smarty_function_img($params, $template)
 	$alt = isset($params["alt"]) ? $params["alt"] : "";
 	$width =  isset($params["width"]) ? "width='{$params["width"]}'" : "";
 	$height =  isset($params["height"]) ? "height='{$params["height"]}'" : "";
+	$style = isset($params["style"]) ? "style='{$params["style"]}'" : "";
 
 	$file = basename($href);
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if($di->get('environment') == "sandbox")
+	if($di->get('environment') == "web")
 	{
 		$wwwroot = $di->get('path')['root'];
 		$wwwhttp = $di->get('path')['http'];
@@ -34,5 +35,5 @@ function smarty_function_img($params, $template)
 	}
 
 	// create and return image
-	return "<img src='$destination' alt='$alt' $width $height />";
+	return "<img src='$destination' alt='$alt' $width $height $style />";
 }
