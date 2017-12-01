@@ -120,4 +120,38 @@ class DeveloperController extends Controller
 		$this->view->title = "Lastest $numlines errors";
 		$this->view->output = $output;
 	}
+
+	/**
+	 * Show the mysql error log
+	 */
+	public function mysqlAction()
+	{
+		// get the error logs file
+		$wwwroot = $this->di->get('path')['root'];
+		$logfile = "$wwwroot/logs/badqueries.log";
+
+		// tail the log file
+		$numlines = "51";
+		$cmd = "tail -$numlines '$logfile'";
+		$errors = preg_split('/^\[/m', shell_exec($cmd));
+
+		// format output to look better
+		$output = array();
+		foreach ($errors as $err)
+		{
+			if(strlen($err) < 5) continue;
+			$line = htmlentities($err);
+			$line = nl2br($line);
+			$line = "<b>[".substr_replace($line,"]</b>",strpos($line, "]"),1);
+			$output[] = $line;
+		}
+
+		// reverse to show latest first & remove incomplete
+		$output = array_reverse($output);
+		array_pop($output);
+
+		$this->view->title = "Lastest 50 mysql errors";
+		$this->view->output = $output;
+		$this->view->pick(['developer/errors']);
+	}
 }

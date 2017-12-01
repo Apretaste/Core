@@ -44,8 +44,9 @@ class NautaClient
 		$this->client = curl_init();
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($this->client, CURLOPT_SSL_VERIFYHOST, 0);
 		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile);
 		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile);
 
@@ -61,6 +62,9 @@ class NautaClient
 	 */
 	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
 	{
+		// @TODO add a SOCKS proxy
+		// https://www.privateinternetaccess.com/pages/buy-vpn/
+		// https://www.socks-proxy.net/
 		curl_setopt($this->client, CURLOPT_PROXY, $host);
 		curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
 	}

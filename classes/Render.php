@@ -77,16 +77,17 @@ class Render
 		$smarty->assign($templateVariables);
 
 		// render the template
-		$renderedTemplate = $smarty->fetch($response->layout);
+		$rendered = $smarty->fetch($response->layout);
 
 		// add link popups for the web
 		if($di->get('environment') == "web") {
 			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_link_popup.phtml");
-			$renderedTemplate = str_replace("</body>", "$linkPopup</body>", $renderedTemplate);
+			$rendered = str_replace("</body>", "$linkPopup</body>", $rendered);
+			$rendered = str_replace('{$APRETASTE_SERVICE_NAME}', strtolower($service->serviceName), $rendered);
 		}
 
 		// remove tabs, double spaces and break lines
-		return preg_replace('/\s+/S', " ", $renderedTemplate);
+		return preg_replace('/\s+/S', " ", $rendered);
 	}
 
 	/**

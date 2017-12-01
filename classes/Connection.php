@@ -58,9 +58,11 @@ class Connection
 		{
 			$message = $e->getMessage();
 			$query = isset($e->getTrace()[0]['args'][0]) ? $e->getTrace()[0]['args'][0] : "Query not available";
+
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$www_root = $di->get('path')['root'];
-			$logger = new \Phalcon\Logger\Adapter\File("$www_root/logs/badqueries.log");
+			$wwwroot = $di->get('path')['root'];
+
+			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/badqueries.log");
 			$logger->log("$message\nQUERY: $query\n");
 			$logger->close();
 
