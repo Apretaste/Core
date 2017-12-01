@@ -10,33 +10,38 @@
 		<meta name="author" content="Salvi Pascual">
 
 		<link rel="icon" href="images/apretaste.icon.png">
-		<link href="css/bootstrap.min.css" rel="stylesheet">
-		<script src="js/jquery.js"></script>
-		<script src="js/jquery-ui.min.js"></script>
-		<link href="css/jquery-ui.min.css" rel="stylesheet">
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<script src="/js/jquery.js"></script>
+		<script src="/js/jquery-ui.min.js"></script>
+		<link href="/css/jquery-ui.min.css" rel="stylesheet">
 	</head>
 	<body>
 		<div class="container">
 			<div class="row" style="margin-top:100px;">
 				<div class="col-xs-4 col-xs-offset-4 text-center">
-					<img src="images/apretaste.logo.big.transp.png" width="250">
+					<img src="/images/apretaste.logo.big.transp.png" width="250">
 					<br/><br/><br/>
 
-					<div id="email-group" class="form-group">
-						<label for="email">ESCRIBA SU EMAIL</label>
-						<input id="email" type="email" name="email" class="form-control input-lg" onkeypress="onEnter(event,'goCode');" placeholder="email@apretaste.com"/>
-						<br/><br/>
-						<button class="btn btn-default" onclick="goCode(); return false;"><span class="glyphicon glyphicon-menu-right"></span></button>
-					</div>
+					<form id="shake" action="/login/<?=$phase?>Submit" method="get">
+						<input type="hidden" name="email" value="<?=$email?>">
+						<input type="hidden" name="redirect" value="<?=$redirect?>">
 
-					<div id="pin-group" class="form-group" style="display:none;">
-						<label for="pin">ESCRIBA EL CODIGO</label>
-						<input id="pin" type="text" name="pin" class="form-control input-lg text-center" onkeypress="onEnter(event,'go');" style="letter-spacing:16px;" maxlength="4" placeholder="****"/>
-						<small>Le mandamos el c&oacute;digo a <span id="sent"></span></small>
-						<br/><br/>
-						<button class="btn btn-default" onclick="goEmail();"><span class="glyphicon glyphicon-menu-left"></span></button>
-						<button class="btn btn-success" onclick="go(); return false;"><span class="glyphicon glyphicon-menu-right"></span></button>
-					</div>
+						<?php if($phase == "email") { ?>
+							<label for="email">ESCRIBA SU EMAIL</label>
+							<input type="email" name="email" value="<?=$email?>" class="form-control input-lg" placeholder="email@apretaste.com" required/>
+							<br/><br/>
+							<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-menu-right"></span></button>
+						<?php } ?>
+
+						<?php if($phase == "code") { ?>
+							<label for="pin">ESCRIBA EL CODIGO</label>
+							<input id="pin" type="text" name="pin" class="form-control input-lg text-center" style="letter-spacing:16px;" maxlength="4" placeholder="****" required/>
+							<small>Le mandamos el c&oacute;digo a <?=$email?></small>
+							<br/><br/>
+							<a class="btn btn-default" href="/login?email=<?=$email?>&redirect=<?=$redirect?>"><span class="glyphicon glyphicon-menu-left"></span></a>
+							<button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-menu-right"></span></button>
+						<?php } ?>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -50,59 +55,10 @@
 	}
 </style>
 
+<?php if($shake == "true") { ?>
 <script>
-	function onEnter(e, func){
-		if(e.keyCode === 13){
-			e.preventDefault();
-			eval(func+'();');
-		}
-	}
-
-	function goCode(){
-		var email = $('#email').val();
-
-		// check is a valid email
-		var emailReg = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-		if( ! emailReg.test(email)) {
-			$('#email-group').effect('shake');
-			$('#email').focus();
-			return false;
-		}
-
-		// send email with the code
-		$.getJSON('/login/asyncSendCode?email='+email, function(data) {
-			if(data.code == 'error') {
-				$('#email-group').effect('shake');
-				$('#email').focus();
-				return false;
-			}
-		});
-
-		// change the box
-		$('#sent').html(email);
-		$('#email-group').slideUp();
-		$('#pin-group').slideDown();
-		$('#pin').focus();
-	}
-
-	function goEmail(){
-		$('#email-group').slideDown();
-		$('#pin-group').slideUp();
-		$('#email').focus();
-	}
-
-	function go(){
-		var email = $('#email').val();
-		var pin = $('#pin').val();
-
-		// check the email and pin and login
-		$.getJSON('/login/asyncLoginSubmit?email='+email+'&pin='+pin+'&redirect=<?=$redirect?>', function(data) {
-			if(data.code == 'ok') {
-				window.location = data.redirect;
-			} else {
-				$('#pin-group').effect('shake');
-				$('#pin').focus();
-			}
-		});
-	}
+	$(document).ready(function(){
+		$('#shake').effect('shake');
+	});
 </script>
+<?php } ?>

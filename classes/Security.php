@@ -38,10 +38,38 @@ class Security
 		$user->pages = empty($manager) ? [] : explode(",", $manager[0]->pages);
 		$user->startPage = empty($manager) ? "" : $manager[0]->start_page;
 
+		// save the last user's IP and access time
+		$ip = php::getClientIP();
+		$connection->query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+
 		// save the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$di->getShared("session")->set("user", $user);
 		return $user;
+	}
+
+	/**
+	 * Login a user using the latest IP used
+	 *
+	 * @author salvipascual
+	 * @param String $emal
+	 * @return Boolean
+	 */
+	public function loginByIP($email)
+	{
+		// get the lastest IP and date
+		$connection = new Connection();
+		$person = $connection->query("SELECT last_ip, pin FROM person WHERE email='$email'");
+		if(empty($person)) return false; else $person = $person[0];
+
+		// check if user can be logged
+		$ip = php::getClientIP();
+		$localIP = $ip == "127.0.0.1";
+		$sameIP = $ip == $person->last_ip;
+
+		// log in the user and return
+		if($localIP || $sameIP) return $this->login($email, $person->pin);
+		else return false;
 	}
 
 	/**
@@ -54,6 +82,7 @@ class Security
 		// get the group from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$di->getShared("session")->remove("user");
+		$di->getShared("session")->remove("layout");
 
 		header("Location: /login"); exit;
 	}

@@ -5,11 +5,26 @@ use Phalcon\Mvc\Controller;
 class LoginController extends Controller
 {
 	/**
-	 * Start the user session
+	 * Ask for email to login
 	 */
 	public function indexAction()
 	{
+		$this->view->phase = "email";
+		$this->view->email = $this->request->get('email');
 		$this->view->redirect = $this->request->get('redirect');
+		$this->view->shake = $this->request->get('shake');
+		$this->view->setLayout('login');
+	}
+
+	/**
+	 * Ask for the code to login
+	 */
+	public function codeAction()
+	{
+		$this->view->phase = "code";
+		$this->view->email = $this->request->get('email');
+		$this->view->redirect = $this->request->get('redirect');
+		$this->view->shake = $this->request->get('shake');
 		$this->view->setLayout('login');
 	}
 
@@ -28,17 +43,34 @@ class LoginController extends Controller
 	 * @param GET email
 	 * @return JSON
 	 */
-	public function asyncSendCodeAction()
+	public function emailSubmitAction()
 	{
-		// params from GEt and default options
-		$email = trim($this->request->get('email'));
+		// params from GET and default options
+		$email = $this->request->get('email');
+		$redirect = $this->request->get('redirect');
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) die('{"code":"error"}');
+		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
+		}
+
+		// try to login by IP to avoid sending code
+		$security = new Security();
+		$user = $security->loginByIP($email);
+		if($user) {
+			// get redirect link and redirect
+			$redirect = empty($redirect) ? "servicios" : $redirect;
+			if($user->isManager) $this->response->redirect($user->startPage);
+			else $this->response->redirect("run/display?subject=$redirect");
+			$this->view->disable();
+			return false;
+		}
 
 		// create the user if he/she does not exist
-		$connection = new Connection();
 		$utils = new Utils();
+		$connection = new Connection();
 		if( ! $utils->personExist($email)) {
 			$username = $utils->usernameFromEmail($email);
 			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
@@ -66,15 +98,15 @@ class LoginController extends Controller
 		$sender->body = $body;
 		$res = $sender->send();
 
-		// return response
-		if($res->code == "200") die('{"code":"ok"}');
-		else die('{"code":"error"}');
+		// do not check from Development/Stage
+		$this->response->redirect("login/code?email=$email&redirect=$redirect");
+		$this->view->disable();
 	}
 
 	/**
-	 * Start the user session
+	 * Submit the code and start the user session
 	 */
-	public function asyncLoginSubmitAction()
+	public function codeSubmitAction()
 	{
 		// get data from post
 		$email = $this->request->get('email');
@@ -82,21 +114,30 @@ class LoginController extends Controller
 		$redirect = $this->request->get('redirect');
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL) || empty($pin)) die('{"code":"error"}');
+		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
+		}
 
-		// try to log the user and redirect to default page
+		// log in the user
 		$security = new Security();
 		$user = $security->login($email, $pin);
 
-		// get redirect link to send after login
-		if($user) {
-			if($user->isManager) $redirectLink = $user->startPage;
-			else {
-				if(empty($redirect)) $redirect = "servicios";
-				$redirectLink = "/run/display?subject=$redirect";
-			}
-			die('{"code":"ok", "redirect":"'.$redirectLink.'"}');
+		// error if the user cannot be logged
+		if(empty($user)) {
+			$this->response->redirect("login/$goto?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
 		}
-		else die('{"code":"error"}');
+
+		// get redirect link and redirect
+		$redirect = empty($redirect) ? "servicios" : $redirect;
+		if($user->isManager) $redirectLink = $user->startPage;
+		else $redirectLink = "run/display?subject=$redirect";
+
+		// redirect to page
+		$this->response->redirect($redirectLink);
+		$this->view->disable();
 	}
 }
