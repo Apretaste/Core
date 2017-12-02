@@ -1,0 +1,29 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table id="servicesTable" class="table">
+			<thead>
+			<tr>
+				<th>Details</th>
+				<th class="text-center">ID</th>
+				<th class="text-center">Type</th>
+				<th class="text-center">Text</th>
+			</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($alerts as $alert) {
+				?>
+				<tr>
+					<td>
+						<b><?=$alert->id?></b>
+					</td>
+					<td class="text-center"><?=$alert->type?></td>
+					<td class="text-left"><?=$alert->text?></td>
+					<td class="text-center">
+						<a class="btn btn-default" target="_blank" href="/developer/alerts/fixed/<?=$service->id?>">Fixed</a>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

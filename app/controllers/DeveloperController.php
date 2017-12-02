@@ -154,4 +154,10 @@ class DeveloperController extends Controller
 		$this->view->output = $output;
 		$this->view->pick(['developer/errors']);
 	}
+
+	public function alertsAction()
+	{
+		$alerts = Connection::query("SELECT * FROM alerts WHERE fixed = 0 ORDER BY id LIMIT 30 ;");
+		$this->view->alerts = $alerts;
+	}
 }
