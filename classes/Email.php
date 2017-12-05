@@ -278,12 +278,17 @@ class Email
 			$attach = empty($this->attachments) ? false : $this->attachments[0];
 
 			// send email and logout
-			$client->send($this->to, $this->subject, $this->body, $attach);
+			$res = $client->send($this->to, $this->subject, $this->body, $attach);
 
 			// create response
 			$output = new stdClass();
-			$output->code = "200";
-			$output->message = "Sent to {$this->to}";
+			if($res) {
+				$output->code = "200";
+				$output->message = "Sent to {$this->to}";
+			} else {
+				$output->code = "520";
+				$output->message = "Error sending to {$this->to}";
+			}
 			return $output;
 		}
 		// if the client cannot login show error
