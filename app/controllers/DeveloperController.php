@@ -157,19 +157,19 @@ class DeveloperController extends Controller
 
 	public function alertsAction()
 	{
-		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY id DESC LIMIT 30 ;";
+		$default_query = "SELECT * FROM alerts WHERE fixed = 0 AND datediff(created, CURRENT_DATE) <=7 ORDER BY created DESC;";
 		$sql = $default_query;
 		$query = '';
 		if ($this->request->isPost())
 		{
 			$query = $this->request->getPost('filter');
 			if (!is_null($query))
-				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY id DESC LIMIT 30 ;";
+				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY created DESC LIMIT 30 ;";
 
 			$fixes = $this->request->getPost('fixed');
 			if (!is_null($fixes))
 				foreach ($fixes as $fixed)
-					Connection::query("UPDATE alerts SET fixed = 1 WHERE id = '$fixed';");
+					Connection::query("UPDATE alerts SET fixed = 1, fixed_date = CURRENT_TIMESTAMP WHERE id = '$fixed';");
 
 		}
 
@@ -191,7 +191,8 @@ class DeveloperController extends Controller
 		$this->view->fixed = $fixed;
 		$this->view->percentage = number_format($fixed / $total*100,2);
 		$this->view->query = $query;
-		$this->view->title = "Alerts";
+		$this->view->title = "Alerts ($fixed / $total)";
 		$this->view->alerts = $alerts;
 	}
+
 }
