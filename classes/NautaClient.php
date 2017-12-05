@@ -104,9 +104,7 @@ class NautaClient
 			}
 			else
 			{
-				$text = "Captcha error " . $captcha->code . " with message " . $captcha->message;
-				$utils->createAlert($text, "ERROR");
-				return false;
+				return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}", "ERROR");
 			}
 		}
 
@@ -141,12 +139,8 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u={$this->composeToken}");
 		$html = curl_exec($this->client);
 
-		if (stripos($html, 'Message Composition') === false)
-		{
-			return false;
-		}
-
-		return true;
+		if (stripos($html, 'Message Composition') === false) return false;
+		else return true;
 	}
 
 	/**
@@ -185,7 +179,6 @@ class NautaClient
 	 * @param String $subject
 	 * @param String $body
 	 * @param mixed  $attachment
-	 *
 	 * @return mixed
 	 */
 	public function send($to, $subject, $body, $attachment = false)
@@ -195,7 +188,6 @@ class NautaClient
 		$html = curl_exec($this->client);
 
 		// get the value of hidden fields from the HTML
-		$utils = new Utils();
 		$action = php::substring($html, 'u=', '"');
 		$composeCache = php::substring($html, 'composeCache" value="', '"');
 		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
@@ -222,16 +214,15 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
 		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, $data);
-		$response = curl_exec($this->client);
+		curl_exec($this->client);
 
 		// alert if there are errors
-		if(curl_errno($this->client))
-		{
+		if(curl_errno($this->client)) {
 			$utils = new Utils();
 			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)", "ERROR");
 		}
 
-		return $response;
+		return true;
 	}
 
 	/**
