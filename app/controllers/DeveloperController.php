@@ -190,6 +190,7 @@ class DeveloperController extends Controller
 		$this->view->query = $query;
 		$this->view->title = "Alerts ($fixed / $total)";
 		$this->view->alerts = $alerts;
+		$this->view->buttons = [["caption"=>"Fix all checked", "href"=>"#", "onclick"=>"$('#formAlerts').submit();"]];
 	}
 
 }

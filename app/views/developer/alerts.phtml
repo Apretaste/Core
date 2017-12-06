@@ -11,7 +11,7 @@
         <br/>
     </div>
 
-        <form action="/developer/alerts" method="POST">
+        <form action="/developer/alerts" method="POST" id="formAlerts">
             <input type="hidden" name="filter" id="filter" class="form-control" value="<?=$query?>">
             <table id="servicesTable" class="table">
                 <thead>
@@ -31,15 +31,10 @@
                     <tr>
 
                         <td class="text-center" valign="middle"><input type="checkbox" name="fixed[]" class="chkFix" value="<?=$alert->id?>"></td>
-                        <td valign="middle"><?= date("m/d H:i", strtotime($alert->created)) ?></td>
+                        <td valign="middle" width="100"><?= date("m/d H:i", strtotime($alert->created)) ?></td>
                         <td class="text-left"><?=$alert->text?></td>
                     </tr>
                 <?php } ?>
-                <tr>
-                    <td colspan="2"><input type="submit" class="btn btn-primary" value="Fix all checked" onclick="return confirm('Are you sure?');"></td>
-                    <td></td>
-                    
-                </tr>
                 </tbody>
             </table>
         </form>
