@@ -184,12 +184,9 @@ class DeveloperController extends Controller
 		$total = Connection::query("SELECT count(*) as total FROM alerts;");
 		$total = $total[0]->total;
 
-		$fixed = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed = 1;");
-		$fixed = $fixed[0]->total;
-
 		$this->view->total = $total;
 		$this->view->fixed = $fixed;
-		$this->view->percentage = number_format($fixed / $total*100,2);
+		$this->view->percentage = $total;
 		$this->view->query = $query;
 		$this->view->title = "Alerts ($fixed / $total)";
 		$this->view->alerts = $alerts;
