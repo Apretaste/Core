@@ -43,9 +43,9 @@ class ManageController extends Controller
 		$this->view->supportNewCount = $supportNewCount[0]->cnt;
 		$this->view->supportPendingCount = $supportPendingCount[0]->cnt;
 		$this->view->mailListRegisteredUsers = $mailListRegisteredUsers[0]->cnt;
+		$this->view->tasksWidget = $tasksWidget;
 		$this->view->alertsTotal = $alertsTotal[0]->cnt;
 		$this->view->alertsFixed = $alertsFixed[0]->cnt;
-		$this->view->tasksWidget = $tasksWidget;
 
 	}
 }

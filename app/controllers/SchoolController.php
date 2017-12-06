@@ -505,7 +505,7 @@ class SchoolController extends Controller
 		$wwwroot = $di->get('path')['root'];
 
 		// get images
-		$images = []
+		$images = [];
 		foreach ($imgs as $img)
 		{
 			$src = $img->getAttribute('src');

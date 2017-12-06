@@ -75,8 +75,8 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <i class="fa fa-bug pull-left" style="font-size:37px; margin-right:10px;"></i>
-                <big><?= number_format($alertsTotal-$alertsFixed, 0) ?> / </big><small><?= number_format($alertsFixed, 0) ?> / <?= number_format($alertsTotal, 0) ?></small><br/>
-                <small>No Fixed / Fixed / Total</small>
+                <big><a href="/developer/alerts"><?= number_format($alertsTotal-$alertsFixed, 0) ?></a></big><br/>
+
             </div>
         </div>
     </div>
