@@ -157,14 +157,14 @@ class DeveloperController extends Controller
 
 	public function alertsAction()
 	{
-		$default_query = "SELECT * FROM alerts WHERE fixed = 0 AND datediff(created, CURRENT_DATE) <=7 ORDER BY created DESC;";
+		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY created DESC;";
 		$sql = $default_query;
 		$query = '';
 		if ($this->request->isPost())
 		{
 			$query = $this->request->getPost('filter');
 			if (!is_null($query))
-				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY created DESC LIMIT 30 ;";
+				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY created DESC;";
 
 			$fixes = $this->request->getPost('fixed');
 			if (!is_null($fixes))
