@@ -163,8 +163,9 @@ class DeveloperController extends Controller
 		if ($this->request->isPost())
 		{
 			$query = $this->request->getPost('filter');
+			$querySQL = Connection::escape($query);
 			if (!is_null($query))
-				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY created DESC;";
+				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$querySQL}%' OR type = '$querySQL') ORDER BY created DESC;";
 
 			$fixes = $this->request->getPost('fixed');
 			if (!is_null($fixes))
