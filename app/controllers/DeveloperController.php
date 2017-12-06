@@ -181,7 +181,7 @@ class DeveloperController extends Controller
 			$this->view->no_results = true;
 		}
 
-		$total = Connection::query("SELECT count(*) as total FROM alerts;");
+		$total = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed =0;");
 		$total = $total[0]->total;
 
 		$this->view->total = $total;
