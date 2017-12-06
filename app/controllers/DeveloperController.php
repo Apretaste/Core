@@ -185,8 +185,6 @@ class DeveloperController extends Controller
 		$total = $total[0]->total;
 
 		$this->view->total = $total;
-		$this->view->fixed = $fixed;
-		$this->view->percentage = $total;
 		$this->view->query = $query;
 		$this->view->title = "Alerts ($total)";
 		$this->view->alerts = $alerts;
