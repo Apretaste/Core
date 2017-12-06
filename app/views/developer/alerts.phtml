@@ -2,7 +2,7 @@
     <div class="col-xs-12">
         <form action="/developer/alerts" method="POST">
             <div class="input-group">
-                <input required type="email" class="form-control" name="filter" value="<?=$query?>" placeholder="type text here...">
+                <input required class="form-control" name="filter" value="<?=$query?>" placeholder="type text here...">
                 <span class="input-group-btn">
 					<button type="submit" class="btn btn-success">Search</button>
 				</span>
@@ -31,13 +31,17 @@
                     <tr>
 
                         <td class="text-center" valign="middle"><input type="checkbox" name="fixed[]" class="chkFix" value="<?=$alert->id?>"></td>
-                        <td valign="middle"><?= date("Y/m/d H:i:s", strtotime($alert->created)) ?></td>
+                        <td valign="middle"><?= date("m/d H:i", strtotime($alert->created)) ?></td>
                         <td class="text-left"><?=$alert->text?></td>
                     </tr>
                 <?php } ?>
+                <tr>
+                    <td colspan="2"><input type="submit" class="btn btn-primary" value="Fix all checked" onclick="return confirm('Are you sure?');"></td>
+                    <td></td>
+                    
+                </tr>
                 </tbody>
             </table>
-            <p align="right"> <input type="submit" class="btn btn-default" value="Fix all checked" onclick="return confirm('Are you sure?');"></p>
         </form>
 	</div>
 </div>
