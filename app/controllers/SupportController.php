@@ -25,15 +25,13 @@ class SupportController extends Controller
 			OR status = 'PENDING'
 			ORDER BY creation_date DESC");
 
-		// get the list of can responses
+		// get the list of macros
 		$cans = $connection->query("SELECT id, name FROM support_cans");
 
 		// create top buttons
 		$this->view->buttons = [
 			["caption"=>"New ticket", "href"=>"#", "icon"=>"plus", "modal"=>"newTicket"],
-			["caption"=>"Search", "href"=>"#", "modal"=>"searchTickets"],
-			["caption"=>"Can responses", "href"=>"/support/cans"],
-			["caption"=>"Reports", "href"=>"/support/reports"]
+			["caption"=>"Search", "href"=>"#", "modal"=>"searchTickets"]
 		];
 
 		// send variables to the view
@@ -51,19 +49,14 @@ class SupportController extends Controller
 		$connection = new Connection();
 		$cans = $connection->query("SELECT * FROM support_cans");
 
-		// create top buttons
-		$this->view->buttons = [
-			["caption"=>"New can response", "href"=>"#", "onclick"=>"newCanResponse();", "icon"=>"plus"],
-			["caption"=>"Open tickets", "href"=>"/support"]
-		];
-
 		// send variables to the view
-		$this->view->title = "Can responses";
+		$this->view->title = "Macros";
+		$this->view->buttons = [["caption"=>"New macro", "href"=>"#", "onclick"=>"newCanResponse();", "icon"=>"plus"]];
 		$this->view->cans = $cans;
 	}
 
 	/**
-	 * Create a new can response or update one
+	 * Create a new macro or update one
 	 */
 	public function updateCanResponseSubmitAction()
 	{
@@ -72,7 +65,7 @@ class SupportController extends Controller
 		$name = $this->request->get("name");
 		$body = $this->request->get("body");
 
-		// create a new can response or update an existing one
+		// create a new macro or update an existing one
 		$connection = new Connection();
 		if(empty($id)) $connection->query("INSERT INTO support_cans(name,body) VALUES ('$name','$body')");
 		else $connection->query("UPDATE support_cans SET name='$name',body='$body' WHERE id=$id");
@@ -82,14 +75,14 @@ class SupportController extends Controller
 	}
 
 	/**
-	 * Delete a can response
+	 * Delete a macro
 	 */
 	public function deleteCanResponseSubmitAction()
 	{
 		// get data from POST
 		$id = $this->request->get("id");
 
-		// delete can response
+		// delete macro
 		$connection = new Connection();
 		$connection->query("DELETE FROM support_cans WHERE id=$id");
 
@@ -116,7 +109,7 @@ class SupportController extends Controller
 		// do not continue if there are no tickets
 		if(empty($chats)) die("No hay tickets creados para $email");
 
-		// get the list of can responses
+		// get the list of macros
 		$cans = $connection->query("SELECT id, name FROM support_cans");
 
 		// get info from the requestor
@@ -219,7 +212,7 @@ class SupportController extends Controller
 		$name = $this->request->get("name");
 		$username = $this->request->get("username");
 
-		// get the list of can responses
+		// get the list of macros
 		$connection = new Connection();
 		$can = $connection->query("SELECT body FROM support_cans WHERE id=$id");
 		$content = $can[0]->body;
@@ -249,16 +242,11 @@ class SupportController extends Controller
 	{
 		// get total of new tickets
 		$connection = new Connection();
-		$newCount = $connection->query("
+		$unresponded = $connection->query("
 			SELECT COUNT(id) AS count
 			FROM support_tickets
-			WHERE status = 'NEW'");
-
-		// get total of pending tickets
-		$pendingCount = $connection->query("
-			SELECT COUNT(id) AS count
-			FROM support_tickets
-			WHERE status = 'PENDING'");
+			WHERE status = 'NEW'
+			OR status = 'PENDING'")[0]->count;
 
 		// get the last 30 days of tickets
 		$mysqlDateLastMonth = date('Y-m-d', strtotime('last month'));
@@ -269,10 +257,7 @@ class SupportController extends Controller
 			ORDER BY inserted DESC");
 
 		// send variables to the view
-		$this->view->title = "Tickets reports";
-		$this->view->newCount = $newCount[0]->count;
-		$this->view->pendingCount = $pendingCount[0]->count;
-		$this->view->buttons = [["caption"=>"Open Tickets", "href"=>"/support"]];
+		$this->view->title = "Tickets ($unresponded)";
 		$this->view->tickets = $tickets;
 	}
 }
