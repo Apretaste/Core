@@ -56,14 +56,14 @@
 			<div class="modal-content">
 				<div class="modal-header">
 					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4 class="modal-title">Can Response</h4>
+					<h4 class="modal-title">New ticket</h4>
 				</div>
 				<div class="modal-body">
-					<!-- list of can responses -->
+					<!-- list of macros -->
 					<div class="form-group">
-						<label for="cans">Can response</label>
+						<label for="cans">Macro</label>
 						<select id="cans" class="form-control" onchange="loadCanResponse();">
-							<option value="">Can response (optional)</option>
+							<option value="">Macro (optional)</option>
 							<?php foreach($cans as $can) { ?>
 								<option value="<?=$can->id?>"><?=$can->name?></option>
 							<?php } ?>
@@ -104,7 +104,7 @@
 		if(email != "") window.location = '/support/view?email='+email;
 	}
 
-	// load a can response async
+	// load a macro async
 	function loadCanResponse(){
 		var canId = $('#cans').val();
 		$.ajax({
