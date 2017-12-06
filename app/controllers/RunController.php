@@ -523,7 +523,7 @@ class RunController extends Controller
 		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '{$this->subject}', '{$this->body}')");
 
 		// save the new ticket in the reports table
-		$mysqlDateToday = date("Y-m-d H:i:s");
+		$mysqlDateToday = date("Y-m-d");
 		$connection->query("
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");

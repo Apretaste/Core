@@ -35,9 +35,9 @@
 
 	<div class="col-xs-12">
 		<form id="form" role="form" action="saveTicketSubmit" method="POST">
-			<!-- list of can responses -->
+			<!-- list of macros -->
 			<div class="form-group">
-				<label for="cans">Can response</label>
+				<label for="cans">Macro</label>
 				<select id="cans" class="form-control" onchange="loadCanResponse();">
 					<?php foreach($cans as $can) { ?>
 						<option value="<?=$can->id?>"><?=$can->name?></option>
@@ -71,12 +71,12 @@
 </div>
 
 <script type="text/javascript">
-	// load the first can response
+	// load the first macro
 	$(document).ready(function(){
 		loadCanResponse();
 	});
 
-	// load a can response async
+	// load a macro async
 	function loadCanResponse(){
 		var canId = $('#cans').val();
 		var name = '<?=$name?>';
