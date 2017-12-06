@@ -157,19 +157,20 @@ class DeveloperController extends Controller
 
 	public function alertsAction()
 	{
-		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY id DESC LIMIT 30 ;";
+		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY created DESC;";
 		$sql = $default_query;
 		$query = '';
 		if ($this->request->isPost())
 		{
 			$query = $this->request->getPost('filter');
+			$querySQL = Connection::escape($query);
 			if (!is_null($query))
-				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$query}%' OR type = '$query') ORDER BY id DESC LIMIT 30 ;";
+				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$querySQL}%' OR type = '$querySQL') ORDER BY created DESC;";
 
 			$fixes = $this->request->getPost('fixed');
 			if (!is_null($fixes))
 				foreach ($fixes as $fixed)
-					Connection::query("UPDATE alerts SET fixed = 1 WHERE id = '$fixed';");
+					Connection::query("UPDATE alerts SET fixed = 1, fixed_date = CURRENT_TIMESTAMP WHERE id = '$fixed';");
 
 		}
 
@@ -181,17 +182,14 @@ class DeveloperController extends Controller
 			$this->view->no_results = true;
 		}
 
-		$total = Connection::query("SELECT count(*) as total FROM alerts;");
+		$total = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed =0;");
 		$total = $total[0]->total;
 
-		$fixed = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed = 1;");
-		$fixed = $fixed[0]->total;
-
 		$this->view->total = $total;
-		$this->view->fixed = $fixed;
-		$this->view->percentage = number_format($fixed / $total*100,2);
 		$this->view->query = $query;
-		$this->view->title = "Alerts";
+		$this->view->title = "Alerts ($total)";
 		$this->view->alerts = $alerts;
+		$this->view->buttons = [["caption"=>"Fix all checked", "href"=>"#", "onclick"=>"$('#formAlerts').submit();"]];
 	}
+
 }

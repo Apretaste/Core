@@ -1,53 +1,37 @@
-
 <div class="row">
-	<div class="col-xs-12">
-        <div class="panel ">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col col-lg-9 col-md-9">
-                        Status: <?=$fixed?> / <?=$total?>
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped active" aria-valuenow="<?=$percentage?>" aria-valuemin="0" aria-valuemax="100" style="width: <?=$percentage?>%;"><?=$percentage?>%</div>
-                        </div>
-                    </div>
-                    <div class="col col-lg-3 col-md-3">
-                        <form action="/developer/alerts" method="POST" class="form-inline">
-                            <div class="form-group">
-                                <label for ="filter">Filter</label>
-                                <input name="filter" id="filter" class="form-control" value="<?=$query?>">
-                                <input type="submit" value="Go!" class="btn btn-default">
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="col-xs-12">
         <form action="/developer/alerts" method="POST">
+            <div class="input-group">
+                <input required class="form-control" name="filter" value="<?=$query?>" placeholder="type text here...">
+                <span class="input-group-btn">
+					<button type="submit" class="btn btn-success">Search</button>
+				</span>
+            </div>
+        </form>
+        <br/>
+	    <?php if ($no_results): ?>
+            <div role="alert" class="alert alert-danger"><span>No alerts<?php if (!empty($query)): ?> for <b><?=$query?></b><?php endif; ?>.</span></div>
+	    <?php endif; ?>
+    </div>
+
+        <form action="/developer/alerts" method="POST" id="formAlerts">
             <input type="hidden" name="filter" id="filter" class="form-control" value="<?=$query?>">
-            <p align="right"> <input type="submit" class="btn btn-default" value="Fix all checked" onclick="return confirm('Are you sure?');"></p>
             <table id="servicesTable" class="table">
                 <thead>
                 <tr>
-                    <th class="text-center"><input type="checkbox" onclick="$('.chkFix').click();"></th>
-                    <th class="text-center">ID</th>
-                    <th class="text-center">Type</th>
+                    <th width="50" class="text-center"><input type="checkbox" onclick="$('.chkFix').click();"></th>
+                    <th>Date</th>
                     <th class="text-center">Text</th>
                 </tr>
                 </thead>
                 <tbody>
-                <?php if ($no_results): ?>
-                    <div role="alert" class="alert alert-danger"><span>No alerts<?php if (!empty($query)): ?> for <b><?=$query?></b><?php endif; ?>.</span></div>
-                <?php endif; ?>
 
                 <?php foreach ($alerts as $alert) {
                     ?>
                     <tr>
-                        <td class="text-center"><input type="checkbox" name="fixed[]" class="form-control chkFix" value="<?=$alert->id?>"></td>
-                        <td>
-                            <b><?=$alert->id?></b>
-                        </td>
-                        <td class="text-center"><?=$alert->type?></td>
+
+                        <td class="text-center" valign="middle"><input type="checkbox" name="fixed[]" class="chkFix" value="<?=$alert->id?>"></td>
+                        <td valign="middle" width="100"><?= date("m/d H:i", strtotime($alert->created)) ?></td>
                         <td class="text-left"><?=$alert->text?></td>
                     </tr>
                 <?php } ?>
