@@ -51,7 +51,7 @@ class Email
 		// create an alert if the email failed
 		if($res->code != "200" && $res->code != "515") {
 			$utils = new Utils();
-			$utils->createAlert("Sending failed MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
+			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
 		}
 
 		// return {code, message} structure
@@ -176,8 +176,8 @@ class Email
 		$word = $utils->randomSentence(1);
 
 		// send the email using smtp
-		if(empty($this->method)) $this->method = "sparkpost";
-		if(empty($this->from)) $this->from = "$word@cubazone.info";
+		$this->method = "sparkpost";
+		$this->from = "$word@cubazone.info";
 		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
@@ -266,9 +266,14 @@ class Email
 			$connection->query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
 		// insert in drops emails and add 24h of waiting time
 		}else{
+			// save error in the database
 			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
 			$connection->query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
+
+			// create notice that the service failed
+			$utils = new Utils();
+			$utils->createAlert("[{$this->method}] {$output->message}");
 		}
 
 		return $output;
@@ -291,6 +296,8 @@ class Email
 			$output = new stdClass();
 			$output->code = "300";
 			$output->message = "No password for {$this->to}";
+
+			$utils->createAlert("[{$this->method}] {$output->message}");
 			return $output;
 		}
 
@@ -315,8 +322,8 @@ class Email
 			} else {
 				$output->code = "520";
 				$output->message = "Error sending to {$this->to}";
+				$utils->createAlert("[{$this->method}] {$output->message}");
 			}
-			return $output;
 		}
 		// if the client cannot login show error
 		else
@@ -324,8 +331,11 @@ class Email
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
-			return $output;
+			$utils->createAlert("[{$this->method}] {$output->message}");
 		}
+
+		// create notice that the service failed
+		return $output;
 	}
 
 	/**
@@ -452,6 +462,10 @@ class Email
 		}catch (Exception $e){
 			$output->code = "500";
 			$output->message = $e->getMessage();
+
+			// create notice that the service failed
+			$utils = new Utils();
+			$utils->createAlert("[{$this->method}] {$output->message}");
 		}
 
 		return $output;

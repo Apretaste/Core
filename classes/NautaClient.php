@@ -104,7 +104,7 @@ class NautaClient
 			}
 			else
 			{
-				return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}", "ERROR");
+				return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
 			}
 		}
 
@@ -219,7 +219,7 @@ class NautaClient
 		// alert if there are errors
 		if(curl_errno($this->client)) {
 			$utils = new Utils();
-			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)", "ERROR");
+			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)");
 		}
 
 		return true;
