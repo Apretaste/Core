@@ -31,6 +31,7 @@ class Email
 		// if is Nauta and we have the user's password
 		elseif($isNauta) {
 			$res = $this->sendEmailViaWebmail();
+			if($res->code != "200") $res = $this->sendEmailViaSparkPost();
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
@@ -152,6 +153,32 @@ class Email
 		$this->method = "alias";
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
+	}
+
+	/**
+	 * Sends an email using SparkPost
+	 *
+	 * @author salvipascual
+	 * @return {"code", "message"}
+	 */
+	public function sendEmailViaSparkPost()
+	{
+		// get the Amazon params
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$host = "smtp.sparkpostmail.com";
+		$user = $di->get('config')['sparkpost']['user'];
+		$pass = $di->get('config')['sparkpost']['key'];
+		$port = '587';
+		$security = 'STARTTLS';
+
+		// get a random word
+		$utils = new Utils();
+		$word = $utils->randomSentence(1);
+
+		// send the email using smtp
+		if(empty($this->method)) $this->method = "sparkpost";
+		if(empty($this->from)) $this->from = "$word@cubazone.info";
+		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
 	/**
@@ -425,10 +452,6 @@ class Email
 		}catch (Exception $e){
 			$output->code = "500";
 			$output->message = $e->getMessage();
-
-			// log error with SMTP
-			$utils = new Utils();
-			$utils->createAlert($e->getMessage(), "ERROR");
 		}
 
 		return $output;
