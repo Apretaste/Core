@@ -1197,7 +1197,6 @@ class Utils
 			$service->serviceDescription = $result[0]->description;
 			$service->creatorEmail = $result[0]->creator_email;
 			$service->serviceCategory = $result[0]->category;
-			$service->serviceUsage = $result[0]->usage_text;
 			$service->insertionDate = $result[0]->insertion_date;
 			$service->showAds = $result[0]->ads == 1;
 		} else {
