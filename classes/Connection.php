@@ -56,17 +56,22 @@ class Connection
 			}
 		} catch(PDOException $e) // log the error and rethrow it
 		{
-			$message = $e->getMessage();
+			// create the message
 			$query = isset($e->getTrace()[0]['args'][0]) ? $e->getTrace()[0]['args'][0] : "Query not available";
+			$message = $e->getMessage() . "\nQUERY: $query\n";
 
+			// get the path to root
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 
+			// save the bad queries log
 			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/badqueries.log");
-			$logger->log("$message\nQUERY: $query\n");
+			$logger->log($message);
 			$logger->close();
 
-			throw $e;
+			// create the alert
+			$utils = new Utils();
+			return $utils->createAlert($message, "ERROR");
 		}
 	}
 
