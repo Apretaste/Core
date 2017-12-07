@@ -748,26 +748,6 @@ class Utils
 	}
 
 	/**
-	 * Return user's notifications, and mark notifications as read
-	 *
-	 * @param string $email
-	 * @return array
-	 */
-	public function getUnreadNotifications($email)
-	{
-		// get all user notifications
-		$connection = new Connection();
-		$notifications = $connection->query("SELECT * FROM notifications WHERE viewed='0' AND email='$email' ORDER BY inserted_date DESC");
-
-		// Mark all notifications as read
-		if($notifications){
-//			$connection->query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE email='$email'");
-		}
-
-		return $notifications;
-	}
-
-	/**
 	 * Encript a message using the user's public key.
 	 *
 	 * @author salvipascual
