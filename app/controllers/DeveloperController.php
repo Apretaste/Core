@@ -185,6 +185,7 @@ class DeveloperController extends Controller
 		$total = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed =0;");
 		$total = $total[0]->total;
 
+		foreach($alerts as $alert) $alert->text = str_replace("|","<br/>", nl2br($alert->text));
 		$this->view->total = $total;
 		$this->view->query = $query;
 		$this->view->title = "Alerts ($total)";
