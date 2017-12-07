@@ -322,6 +322,7 @@ class Email
 			} else {
 				$output->code = "520";
 				$output->message = "Error sending to {$this->to}";
+				$utils->createAlert("[{$this->method}] {$output->message}");
 			}
 		}
 		// if the client cannot login show error
@@ -330,10 +331,10 @@ class Email
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
+			$utils->createAlert("[{$this->method}] {$output->message}");
 		}
 
 		// create notice that the service failed
-		if($output->code != "200") $utils->createAlert("[{$this->method}] {$output->message}");
 		return $output;
 	}
 
