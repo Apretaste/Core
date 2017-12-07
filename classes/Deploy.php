@@ -154,8 +154,8 @@ class Deploy
 		// save the new service in the database
 		$connection = new Connection();
 		$insertUserQuery = "
-			INSERT INTO service (name,description,creator_email,category, listed)
-			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['serviceUsage']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}')";
+			INSERT INTO service (name,description,creator_email,category,listed)
+			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}')";
 		$connection->deepQuery($insertUserQuery);
 
 		// clear old alias
