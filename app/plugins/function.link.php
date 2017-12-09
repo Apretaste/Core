@@ -3,10 +3,9 @@
 /**
  * Smarty plugin
  *
- * @package    Smarty
+ * @package Smarty
  * @subpackage PluginsFunction
  */
-
 function smarty_function_link($params, $template)
 {
 	// get params
