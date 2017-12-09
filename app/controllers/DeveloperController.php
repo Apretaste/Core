@@ -186,4 +186,42 @@ class DeveloperController extends Controller
 
 		exit;
 	}
+
+	public function alertsAction()
+	{
+		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY created DESC;";
+		$sql = $default_query;
+		$query = '';
+		if ($this->request->isPost())
+		{
+			$query = $this->request->getPost('filter');
+			$querySQL = Connection::escape($query);
+			if (!is_null($query))
+				$sql = "SELECT * FROM alerts WHERE fixed = 0 AND (text LIKE '%{$querySQL}%' OR type = '$querySQL') ORDER BY created DESC;";
+
+			$fixes = $this->request->getPost('fixed');
+			if (!is_null($fixes))
+				foreach ($fixes as $fixed)
+					Connection::query("UPDATE alerts SET fixed = 1, fixed_date = CURRENT_TIMESTAMP WHERE id = '$fixed';");
+
+		}
+
+		$alerts = Connection::query($sql);
+		$this->view->no_results = false;
+		if (count($alerts) == 0)
+		{
+			$alerts = Connection::query($default_query);
+			$this->view->no_results = true;
+		}
+
+		$total = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed =0;");
+		$total = $total[0]->total;
+
+		foreach($alerts as $alert) $alert->text = str_replace("|","<br/>", nl2br($alert->text));
+		$this->view->total = $total;
+		$this->view->query = $query;
+		$this->view->title = "Alerts ($total)";
+		$this->view->alerts = $alerts;
+		$this->view->buttons = [["caption"=>"Fix all checked", "href"=>"#", "onclick"=>"$('#formAlerts').submit();"]];
+	}
 }
