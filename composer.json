@@ -11,6 +11,8 @@
 		"matthiasnoback/microsoft-translator":  "dev-master",
 		"aws/aws-sdk-php": "^3.36",
 		"php-mime-mail-parser/php-mime-mail-parser": "^2.9",
-		"guzzlehttp/guzzle": "^6.3"
+		"sparkpost/sparkpost": "^2.1",
+		"guzzlehttp/guzzle": "^6.3",
+		"php-http/guzzle6-adapter": "^1.1"
 	}
 }
