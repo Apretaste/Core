@@ -264,25 +264,18 @@ class RunController extends Controller
 	 */
 	public function webhookAction()
 	{
-$this->fromName = "Salvi";
-$this->fromEmail = "salvi.pascual@gmail.com";
-$this->toEmail = "apretaste@gmial.com";
-$this->subject = "hola mundo";
-$this->body = "";
-$this->attachments = ["/home/salvipascual/g4X34mc2.zip"];
-
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// get data from Amazon AWS webhook
-//		$this->callAmazonWebhook();
+		$this->callAmazonWebhook();
 
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$connection = new Connection();
 		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
-$environment = "app";
+
 		// stop procesing if the sender is invalid
 		$utils = new Utils();
 		if($environment != "app") { // no need to test for the app
@@ -430,7 +423,7 @@ $environment = "app";
 				$service->appversion = $appversion;
 				$this->body = $render->renderHTML($service, $response);
 			}
-die($this->body);
+
 			// get extra data for the app
 			// if the old version is calling status, do not get extra data
 			// @TODO remove when we get rid of the old version
