@@ -1,8 +1,8 @@
 {if $APRETASTE_ENVIRONMENT == "app" && $APP_VERSION < $APP_LATEST_VERSION}
-<table width="100%" cellspacing="0">
+<table width="100%" cellspacing="0" cellpadding="3">
 	<tr>
 		<td align="center" bgcolor="#F6CED8">
-			<p><small>Usted tiene una version antigua de la app; descargue la version {$APP_LATEST_VERSION} y saque maximo provecho a Apretaste</small></p>
+			<p><small>Descargue la version {$APP_LATEST_VERSION} de la app y pongase al dia</small></p>
 		</td>
 		<td align="right" bgcolor="#F6CED8" width="10">
 			{button href="APP" caption="Descargar" size="small"}
