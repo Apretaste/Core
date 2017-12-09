@@ -2,7 +2,7 @@
 <table width="100%" cellspacing="0" cellpadding="3">
 	<tr>
 		<td align="left" bgcolor="#F6CED8">
-			<p><small>Su app esta desactualizada. Recomendamos descargar la version {$APP_LATEST_VERSION}.</small></p>
+			<p><small>Su app esta desactualizada. Descargue la version {$APP_LATEST_VERSION}.</small></p>
 		</td>
 		<td align="right" bgcolor="#F6CED8" width="10">
 			{button href="APP" caption="Descargar" size="small"}
