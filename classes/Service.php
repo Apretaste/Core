@@ -6,7 +6,6 @@ class Service
 	public $serviceDescription;
 	public $creatorEmail;
 	public $serviceCategory;
-	public $serviceUsage;
 	public $insertionDate;
 	public $pathToService;
 	public $appversion;

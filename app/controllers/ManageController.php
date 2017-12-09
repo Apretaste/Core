@@ -27,6 +27,8 @@ class ManageController extends Controller
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='NEW'");
 		$supportPendingCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='PENDING'");
 		$mailListRegisteredUsers = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE mail_list=1");
+		$alertsTotal = $connection->query("SELECT COUNT(id) as cnt FROM alerts;");
+		$alertsFixed = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed = 1;");
 
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
@@ -42,5 +44,8 @@ class ManageController extends Controller
 		$this->view->supportPendingCount = $supportPendingCount[0]->cnt;
 		$this->view->mailListRegisteredUsers = $mailListRegisteredUsers[0]->cnt;
 		$this->view->tasksWidget = $tasksWidget;
+		$this->view->alertsTotal = $alertsTotal[0]->cnt;
+		$this->view->alertsFixed = $alertsFixed[0]->cnt;
+
 	}
 }
