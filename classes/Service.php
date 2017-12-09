@@ -8,6 +8,7 @@ class Service
 	public $serviceCategory;
 	public $insertionDate;
 	public $pathToService;
+	public $appversion;
 	public $utils; // Utils
 	public $email; // Email
 	public $request; // Request
