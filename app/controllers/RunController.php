@@ -407,7 +407,7 @@ class RunController extends Controller
 		if($response->render)
 		{
 			// set the layout to blank
-			$response->setEmailLayout('email_text.tpl');
+			$response->setEmailLayout('email_app.tpl');
 
 			// is there is a cache time, add it
 			if($response->cache) {
@@ -420,6 +420,7 @@ class RunController extends Controller
 			if($text == "status") $this->body = "{}";
 			else {
 				$render = new Render();
+				$service->appversion = $appversion;
 				$this->body = $render->renderHTML($service, $response);
 			}
 

@@ -9,8 +9,9 @@ class Service
 	public $serviceUsage;
 	public $insertionDate;
 	public $pathToService;
-	public $showAds;
-	public $group = 'apretaste';
+	public $appversion;
+	public $showAds; // @TODO remove
+	public $group = 'apretaste'; // @TODO remove
 	public $utils; // Utils
 	public $email; // Email
 	public $request; // Request

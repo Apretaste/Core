@@ -85,12 +85,29 @@
 			}
 			else if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
-				$.each(desc.split("|"), function(i, val){
-					$('#modalRequestMoreDataBody').append('
-						<div style="text-align:left; margin-bottom:15px;">\
-							<small><label for="field'+i+'">'+val+'</label></small><br/>\
-							<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" style="width:100%;" type="text" class="form-control"/>\
-						</div>');
+				$.each(desc.split("|"), function(i, val) {
+					var isDropDown = val.indexOf('[');
+					var html = '<div style="text-align:left; margin-bottom:15px;"><small>';
+
+					if(isDropDown > -1)
+					{
+						var label = val.substring(0, val.lastIndexOf('['));
+						var elements = val.substring(isDropDown+1, val.lastIndexOf(']')).split(',');
+						html += '<label for="field'+i+'">'+label+'</label></small><br/>';
+						html += '<select id="field'+i+'" class="input" style="width:100%;">';
+						for (var i = 0; i < elements.length; i++) {
+							var element = elements[i].trim();
+							html += '<option value="'+element+'">'+element+'</option>';
+						}
+						html += '</selects>';
+					}
+					else
+					{
+						html += '<label for="field'+i+'">'+val+'</label></small><br/>';
+						html += '<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" style="width:100%;" type="text" class="input"/>';
+					}
+
+					$('#modalRequestMoreDataBody').append(html+'</div>');
 				});
 				modalOpen('modalRequestMoreData');
 				$('#field0').focus();
@@ -101,14 +118,14 @@
 		sendMoreData: function() {
 			var params = "";
 			var redirect = true;
-			$('#modalRequestMoreDataBody input').each(function(){
+			$('#modalRequestMoreDataBody .input').each(function(){
 				$(this).css("border", "1px solid #A9A9A9");
 				var value = this.value.trim();
 				if(value == "") {
 					$(this).css("border", "1px solid red");
 					redirect = false;
 				}
-				params += value + " ";
+				params += encodeURIComponent(value) + " ";
 			});
 
 			if(redirect) {
