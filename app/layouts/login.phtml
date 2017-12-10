@@ -18,7 +18,7 @@
 	<body>
 		<div class="container">
 			<div class="row" style="margin-top:100px;">
-				<div class="col-xs-4 col-xs-offset-4 text-center">
+				<div class="col-xs-12 text-center">
 					<img src="/images/apretaste.logo.big.transp.png" width="250">
 					<br/><br/><br/>
 
@@ -27,14 +27,14 @@
 						<input type="hidden" name="redirect" value="<?=$redirect?>">
 
 						<?php if($phase == "email") { ?>
-							<label for="email">ESCRIBA SU EMAIL</label>
+							<label for="email">ESCRIBA SU EMAIL</label><br/>
 							<input id="email" type="email" name="email" value="<?=$email?>" class="form-control input-lg" placeholder="email@apretaste.com" required/>
 							<br/><br/>
 							<button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-menu-right"></span></button>
 						<?php } ?>
 
 						<?php if($phase == "code") { ?>
-							<label for="pin">ESCRIBA EL CODIGO</label>
+							<label for="pin">ESCRIBA EL CODIGO</label><br/>
 							<input id="pin" type="text" name="pin" class="form-control input-lg text-center" style="letter-spacing:16px;" maxlength="4" placeholder="****" required/>
 							<small>Le mandamos el c&oacute;digo a <?=$email?></small>
 							<br/><br/>
@@ -50,8 +50,16 @@
 
 <style>
 	body {
-		background: #E3E7D0 url("/images/background3.jpg") no-repeat fixed center;
-		background-size: 100%;
+		background: #E3E7D0 url('/images/background3.jpg') no-repeat center center fixed;
+		-webkit-background-size: cover;
+		-moz-background-size: cover;
+		-o-background-size: cover;
+		background-size: cover;
+	}
+
+	.form-control {
+		max-width: 350px;
+		display: inline-block;
 	}
 </style>
 
