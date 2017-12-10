@@ -187,10 +187,13 @@ class revolicoTask extends \Phalcon\Cli\Task
 				for ($i = 0; $i < count($nodes); $i ++)
 				{
 					$href = $nodes->eq($i)->attr('href');
-					
+
+					if ($href == 'javascript:')
+						continue;
+
 					// delete double /
 					$ru = $this->revolicoURL;
-					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
+					if ($href[0] == "/" && $ru[strlen($ru)-1] == "/")
 						$href = substr($href, 1);
 					
 					// get the url from the list
