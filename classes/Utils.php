@@ -1059,12 +1059,14 @@ class Utils
 	 * @param String $text
 	 * @param Enum $type: NOTICE,WARNING,ERROR
 	 */
-	public function createAlert($text, $severity="NOTICE")
+	public function createAlert($text, $severity="WARNING")
 	{
-		// save alert into the database
-		$connection = new Connection();
-		$text = $connection->escape(substr($text, 0, 254));
-		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+		// save WARNINGS and ERRORS in the database
+		if($severity != "NOTICE") {
+			$connection = new Connection();
+			$text = $connection->escape(substr($text, 0, 254));
+			$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+		}
 
 		// send the alert to the error log
 		$subject = "$severity: $text";
@@ -1074,10 +1076,8 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$tier = $di->get('config')['global']['tier'];
 
-		// if the email is an error
-		if($severity == "ERROR" && $tier == "production")
-		{
-			// send the alert by email
+		// send the alert by email
+		if($severity == "ERROR" && $tier == "production") {
 			$email = new Email();
 			$email->to = $di->get('config')['global']['alerts'];
 			$email->subject = substr($subject, 0, 80);
