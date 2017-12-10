@@ -41,7 +41,7 @@ class Email
 		else $res = $this->sendEmailViaAlias();
 
 		// update the database with the email sent
-		$res->message = str_replace("'", "", $res->message); // single quotes break the SQL
+		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
 		$connection = new Connection();
 		$connection->query("
 			START TRANSACTION;
@@ -54,7 +54,7 @@ class Email
 			COMMIT;");
 
 		// create an alert if the email failed
-		if($res->code != "200" && $res->code != "515") {
+		if($res->code != "200") {
 			$utils = new Utils();
 			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
 		}
@@ -225,7 +225,7 @@ class Email
 			$output->code = "200";
 			$output->message = "Sent to {$this->to}";
 		} catch (\Exception $e) {
-			$output->code = "500";
+			$output->code = "501";
 			$output->message = $e->getCode() . " " . $e->getMessage();
 			$utils->createAlert("[{$this->method}] {$output->message}");
 		}
@@ -260,6 +260,8 @@ class Email
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "NODE: No active account to send to {$this->to}";
+
+			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
 			return $output;
 		} $gmail = $gmail[0];
 
@@ -349,7 +351,7 @@ class Email
 			$output->code = "300";
 			$output->message = "No password for {$this->to}";
 
-			$utils->createAlert("[{$this->method}] {$output->message}");
+			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
 			return $output;
 		}
 
