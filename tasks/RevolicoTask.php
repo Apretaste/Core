@@ -82,7 +82,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 				}
 				catch (Exception $e)
 				{
-					echo "[ERROR] Page {$pages[$i]} request error \n";
+					//echo "[ERROR] Page {$pages[$i]} request error \n";
 				}
 
 				if ($data !== false)
