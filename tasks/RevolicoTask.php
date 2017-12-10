@@ -23,11 +23,9 @@ class revolicoTask extends \Phalcon\Cli\Task
 	public function mainAction($revolicoMainUrls = null)
 	{		
 		$this->utils = new Utils();
-		$this->client = new Client();
-		$guzzle = $this->client->getClient();
-		$guzzle->setDefaultOption("verify", false);
-		$this->client->setClient($guzzle);
-
+		$this->client = new Goutte\Client();
+		$this->client->getClient()->setDefaultOption("verify", false);
+		
 		$this->connection = new Connection();
 				
 		if (is_null($revolicoMainUrls))
