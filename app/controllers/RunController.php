@@ -110,7 +110,6 @@ class RunController extends Controller
 		}
 
 		// run the request and get the service and first response
-		$render = new Render();
 		$ret = Render::runRequest($email, $subject, $body, $attach);
 		$service = $ret->service;
 		$response = $ret->response;
@@ -177,7 +176,6 @@ class RunController extends Controller
 		}
 
 		// run the request
-		$render = new Render();
 		$ret = Render::runRequest($this->fromEmail, $text, '', $this->attachments);
 		$service = $ret->service;
 		$response = $ret->response;
@@ -392,7 +390,6 @@ class RunController extends Controller
 		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$render = new Render();
 		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs);
 		$service = $ret->service;
 		$response = $ret->response;
@@ -468,7 +465,6 @@ class RunController extends Controller
 	private function runEmail()
 	{
 		// run the request and get the service and response
-		$render = new Render();
 		$ret = Render::runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
 		$service = $ret->service;
 		$response = $ret->response;
