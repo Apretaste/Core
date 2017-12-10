@@ -1,6 +1,9 @@
 <?php
 
 use Nette\Mail\Message;
+use SparkPost\SparkPost;
+use GuzzleHttp\Client;
+use Http\Adapter\Guzzle6\Client as GuzzleAdapter;
 
 class Email
 {
@@ -165,22 +168,70 @@ class Email
 	 */
 	public function sendEmailViaSparkPost()
 	{
-		// get the Amazon params
+		// get the Sparkpost key
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$host = "smtp.sparkpostmail.com";
-		$user = $di->get('config')['sparkpost']['user'];
 		$pass = $di->get('config')['sparkpost']['key'];
-		$port = '587';
-		$security = 'STARTTLS';
 
-		// get a random word
+		// get the email to send from
 		$utils = new Utils();
 		$word = $utils->randomSentence(1);
-
-		// send the email using smtp
-		$this->method = "sparkpost";
 		$this->from = "$word@cubazone.info";
-		return $this->smtp($host, $user, $pass, $port, $security);
+		$this->method = "sparkpost";
+
+		// get attachments
+		$attachments = [];
+		if($this->attachments) {
+			$file = $this->attachments[0];
+			$fileName = basename($file);
+			$fileType = mime_content_type($file);
+			$fileData = base64_encode(file_get_contents($file));
+			$attachments = [['name' => $fileName, 'type' => $fileType, 'data' => $fileData]];
+		}
+
+		// create client
+		$httpClient = new GuzzleAdapter(new Client());
+		$sparky = new SparkPost($httpClient, ['key'=>'e6aa6d475daaac7e5ae7fde805d84a9c8c9002f1']);
+
+		// prepare email
+		$promise = $sparky->transmissions->post([
+			'content' => [
+				'from' => [
+					'name' => $word,
+					'email' => $this->from,
+				],
+				'subject' => $this->subject,
+				'html' => $this->body,
+				'text' => '',
+				'attachments' => $attachments,
+			],
+			'recipients' => [
+				[
+					'address' => [
+						'name' => '',
+						'email' => $this->to,
+					],
+				],
+			],
+		]);
+
+		// send email
+		$promise = $sparky->transmissions->get();
+
+		try {
+			// check if sent
+			$response = $promise->wait();
+
+			// create the response code and message
+			$output = new stdClass();
+			$output->code = "200";
+			$output->message = "Sent to {$this->to}";
+		} catch (\Exception $e) {
+			$output->code = "500";
+			$output->message = $e->getCode() . " " . $e->getMessage();
+			$utils->createAlert("[{$this->method}] {$output->message}");
+		}
+
+		return $output;
 	}
 
 	/**

@@ -12,7 +12,7 @@ use Goutte\Client;
 class revolicoTask extends \Phalcon\Cli\Task
 {
 
-	private $revolicoURL = "http://revolico.com/";
+	private $revolicoURL = "https://revolico.com/";
 	private $client;
 	private $connection;
 	public $utils;
@@ -24,6 +24,10 @@ class revolicoTask extends \Phalcon\Cli\Task
 	{		
 		$this->utils = new Utils();
 		$this->client = new Client();
+		$guzzle = $this->client->getClient();
+		$guzzle->setDefaultOption("verify", false);
+		$this->client->setClient($guzzle);
+
 		$this->connection = new Connection();
 				
 		if (is_null($revolicoMainUrls))
