@@ -14,6 +14,9 @@ setlocale(LC_TIME, "es_ES");
 // include composer
 include_once "../vendor/autoload.php";
 
+// set the memory to be used by php
+ini_set('memory_limit', '1024M');
+
 /* @TODO antes de poner este code hay que probarlo con cada uno de los servicios
 // handle php errors as exceptions
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
