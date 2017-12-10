@@ -30,8 +30,9 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$this->client->setClient($guzzle);
 
 		$this->connection = new Connection();
-				
-		if (is_null($revolicoMainUrls))
+
+		// empty(null) === true && empty([]) === null
+		if (empty($revolicoMainUrls))
 		{
 			// starting points for the crawler
 			$revolicoMainUrls = array(
