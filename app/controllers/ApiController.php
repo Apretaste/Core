@@ -239,8 +239,7 @@ class ApiController extends Controller
 		$response->internal = true;
 
 		// render the template as html
-		$render = new Render();
-		$body = $render->renderHTML(new Service(), $response);
+		$body = Render::renderHTML(new Service(), $response);
 
 		// email the code to the user
 		$sender = new Email();
