@@ -35,13 +35,9 @@ class RunController extends Controller
 		// set the running environment
 		$this->di->set('environment', function() {return "web";});
 
-		// run the request
-		$utils = new Utils();
-		$ret = $utils->runRequest($this->fromEmail, $this->subject, '', []);
-
-		// render the response
-		$render = new Render();
-		$html = $render->renderHTML($ret->service, $ret->response);
+		// run the request & render the response
+		$ret = Render::runRequest($this->fromEmail, $this->subject, '', []);
+		$html = Render::renderHTML($ret->service, $ret->response);
 		die($html);
 	}
 
@@ -114,18 +110,18 @@ class RunController extends Controller
 		}
 
 		// run the request and get the service and first response
-		$ret = $utils->runRequest($email, $subject, $body, $attach);
+		$render = new Render();
+		$ret = Render::runRequest($email, $subject, $body, $attach);
 		$service = $ret->service;
 		$response = $ret->response;
 
 		// respond by email, if there is an email to send
-		$render = new Render();
 		if($response->email && $response->render)
 		{
 			$sender = new Email();
 			$sender->to = $response->email;
 			$sender->subject = $response->subject;
-			$sender->body = $render->renderHTML($service, $response);
+			$sender->body = Render::renderHTML($service, $response);
 			$sender->send();
 		}
 
@@ -133,7 +129,7 @@ class RunController extends Controller
 		$connection->query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 
 		// respond to the API
-		if($response->render) die($render->renderJSON($response));
+		if($response->render) die(Render::renderJSON($response));
 		else die('{"code":"ok"}');
 	}
 
@@ -181,8 +177,8 @@ class RunController extends Controller
 		}
 
 		// run the request
-		$utils = new Utils();
-		$ret = $utils->runRequest($this->fromEmail, $text, '', $this->attachments);
+		$render = new Render();
+		$ret = Render::runRequest($this->fromEmail, $text, '', $this->attachments);
 		$service = $ret->service;
 		$response = $ret->response;
 
@@ -202,10 +198,7 @@ class RunController extends Controller
 
 			// render the HTML, unless it is a status call
 			if($text == "status") $this->body = "{}";
-			else {
-				$render = new Render();
-				$this->body = $render->renderHTML($service, $response);
-			}
+			else $this->body = Render::renderHTML($service, $response);
 
 			// get extra data for the app
 			// if the old version is calling status, do not get extra data
@@ -399,7 +392,8 @@ class RunController extends Controller
 		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$ret = $utils->runRequest($this->fromEmail, $text, '', $attachs);
+		$render = new Render();
+		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs);
 		$service = $ret->service;
 		$response = $ret->response;
 
@@ -419,9 +413,8 @@ class RunController extends Controller
 			// render the HTML, unless it is a status call
 			if($text == "status") $this->body = "{}";
 			else {
-				$render = new Render();
 				$service->appversion = $appversion;
-				$this->body = $render->renderHTML($service, $response);
+				$this->body = Render::renderHTML($service, $response);
 			}
 
 			// get extra data for the app
@@ -475,8 +468,8 @@ class RunController extends Controller
 	private function runEmail()
 	{
 		// run the request and get the service and response
-		$utils = new Utils();
-		$ret = $utils->runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
+		$render = new Render();
+		$ret = Render::runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
 		$service = $ret->service;
 		$response = $ret->response;
 
@@ -484,8 +477,7 @@ class RunController extends Controller
 		if($response->render)
 		{
 			// render the HTML body
-			$render = new Render();
-			$body = $render->renderHTML($service, $response);
+			$body = Render::renderHTML($service, $response);
 
 			// prepare and send the email
 			$email = new Email();
