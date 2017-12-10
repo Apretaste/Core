@@ -1063,7 +1063,7 @@ class Utils
 	{
 		// save alert into the database
 		$connection = new Connection();
-		$text = $connection->escape($text);
+		$text = $connection->escape(substr($text, 0, 254));
 		$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
 
 		// send the alert to the error log
