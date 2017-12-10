@@ -51,7 +51,8 @@ class revolicoTask extends \Phalcon\Cli\Task
 		
 		// variable to store the total number of posts
 		$totalPosts = 0;
-		
+
+		var_dump($revolicoMainUrls);
 		// for each main url
 		foreach ($revolicoMainUrls as $url)
 		{
