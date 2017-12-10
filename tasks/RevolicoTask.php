@@ -1,6 +1,7 @@
 <?php
 
 use Goutte\Client;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Revolico Crawler Task
@@ -23,15 +24,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 	public function mainAction($revolicoMainUrls = null)
 	{
 		$this->utils = new Utils();
-		$this->client = new Goutte\Client([
-			"CURLOPT_SSL_VERIFYHOST" => false,
-			"verify" => false
-		]);
-		//$this->client->setDefaultOption('config/curl/'.CURLOPT_SSL_VERIFYHOST, FALSE);
-		/*$guzzle = $this->client->getClient();
-		$guzzle->setDefaultOption("verify", false);
+		$this->client = new Client();
+		$guzzle = new GuzzleClient(["verify" => false]);
+
 		$this->client->setClient($guzzle);
-*/
+
 		$this->connection = new Connection();
 				
 		if (is_null($revolicoMainUrls))
