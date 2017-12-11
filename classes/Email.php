@@ -447,15 +447,18 @@ class Email
 			$images = array();
 			if(is_array($this->images)) foreach ($this->images as $file)
 			{
-				// thumbnail the image or use thumbnail cache
-				$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
-				if( ! file_exists($thumbnail)) {
-					copy($file, $thumbnail);
-					$utils->optimizeImage($thumbnail, 100);
-				}
+				if(file_exists($file))
+				{
+					// thumbnail the image or use thumbnail cache
+					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+					if( ! file_exists($thumbnail)) {
+						copy($file, $thumbnail);
+						$utils->optimizeImage($thumbnail, 100);
+					}
 
-				// use the image only if it can be compressed
-				$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+					// use the image only if it can be compressed
+					$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+				}
 			}
 			$this->images = $images;
 		}
