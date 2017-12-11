@@ -132,8 +132,6 @@ class Response
 	 */
 	public function createFromJSON($json)
 	{
-		$this->template = "empty.tpl";
-		$this->content = array();
 		$this->json = $json;
 		$this->internal = true;
 		$this->render = true;
