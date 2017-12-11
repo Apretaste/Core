@@ -294,6 +294,7 @@ class RunController extends Controller
 		foreach ($this->attachments as $a) $attachs[] = basename($a);
 		$attachsStr = implode(",", $attachs);
 		$domain = explode("@", $this->fromEmail)[1];
+		$this->subject = substr($this->subject, 0, 1023);
 		$this->idEmail = $connection->query("
 			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
 			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attachsStr')");
