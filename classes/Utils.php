@@ -1076,7 +1076,9 @@ class Utils
 		}
 
 		// send the alert to the error log
-		error_log($subject. ($error_saving_alert !== false ?" [ERROR SAVING THIS ALERT: $error_saving_alert]" : ""));
+		error_log($subject);
+		if ($error_saving_alert !== false)
+			error_log("[Alert] ERROR SAVING THIS ALERT: $error_saving_alert");
 
 		// get the tier from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
