@@ -1,10 +1,11 @@
 <?php
 
 use Goutte\Client;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Revolico Crawler Task
- * 
+ *
  * @author kuma
  * @version 2.0
  */
@@ -12,21 +13,26 @@ use Goutte\Client;
 class revolicoTask extends \Phalcon\Cli\Task
 {
 
-	private $revolicoURL = "http://revolico.com/";
+	private $revolicoURL = "https://revolico.com/";
 	private $client;
 	private $connection;
 	public $utils;
 
 	/**
-	 * Main action 
+	 * Main action
 	 */
 	public function mainAction($revolicoMainUrls = null)
-	{		
+	{
 		$this->utils = new Utils();
 		$this->client = new Client();
+		$guzzle = new GuzzleClient(["verify" => false]);
+
+		$this->client->setClient($guzzle);
+
 		$this->connection = new Connection();
-				
-		if (is_null($revolicoMainUrls))
+
+		// empty(null) === true && empty([]) === null
+		if (empty($revolicoMainUrls))
 		{
 			// starting points for the crawler
 			$revolicoMainUrls = array(
@@ -38,56 +44,57 @@ class revolicoTask extends \Phalcon\Cli\Task
 				$this->revolicoURL.'vivienda/'
 			);
 		}
-		
+
 		// starting time and message
 		$timeCrawlerStart = time();
 		$timeStart = microtime(true);
 		echo "\n\nREVOLICO CRAWLER STARTED\n";
-		
+
 		// variable to store the total number of posts
 		$totalPosts = 0;
-		
+
+		var_dump($revolicoMainUrls);
 		// for each main url
 		foreach ($revolicoMainUrls as $url)
 		{
 			echo "CRAWLING $url\n";
-			
+
 			// get the list of pages that have not been inserted yet
 			$pages = $this->getRevolicoPagesFromMainURL($url);
 			$totalPages = count($pages);
-			
+
 			// calculate the total number of posts
 			$totalPosts += count($pages);
-			
+
 			echo "PROCESSING URLs $url - $totalPages pages\n";
-			
+
 			// for every page
 			for ($i = 0; $i < $totalPages; $i ++)
 			{
 				echo "SAVING PAGE $i/" . $totalPages . " {$pages[$i]} \n";
-				
+
 				$data = false;
-				
+
 				// get the page's data and images
-				try 
+				try
 				{
 					$data = $this->crawlRevolicoURL($pages[$i]);
-				} 
+				}
 				catch (Exception $e)
 				{
-					echo "[ERROR] Page {$pages[$i]} request error \n";
+					//echo "[ERROR] Page {$pages[$i]} request error \n";
 				}
-				
+
 				if ($data !== false)
 				{
 					// save the data into the database
 					$this->saveToDatabase($data);
 				}
-				else 
+				else
 				{
 					echo "[ERROR] Page {$pages[$i]} request error \n";
 				}
-				
+
 				echo "\tMEMORY USED: " . $this->utils->getFriendlySize(memory_get_usage(true)) . "\n";
 			}
 		}
@@ -106,20 +113,20 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 	/**
 	 * Proccess specific sections in revlico site
-	 * 
+	 *
 	 * @param array $sectionNames
 	 */
 	public function sectionAction($sectionNames = array()){
 		$revolicoMainUrls = array();
-		
+
 		foreach($sectionNames as $sn)
 		{
 			$revolicoMainUrls[] = $this->revolicoURL.$sn."/";
 		}
-		
+
 		return $this->mainAction($revolicoMainUrls);
 	}
-	
+
 	/*
 	 * * * * * * * * * * * * * * * * * * * * *
 	 * CORE FUNCTION, PLEASE
@@ -129,25 +136,25 @@ class revolicoTask extends \Phalcon\Cli\Task
 	private function getRevolicoPagesFromMainURL($url)
 	{
 		$links = array();
-		
+
 		try
 		{
 			$crawler = $this->client->request('GET', $url);
-			
+
 			// get the latest page count
 			$lastPage = $crawler->filter('[title="Final"]')->attr('href');
 			echo "LAST PAGE $lastPage\n";
 			$pagesTotal = intval(preg_replace('/[^0-9]+/', '', $lastPage), 10);
 			echo "PAGES TOTAL $pagesTotal \n";
 			echo "TODAY ".$this->utils->getTodaysDateSpanishString();
-			
+
 			// get all valid links
 			for ($n = 1; $n < $pagesTotal; $n ++)
 			{
 				echo "PAGE $n\n";
-				
+
 				// only crawl for today
-				$site = file_get_contents($url . "pagina-$n.html");
+				$site = $this->getUrl($url . "pagina-$n.html");
 				$exist = stripos($site, $this->utils->getTodaysDateSpanishString());
 				if ( ! $exist) {
 					$months = array(
@@ -171,21 +178,24 @@ class revolicoTask extends \Phalcon\Cli\Task
 					if ( ! $exist)
 						return $links;
 				}
-				
+
 				// move to the next page
 				$crawler = $this->client->request('GET', $url . "pagina-$n.html");
-				
+
 				// get all results for that page
 				$nodes = $crawler->filter('td a:not(.pwtip)');
 				for ($i = 0; $i < count($nodes); $i ++)
 				{
 					$href = $nodes->eq($i)->attr('href');
-					
+
+					if ($href == 'javascript:')
+						continue;
+
 					// delete double /
 					$ru = $this->revolicoURL;
-					if ($href[0] == "/" && $ru[count($ru)-1] == "/")
+					if ($href[0] == "/" && $ru[strlen($ru)-1] == "/")
 						$href = substr($href, 1);
-					
+
 					// get the url from the list
 					$links[] = $ru. $href;
 				}
@@ -200,33 +210,33 @@ class revolicoTask extends \Phalcon\Cli\Task
 	/**
 	 * Crawler
 	 *
-	 * @param unknown $url        	
+	 * @param unknown $url
 	 */
 	private function crawlRevolicoURL($url)
 	{
-		
+
 		$timeStart = time();
-		
+
 		// create crawler
 		try
 		{
 			while (strpos($url, '//') !== false)
 				$url = str_replace("//", "/", $url);
-			
+
 			$url = str_replace("http:/", "http://", $url);
 			$crawler = $this->client->request('GET', $url);
-		} 
+		}
 		catch (Exception $e)
 		{
-			return false;			
+			return false;
 		}
-		
+
 		// get title
 		$title = trim($crawler->filter('.headingText')->text());
-		
+
 		// get body
 		$body = trim($crawler->filter('.showAdText')->text());
-		
+
 		// declare a whole bunch of empty variables
 		$price = "";
 		$currency = "";
@@ -236,19 +246,19 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$phone = "";
 		$cell = "";
 		$province = "";
-		
+
 		// get email
 		$email = $this->utils->getEmailFromText($title);
 		if (empty($email)) $email = $this->utils->getEmailFromText($body);
-		
+
 		// get the phone number
 		$phone = $this->utils->getPhoneFromText($title);
 		if (empty($phone)) $phone = $this->utils->getPhoneFromText($body);
-		
+
 		// get the cell number
 		$cell = $this->utils->getCellFromText($title);
 		if (empty($cell)) $cell = $this->utils->getCellFromText($body);
-		
+
 		// get all code into lineBloks
 		$nodes = $crawler->filter('#lineBlock');
 		for ($i = 0; $i < count($nodes); $i ++)
@@ -264,75 +274,75 @@ class revolicoTask extends \Phalcon\Cli\Task
 			switch ($header)
 			{
 				case "Precio:":
-					{
-						$price = preg_replace("/[^0-9]/", "", $data);
-						$currency = ! empty($price) ? "CUC" : "";
-						break;
-					}
+				{
+					$price = preg_replace("/[^0-9]/", "", $data);
+					$currency = ! empty($price) ? "CUC" : "";
+					break;
+				}
 				case "Fecha:":
-					{
-						$date = $this->utils->dateSpanishToMySQL($data);
-						break;
-					}
+				{
+					$date = $this->utils->dateSpanishToMySQL($data);
+					break;
+				}
 				case "Nombre:":
-					{
-						$owner = str_replace("'", "",$data);
-						if (stripos($owner,'<![CDATA[')!== false)
-							$owner = "";
-						else $owner = substr($owner,0,15);
-						break;
-					}
+				{
+					$owner = str_replace("'", "",$data);
+					if (stripos($owner,'<![CDATA[')!== false)
+						$owner = "";
+					else $owner = substr($owner,0,15);
+					break;
+				}
 
 				case "Teléfono:":
-					{
-						if (empty($phone)) $phone = $this->utils->getPhoneFromText($data);
-						if (empty($cell)) $cell = $this->utils->getCellFromText($data);
-						break;
-					}
+				{
+					if (empty($phone)) $phone = $this->utils->getPhoneFromText($data);
+					if (empty($cell)) $cell = $this->utils->getCellFromText($data);
+					break;
+				}
 				case "Email:":
-					{
-						$email = '';
-						if (empty($email)) 
-							$data = $this->utils->getEmailFromText($data);
-						    if ($data !== false)
-								$email = $data;
-							else
-								$email = 'desconocido@apretaste.com';
-							
-						echo "EMAIL $email \n";
-						break;
-					}
+				{
+					$email = '';
+					if (empty($email))
+						$data = $this->utils->getEmailFromText($data);
+					if ($data !== false)
+						$email = $data;
+					else
+						$email = 'desconocido@apretaste.com';
+
+					echo "EMAIL $email \n";
+					break;
+				}
 			}
 		}
-		
+
 		// get the province
 		if (empty($province) && ! empty($phone)) $province = $this->utils->getProvinceFromPhone($phone);
-		
+
 		// download images
 		$pictures = $crawler->filter('.view img');
 		for ($i = 0; $i < count($pictures); $i ++)
 		{
 			// get the current picture
 			$picURl = "{$this->revolicoURL}{$pictures->eq($i)->attr('src')}";
-			
+
 			// get the path
 			$path = dirname(__DIR__) . "/public/tienda/" . md5($url) . "_" . ($i + 1) . ".jpg";
-			
+
 			// save image in the temp folder
-			$file = file_get_contents($picURl);
+			$file = $this->getUrl($picURl);
 			$insert = file_put_contents($path, $file);
-			
+
 			if ( ! $insert)
 			{
 				// save error log
 				$this->saveCrawlerLog(" Could not save image $path");
 			}
 		}
-		
+
 		$timeEnd = time();
 		$timeDiff = $timeEnd - $timeStart;
 		echo "\tCRAWL TIME: $timeDiff \n";
-		
+
 		// return all values
 		return array(
 			"date" => $date,
@@ -354,12 +364,12 @@ class revolicoTask extends \Phalcon\Cli\Task
 	/**
 	 * Save to database
 	 *
-	 * @param mixed $data        	
+	 * @param mixed $data
 	 */
 	private function saveToDatabase($data)
-	{		
+	{
 		$timeStart = time();
-		
+
 		// create the query to insert only if it is not repeated in the last month
 		/*
 		 * $sql = "
@@ -408,7 +418,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		// clean the body and title of characters that may break the query
 		$title = $this->connection->escape($data['title']);
 		$body = $this->connection->escape($data['body']);
-		
+
 		$sql = "
 		INSERT INTO _tienda_post (
 		contact_name,
@@ -444,12 +454,12 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 		try {
 			// save into the database, log on error
-			@$this->connection->deepQuery($sql);	
+			@$this->connection->deepQuery($sql);
 		} catch(Exception $ex)
 		{
 			var_dump($ex);
 		}
-		
+
 		$timeEnd = time();
 		$timeDiff = $timeEnd - $timeStart;
 		echo "\tDB TIME: $timeDiff\n";
@@ -497,7 +507,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			'books' => 'libro,revista,biblio',
 			'for_sale' => 'venta,vendo,ganga'
 		);
-		
+
 		foreach ($map as $class => $kws)
 		{
 			$kws = explode(',', $kws);
@@ -509,7 +519,46 @@ class revolicoTask extends \Phalcon\Cli\Task
 				}
 			}
 		}
-		
+
 		return 'for_sale';
+	}
+
+	private function getUrl($url, &$info = [])
+	{
+		$url = str_replace("//", "/", $url);
+		$url = str_replace("http:/","http://", $url);
+		$url = str_replace("https:/","https://", $url);
+
+		$ch = curl_init();
+
+		curl_setopt($ch, CURLOPT_URL, $url);
+
+		$default_headers = [
+			"Cache-Control" => "max-age=0",
+			"Origin" => "{$url}",
+			"User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
+			"Content-Type" => "application/x-www-form-urlencoded"
+		];
+
+		$hhs = [];
+		foreach ($default_headers as $key => $val)
+			$hhs[] = "$key: $val";
+
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $hhs);
+
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+		$html = curl_exec($ch);
+
+		$info = curl_getinfo($ch);
+
+		if ($info['http_code'] == 301)
+			if (isset($info['redirect_url']) && $info['redirect_url'] != $url)
+				return $this->getUrl($info['redirect_url'], $info);
+
+		curl_close($ch);
+
+		return $html;
 	}
 }
