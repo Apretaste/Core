@@ -1061,16 +1061,22 @@ class Utils
 	 */
 	public function createAlert($text, $severity="WARNING")
 	{
+		$subject = "$severity: $text";
+		$error_saving_alert = false;
+
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
-			$connection = new Connection();
-			$text = $connection->escape(substr($text, 0, 254));
-			$connection->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+			try{
+				$text = Connection::escape(substr($text, 0, 254));
+				Connection::db()->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+			} catch(Exception $ex)
+			{
+				$error_saving_alert = $ex->getMessage();
+			}
 		}
 
 		// send the alert to the error log
-		$subject = "$severity: $text";
-		error_log($subject);
+		error_log($subject. ($error_saving_alert !== false ?" [ERROR SAVING THIS ALERT: $error_saving_alert]" : ""));
 
 		// get the tier from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -1082,6 +1088,10 @@ class Utils
 			$email->to = $di->get('config')['global']['alerts'];
 			$email->subject = substr($subject, 0, 80);
 			$email->body = "<b>SEVERITY:</b> $severity<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
+
+			if ($error_saving_alert !== false)
+				$email->body .= "<br/><b>[ERROR SAVING THIS ALERT: $error_saving_alert]</b>";
+
 			$email->send();
 		}
 
