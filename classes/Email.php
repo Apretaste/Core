@@ -383,7 +383,7 @@ class Email
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
-			$utils->createAlert("[{$this->method}] {$output->message}");
+			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
 		}
 
 		// create notice that the service failed
