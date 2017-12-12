@@ -21,7 +21,8 @@ function smarty_function_link($params, $template)
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
 		if($popup == "false") $desc = "";
-		return "<a onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\" href='#!' $style>$caption</a>";
+		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.'); return false;';
+		$href = "#!";
 	}
 	// create link for the email system
 	else
@@ -31,7 +32,9 @@ function smarty_function_link($params, $template)
 
 		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
-		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
-		return "<a href='$linkto' $style>$caption</a>";
+		$onclick = "";
+		$href = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
+
+	return "<a href='$href' onclick='$onclick' $style>$caption</a>";
 }
