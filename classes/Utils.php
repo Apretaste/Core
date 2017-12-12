@@ -1142,15 +1142,16 @@ class Utils
 		// variable to store attach images
 		$attachments = array();
 
-		// get the person
+		// get the person object
 		$connection = new Connection();
 		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
+		$person = $person[0];
 
 		// create the response
 		$res = new stdClass();
 		$res->timestamp = time();
-		$res->username = $person[0]->username;
-		$res->credit = number_format($person[0]->credit, 2, '.', '');
+		$res->username = $person->username;
+		$res->credit = number_format($person->credit, 2, '.', '');
 
 		// get the list of mailboxes
 		$connection = new Connection();
@@ -1160,15 +1161,15 @@ class Utils
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$res->mailbox = "$inbox+{$person[0]->username}@gmail.com";
+		$res->mailbox = "$inbox+{$person->username}@gmail.com";
 
 		// check if there is any change in the profile
 		$res->profile = new stdClass();
-		if($lastUpdateTime < strtotime($person[0]->last_update_date))
+		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
 			$social = new Social();
-			$person = $social->prepareUserProfile($person[0]);
+			$person = $social->prepareUserProfile($person);
 
 			// add user profile to the response
 			$res->profile->full_name = $person->full_name;
@@ -1241,6 +1242,9 @@ class Utils
 		// get the latest versin from the config
 		$appversion = $di->get('config')['global']['appversion'];
 		$res->latest = "$appversion";
+
+		// get image quality
+		$res->img_quality = $person->img_quality;
 
 		// convert to JSON and return array
 		return array(
