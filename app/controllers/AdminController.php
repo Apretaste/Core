@@ -24,7 +24,7 @@ class AdminController extends Controller
 			FROM raffle A
 			LEFT JOIN ticket B
 			ON A.raffle_id = B.raffle_id
-			GROUP BY B.raffle_id
+			GROUP BY A.raffle_id, B.raffle_id
 			ORDER BY end_date DESC");
 
 		// get the current number of tickets
