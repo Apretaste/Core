@@ -1061,24 +1061,21 @@ class Utils
 	 */
 	public function createAlert($text, $severity="WARNING")
 	{
-		$subject = "$severity: $text";
-		$error_saving_alert = false;
+		// create basic message
+		$message = "$severity: $text";
 
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
 			try{
 				$text = Connection::escape(substr($text, 0, 254));
 				Connection::db()->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
-			} catch(Exception $ex)
-			{
-				$error_saving_alert = $ex->getMessage();
+			} catch(Exception $e) {
+				$message .= " [CreateAlert] ".$e->getMessage();
 			}
 		}
 
 		// send the alert to the error log
-		error_log($subject);
-		if ($error_saving_alert !== false)
-			error_log("[Alert] ERROR SAVING THIS ALERT: $error_saving_alert");
+		error_log($message);
 
 		// get the tier from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -1088,12 +1085,8 @@ class Utils
 		if($severity == "ERROR" && $tier == "production") {
 			$email = new Email();
 			$email->to = $di->get('config')['global']['alerts'];
-			$email->subject = substr($subject, 0, 80);
-			$email->body = "<b>SEVERITY:</b> $severity<br/><br/><b>TIER:</b> $tier<br/><br/><b>TEXT:</b> $text<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
-
-			if ($error_saving_alert !== false)
-				$email->body .= "<br/><b>[ERROR SAVING THIS ALERT: $error_saving_alert]</b>";
-
+			$email->subject = substr($message, 0, 80);
+			$email->body = "<b>MESSAGE:</b> $message<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
 			$email->send();
 		}
 
@@ -1154,15 +1147,16 @@ class Utils
 		// variable to store attach images
 		$attachments = array();
 
-		// get the person
+		// get the person object
 		$connection = new Connection();
 		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
+		$person = $person[0];
 
 		// create the response
 		$res = new stdClass();
 		$res->timestamp = time();
-		$res->username = $person[0]->username;
-		$res->credit = number_format($person[0]->credit, 2, '.', '');
+		$res->username = $person->username;
+		$res->credit = number_format($person->credit, 2, '.', '');
 
 		// get the list of mailboxes
 		$connection = new Connection();
@@ -1172,15 +1166,15 @@ class Utils
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$res->mailbox = "$inbox+{$person[0]->username}@gmail.com";
+		$res->mailbox = "$inbox+{$person->username}@gmail.com";
 
 		// check if there is any change in the profile
 		$res->profile = new stdClass();
-		if($lastUpdateTime < strtotime($person[0]->last_update_date))
+		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
 			$social = new Social();
-			$person = $social->prepareUserProfile($person[0]);
+			$person = $social->prepareUserProfile($person);
 
 			// add user profile to the response
 			$res->profile->full_name = $person->full_name;
@@ -1253,6 +1247,9 @@ class Utils
 		// get the latest versin from the config
 		$appversion = $di->get('config')['global']['appversion'];
 		$res->latest = "$appversion";
+
+		// get image quality
+		$res->img_quality = $person->img_quality;
 
 		// convert to JSON and return array
 		return array(

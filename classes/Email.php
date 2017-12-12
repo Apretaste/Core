@@ -44,14 +44,12 @@ class Email
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
 		$connection = new Connection();
 		$connection->query("
-			START TRANSACTION;
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id='{$this->id}';
-			COMMIT;");
+			WHERE id='{$this->id}'");
 
 		// create an alert if the email failed
 		if($res->code != "200") {
