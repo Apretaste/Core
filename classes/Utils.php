@@ -161,21 +161,16 @@ class Utils
 	 */
 	public function usernameFromEmail($email)
 	{
-		$username = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
-		$username = substr($username, 0, 5); // get the first 5 chars
+		// get the first part of the username
+		$shortmail = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
+		$shortmail = substr($shortmail, 0, 5); // get the first 5 chars
 
+		// contatenate a random unique number
 		$connection = new Connection();
-		$res = $connection->query("SELECT username as users FROM person WHERE username LIKE '$username%'");
-		if(count($res) > 0) $username = $username . count($res); // add a number after if the username exist
-
-		// ensure the username is unique
-		$res = $connection->query("SELECT username FROM person WHERE username='$username'");
-		if( ! empty($res))
-		{
-			$hash = md5(uniqid().$username.$email);
-			$hash = strtolower(preg_replace('/[^A-Za-z]/', '', $hash)); // remove special chars and caps
-			$username = substr($hash, 0, 6); // get the first 6 chars
-		}
+		do {
+			$username = $shortmail . rand(100, 999);
+			$exist = $connection->query("SELECT username FROM person WHERE username='$username'");
+		} while($exist);
 
 		return $username;
 	}
