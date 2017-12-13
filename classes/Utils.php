@@ -1215,11 +1215,16 @@ class Utils
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
+		// get VIP services if you referred 20+ users
+		// if listed=2 means is a VIP service, if listed=1 is a service
+		$referred = $connection->query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
+		$listed = ($referred[0]->nbr >= 10) ? "listed>=1" : "listed=1";
+
 		// get all services since last update
 		$services = $connection->query("
 			SELECT name, description, category, creator_email, insertion_date
 			FROM service
-			WHERE listed=1 AND insertion_date > '$lastUpdateDate'");
+			WHERE $listed AND insertion_date > '$lastUpdateDate'");
 
 		// add services to the response
 		$res->services = array();

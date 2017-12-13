@@ -510,7 +510,9 @@ class RunController extends Controller
 	{
 		// save the new ticket into the database
 		$connection = new Connection();
-		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '{$this->subject}', '{$this->body}')");
+		$subject = $connection->escape($this->subject, 250);
+		$body = $connection->escape($this->body, 1024);
+		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '$subject', '$body')");
 
 		// save the new ticket in the reports table
 		$mysqlDateToday = date("Y-m-d");
