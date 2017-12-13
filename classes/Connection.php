@@ -87,15 +87,21 @@ class Connection
 	/**
 	 * Escape dangerous strings before passing it to mysql
 	 * @author salvipascual
-	 * @param String $str , text to scape
+	 * @param String $str, text to scape
+	 * @param Intener $cut, number of chars to truncate the string
 	 * @return String, escaped text ready to be sent to mysql
 	 */
-	public function escape($str)
+	public function escape($str, $cut=false)
 	{
 		// get the escaped string
 		$safeStr = self::db()->escapeString($str);
 
 		// remove the ' at the beginning and end of the string
-		return substr(substr($safeStr, 0, - 1), 1);
+		$safeStr = substr(substr($safeStr, 0, - 1), 1);
+
+		// cut the string if a max number is passed
+		if($cut) $safeStr = trim(substr($safeStr, 0, $cut));
+
+		return $safeStr;
 	}
 }

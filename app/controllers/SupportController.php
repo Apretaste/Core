@@ -149,6 +149,8 @@ class SupportController extends Controller
 		$manager = $security->getUser();
 
 		// save response in the database
+		$subject = $connection->escape($this->subject, 250);
+		$content = $connection->escape($this->body, 1024);
 		$connection->query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
