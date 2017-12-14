@@ -5,7 +5,8 @@ use Phalcon\Mvc\Controller;
 class SupportController extends Controller
 {
 	// do not let anonymous users pass
-	public function initialize(){
+	public function initialize()
+	{
 		$security = new Security();
 		$security->enforceLogin();
 		$this->view->setLayout('manage');
@@ -149,8 +150,8 @@ class SupportController extends Controller
 		$manager = $security->getUser();
 
 		// save response in the database
-		$subject = $connection->escape($this->subject, 250);
-		$content = $connection->escape($this->body, 1024);
+		$subject = $connection->escape($subject, 250);
+		$content = $connection->escape($content, 1024);
 		$connection->query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
@@ -165,15 +166,11 @@ class SupportController extends Controller
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET response_count = response_count+1 WHERE inserted = '$mysqlDateToday';");
 
-		// add break lines as HTML to send the email
-		$body = str_replace("\r", "<br/>", $content);
-
 		// respond back to the user
 		$email = new Email();
 		$email->to = $to;
 		$email->subject = $subject;
-		$email->body = $body;
-		$email->group = "support";
+		$email->body = str_replace("\r", "<br/>", $content);
 		$email->send();
 
 		// go to the list of tickets
