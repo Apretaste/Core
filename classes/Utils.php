@@ -1063,7 +1063,8 @@ class Utils
 		if($severity != "NOTICE") {
 			try{
 				$text = Connection::escape(substr($text, 0, 254));
-				Connection::db()->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+				$stmt = Connection::db()->prepare("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
+				$stmt->execute();
 			} catch(Exception $e) {
 				$message .= " [CreateAlert] ".$e->getMessage();
 			}
