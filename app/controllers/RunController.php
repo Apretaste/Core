@@ -384,7 +384,7 @@ class RunController extends Controller
 		else {
 			$file = file("$temp/$folderName/$textFile");
 			$text = trim($file[0]);
-			$appversion = (isset($file[1]) && is_numeric($file[1])) ? trim($file[1]) : "";
+			$appversion = (isset($file[1]) && is_numeric(trim($file[1]))) ? trim($file[1]) : "";
 			$osversion = false;
 			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 			$timestamp = time(); // get only notifications
