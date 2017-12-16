@@ -68,7 +68,7 @@ class RunController extends Controller
 		$email = $utils->detokenize($token);
 		if(empty($token) || empty($email)) {
 			echo '{"code":"error","message":"bad authentication"}';
-			return;
+			return false;
 		}
 
 		// save the API log
@@ -82,7 +82,7 @@ class RunController extends Controller
 		$serviceName = strtoupper(explode(" ", $subject)[0]);
 		if (strtoupper($serviceName) == 'EXCLUYEME') {
 			echo '{"code":"error","message":"service not accesible"}';
-			return;
+			return false;
 		}
 
 		// check if the user is blocked
