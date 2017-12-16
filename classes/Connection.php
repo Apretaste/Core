@@ -38,14 +38,12 @@ class Connection
 			if(stripos(trim($sql), "select") === 0)
 			{
 				// query the database
-				$rows = [];
 				$result = self::db()->query($sql);
 				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
 
 				// convert to array of objects
+				$rows = [];
 				while($data = $result->fetch()) $rows[] = $data;
-
-				// return the array of objects
 				return $rows;
 			}
 			else
@@ -54,7 +52,8 @@ class Connection
 				self::db()->execute($sql);
 				return self::db()->lastInsertId();
 			}
-		} catch(PDOException $e) // log the error and rethrow it
+		}
+		catch(PDOException $e) // log the error and rethrow it
 		{
 			// create the message
 			$query = isset($e->getTrace()[0]['args'][0]) ? $e->getTrace()[0]['args'][0] : "Query not available";
@@ -68,6 +67,10 @@ class Connection
 			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/badqueries.log");
 			$logger->log($message);
 			$logger->close();
+
+			// hack to re-connect if connection is lost
+			$goneAway = php::exists($message, "gone away");
+			if($goneAway) self::db()->connect();
 
 			// create the alert
 			$utils = new Utils();

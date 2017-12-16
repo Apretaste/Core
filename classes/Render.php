@@ -165,8 +165,8 @@ class Render
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
 			// app only variables
-			"APP_VERSION" => $service->appversion,
-			"APP_LATEST_VERSION" => $di->get('config')['global']['appversion'],
+			"APP_VERSION" => floatval($service->appversion),
+			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
 			'USER_USERNAME' => $username,
