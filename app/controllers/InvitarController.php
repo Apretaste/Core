@@ -35,7 +35,7 @@ class InvitarController extends Controller
 		$host = trim($this->request->getPost('email'));
 		$guest = trim($this->request->getPost('guest'));
 
-		// throw a die() if no phrase in the session
+		// display an error if no phrase in the session
 		if ( ! isset($_SESSION['phrase'])) $_SESSION['phrase'] = uniqid();
 
 		// check all values passed are valid
@@ -44,7 +44,10 @@ class InvitarController extends Controller
 			$name == "" ||
 			! filter_var($host, FILTER_VALIDATE_EMAIL) ||
 			! filter_var($guest, FILTER_VALIDATE_EMAIL)
-		) die("Error procesando, por favor valla atras y comience nuevamente.");
+		){
+			echo "Error procesando, por favor valla atras y comience nuevamente.";
+			return false;
+		}
 
 		// params for the response
 		$this->view->name = $name;
@@ -104,7 +107,7 @@ class InvitarController extends Controller
 	public function checkAction()
 	{
 		$captcha = $this->request->get('text');
-		if(strtoupper($captcha) == strtoupper($_SESSION['phrase'])) die("true");
-		else die("false");
+		if(strtoupper($captcha) == strtoupper($_SESSION['phrase'])) echo "true";
+		else echo "false";
 	}
 }

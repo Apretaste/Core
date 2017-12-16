@@ -139,7 +139,7 @@ class MarketController extends Controller
 		// get product details
 		$connection = new Connection();
 		$product = $connection->query("SELECT * FROM _tienda_products WHERE code='$code'");
-		if(empty($product)) die("Error: Product cannot be found by its code: $code");
+		if(empty($product)) return false;
 
 		// send items to the view
 		$this->view->product = $product[0];

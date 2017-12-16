@@ -44,7 +44,7 @@ class AdminController extends Controller
 	{
 		// get the raffle id
 		$id = $this->request->get("id");
-		if(empty($id)) die("Error bad ID");
+		if(empty($id)) return false;
 
 		// get list of possible winners
 		$connection = new Connection();

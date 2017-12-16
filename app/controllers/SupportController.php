@@ -108,7 +108,11 @@ class SupportController extends Controller
 			ORDER BY creation_date ASC");
 
 		// do not continue if there are no tickets
-		if(empty($chats)) die("No hay tickets creados para $email");
+		if(empty($chats)) {
+			echo "No hay tickets creados para $email";
+			$this->view->disable();
+			return false;
+		}
 
 		// get the list of macros
 		$cans = $connection->query("SELECT id, name FROM support_cans");
@@ -150,11 +154,11 @@ class SupportController extends Controller
 		$manager = $security->getUser();
 
 		// save response in the database
-		$subject = $connection->escape($subject, 250);
-		$content = $connection->escape($content, 1024);
+		$subClean = $connection->escape($subject, 250);
+		$conClean = $connection->escape($content, 1024);
 		$connection->query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
-			VALUES ('{$manager->email}', '$subject', '$content', '$status', '$to')");
+			VALUES ('{$manager->email}', '$subClean', '$conClean', '$status', '$to')");
 
 		// send a notification to the user
 		$utils = new Utils();
@@ -231,7 +235,8 @@ class SupportController extends Controller
 		$content = str_replace('{SUPPORT_EMAIL}', $supportEmail, $content);
 
 		// return final text
-		die($content);
+		echo $content;
+		$this->view->disable();
 	}
 
 	/**

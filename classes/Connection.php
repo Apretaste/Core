@@ -104,4 +104,13 @@ class Connection
 
 		return $safeStr;
 	}
+
+	/**
+	 * Closes the connection to MySQL
+	 * @author salvipascual
+	 */
+	public static function disconnect()
+	{
+		self::db()->close();
+	}
 }
