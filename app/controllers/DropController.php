@@ -29,7 +29,7 @@ class DropController extends Controller
 		$email = $message->bounce->bouncedRecipients[0]->emailAddress;
 		$message = $message->bounce->bouncedRecipients[0]->diagnosticCode;
 		$message = str_replace(array("'", "\n"), "", $message);
-		$code = explode(" ", $message)[1];
+		$code = intval(trim(explode(" ", $message)[1]));
 
 		// save it into the database
 		$connection = new Connection();
