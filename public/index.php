@@ -67,12 +67,12 @@ try
 
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql(array(
+	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
 		"host" => $config['database']['host'],
 		"username" => $config['database']['user'],
 		"password" => $config['database']['password'],
 		"dbname"   => $config['database']['database']
-	)));
+	]));
 
 	// Set the tier (sandbox | stage | production)
 	$di->set('tier', function () use ($config) {
@@ -120,4 +120,9 @@ catch(Exception $e)
 	// show 404 page
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
+}
+finally
+{
+	// disconnect from the database
+	Connection::disconnect();
 }
