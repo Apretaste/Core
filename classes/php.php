@@ -6,13 +6,13 @@ class php
 	 * Returns a subString delimited by two other strings
 	 *
 	 * @author salvipascual
-	 * @param String $text
+	 * @param String $haystack
 	 * @param String $start
 	 * @param String $end
 	 * @return String | Boolean
 	 */
-	static function substring($txt, $start, $end) {
-		$r = explode($start, $txt);
+	static function substring($haystack, $start, $end) {
+		$r = explode($start, $haystack);
 		if (isset($r[1])) {
 			$r = explode($end, $r[1]);
 			return $r[0];
@@ -46,6 +46,19 @@ class php
 	{
 		$length = mb_strlen($needle, 'UTF-8');
 		return $length === 0 || (mb_substr($haystack, -$length, $length, 'UTF-8') === $needle);
+	}
+
+	/**
+	 * Check if a text exist into a string
+	 *
+	 * @author salvipascual
+	 * @param String $haystack
+	 * @param String $needle
+	 * @return Boolean
+	 */
+	static function exists($haystack, $needle)
+	{
+		return strpos($haystack, $needle) !== false;
 	}
 
 	// Function to get the client IP address
