@@ -37,8 +37,7 @@ class RunController extends Controller
 
 		// run the request & render the response
 		$ret = Render::runRequest($this->fromEmail, $this->subject, '', []);
-		$html = Render::renderHTML($ret->service, $ret->response);
-		die($html);
+		echo Render::renderHTML($ret->service, $ret->response);
 	}
 
 	/**
@@ -67,7 +66,10 @@ class RunController extends Controller
 		// if is not encrypted, get the email from the token
 		$utils = new Utils();
 		$email = $utils->detokenize($token);
-		if( ! $email) die('{"code":"error","message":"bad authentication"}');
+		if(empty($token) || empty($email)) {
+			echo '{"code":"error","message":"bad authentication"}';
+			return;
+		}
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -78,12 +80,18 @@ class RunController extends Controller
 
 		// some services cannot be called from the API
 		$serviceName = strtoupper(explode(" ", $subject)[0]);
-		if (strtoupper($serviceName) == 'EXCLUYEME') die('{"code":"error","message":"service not accesible"}');
+		if (strtoupper($serviceName) == 'EXCLUYEME') {
+			echo '{"code":"error","message":"service not accesible"}';
+			return;
+		}
 
 		// check if the user is blocked
 		$connection = new Connection();
 		$blocked = $connection->query("SELECT email FROM person WHERE email='$email' AND blocked=1");
-		if(count($blocked)>0) die('{"code":"error","message":"user blocked"}');
+		if(count($blocked)>0) {
+			echo '{"code":"error","message":"user blocked"}';
+			return false;
+		}
 
 		// download attachments and save the paths in the array
 		$attach = array();
@@ -128,8 +136,8 @@ class RunController extends Controller
 		$connection->query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 
 		// respond to the API
-		if($response->render) die(Render::renderJSON($response));
-		else die('{"code":"ok"}');
+		if($response->render) echo Render::renderJSON($response);
+		else echo '{"code":"ok"}';
 	}
 
 	/**
@@ -151,7 +159,10 @@ class RunController extends Controller
 		// ensure the person has access
 		$utils = new Utils();
 		$pass = $utils->getNautaPassword($this->fromEmail);
-		if($pass != base64_decode($token)) die('{"code":"300", "message":"El token es incorrecto o el usuario no existe"}');
+		if($pass != base64_decode($token)) {
+			echo '{"code":"300", "message":"El token es incorrecto o el usuario no existe"}';
+			return false;
+		}
 
 		// error if we don't have the password
 		if(empty($pass)) {
@@ -244,7 +255,7 @@ class RunController extends Controller
 
 		// display ok response
 		$path = $response->render ? $utils->getPublicTempDir('http').$fileName : "";
-		die('{"code":"200", "message":"", "render":"'.$response->render.'", "file":"'.$path.'"}');
+		echo '{"code":"200", "message":"", "render":"'.$response->render.'", "file":"'.$path.'"}';
 	}
 
 	/**
@@ -332,11 +343,12 @@ class RunController extends Controller
 		// error if no attachment is received
 		if(isset($this->attachments[0]) && file_exists($this->attachments[0])) {
 			$attachEmail = $this->attachments[0];
-		}else{
+		} else {
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "Error on attachment file";
-			die(json_encode($output));
+			echo json_encode($output);
+			return false;
 		}
 
 		// get path to the folder to save

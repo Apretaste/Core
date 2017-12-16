@@ -28,7 +28,10 @@ class ApiController extends Controller
 		// check if user/pass is correct
 		$connection = new Connection();
 		$auth = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
-		if(empty($auth)) die('{"code":"error","message":"invalid email or pin"}');
+		if(empty($auth)) {
+			echo '{"code":"error","message":"invalid email or pin"}';
+			return false;
+		}
 
 		// check if the token exist and grab it
 		$token = $connection->query("SELECT token FROM authentication WHERE email='$email' AND appname='$appname'");
@@ -48,7 +51,7 @@ class ApiController extends Controller
 		$logger->close();
 
 		// return ok response
-		die('{"code":"ok","token":"'.$token.'"}');
+		echo '{"code":"ok","token":"'.$token.'"}';
 	}
 
 	/**
@@ -72,12 +75,18 @@ class ApiController extends Controller
 		$appname = trim($this->request->get('appname'));
 
 		// force appid and appname
-		if(empty($appid) || empty($appname)) die('{"code":"error","message":"missing appid or appname"}');
+		if(empty($appid) || empty($appname)) {
+			echo '{"code":"error","message":"missing appid or appname"}';
+			return false;
+		}
 
 		// check if token exists
 		$connection = new Connection();
 		$exist = $connection->query("SELECT COUNT(id) AS exist FROM authentication WHERE token = '$token'")[0]->exist;
-		if(empty($exist)) die('{"code":"error","message":"invalid token"}');
+		if(empty($exist)) {
+			echo '{"code":"error","message":"invalid token"}';
+			return false;
+		}
 
 		// update appid and appname
 		$connection->query("UPDATE authentication SET appid='$appid', appname='$appname' WHERE token='$token'");
@@ -89,7 +98,7 @@ class ApiController extends Controller
 		$logger->close();
 
 		// return ok response
-		die('{"code":"ok"}');
+		echo '{"code":"ok"}';
 	}
 
 	/**
@@ -120,7 +129,7 @@ class ApiController extends Controller
 		$logger->close();
 
 		// return ok response
-		die('{"code":"ok"}');
+		echo '{"code":"ok"}';
 	}
 
 	/**
@@ -141,10 +150,16 @@ class ApiController extends Controller
 		$connection = new Connection();
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) die('{"code":"error","message":"invalid email"}');
+		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			echo '{"code":"error","message":"invalid email"}';
+			return false;
+		}
 
 		// check if the email exist
-		if($utils->personExist($email)) die('{"code":"error","message":"existing user"}');
+		if($utils->personExist($email)) {
+			echo '{"code":"error","message":"existing user"}';
+			return false;
+		}
 
 		// create the new profile
 		$username = $utils->usernameFromEmail($email);
@@ -157,7 +172,7 @@ class ApiController extends Controller
 		$logger->close();
 
 		// return ok response
-		die('{"code":"ok","username":"'.$username.'"}');
+		echo '{"code":"ok","username":"'.$username.'"}';
 	}
 
 	/**
@@ -189,7 +204,7 @@ class ApiController extends Controller
 		$logger->log("LOOKUP user:$email, pin:$pin");
 		$logger->close();
 
-		die('{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}');
+		echo '{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}';
 	}
 
 	/**
@@ -211,7 +226,10 @@ class ApiController extends Controller
 		if(empty($lang)) $lang = "es";
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) die('{"code":"error","message":"invalid email"}');
+		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			echo '{"code":"error","message":"invalid email"}';
+			return false;
+		}
 
 		$utils = new Utils();
 		$connection = new Connection();
@@ -255,7 +273,7 @@ class ApiController extends Controller
 		$logger->close();
 
 		// return ok response
-		die('{"code":"ok", "newuser":"'.$newUser.'"}');
+		echo '{"code":"ok", "newuser":"'.$newUser.'"}';
 	}
 
 	/**
@@ -274,14 +292,14 @@ class ApiController extends Controller
 		{
 			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
 			$utils->createAlert($msg);
-			die('{"code":"error", "message":"'.$msg.'"}');
+			echo '{"code":"error", "message":"'.$msg.'"}';
 		}
 		// else upload the file and return the path
 		else
 		{
 			$file = $utils->getTempDir() . $_FILES['file']['name'];
 			move_uploaded_file($_FILES['file']['tmp_name'], $file);
-			die('{"code":"ok", "message":"'.$file.'"}');
+			echo '{"code":"ok", "message":"'.$file.'"}';
 		}
 	}
 }

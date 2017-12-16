@@ -17,13 +17,13 @@ class DropController extends Controller
 
 		// validate the message
 		$validator = new MessageValidator();
-		if( ! $validator->isValid($message)) die("Invalid");
+		if( ! $validator->isValid($message)) return false;
 
 		// convert string into json object
 		$message = json_decode($message['Message']);
 
 		// accept only bounces
-		if($message->notificationType != "Bounce") die("Not a bounce");
+		if($message->notificationType != "Bounce") return false;
 
 		// get the params from the message
 		$email = $message->bounce->bouncedRecipients[0]->emailAddress;
