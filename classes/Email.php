@@ -54,7 +54,7 @@ class Email
 		// create an alert if the email failed
 		if($res->code != "200") {
 			$utils = new Utils();
-			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}", "ERROR");
+			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}");
 		}
 
 		// return {code, message} structure
