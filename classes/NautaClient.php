@@ -19,7 +19,38 @@ class NautaClient
 	private $sessionFile = "";
 	private $logoutToken = "";
 	private $composeToken = "";
-	private $baseUrl = 'https://webmail.nauta.cu/';
+
+	private $uriGame = [
+		0 => [
+			'base' => 'http://webmail.nauta.cu/',
+			'captcha' => false,
+			'login' => 'horde/login.php',
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
+			'compose' => 'horde/imp/compose-mimp.php?u={token}',
+			'composePost' => 'horde/imp/compose-mimp.php',
+			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
+		],
+		1 => [
+			'base' => 'https://webmail.nauta.cu/',
+			'captcha' => false,
+			'login' => 'horde/login.php',
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
+			'compose' => 'horde/imp/compose-mimp.php?u={token}',
+			'composePost' => 'horde/imp/compose-mimp.php',
+			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
+		],
+		2 => [
+			'base' => 'https://webmail.nauta.cu/',
+			'captcha' => '/securimage/securimage_show.php',
+			'login' => 'login.php',
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&captcha_code={captcha}&horde_select_view=mobile&new_lang=en_US",
+			'compose' => 'imp/minimal.php?page=compose&u={token}',
+			"composePost' => 'imp/minimal.php?page=compose&u={token}",
+			'logout' => "login.php?horde_logout_token={token}&logout_reason=4"
+		]
+	];
+
+	private $currentUriGame = 0;
 
 	/**
 	 * NautaClient constructor.
@@ -52,6 +83,130 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
+
+		$this->detectUriGame();
+	}
+
+	public function detectUriGame()
+	{
+		foreach($this->uriGame as $key => $urls)
+		{
+			try
+			{
+				//echo "checking {$urls['base']}\n";
+				$check= $this->checkLogin();
+				$this->currentUriGame = $key;
+				return $check;
+			} catch (Exception $e)
+			{
+				continue;
+			}
+		}
+	}
+	/**
+	 * Return the current set of URL of webmail
+	 *
+	 * @return mixed
+	 */
+	public function getUriGame()
+	{
+		return $this->uriGame[$this->currentUriGame];
+	}
+
+	/**
+	 * Replace string with key/value pairs
+	 *
+	 * @param $str
+	 * @param $params
+	 *
+	 * @return bool|mixed
+	 */
+	public function replaceParams($str, $params)
+	{
+		if ($str == false) return false;
+		foreach($params as $var => $value)
+		{
+			$str = str_replace('{'.$var.'}', $value, $str);
+		}
+		return $str;
+	}
+
+	/**
+	 * Return base URL of webmail
+	 *
+	 * @return mixed
+	 */
+	public function getBaseUrl()
+	{
+		return $this->getUriGame()['base'];
+	}
+
+	/**
+	 * Return the captcha URL
+	 * @return mixed
+	 */
+	public function getCaptchaUrl()
+	{
+		$uri = $this->getUriGame()['captcha'];
+		if ($uri == false) return false;
+		return $this->getBaseUrl().$uri;
+	}
+
+	/**
+	 * Return base URL for login
+	 * @return mixed
+	 */
+	public function getLoginUrl()
+	{
+		return $this->getBaseUrl().$this->getUriGame()['login'];
+	}
+
+	/**
+	 * Return login URI with replaced params
+	 *
+	 * @param array $params
+	 *
+	 * @return mixed
+	 */
+	public function getLoginParams($params = [])
+	{
+		return $this->replaceParams($this->getUriGame()['loginParams'], $params);
+	}
+
+	/**
+	 * Return the compose URL
+	 *
+	 * @param $params
+	 *
+	 * @return mixed
+	 */
+	public function getComposeUrl($params = [])
+	{
+		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['compose'], $params);
+	}
+
+	/**
+	 * Return compost post url
+	 *
+	 * @param $params
+	 *
+	 * @return string
+	 */
+	public function getComposePostUrl($params = [])
+	{
+		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['composePost'], $params);
+	}
+
+	/**
+	 * Return logout url
+	 *
+	 * @param array $params
+	 *
+	 * @return string
+	 */
+	public function getLogoutUrl($params = [])
+	{
+		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['logout'], $params);
 	}
 
 	/**
@@ -83,37 +238,55 @@ class NautaClient
 		// save the captcha image in the temp folder
 		$utils = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}/securimage/securimage_show.php");
-		file_put_contents($captchaImage, curl_exec($this->client));
+		$captchaUrl = $this->getCaptchaUrl();
 
-		if($cliOfflineTest)
+		$img = false; // maybe, uri game have captcha url and webmail not
+		if ($captchaUrl !== false)
 		{
-			echo "[INFO] Captcha image store in: $captchaImage \n";
-			echo "Please enter captcha test:";
-			$cli = fopen("php://stdin", "r");
-			$captchaText = fgets($cli);
+			curl_setopt($this->client, CURLOPT_URL, $captchaUrl);
+			$img = curl_exec($this->client);
 		}
-		else
+
+		$captchaText = '';
+
+		if ($img !== false)
 		{
-			// break the captcha
-			$captcha = $this->breakCaptcha($captchaImage);
-			if($captcha->code == "200")
+			file_put_contents($captchaImage, $img);
+
+			if($cliOfflineTest)
 			{
-				$captchaText = $captcha->message;
-				rename($captchaImage, $utils->getTempDir() . "capcha/$captchaText.jpg");
+				echo "[INFO] Captcha image store in: $captchaImage \n";
+				echo "Please enter captcha test:";
+				$cli = fopen("php://stdin", "r");
+				$captchaText = fgets($cli);
 			}
 			else
 			{
-				return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
+				// break the captcha
+				$captcha = $this->breakCaptcha($captchaImage);
+				if($captcha->code == "200")
+				{
+					$captchaText = $captcha->message;
+					rename($captchaImage, $utils->getTempDir() . "capcha/$captchaText.jpg");
+				}
+				else
+				{
+					return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
+				}
 			}
 		}
 
 		// send details to login
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php");
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user=" . urlencode($this->user) . "&horde_pass=" . urlencode($this->pass) . "&captcha_code=" . urlencode($captchaText) . "&horde_select_view=mobile&new_lang=en_US");
+		curl_setopt($this->client, CURLOPT_URL, $this->getLoginUrl());
+		curl_setopt($this->client, CURLOPT_POSTFIELDS, $this->getLoginParams([
+			'user' => urlencode($this->user),
+            'pass' => urlencode($this->pass),
+            'captcha' => urlencode($captchaText)
+		]));
+
 		$response = curl_exec($this->client);
 
-		if($response === false) return false;
+		if ($response === false) return false;
 
 		if (stripos($response, 'digo de verificaci') !== false &&
 			stripos($response, 'n incorrecto') !== false)
@@ -130,14 +303,21 @@ class NautaClient
 	/**
 	 * Check keep alive
 	 *
+	 * @throws Exception
 	 * @return bool
 	 */
 	public function checkLogin()
 	{
 		$this->loadSession();
 
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u={$this->composeToken}");
+		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
+			'token' => $this->composeToken
+		]));
+
 		$html = curl_exec($this->client);
+
+		if ($html === false)
+			throw new Exception("[NautaClient] Curl error when check login");
 
 		if (stripos($html, 'Message Composition') === false) return false;
 		else return true;
@@ -184,18 +364,26 @@ class NautaClient
 	public function send($to, $subject, $body, $attachment = false)
 	{
 		// get the HTML of the compose window
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u={$this->composeToken}");
+
+		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
+			'token' => $this->composeToken
+		]));
+
 		$html = curl_exec($this->client);
 
 		// get the value of hidden fields from the HTML
 		$action = php::substring($html, 'u=', '"');
 		$composeCache = php::substring($html, 'composeCache" value="', '"');
+		$compose_formToken = php::substring($html, 'compose_formToken" value="', '"');
+		$compose_requestToken = php::substring($html, 'compose_requestToken" value="', '"');
 		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
 		$user = php::substring($html, 'user" value="', '"');
 
 		// create the body of the image
 		$data['composeCache'] = $composeCache;
 		$data['composeHmac'] = $composeHmac;
+		$data['compose_formToken'] = $compose_formToken;
+		$data['compose_requestToken'] = $compose_requestToken;
 		$data['user'] = $user;
 		$data['to'] = $to;
 		$data['cc'] = "";
@@ -210,11 +398,16 @@ class NautaClient
 		$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
 
 		// send email
-		curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}imp/minimal.php?page=compose&u=$action");
+		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
+			'token' => $action
+		]));
+
 		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
 		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, $data);
 		curl_exec($this->client);
+
+		//var_dump($data);
 
 		// alert if there are errors
 		if(curl_errno($this->client)) {
@@ -232,7 +425,10 @@ class NautaClient
 	{
 		if($this->client)
 		{
-			curl_setopt($this->client, CURLOPT_URL, "{$this->baseUrl}login.php?horde_logout_token={$this->logoutToken}&logout_reason=4");
+			curl_setopt($this->client, CURLOPT_URL, $this->getLogoutUrl([
+				'token' => $this->logoutToken
+			]));
+
 			curl_exec($this->client);
 			curl_close($this->client);
 		}
@@ -248,7 +444,7 @@ class NautaClient
 		// set default headers
 		$default_headers = [
 			"Cache-Control" => "max-age=0",
-			"Origin" => "{$this->baseUrl}",
+			"Origin" => $this->getBaseUrl(),
 			"User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
 			"Content-Type" => "application/x-www-form-urlencoded",
 			"Connection" => "Keep-Alive",
