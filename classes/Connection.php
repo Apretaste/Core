@@ -7,16 +7,22 @@ class Connection
 	/**
 	 * Singleton db connection
 	 *
+	 * @param bool $force Force the connection
+	 * @throws \Exception
 	 * @author kumahacker
-	 * @return mixed|null
+	 * @return mysqli
 	 */
-	static function db()
+	static function db($force = false)
 	{
-		if(is_null(self::$__db))
+		if(is_null(self::$__db) || $force)
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			self::$__db = $di->get('db');
-			self::$__db->connect();
+			$config = $di->get('config');
+			self::$__db = new mysqli($config['database']['host'],  $config['database']['user'], $config['database']['password'], $config['database']['database']);
+
+			if (self::$__db ->connect_errno) {
+				throw new Exception("Failed to connect to MySQL: (" . self::$__db ->connect_errno . ") " . self::$__db ->connect_error);
+			}
 		}
 
 		return self::$__db;
@@ -27,8 +33,13 @@ class Connection
 	 * Please use escape() for all texts before creating the $sql
 	 *
 	 * @author salvipascual
+	 * @author kumahacker
+	 *
+	 * @throws Exception
+	 *
 	 * @param string $sql , valid sql query
-	 * @return array, list of rows or NULL if it is not a select
+	 *
+	 * @return mixed, list of rows or NULL if it is not a select
 	 */
 	public function query($sql)
 	{
@@ -38,19 +49,23 @@ class Connection
 			if(stripos(trim($sql), "select") === 0)
 			{
 				// query the database
-				$result = self::db()->query($sql);
-				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
+				if ($result = self::db()->query($sql))
+				{
+					// convert to array of objects
+					$rows = [];
+					while($data = $result->fetch_object()) $rows[] = $data;
+					return $rows;
+				}
 
-				// convert to array of objects
-				$rows = [];
-				while($data = $result->fetch()) $rows[] = $data;
-				return $rows;
+				throw new Exception('MYSQL ERRROR #'.$this->db()->errno.', MSG: '.$this->db()->error.', SQLSTATE: '. $this->db()->sqlstate);
 			}
 			else
 			{
 				// run query and return last inserted id
-				self::db()->execute($sql);
-				return self::db()->lastInsertId();
+				$stmt = self::db()->prepare($sql);
+				$stmt->execute();
+
+				return self::db()->insert_id;
 			}
 		}
 		catch(PDOException $e) // log the error and rethrow it
@@ -70,7 +85,7 @@ class Connection
 
 			// hack to re-connect if connection is lost
 			$goneAway = php::exists($message, "gone away");
-			if($goneAway) self::db()->connect();
+			if($goneAway) self::db(true);
 
 			// create the alert
 			$utils = new Utils();
@@ -97,7 +112,7 @@ class Connection
 	public function escape($str, $cut=false)
 	{
 		// get the escaped string
-		$safeStr = self::db()->escapeString($str);
+		$safeStr = self::db()->escape_string($str);
 
 		// remove the ' at the beginning and end of the string
 		$safeStr = substr(substr($safeStr, 0, - 1), 1);

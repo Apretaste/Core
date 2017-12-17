@@ -20,9 +20,9 @@ ini_set('memory_limit', '512M');
 /* @TODO antes de poner este code hay que probarlo con cada uno de los servicios
 // handle php errors as exceptions
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
-	throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
 } set_error_handler("exception_error_handler");
-*/
+ */
 
 try
 {
@@ -67,12 +67,13 @@ try
 
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
+	/*$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
 		"host" => $config['database']['host'],
 		"username" => $config['database']['user'],
 		"password" => $config['database']['password'],
 		"dbname"   => $config['database']['database']
 	]));
+	*/
 
 	// Set the tier (sandbox | stage | production)
 	$di->set('tier', function () use ($config) {
@@ -121,8 +122,9 @@ catch(Exception $e)
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
 }
+/*
 finally
 {
 	// disconnect from the database
 	Connection::disconnect();
-}
+}*/
