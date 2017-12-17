@@ -1059,12 +1059,15 @@ class Utils
 		// create basic message
 		$message = "$severity: $text";
 
+		// get the tier from the configs file
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$tier = $di->get('config')['global']['tier'];
+
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
 			try{
-				$text = Connection::escape(substr($text, 0, 254));
-				$stmt = Connection::db()->prepare("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$text')");
-				$stmt->execute();
+				$safeStr = Connection::escape($text, 254);
+				$di->get('db')->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
 			} catch(Exception $e) {
 				$message .= " [CreateAlert] ".$e->getMessage();
 			}
@@ -1072,10 +1075,6 @@ class Utils
 
 		// send the alert to the error log
 		error_log($message);
-
-		// get the tier from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$tier = $di->get('config')['global']['tier'];
 
 		// send the alert by email
 		if($severity == "ERROR" && $tier == "production") {
