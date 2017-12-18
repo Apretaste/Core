@@ -315,9 +315,7 @@ class NautaClient
 		]));
 
 		$html = curl_exec($this->client);
-
-		if ($html === false)
-			throw new Exception("[NautaClient] Curl error when check login");
+		$html = "$html";
 
 		if (stripos($html, 'Message Composition') === false) return false;
 		else return true;
