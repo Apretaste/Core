@@ -230,6 +230,19 @@ class revolicoTask extends \Phalcon\Cli\Task
 			return false;
 		}
 
+
+		if ($crawler->filter('.headingText')->count() < 1)
+		{
+			echo "[CRAWLER] No ad title \n";
+			return false;
+		}
+
+		if ($crawler->filter('.showAdText')->count() < 1)
+		{
+			echo "[CRAWLER] No ad text \n";
+			return false;
+		}
+
 		// get title
 		$title = trim($crawler->filter('.headingText')->text());
 
