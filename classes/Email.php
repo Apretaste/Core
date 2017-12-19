@@ -82,6 +82,33 @@ class Email
 	}
 
 	/**
+	 * Sends alerts. Do not use for regular emails!
+	 *
+	 * @author salvipascual
+	 */
+	public function sendAlert()
+	{
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+
+		// create message
+		$mail = new Message;
+		$mail->setFrom('noreply@apretaste.com');
+		$mail->addTo($di->get('config')['global']['alerts']);
+		$mail->setSubject(utf8_encode(substr($this->subject, 0, 80)));
+		$mail->setHtmlBody($this->body, false);
+
+		// send mail
+		$mailer = new Nette\Mail\SmtpMailer([
+			'host' => "email-smtp.us-east-1.amazonaws.com",
+			'username' => $di->get('config')['amazon']['access'],
+			'password' => $di->get('config')['amazon']['secret'],
+			'port' => '465',
+			'secure' => 'ssl'
+		]);
+		$mailer->send($mail, false);
+	}
+
+	/**
 	 * Load a template and send it as email
 	 *
 	 * @author salvipascual
