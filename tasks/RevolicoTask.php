@@ -461,7 +461,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		'$body',
 		'{$data['category']}',
 		'{$data['images']}',
-		".(empty($data['price'])?'null':"'{$data['price']}'").",
+		".(empty($data['price'])?'0':"'{$data['price']}'").",
 		'{$data['currency']}',
 		'{$data['date']}',
 		'revolico',
