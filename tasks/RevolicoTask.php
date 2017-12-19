@@ -223,10 +223,14 @@ class revolicoTask extends \Phalcon\Cli\Task
 				$url = str_replace("//", "/", $url);
 
 			$url = str_replace("http:/", "http://", $url);
+			$url = str_replace("https:/", "https://", $url);
+
+			echo "[RevolicoTask] Real url crawled $url\n";
 			$crawler = $this->getClient()->request('GET', $url);
 		}
 		catch (Exception $e)
 		{
+			echo "[RevolicoTask] crawRevolicoURL exception: ".$e->getMessage()."\n";
 			return false;
 		}
 
@@ -425,8 +429,11 @@ class revolicoTask extends \Phalcon\Cli\Task
 		 */
 
 		// clean the body and title of characters that may break the query
-		$title = Connection::escape($data['title']);
-		$body = Connection::escape($data['body']);
+		$title = Connection::escape($data['title'], 250);
+		$body = Connection::escape($data['body'], 1000);
+
+		if (trim($data['province'])=='')
+			$data['province'] = 'LA_HABANA';
 
 		$sql = "
 		INSERT INTO _tienda_post (
@@ -466,7 +473,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 			@Connection::query($sql);
 		} catch(Exception $ex)
 		{
-			var_dump($ex);
+			echo "[RevolicoTask] Exception inserting ad ".$ex->getMessage()."\n";
 		}
 
 		$timeEnd = time();
