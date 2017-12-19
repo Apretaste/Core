@@ -1061,7 +1061,7 @@ class Utils
 
 		// get the tier from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$tier = $di->get('tier');
+		$tier = $di->get('config')['global']['tier'];
 
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
