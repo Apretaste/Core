@@ -53,7 +53,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 	public function mainAction($revolicoMainUrls = null)
 	{
 
-		
+
 		// empty(null) === true && empty([]) === null
 		if (empty($revolicoMainUrls))
 		{
@@ -75,7 +75,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		// variable to store the total number of posts
 		$totalPosts = 0;
 		$totalPages = 0;
-		
+
 		// for each main url
 		foreach ($revolicoMainUrls as $url)
 		{
@@ -142,7 +142,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 						// get the url from the list
 						$totalPages ++;
 
-						echo "SAVING PAGE $totalPages: $ru.$href \n";
+						echo "SAVING PAGE $totalPages: {$ru}$href \n";
 
 						$data = false;
 
@@ -152,6 +152,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 							$data = $this->crawlRevolicoURL($ru . $href);
 						} catch(Exception $e)
 						{
+							echo "EXCEPTION: ".$e->getMessage();
 							//echo "[ERROR] Page {$pages[$i]} request error \n";
 						}
 
@@ -174,7 +175,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 				echo "[FATAL] Could not request the URL $url \n";
 			}
 		}
-			
+
 		// ending message, log and time
 		$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
 		$totalMem = $this->getUtils()->getFriendlySize(memory_get_usage(true));
@@ -207,7 +208,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 	 * Crawler
 	 *
 	 * @param string $url
-	 * 
+	 *
 	 * @return mixed
 	 */
 	private function crawlRevolicoURL($url)
