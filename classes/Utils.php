@@ -1069,22 +1069,24 @@ class Utils
 				$safeStr = Connection::escape($text, 254);
 				$di->get('db')->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
 			} catch(Exception $e) {
-				$message .= " [CreateAlert] ".$e->getMessage();
+				$message .= " [CreateAlert:Database] ".$e->getMessage();
 			}
 		}
 
-		// send the alert to the error log
-		error_log($message);
-
 		// send the alert by email
 		if($severity == "ERROR" && $tier == "production") {
-			$email = new Email();
-			$email->to = $di->get('config')['global']['alerts'];
-			$email->subject = substr($message, 0, 80);
-			$email->body = "<b>MESSAGE:</b> $message<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
-			$email->send();
+			try{
+				$email = new Email();
+				$email->subject = $message;
+				$email->body = "<b>MESSAGE:</b> $message<br/><br/><b>DATE:</b> ".date('l jS \of F Y h:i:s A');
+				$email->sendAlert();
+			} catch(Exception $e) {
+				$message .= " [CreateAlert:Email] ".$e->getMessage();
+			}
 		}
 
+		// save error log
+		error_log($message);
 		return false;
 	}
 
