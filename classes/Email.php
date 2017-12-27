@@ -370,18 +370,27 @@ class Email
 
 		// get the user's Nauta password
 		$utils = new Utils();
+		$user = explode("@", $this->to)[0];
 		$pass = $utils->getNautaPassword($this->to);
-		if( ! $pass) {
-			$output = new stdClass();
-			$output->code = "300";
-			$output->message = "No password for {$this->to}";
 
-			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
-			return $output;
+		// if user has no pass, borrow a random account
+		if( ! $pass) {
+			$auth = Connection::query("
+				SELECT A.email, A.pass
+				FROM authentication A JOIN person B
+				ON A.email = B.email
+				WHERE B.active = 1
+				AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+				AND A.email LIKE '%nauta.cu'
+				AND A.appname = 'apretaste'
+				AND A.pass IS NOT NULL AND A.pass <> ''
+				ORDER BY RAND() LIMIT 1")[0];
+
+			$user = explode("@", $auth->email)[0];
+			$pass = $utils->decrypt($auth->pass);
 		}
 
 		// connect to the client
-		$user = explode("@", $this->to)[0];
 		$client = new NautaClient($user, $pass);
 
 		// login and send the email
