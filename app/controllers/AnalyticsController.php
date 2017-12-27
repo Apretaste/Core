@@ -229,7 +229,7 @@ class AnalyticsController extends Controller
 				AND b.province IS not NULL
 				AND b.active = 1
 				AND b.province IN ('PINAR_DEL_RIO', 'LA_HABANA', 'ARTEMISA', 'MAYABEQUE', 'MATANZAS', 'VILLA_CLARA', 'CIENFUEGOS', 'SANCTI_SPIRITUS', 'CIEGO_DE_AVILA', 'CAMAGUEY', 'LAS_TUNAS', 'HOLGUIN', 'GRANMA', 'SANTIAGO_DE_CUBA', 'GUANTANAMO', 'ISLA_DE_LA_JUVENTUD')
-			GROUP BY b.province) as c");
+			GROUP BY b.province, a.mnth) as c");
 
 		foreach($prefilesPerPravinceList as $profilesList)
 		{
