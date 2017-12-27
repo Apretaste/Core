@@ -12,6 +12,7 @@ class LoginController extends Controller
 		$this->view->phase = "email";
 		$this->view->email = $this->request->get('email');
 		$this->view->redirect = $this->request->get('redirect');
+		$this->view->icon = $this->getIcon($this->request->get('redirect'));
 		$this->view->shake = $this->request->get('shake');
 		$this->view->setLayout('login');
 	}
@@ -24,6 +25,7 @@ class LoginController extends Controller
 		$this->view->phase = "code";
 		$this->view->email = $this->request->get('email');
 		$this->view->redirect = $this->request->get('redirect');
+		$this->view->icon = $this->getIcon($this->request->get('redirect'));
 		$this->view->shake = $this->request->get('shake');
 		$this->view->setLayout('login');
 	}
@@ -138,5 +140,28 @@ class LoginController extends Controller
 		// redirect to page
 		$this->response->redirect($redirectLink);
 		$this->view->disable();
+	}
+
+	/**
+	 * Get the icon for the service
+	 */
+	public function getIcon($redirect)
+	{
+		// create the default icon path
+		$icon = "/images/apretaste.logo.small.transp.png";
+
+		// get the path to the icon of the service
+		$wwwroot = $this->di->get('path')['root'];
+		$service = strstr($redirect.' ', ' ', true);
+		$pathToIcon = "$wwwroot/services/$service/$service.png";
+
+		// change the icon if exist
+		if(file_exists($pathToIcon)) {
+			$publicPathToIcon = "$wwwroot/public/temp/$service.png";
+			if( ! file_exists($publicPathToIcon)) copy($pathToIcon, $publicPathToIcon);
+			$icon = $this->di->get('path')['http'] . "/temp/$service.png";
+		}
+
+		return $icon;
 	}
 }
