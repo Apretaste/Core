@@ -127,7 +127,7 @@ class LoginController extends Controller
 
 		// error if the user cannot be logged
 		if(empty($user)) {
-			$this->response->redirect("login/$goto?email=$email&redirect=$redirect&shake=true");
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return false;
 		}
