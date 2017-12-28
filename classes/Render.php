@@ -153,13 +153,13 @@ class Render
 		$validEmailAddress = $utils->getValidEmailAddress($username);
 
 		// list the system variables
-		$systemVariables = array(
+		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
 			"APRETASTE_ENVIRONMENT" => $di->get('environment'),
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
-			"APRETASTE_SERVICE_NAME" => strtoupper($service->serviceName),
+			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_EMAIL" => $validEmailAddress,
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
@@ -173,9 +173,8 @@ class Render
 			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
 			'USER_EMAIL' => isset($person->email) ? $person->email : "",
-			'USER_MAILBOX' => $utils->getUserPersonalAddress($response->email),
-			'CURRENT_USER' => isset($person->email) ? $person : false
-		);
+			'USER_MAILBOX' => $utils->getUserPersonalAddress($response->email)
+		];
 
 		// merge all variable sets and assign them to Smarty
 		$templateVariables = array_merge($systemVariables, $response->content);
@@ -186,9 +185,16 @@ class Render
 
 		// add link popups for the web
 		if($di->get('environment') == "web") {
+			// get page content
 			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_link_popup.phtml");
+
+			// replace system variables
+			foreach ($systemVariables as $key=>$value) {
+				$linkPopup = str_replace('{$'.$key.'}', $value, $linkPopup);
+			}
+
+			// add at the end of the <body> of the page
 			$rendered = str_replace("</body>", "$linkPopup</body>", $rendered);
-			$rendered = str_replace('{$APRETASTE_SERVICE_NAME}', strtolower($service->serviceName), $rendered);
 		}
 
 		// remove tabs, double spaces and break lines

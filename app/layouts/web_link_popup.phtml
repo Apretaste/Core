@@ -197,8 +197,12 @@
 	}
 </script>
 
-<!-- web push notifications -->
-<script charset="UTF-8" src="//cdn.sendpulse.com/28edd3380a1c17cf65b137fe96516659/js/push/29802df2c556e10342450dad6c1b4bd1_1.js" async></script>
+<!-- pushengage web push notifications -->
+<script src="https://clientcdn.pushengage.com/core/17493.js"></script>
+<script>
+	_pe.subscribe();
+	_pe.addProfileId('{$USER_EMAIL}');
+</script>
 
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-49715278-1"></script>
