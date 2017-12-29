@@ -211,12 +211,7 @@
 	})(window,document);
 
 	_pcq.push(['APIReady', function () {
-		$.ajax({
-			url: "/api/saveAppId?email={$USER_EMAIL}&appid="+pushcrew.subscriberId,
-			success: function(data) {
-				console.log("ok");
-			}
-		});
+		$.ajax({url: "/api/saveAppId?email={$USER_EMAIL}&appid="+pushcrew.subscriberId});
 	}]);
 </script>
 
