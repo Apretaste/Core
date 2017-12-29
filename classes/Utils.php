@@ -705,12 +705,37 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
-		// increase number of notifications
-		$connection = new Connection();
-		$connection->query("UPDATE person SET notifications = notifications+1 WHERE email = '$email'");
+		// check if we should send a web push
+		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
 
-		// insert notification and return id
-		return $connection->query("INSERT INTO notifications (email, origin, text, link, tag) VALUES ('$email','$origin','$text','$link','$tag')");
+		// if the person has a valid appid, send a web push
+		if( ! empty($row[0]->appid))
+		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
+
+			// convert the link to URL
+			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link";
+
+			// get the image for the service
+			$service = strtolower($origin);
+			$img = file_exists("$wwwroot/public/temp/$service.png") ? "$wwwhttp/temp/$service.png" : "";
+
+			// create title and message
+			$title = ucfirst($origin);
+			$message = substr($text, 0, 80);
+
+			// send web push notification for users of the web
+			$pushNotification = new PushNotification();
+			$pushNotification->sendWebPush($row[0]->appid, $title, $message, $url, $img);
+		}
+
+		// increase number of notifications
+		Connection::query("UPDATE person SET notifications = notifications+1 WHERE email='$email'");
+
+		// insert notification in the db and get id
+		return Connection::query("INSERT INTO notifications (email, origin, `text`, link, tag) VALUES ('$email','$origin','$text','$link','$tag')");
 	}
 
 	/**
