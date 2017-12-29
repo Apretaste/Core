@@ -707,6 +707,7 @@ class Utils
 	{
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		$ispush = 0;
 
 		// if the person has a valid appid, send a web push
 		if( ! empty($row[0]->appid))
@@ -714,6 +715,7 @@ class Utils
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 			$wwwhttp = $di->get('path')['http'];
+			$ispush = 1;
 
 			// convert the link to URL
 			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link";
@@ -735,7 +737,7 @@ class Utils
 		Connection::query("UPDATE person SET notifications = notifications+1 WHERE email='$email'");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (email, origin, `text`, link, tag) VALUES ('$email','$origin','$text','$link','$tag')");
+		return Connection::query("INSERT INTO notifications (email, origin, `text`, link, tag, ispush) VALUES ('$email','$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**
