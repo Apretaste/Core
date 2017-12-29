@@ -9,32 +9,11 @@ class LoginController extends Controller
 	 */
 	public function indexAction()
 	{
-		$email = $this->request->get('email');
-		$redirect = $this->request->get('redirect');
-		$token = $this->request->get('token');
-		$shake = $this->request->get('shake');
-
-		// try login by token if exist
-		if($token) {
-			// login by token
-			$security = new Security();
-			$user = $security->loginByToken($token);
-
-			// redirect if login is correct
-			if($user) {
-				$redirect = empty($redirect) ? "servicios" : $redirect;
-				$this->response->redirect("run/display?subject=$redirect");
-				$this->view->disable();
-				return true;
-			}
-		}
-
-		// send data to the view to ask email
 		$this->view->phase = "email";
-		$this->view->email = $email;
-		$this->view->redirect = $redirect;
-		$this->view->icon = $this->getIcon($redirect);
-		$this->view->shake = $shake;
+		$this->view->email = $this->request->get('email');
+		$this->view->redirect = $this->request->get('redirect');
+		$this->view->icon = $this->getIcon($this->request->get('redirect'));
+		$this->view->shake = $this->request->get('shake');
 		$this->view->setLayout('login');
 	}
 

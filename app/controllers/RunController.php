@@ -25,10 +25,14 @@ class RunController extends Controller
 	{
 		// get the service to load
 		$this->subject = $this->request->get("subject");
+		$token = $this->request->get('token');
 
-		// get the email from the session or redirect to login
+		// try login by token or load from the session
 		$security = new Security();
-		$user = $security->getUser();
+		if($token) $user = $security->loginByToken($token);
+		else $user = $security->getUser();
+
+		// if user is not logged, redirect to login page
 		if($user) $this->fromEmail = $user->email;
 		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
