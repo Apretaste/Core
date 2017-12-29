@@ -1,7 +1,6 @@
 <?php
 
 use Nette\Mail\Message;
-use SparkPost\SparkPost;
 use GuzzleHttp\Client;
 use Http\Adapter\Guzzle6\Client as GuzzleAdapter;
 
@@ -34,7 +33,6 @@ class Email
 		// if is Nauta and we have the user's password
 		elseif($isNauta) {
 			$res = $this->sendEmailViaWebmail();
-			if($res->code != "200") $res = $this->sendEmailViaSparkPost();
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
@@ -182,80 +180,6 @@ class Email
 		$this->method = "alias";
 		$this->from = "$alias@gmail.com";
 		return $this->sendEmailViaAmazon();
-	}
-
-	/**
-	 * Sends an email using SparkPost
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaSparkPost()
-	{
-		// get the Sparkpost key
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$pass = $di->get('config')['sparkpost']['key'];
-
-		// get the email to send from
-		$utils = new Utils();
-		$word = $utils->randomSentence(1);
-		$this->from = "$word@cubazone.info";
-		$this->method = "sparkpost";
-
-		// get attachments
-		$attachments = [];
-		if($this->attachments) {
-			$file = $this->attachments[0];
-			$fileName = basename($file);
-			$fileType = mime_content_type($file);
-			$fileData = base64_encode(file_get_contents($file));
-			$attachments = [['name' => $fileName, 'type' => $fileType, 'data' => $fileData]];
-		}
-
-		// create client
-		$httpClient = new GuzzleAdapter(new Client());
-		$sparky = new SparkPost($httpClient, ['key'=>'e6aa6d475daaac7e5ae7fde805d84a9c8c9002f1']);
-
-		// prepare email
-		$promise = $sparky->transmissions->post([
-			'content' => [
-				'from' => [
-					'name' => $word,
-					'email' => $this->from,
-				],
-				'subject' => $this->subject,
-				'html' => $this->body,
-				'text' => '',
-				'attachments' => $attachments,
-			],
-			'recipients' => [
-				[
-					'address' => [
-						'name' => '',
-						'email' => $this->to,
-					],
-				],
-			],
-		]);
-
-		// send email
-		$promise = $sparky->transmissions->get();
-
-		try {
-			// check if sent
-			$response = $promise->wait();
-
-			// create the response code and message
-			$output = new stdClass();
-			$output->code = "200";
-			$output->message = "Sent to {$this->to}";
-		} catch (\Exception $e) {
-			$output->code = "501";
-			$output->message = $e->getCode() . " " . $e->getMessage();
-			$utils->createAlert("[{$this->method}] {$output->message}");
-		}
-
-		return $output;
 	}
 
 	/**
