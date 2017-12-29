@@ -244,41 +244,42 @@ class PushNotification
 	 * Send a push notification for the web
 	 *
 	 * @author salvipascual
-	 * @param String $email, email of the receiptor
+	 * @param String $appid, id of the subscriber
 	 * @param String $title, title of the push
 	 * @param String $message, message of the push
 	 * @param String $url, url to send the user
 	 * @param String $img, image for the push
 	 * @return Boolean
 	 */
-	public function sendWebPush($email, $title, $message, $url="", $img="")
+	public function sendWebPush($appid, $title, $message, $url="", $img="")
 	{
 		// get the server key
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$apikey = $di->get('config')['pushengage']['apikey'];
+		$apikey = $di->get('config')['pushcrew']['apikey'];
 
-		// create the post fields
-		if($url) $url = "&notification_url=$url";
-		if($img) $img = "&image_url=$img";
-		$fields = "notification_title=$title&notification_message=$message&profile_id[0]=$email" . $url . $img;
+		//set POST variables
+		$fields = [
+			'title' => $title,
+			'message' => $message,
+			'subscriber_id' => $appid
+		];
+		if($url) $fields['url'] = $url;
+		if($img) $fields['image_url'] = $img;
 
-		// prepare the curl request
-		$curl = curl_init();
-		curl_setopt_array($curl, [
-			CURLOPT_URL => "https://api.pushengage.com/apiv1/notifications",
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => "",
-			CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 30,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_POSTFIELDS => $fields,
-			CURLOPT_HTTPHEADER => ["api_key:$apikey","cache-control:no-cache","content-type:application/x-www-form-urlencoded"]
-		]);
+		//open connection
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://pushcrew.com/api/v1/send/individual/');
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: key=$apikey"]);
 
-		// send the curl request
-		$res = curl_exec($curl);
-		curl_close($curl);
-		return json_decode($res, true);
+		// execute request
+		$res = curl_exec($ch);
+		curl_close($ch);
+
+		// retun true/false if worked
+		$res = json_decode($res, true);
+		return isset($res['status']) && $res['status'] == 'success';
 	}
 }

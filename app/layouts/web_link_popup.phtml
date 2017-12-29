@@ -197,11 +197,22 @@
 	}
 </script>
 
-<!-- pushengage web push notifications -->
-<script src="https://clientcdn.pushengage.com/core/17493.js"></script>
-<script>
-	_pe.subscribe();
-	_pe.addProfileId('{$USER_EMAIL}');
+<!-- web push notifications -->
+<script type="text/javascript">
+	(function(p,u,s,h){
+		p._pcq=p._pcq||[];
+		p._pcq.push(['_currentTime',Date.now()]);
+		s=u.createElement('script');
+		s.type='text/javascript';
+		s.async=true;
+		s.src='https://cdn.pushcrew.com/js/d011951882e811830fa7e51f1fec62d7.js';
+		h=u.getElementsByTagName('script')[0];
+		h.parentNode.insertBefore(s,h);
+	})(window,document);
+
+	_pcq.push(['APIReady', function () {
+		$.ajax({url: "/api/saveAppId?email={$USER_EMAIL}&appid="+pushcrew.subscriberId});
+	}]);
 </script>
 
 <!-- Global site tag (gtag.js) - Google Analytics -->
