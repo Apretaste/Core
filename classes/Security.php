@@ -8,13 +8,12 @@ class Security
 	 * @author salvipascual
 	 * @param String $emal
 	 * @param String $pin
-	 * @return Boolean
+	 * @return Object | Boolean
 	 */
 	public function login($email, $pin)
 	{
 		// check if the user/pin is ok
-		$connection = new Connection();
-		$person = $connection->query("SELECT first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
+		$person = Connection::query("SELECT first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
 		if(empty($person)) return false; else $person = $person[0];
 
 		// get the path to root folder
@@ -32,7 +31,7 @@ class Security
 		$user->picture = $picture;
 
 		// add manager data if the user works at Apretaste
-		$manager = $connection->query("SELECT occupation, pages, start_page FROM manage_users WHERE email='$email'");
+		$manager = Connection::query("SELECT occupation, pages, start_page FROM manage_users WHERE email='$email'");
 		$user->isManager = ! empty($manager);
 		$user->position = empty($manager) ? "" : $manager[0]->occupation;
 		$user->pages = empty($manager) ? [] : explode(",", $manager[0]->pages);
@@ -40,7 +39,7 @@ class Security
 
 		// save the last user's IP and access time
 		$ip = php::getClientIP();
-		$connection->query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 
 		// save the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -53,13 +52,12 @@ class Security
 	 *
 	 * @author salvipascual
 	 * @param String $emal
-	 * @return Boolean
+	 * @return Object | Boolean
 	 */
 	public function loginByIP($email)
 	{
 		// get the lastest IP and date
-		$connection = new Connection();
-		$person = $connection->query("SELECT last_ip, pin FROM person WHERE email='$email'");
+		$person = Connection::query("SELECT last_ip, pin FROM person WHERE email='$email'");
 		if(empty($person)) return false; else $person = $person[0];
 
 		// check if user can be logged
@@ -70,6 +68,27 @@ class Security
 		// log in the user and return
 		if($localIP || $sameIP) return $this->login($email, $person->pin);
 		else return false;
+	}
+
+	/**
+	 * Login a user using a login hash
+	 *
+	 * @author salvipascual
+	 * @param String $token
+	 * @return Object | Boolean
+	 */
+	public function loginByToken($token)
+	{
+		// get the lastest IP and date
+		$person = Connection::query("
+			SELECT A.email, A.pin
+			FROM person A JOIN authentication B
+			ON A.email = B.email
+			WHERE B.token='$token'");
+		if(empty($person)) return false;
+
+		// log in the user and return
+		return $this->login($person[0]->email, $person[0]->pin);
 	}
 
 	/**

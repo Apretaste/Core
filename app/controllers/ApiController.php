@@ -319,17 +319,21 @@ class ApiController extends Controller
 		$email = Connection::escape($email);
 		$appid = Connection::escape($appid);
 
+		// create login token
+		$utils = new Utils();
+		$token = $utils->generateRandomHash();
+
 		// check if the row already exists
 		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
 
 		// if the row do not exist, create it
 		if(empty($row)) {
-			Connection::query("INSERT INTO authentication(email,appid,appname,platform) VALUES ('$email','$appid','apretaste','web')");
+			Connection::query("INSERT INTO authentication(token,email,appid,appname,platform) VALUES ('$token','$email','$appid','apretaste','web')");
 		}
 
 		// if the row exist and the appid is different, update it
 		elseif($row[0]->appid != $appid) {
-			Connection::query("UPDATE authentication SET appid='$appid' WHERE email='$email' AND appname='apretaste' AND platform='web'");
+			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE email='$email' AND appname='apretaste' AND platform='web'");
 		}
 	}
 }
