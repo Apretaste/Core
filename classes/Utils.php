@@ -706,7 +706,7 @@ class Utils
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// check if we should send a web push
-		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		$row = Connection::query("SELECT token, appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
 		$ispush = 0;
 
 		// if the person has a valid appid, send a web push
@@ -718,7 +718,7 @@ class Utils
 			$ispush = 1;
 
 			// convert the link to URL
-			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link";
+			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link&token={$row[0]->token}";
 
 			// get the image for the service
 			$service = strtolower($origin);
