@@ -187,65 +187,6 @@ class PushNotification
 	}
 
 	/**
-	 * Send a web push notification when you receive a chat at Pizarra
-	 *
-	 * @author salvipascual
-	 * @param String $appid, id to send the notification
-	 * @param String $from, @username of the sender
-	 * @param String $text, text sent
-	 * @return Boolean
-	 */
-	public function pizarraChatReceived($appid, $from, $text)
-	{
-		// prepara params to send
-		$title = "@$from le ha escrito una nota";
-		$message = substr($text, 0, 80);
-		$callbackUrl = "https://pizarracuba.com/chats/with/$from";
-
-		// call the general web push
-		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
-	}
-
-	/**
-	 * Send a web push notification when somebody mentions you
-	 *
-	 * @author salvipascual
-	 * @param String $appid, id to send the notification
-	 * @param String $from, @username of the sender
-	 * @return Boolean
-	 */
-	public function pizarraUserMentioned($appid, $from)
-	{
-		// prepara params to send
-		$title = "@$from le mencionó en público";
-		$message = "Haga click aquí para ver que @$from escribió de usted";
-		$callbackUrl = "https://pizarracuba.com/feed"; //@TODO point to a unique note
-
-		// call the general web push
-		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
-	}
-
-	/**
-	 * Send a web push notification when somebody adds a heart to your post
-	 *
-	 * @author salvipascual
-	 * @param String $appid, id to send the notification
-	 * @param String $from, @username of the sender
-	 * @param String $text, text sent
-	 * @return Boolean
-	 */
-	public function pizarraHeartNote($appid, $from, $note)
-	{
-		// prepara params to send
-		$title = "A @$from le gustó su nota";
-		$message = substr($note, 0, 80);
-		$callbackUrl = "https://pizarracuba.com/feed"; //@TODO point to a unique note
-
-		// call the general web push
-		return $this->sendGeneralWebPush($appid, $title, $message, $callbackUrl);
-	}
-
-	/**
 	 * Send a push notification for a phone
 	 *
 	 * @author salvipascual
@@ -303,44 +244,42 @@ class PushNotification
 	 * Send a push notification for the web
 	 *
 	 * @author salvipascual
-	 * @param String $appid, ID to push
+	 * @param String $appid, id of the subscriber
 	 * @param String $title, title of the push
 	 * @param String $message, message of the push
-	 * @param String $callbackUrl, url to send the user
+	 * @param String $url, url to send the user
+	 * @param String $img, image for the push
 	 * @return Boolean
 	 */
-	private function sendGeneralWebPush($appid, $title, $message, $callbackUrl)
+	public function sendWebPush($appid, $title, $message, $url="", $img="")
 	{
 		// get the server key
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$apiToken = $di->get('config')['pushcrew']['apitoken'];
+		$apikey = $di->get('config')['pushcrew']['apikey'];
 
-		// set POST variables
-		$fields = array(
+		//set POST variables
+		$fields = [
 			'title' => $title,
 			'message' => $message,
-			'url' => $callbackUrl,
 			'subscriber_id' => $appid
-		);
+		];
+		if($url) $fields['url'] = $url;
+		if($img) $fields['image_url'] = $img;
 
-		// contact the API using curl
+		//open connection
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, 'https://pushcrew.com/api/v1/send/individual/');
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization:key='.$apiToken));
-		$json = curl_exec($ch);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: key=$apikey"]);
+
+		// execute request
+		$res = curl_exec($ch);
 		curl_close($ch);
 
-		// save the API log
-		$wwwroot = $di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
-		$logger->log("NEW WEB PUSH: $json");
-		$logger->close();
-
-		// return boolean if susccess
-		$res = json_decode($json, true);
-		return $res['status'] == 'success';
+		// retun true/false if worked
+		$res = json_decode($res, true);
+		return isset($res['status']) && $res['status'] == 'success';
 	}
 }
