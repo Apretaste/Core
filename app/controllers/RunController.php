@@ -380,7 +380,7 @@ class RunController extends Controller
 			$text = $input->command;
 			$appversion = $input->appversion;
 			$osversion = $input->osversion;
-			$nautaPass = $input->token;
+			$nautaPass = base64_decode($input->token);
 			$timestamp = $input->timestamp;
 		}
 		// get the input if the data is plain text (version <= 2.5)
