@@ -15,7 +15,7 @@
 	<meta name="twitter:title" content="Conéctate a la internet por Nauta">
 	<meta name="twitter:description" content="Revisa las Redes Sociales, Noticias, Web, Entretenimiento y mucho más. Todo desde la comodidad de tu casa, y gratuitamente.">
 	<meta name="twitter:creator" content="@apretaste">
-	<meta name="twitter:image" content="<?php echo $wwwhttp; ?>/images/FeatureGraphic.png">
+	<meta name="twitter:image" content="<?= $wwwhttp ?>/images/FeatureGraphic.png">
 
 	<!-- Open Graph data -->
 	<meta name="fb:app_id" content="285099284865702" />
@@ -26,19 +26,19 @@
 	<meta name="og:site_name" content="Apretaste" />
 	<meta name="og:title" content="Conéctate a la internet por Nauta." />
 	<meta name="og:description" content="Revisa las Redes Sociales, Noticias, Web, Entretenimiento y mucho más. Todo desde la comodidad de tu casa, y gratuitamente." />
-	<meta name="og:image" content="<?php echo $wwwhttp; ?>/images/FeatureGraphic.png" />
+	<meta name="og:image" content="<?= $wwwhttp ?>/images/FeatureGraphic.png" />
 
-	<link rel="icon" href="<?php echo $wwwhttp; ?>/images/apretaste.icon.png">
+	<link rel="icon" href="<?= $wwwhttp ?>/images/apretaste.icon.png">
 	<link rel="canonical" href="https://apretaste.com">
 
 	<!-- Bootstrap Core CSS -->
-	<link href="<?php echo $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
+	<link href="<?= $wwwhttp ?>/css/bootstrap.min.css" rel="stylesheet">
 
 	<!-- Custom CSS -->
-	<link href="<?php echo $wwwhttp; ?>/css/welcome.css" rel="stylesheet">
+	<link href="<?= $wwwhttp ?>/css/welcome.css" rel="stylesheet">
 
 	<!-- Custom Fonts -->
-	<link href="<?php echo $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+	<link href="<?= $wwwhttp ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
 
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -78,7 +78,7 @@
 	<header id="top" class="header">
 		<div class="text-vertical-center">
 			<div style="margin-top:-200px">
-				<img id="main-logo-image" src="<?php echo $wwwhttp; ?>/images/apretaste.logo.big.transp.png" alt="Apretaste"><br/>
+				<img id="main-logo-image" src="<?= $wwwhttp ?>/images/apretaste.logo.big.transp.png" alt="Apretaste"><br/>
 				<div id="motto">
 					<h3 class="contrast">Connecting thousands of Cubans to the internet using accessible, effective and legal ways</h3>
 				</div>
@@ -95,7 +95,7 @@
 			<div class="row inner-space-vertical">
 				<div class="col-lg-5 col-md-5 col-sm-6">
 					<div class="blank-space-divider hidden-lg hidden-xs"></div>
-					<img class="img-responsive" src="<?php echo $wwwhttp; ?>/images/internet-in-cuba.png"/>
+					<img class="img-responsive" src="<?= $wwwhttp ?>/images/internet-in-cuba.png"/>
 				</div>
 				<div class="col-lg-7 col-md-7 col-sm-6">
 					<p class="lead high-note"><span class="green">2,800,000</span> Cubans only access email<br/>while only <span class="red">560,000</span> can surf the Web</p>
@@ -123,7 +123,7 @@
 				<div class="blank-space-divider"></div>
 
 				<div class="col-lg-7 col-md-7 col-sm-6 text-center">
-					<img src="<?php echo $wwwhttp; ?>/images/ap-app.png">
+					<img src="<?= $wwwhttp ?>/images/ap-app.png">
 				</div>
 			</div>
 		</div>
@@ -310,7 +310,7 @@
 			</div>
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<h3 class="black lead">With more than <?php echo number_format($visitorsPerMonth/1000) . "K"; ?> Visitors/Month, we believe we are on the right track</h3>
+					<h3 class="black lead">With <?= number_format($visitorsPerMonth) ?> Visitors/Month, we believe we are on the right track</h3>
 					<br/>
 				</div>
 			</div>
@@ -353,56 +353,56 @@
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.miamiherald.com/news/business/technology/article65196697.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/miamiherald.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/miamiherald.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://event.on24.com/wcc/r/1237558/E17397506918D1078847DF56BBA25D2E" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/oreilly.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/oreilly.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.telemundo51.com/noticias/cuba/Concurso-Hey-Cuba-Hackaton_TLMD---Miami-368985671.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/telemundo.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/telemundo.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.sun-sentinel.com/business/small-business/fl-cuba-internet-company-20151130-story.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/sunsentinel.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/sunsentinel.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.miaminewtimes.com/news/miami-company-helps-cubans-access-the-internet-through-their-email-8351534" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/newtimesmiami.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/newtimesmiami.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.jump-in.com.au/show/60minutes/stories/2014/september/a-cuban-revolution/" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/60minutes.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/60minutes.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.elnuevoherald.com/noticias/mundo/america-latina/cuba-es/article64126537.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/nuevoherald.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/nuevoherald.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://motherboard.vice.com/read/this-workaround-lets-26-million-cubans-surf-the-web" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/motherboard.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/motherboard.png">
 								</a>
 							</div>
 						</div>
@@ -411,84 +411,84 @@
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.elmundo.es/economia/2016/02/15/56c192b0268e3ef5758b45bd.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/elmundo.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/elmundo.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.martinoticias.com/content/apretaste-servicio-clasificados-por-email/31982.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/martinoticias.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/martinoticias.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.bizjournals.com/southflorida/news/2016/03/10/miami-hackathon-aims-to-improve-cuba-s-web-access.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/southflobizjournal.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/southflobizjournal.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.diariolasamericas.com/4842_locales/3628715_organizan-encuentro-programadores-miami-internet-cuba.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/diariolasamericas.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/diariolasamericas.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.14ymedio.com/blogs/generacion_y/Apretaste_7_1537716214.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/14ymedio.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/14ymedio.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.diariodecuba.com/cuba/1449255436_18591.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/diariodecuba.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/diariodecuba.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="https://www.cubanet.org/noticias/cubano-organiza-hackathon-en-miami-por-mejorar-acceso-a-internet-en-la-isla/" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cubanet.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/cubanet.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://www.14ymedio.com/blogs/generacion_y/Apretaste_7_1537716214.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/generaciony.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/generaciony.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="https://www.cibercuba.com/noticias/14ymedio/2016-02-15-una-hackathon-en-miami-para-facilitar-acceso-internet-cubanos" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/cibercuba.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/cibercuba.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://raicesblog.blogspot.com/2014/02/roots-of-hope-hosts-first-ever.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hackathonforcuba.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/hackathonforcuba.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://martinoticias.org/archive/one_thousand_800_online/14/97/129.html" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/1800online.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/1800online.png">
 								</a>
 							</div>
 						</div>
 						<div class="col-md-3 col-sm-4 col-xs-6 showmorepress">
 							<div class="portfolio-item tooltip-image" data-toggle="tooltip" data-placement="top">
 								<a href="http://hispz14.sched.org/event/d586fcd1fadff0e5b84fc2995eccfd20#.VCh10vnxqTU" target="_blank">
-									<img class="img-portfolio img-responsive img-thumbnail" src="<?php echo $wwwhttp; ?>/images/media/hispanicize.png">
+									<img class="img-portfolio img-responsive img-thumbnail" src="<?= $wwwhttp ?>/images/media/hispanicize.png">
 								</a>
 							</div>
 						</div>
@@ -513,22 +513,22 @@
 					<hr class="small">
 					<div class="row">
 						<div class="img-team col-md-4 col-sm-4 col-xs-6">
-							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/salvi.jpg"/>
+							<img class="img-circle team-member" src="<?= $wwwhttp ?>/images/team/salvi.jpg"/>
 							<h4>Salvi Pascual</h4>
 							<p>Executive Director<br/><a href="mailto:salvi@apretaste.com">salvi@apretaste.com</a></p>
-							<img src="<?php echo $wwwhttp; ?>/images/flags/us.png"/>
+							<img src="<?= $wwwhttp ?>/images/flags/us.png"/>
 						</div>
 						<div class="img-team col-md-4 col-sm-4 col-xs-6">
-							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/kuma.jpg"/>
+							<img class="img-circle team-member" src="<?= $wwwhttp ?>/images/team/kuma.jpg"/>
 							<h4>Kuma Hacker</h4>
 							<p>Chief Technology Officer<br/><a href="mailto:kumahavana@gmail.com">kumahavana@gmail.com</a></p>
-							<img src="<?php echo $wwwhttp; ?>/images/flags/cu.png"/>
+							<img src="<?= $wwwhttp ?>/images/flags/cu.png"/>
 						</div>
 						<div class="img-team col-md-4 col-sm-4 col-xs-12">
-							<img class="img-circle team-member" src="<?php echo $wwwhttp; ?>/images/team/alex.jpg"/>
+							<img class="img-circle team-member" src="<?= $wwwhttp ?>/images/team/alex.jpg"/>
 							<h4>Alex Maestre</h4>
 							<p>Master of all Trades<br/><a href="mailto:alex@apretaste.com">alex@apretaste.com</a></p>
-							<img src="<?php echo $wwwhttp; ?>/images/flags/ve.png"/>
+							<img src="<?= $wwwhttp ?>/images/flags/ve.png"/>
 						</div>
 					</div>
 
@@ -563,7 +563,7 @@
 
 	<!-- Map -->
 	<section id="contact" class="map">
-		<img style="width:100%;" src="<?php echo $wwwhttp; ?>/images/map.png" alt="We are located at the Miami Entrepreneurship Center"/>
+		<img style="width:100%;" src="<?= $wwwhttp ?>/images/map.png" alt="We are located at the Miami Entrepreneurship Center"/>
 	</section>
 
 	<!-- Footer -->
@@ -601,10 +601,10 @@
 	<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55b53cc3acee4add" async="async"></script>
 
 	<!-- jQuery -->
-	<script src="<?php echo $wwwhttp; ?>/js/jquery.js"></script>
+	<script src="<?= $wwwhttp ?>/js/jquery.js"></script>
 
 	<!-- Bootstrap Core JavaScript -->
-	<script src="<?php echo $wwwhttp; ?>/js/bootstrap.min.js"></script>
+	<script src="<?= $wwwhttp ?>/js/bootstrap.min.js"></script>
 
 	<!-- google graph -->
 	<script type='text/javascript' src='https://www.google.com/jsapi'></script>
@@ -617,7 +617,7 @@
 		var data = google.visualization.arrayToDataTable([
 			['Day of the week', 'Email'],
 			<?php foreach ($visitors as $data) { ?>
-				['<?php echo $data['date']; ?>',<?php echo $data['emails']; ?>],
+				['<?= $data['date'] ?>',<?= $data['emails'] ?>],
 			<?php } ?>
 		]);
 		var options = {backgroundColor: '#C1C1C1', legend: 'none'};
@@ -669,6 +669,6 @@
 	});
 	</script>
 
-	<?php require_once "$wwwroot/lib/googleAnalyticsTracking.php"; ?>
+	<?php require_once "$wwwroot/lib/googleAnalyticsTracking.php" ?>
 </body>
 </html>
