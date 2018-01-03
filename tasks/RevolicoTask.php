@@ -460,7 +460,7 @@ class revolicoTask extends \Phalcon\Cli\Task
         $sql = "INSERT INTO _tienda_post (contact_name, contact_email_1, contact_phone, contact_cellphone, location_province, ad_title, ad_body, currency,  category,    number_of_pictures, price,   date_time_posted, source,      source_url ) 
                                   VALUES ({owner},      {email},         {phone},       {cell},            {province},        {title},  {body},  {currency}, {category}, {images},           {price}, {date},           'revolico',  {url});";
 
-        foreach($data as $key => $value) $sql = str_replace("'{$key}'", $value, $sql);
+        foreach($data as $key => $value) $sql = str_replace("{{$key}}", "'$value'", $sql);
 
         try {
             // save into the database, log on error
