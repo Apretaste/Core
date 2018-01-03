@@ -446,7 +446,7 @@ class revolicoTask extends \Phalcon\Cli\Task
         $data['body'] = $body;
 
         // remove duplicated
-        Connection::query("DELETE FROM _tienda_post WHERE ad_title = '{$data['title']}' AND (contact_email_1 = '{email}' OR source = 'revolico')");
+        Connection::query("DELETE FROM _tienda_post WHERE ad_title = '{$data['title']}' AND (contact_email_1 = '{{$data['email']}}' OR source = 'revolico')");
 
         // insert
         /*
