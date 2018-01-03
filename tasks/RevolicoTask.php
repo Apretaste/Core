@@ -444,6 +444,7 @@ class revolicoTask extends \Phalcon\Cli\Task
         $data['currency'] = empty($data['currency']) ? "CUC" : "{$data['currency']}";
         $data['title'] = $title;
         $data['body'] = $body;
+        $data['price'] = (empty(trim($data['price'])) ? 0: trim($data['price'])) * 1.0;
 
         // remove duplicated
         Connection::query("DELETE FROM _tienda_post WHERE ad_title = '{$data['title']}' AND (contact_email_1 = '{{$data['email']}}' OR source = 'revolico')");
