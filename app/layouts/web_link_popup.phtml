@@ -1,9 +1,7 @@
 <!-- modal window for request sent -->
 <div id="modalRequestSent" class="modal">
 	<div class="body">
-		<p style="color:#5EBB47; font-size:50px; margin:0px;">&#x2714;</p>
-		<p style="margin-top:0px;">Su peticion ha sido enviada</p>
-		<button type="button" onclick="modalClose('modalRequestSent'); location.reload();">Cerrar</button>
+		<div class="loader"></div>
 	</div>
 </div>
 
@@ -12,7 +10,7 @@
 	<div class="body">
 		<div id="modalRequestMoreDataBody" class="modal-body"></div>
 		<button type="button" onclick="modalClose('modalRequestMoreData');">Cerrar</button>
-		<button type="button" onclick="apretaste.sendMoreData();">Enviar</button>
+		<button type="button" class="green" onclick="apretaste.sendMoreData();">Enviar</button>
 	</div>
 </div>
 
@@ -24,7 +22,7 @@
 			<input id="attachment" type="file" name="attachment"/>
 		</div>
 		<button type="button" onclick="modalClose('modalUploadFile');">Cerrar</button>
-		<button type="button" onclick="apretaste.uploadFile();">Enviar</button>
+		<button type="button" class="green" onclick="apretaste.uploadFile();">Enviar</button>
 	</div>
 </div>
 
@@ -60,15 +58,52 @@
 		height:100%;
 		text-align:center;
 		z-index: 1000;
+		background: rgba(0, 0, 0, 0.8);
+
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-justify-content: center;
+		-ms-flex-pack: center;
+		justify-content: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
 	}
 
 	.modal .body {
 		width:300px;
-		margin: 100px auto;
+		margin: auto;
 		background-color: #fff;
 		border:1px solid #000;
-		padding:15px;
+		padding:20px;
 		text-align:center;
+		border-radius: 5px;
+	}
+
+	button {
+		border: none;
+		cursor: pointer;
+	}
+
+	button.green {
+		color: white;
+		background-color: #5EBB47;
+	}
+
+	.loader {
+		border: 16px solid #f3f3f3;
+		border-top: 16px solid #5EBB47;
+		border-radius: 50%;
+		margin: auto;
+		width: 50px;
+		height: 50px;
+		animation: spin 2s linear infinite;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
 	}
 </style>
 
@@ -167,6 +202,7 @@
 			}else{
 				$.get(apretaste.url, function(data) {
 					modalOpen('modalRequestSent');
+					location.reload();
 				});
 			}
 		},
