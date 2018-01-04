@@ -430,6 +430,7 @@ class Utils
 		}
 
 		// save all emails tested so we dot duplicated the check
+		$code = intval($code);
 		$connection->query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
 		return $status;
 	}
