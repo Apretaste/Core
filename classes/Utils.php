@@ -19,8 +19,8 @@ class Utils
 		$environment = $di->get('environment');
 
 		// get a random mailbox
-		$connection = new Connection();
-		$node = $connection->query("
+		
+		$node = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='$environment' AND active=1
 			ORDER BY RAND() LIMIT 1");
@@ -44,8 +44,8 @@ class Utils
 	public function getSupportEmailAddress()
 	{
 		// get a random support email
-		$connection = new Connection();
-		$support = $connection->query("
+		
+		$support = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='support' AND active=1
 			ORDER BY RAND() LIMIT 1");
@@ -78,13 +78,13 @@ class Utils
 	 * Format a link to be an Apretaste mailto
 	 *
 	 * @author salvipascual
-	 * @param String , name of the service
-	 * @param String , name of the subservice, if needed
-	 * @param String , pharse to search, if needed
-	 * @param String , body of the email, if necessary
-	 * @return String, link to add to the href section
+	 * @param mixed $service name of the service
+	 * @param mixed $subservice name of the subservice, if needed
+	 * @param mixed $parameter pharse to search, if needed
+	 * @param mixed $body body of the email, if necessary
+	 * @return String link to add to the href section
 	 */
-	public function getLinkToService($service, $subservice=false, $parameter=false, $body=false)
+	public function getLinkToService($service, $subservice = false, $parameter = false, $body = false)
 	{
 		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
 		if ($subservice) $link .= " $subservice";
@@ -109,8 +109,8 @@ class Utils
 
 		// check if service exist and return its name
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		if(file_exists("$wwwroot/services/$name/config.xml")) return $name;
+		$www_root = $di->get('path')['root'];
+		if(file_exists("$www_root/services/$name/config.xml")) return $name;
 		else return false;
 	}
 
@@ -123,8 +123,8 @@ class Utils
 	 */
 	public function personExist($email)
 	{
-		$connection = new Connection();
-		$res = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
+		
+		$res = Connection::query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
 		return count($res) > 0;
 	}
 
@@ -132,13 +132,13 @@ class Utils
 	 * Get a person's profile
 	 *
 	 * @author salvipascual
-	 * @return Array or false
+	 * @return object|boolean
 	 */
 	public function getPerson($email)
 	{
 		// get the person
-		$connection = new Connection();
-		$person = $connection->query("SELECT * FROM person WHERE email = '$email'");
+		
+		$person = Connection::query("SELECT * FROM person WHERE email = '$email'");
 
 		// return false if person cannot be found
 		if (empty($person)) return false;
@@ -166,10 +166,10 @@ class Utils
 		$shortmail = substr($shortmail, 0, 5); // get the first 5 chars
 
 		// contatenate a random unique number
-		$connection = new Connection();
+		
 		do {
 			$username = $shortmail . rand(100, 999);
-			$exist = $connection->query("SELECT username FROM person WHERE username='$username'");
+			$exist = Connection::query("SELECT username FROM person WHERE username='$username'");
 		} while($exist);
 
 		return $username;
@@ -188,8 +188,8 @@ class Utils
 		$username = str_replace("@", "", $username);
 
 		// get the email
-		$connection = new Connection();
-		$email = $connection->query("SELECT email FROM person WHERE username='$username'");
+		
+		$email = Connection::query("SELECT email FROM person WHERE username='$username'");
 
 		// return the email or false if not found
 		if(empty($email)) return false;
@@ -206,8 +206,8 @@ class Utils
 	public function getUsernameFromEmail($email)
 	{
 		// get the username
-		$connection = new Connection();
-		$username = $connection->query("SELECT username FROM person WHERE email='$email'");
+		
+		$username = Connection::query("SELECT username FROM person WHERE email='$email'");
 
 		// return the email or false if not found
 		if(empty($username)) return false;
@@ -237,20 +237,20 @@ class Utils
 	 * Return the current Raffle or false if no Raffle was found
 	 *
 	 * @author salvipascual
-	 * @return Array or false
+	 *
+	 * @return array|boolean
 	 */
 	public function getCurrentRaffle()
 	{
 		// get the raffle
-		$connection = new Connection();
-		$raffle = $connection->query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
+		$raffle = Connection::query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
 
 		// return false if there is no open raffle
 		if (count($raffle)==0) return false;
 		else $raffle = $raffle[0];
 
 		// get number of tickets opened
-		$openedTickets = $connection->query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
+		$openedTickets = Connection::query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
@@ -283,20 +283,23 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @author kuma
+	 *
 	 * @version 2.0
+	 *
 	 * @param String $imagePath, path to the image
-	 * @param number $width Fit to width
-	 * @param number $height Fit to height
-	 * @param number $quality Decrease/increase quality
+	 * @param mixed $width Fit to width
+	 * @param mixed $height Fit to height
+	 * @param mixed $quality Decrease/increase quality
 	 * @param string $format Convert to format
+	 *
 	 * @return boolean
 	 */
 	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
 	{
 		// include SimpleImage class
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		include_once "$wwwroot/lib/SimpleImage.php";
+		$www_root = $di->get('path')['root'];
+		include_once "$www_root/lib/SimpleImage.php";
 
 		// optimize image
 		try
@@ -323,7 +326,7 @@ class Utils
 	 *
 	 * @author hcarras
 	 * @param String $name, full name
-	 * @return Array [$firstName, $middleName, $lastName, $motherName]
+	 * @return array [$firstName, $middleName, $lastName, $motherName]
 	 */
 	public function fullNameToNamePieces($name)
 	{
@@ -392,8 +395,8 @@ class Utils
 	public function deliveryStatus($email)
 	{
 		// check if we already have a status for the email
-		$connection = new Connection();
-		$res = $connection->query("SELECT status FROM delivery_checked WHERE email='$email'");
+		
+		$res = Connection::query("SELECT status FROM delivery_checked WHERE email='$email'");
 		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
 
 		// block no reply emails
@@ -410,7 +413,7 @@ class Utils
 
 		// block emails sending 30+ of the same request in 5 mins
 		if(empty($status)) {
-			$received = $connection->query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
+			$received = Connection::query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
 			if ($received[0]->total > 30) $status = 'loop';
 		}
 
@@ -438,7 +441,7 @@ class Utils
 
 		// save all emails tested so we dot duplicated the check
 		$code = intval($code);
-		$connection->query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
+		Connection::query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
 		return $status;
 	}
 
@@ -482,8 +485,8 @@ class Utils
 	public function detokenize($token)
 	{
 		// get the email for a token
-		$connection = new Connection();
-		$auth = $connection->query("SELECT id, email FROM authentication WHERE token='$token'");
+		
+		$auth = Connection::query("SELECT id, email FROM authentication WHERE token='$token'");
 
 		if(empty($auth)) return false;
 		return $auth[0]->email;
@@ -518,6 +521,8 @@ class Utils
 	 * @param mixed $search
 	 * @param mixed $replace
 	 * @param String $subject
+	 *
+	 * @return string
 	 */
 	public function recursiveReplace($search, $replace, $subject)
 	{
@@ -703,13 +708,15 @@ class Utils
 	/**
 	 * Insert a notification in the database
 	 *
-	 * @author kuma
+	 * @author kumahacker
+	 *
 	 * @param string $email
 	 * @param string $origin
 	 * @param string $text
 	 * @param string $link
 	 * @param string $tag
-	 * @return integer
+	 *
+	 * @return array
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
@@ -757,8 +764,8 @@ class Utils
 	public function getNumberOfNotifications($email)
 	{
 		// temporal mechanism?
-		$connection = new Connection();
-		$r = $connection->query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
+		
+		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
 		if ( ! isset($r[0]))
 		{
 			$r[0] = new stdClass();
@@ -769,9 +776,9 @@ class Utils
 		if (trim($notifications) == '')
 		{
 			// calculate notifications and update the number
-			$r = $connection->query("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
+			$r = Connection::query("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
-			$connection->query("UPDATE person SET notifications = $notifications WHERE email ='$email'");
+			Connection::query("UPDATE person SET notifications = $notifications WHERE email ='$email'");
 		}
 
 		return $notifications * 1;
@@ -830,8 +837,8 @@ class Utils
 	public function getNautaPassword($email)
 	{
 		// check if we have the nauta pass for the user
-		$connection = new Connection();
-		$pass = $connection->query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
+		
+		$pass = Connection::query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
 
 		// return false if the password do not exist
 		if(empty($pass)) return false;
@@ -897,8 +904,8 @@ class Utils
 	 */
 	public function subscribeToEmailList($email)
 	{
-		$connection = new Connection();
-		$connection->query("UPDATE person SET mail_list=1 WHERE email='$email'");
+		
+		Connection::query("UPDATE person SET mail_list=1 WHERE email='$email'");
 	}
 
 	/**
@@ -909,8 +916,8 @@ class Utils
 	 */
 	public function unsubscribeFromEmailList($email)
 	{
-		$connection = new Connection();
-		$connection->query("UPDATE person SET mail_list=0 WHERE email='$email'");
+		
+		Connection::query("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
 	/**
@@ -968,7 +975,8 @@ class Utils
 	 * @param string $html
 	 * @param array $imageList
 	 * @param string $prefix
-	 * @return array
+	 *
+	 * @return string
 	 */
 	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
 	{
@@ -1035,6 +1043,7 @@ class Utils
 	 * @REMOVE delete from the system and remove
 	 * @author salvipascual
 	 * @param String $email
+	 *
 	 * @return Number, percentage of completion
 	 */
 	public function getProfileCompletion($email)
@@ -1057,8 +1066,8 @@ class Utils
 		$countryCode = strtoupper($countryCode);
 
 		// get the country
-		$connection = new Connection();
-		$country = $connection->query("SELECT $lang FROM countries WHERE code = '$countryCode'");
+		
+		$country = Connection::query("SELECT $lang FROM countries WHERE code = '$countryCode'");
 
 		// return the country name or empty string
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
@@ -1086,10 +1095,13 @@ class Utils
 	 * Create an alert and notify the alert group
 	 *
 	 * @author salvipascual
-	 * @param String $text
-	 * @param Enum $type: NOTICE,WARNING,ERROR
+	 * 
+	 * @param string $text
+	 * @param string $severity NOTICE,WARNING,ERROR
+	 *
+	 * @return mixed
 	 */
-	public function createAlert($text, $severity="WARNING")
+	public function createAlert($text, $severity = "WARNING")
 	{
 		// create basic message
 		$message = "$severity: $text";
@@ -1168,7 +1180,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $timestamp
-	 * @return Array(Object, Attachments)
+	 * @return array (Object, Attachments)
 	 */
 	public function getExternalAppData($email, $timestamp)
 	{
@@ -1180,8 +1192,8 @@ class Utils
 		$attachments = array();
 
 		// get the person object
-		$connection = new Connection();
-		$person = $connection->query("SELECT * FROM person WHERE email='$email'");
+		
+		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
 		$person = $person[0];
 
 		// create the response
@@ -1191,8 +1203,8 @@ class Utils
 		$res->credit = number_format($person->credit, 2, '.', '');
 
 		// get the list of mailboxes
-		$connection = new Connection();
-		$inboxes = $connection->query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
+		
+		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
 
 		// add the response mailbox
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
@@ -1232,20 +1244,20 @@ class Utils
 		}
 
 		// get unread notifications
-		$res->notifications = $connection->query("
+		$res->notifications = Connection::query("
 			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
 			FROM notifications
 			WHERE email='$email' AND viewed = 0
 			ORDER BY inserted_date DESC");
 
 		// mark notifications as read
-		if($res->notifications) $connection->query("
+		if($res->notifications) Connection::query("
 			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
 			WHERE email='$email' AND viewed = 0");
 
 		// get list of active services
 		$res->active = array();
-		$active = $connection->query("SELECT name FROM service WHERE listed=1");
+		$active = Connection::query("SELECT name FROM service WHERE listed=1");
 		foreach ($active as $a) $res->active[] = $a->name;
 
 		// get access to the configuration
@@ -1254,11 +1266,11 @@ class Utils
 
 		// get VIP services if you referred 10+ users
 		// if listed=2 means is a VIP service, if listed=1 is a service
-		$referred = $connection->query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
+		$referred = Connection::query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
 		$listed = ($referred[0]->nbr >= 10) ? "listed>=1" : "listed=1";
 
 		// get all services since last update
-		$services = $connection->query("
+		$services = Connection::query("
 			SELECT name, description, category, creator_email, insertion_date
 			FROM service
 			WHERE $listed AND insertion_date > '$lastUpdateDate'");

@@ -9,7 +9,7 @@ class Debug {
 
 	/**
 	 * Readable exception
-	 * 
+	 *
 	 * @param Exception $e
 	 * @return string
 	 */
