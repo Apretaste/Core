@@ -301,13 +301,20 @@ class Utils
 		// optimize image
 		try
 		{
-			$img = new \abeautifulsite\SimpleImage();
-			$img->load($imagePath);
-			if ( ! empty($width)) $img->fit_to_width($width);
-			if ( ! empty($height)) $img->fit_to_height($height);
-			$img->save($imagePath, $quality, $format);
+			if (file_exists($imagePath))
+			{
+				$img = new \abeautifulsite\SimpleImage();
+				$img->load($imagePath);
+				if ( ! empty($width)) $img->fit_to_width($width);
+				if ( ! empty($height)) $img->fit_to_height($height);
+				$img->save($imagePath, $quality, $format);
+			}
+
 		}
-		catch (Exception $e) { return false; }
+		catch (Exception $e) {
+			$this->createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
+			return false;
+		}
 		return true;
 	}
 

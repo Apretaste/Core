@@ -488,6 +488,8 @@ class RunController extends Controller
 
 	/**
 	 * Receives email from the webhook and parse it for the email tool
+	 *
+	 * @return string
 	 */
 	private function runEmail()
 	{
