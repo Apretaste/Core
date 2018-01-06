@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Debugger utility
+ *
+ * @author kumahackaer
+ */
 class Debug {
 
 	static function getReadableException(Exception $e)
