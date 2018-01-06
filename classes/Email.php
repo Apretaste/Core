@@ -1,8 +1,6 @@
 <?php
 
 use Nette\Mail\Message;
-use GuzzleHttp\Client;
-use Http\Adapter\Guzzle6\Client as GuzzleAdapter;
 
 class Email
 {
@@ -12,15 +10,15 @@ class Email
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
-	public $attachments = array(); // array of paths
-	public $images = array(); // array of paths
+	public $attachments = []; // array of paths
+	public $images = []; // array of paths
 	public $method;
 	public $sent; // date
 
 	/**
 	 * Select a provider automatically and send an email
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function send()
 	{
@@ -49,7 +47,8 @@ class Email
 			WHERE id='{$this->id}'");
 
 		// create an alert if the email failed
-		if($res->code != "200") {
+		if($res->code != "200")
+		{
 			$utils = new Utils();
 			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}");
 		}
@@ -192,7 +191,7 @@ class Email
 	 * Sends an email using Gmail by an external node
 	 *
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function sendEmailViaGmail()
 	{
@@ -292,7 +291,7 @@ class Email
 	 * Sends an email using Nauta webmail
 	 *
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function sendEmailViaWebmail()
 	{
