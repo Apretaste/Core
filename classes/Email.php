@@ -1,8 +1,6 @@
 <?php
 
 use Nette\Mail\Message;
-use GuzzleHttp\Client;
-use Http\Adapter\Guzzle6\Client as GuzzleAdapter;
 
 class Email
 {
@@ -12,15 +10,15 @@ class Email
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
-	public $attachments = array(); // array of paths
-	public $images = array(); // array of paths
+	public $attachments = []; // array of paths
+	public $images = []; // array of paths
 	public $method;
 	public $sent; // date
 
 	/**
 	 * Select a provider automatically and send an email
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function send()
 	{
@@ -40,8 +38,7 @@ class Email
 
 		// update the database with the email sent
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
@@ -50,7 +47,8 @@ class Email
 			WHERE id='{$this->id}'");
 
 		// create an alert if the email failed
-		if($res->code != "200") {
+		if($res->code != "200")
+		{
 			$utils = new Utils();
 			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}");
 		}
@@ -63,19 +61,23 @@ class Email
 	 * Overload of the function send() for backward compatibility
 	 *
 	 * @author salvipascual
-	 * @param String $to, email address of the receiver
-	 * @param String $subject, subject of the email
-	 * @param String $body, body of the email in HTML
-	 * @param Array $images, paths to the images to embeb
-	 * @param Array $attachments, paths to the files to attach
+	 *
+	 * @param string $to, email address of the receiver
+	 * @param string $subject, subject of the email
+	 * @param string $body, body of the email in HTML
+	 * @param array $images, paths to the images to embeb
+	 * @param array $attachments, paths to the files to attach
+	 *
+	 * @return mixed
 	 */
-	public function sendEmail($to, $subject, $body, $images=array(), $attachments=array())
+	public function sendEmail($to, $subject, $body, $images = [], $attachments = [])
 	{
 		$this->to = $to;
 		$this->subject = $subject;
 		$this->body = $body;
 		$this->images = $images;
 		$this->attachments = $attachments;
+
 		return $this->send();
 	}
 
@@ -103,6 +105,7 @@ class Email
 			'port' => '465',
 			'secure' => 'ssl'
 		]);
+
 		$mailer->send($mail, false);
 	}
 
@@ -110,11 +113,13 @@ class Email
 	 * Load a template and send it as email
 	 *
 	 * @author salvipascual
-	 * @param String $template, path to the template
-	 * @param Array $params, variables for the template
-	 * @param String $layout, path to the layout
+	 * @param string $template, path to the template
+	 * @param array $params, variables for the template
+	 * @param string $layout, path to the layout
+	 *
+	 * @return mixed
 	 */
-	public function sendFromTemplate($template, $params=[], $layout="email_empty.tpl")
+	public function sendFromTemplate($template, $params = [], $layout = "email_empty.tpl")
 	{
 		// create the response object
 		$response = new Response();
@@ -186,18 +191,17 @@ class Email
 	 * Sends an email using Gmail by an external node
 	 *
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function sendEmailViaGmail()
 	{
 		$this->method = "gmail";
 
 		// every new day set the daily counter back to zero
-		$connection = new Connection();
-		$connection->query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		Connection::query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
 
 		// get an available gmail account randomly
-		$gmail = $connection->query("
+		$gmail = Connection::query("
 			SELECT * FROM delivery_gmail
 			WHERE active = 1
 			AND `limit` > daily
@@ -209,7 +213,7 @@ class Email
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "NODE: No active account to send to {$this->to}";
-
+			$utils = new Utils();
 			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
 			return $output;
 		} $gmail = $gmail[0];
@@ -266,13 +270,14 @@ class Email
 
 		// update delivery time if OK
 		if($output->code == "200") {
-			$connection->query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
-		// insert in drops emails and add 24h of waiting time
-		}else{
+			Connection::query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
+			// insert in drops emails and add 24h of waiting time
+		} else {
 			// save error in the database
 			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
 			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-			$connection->query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
+
+			Connection::query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
 
 			// create notice that the service failed
 			$utils = new Utils();
@@ -286,7 +291,7 @@ class Email
 	 * Sends an email using Nauta webmail
 	 *
 	 * @author salvipascual
-	 * @return {"code", "message"}
+	 * @return string {"code", "message"}
 	 */
 	public function sendEmailViaWebmail()
 	{
@@ -387,8 +392,7 @@ class Email
 	public function setImageQuality()
 	{
 		// get the image quality
-		$connection = new Connection();
-		$quality = $connection->query("SELECT img_quality FROM person WHERE email='{$this->to}'");
+		$quality = Connection::query("SELECT img_quality FROM person WHERE email='{$this->to}'");
 		if(empty($quality)) $quality = "ORIGINAL";
 		else $quality = $quality[0]->img_quality;
 
