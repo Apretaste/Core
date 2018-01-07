@@ -1094,7 +1094,8 @@ class Utils
 		if($severity != "NOTICE") {
 			try{
 				$safeStr = Connection::escape($text, 254);
-				$di->get('db')->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
+				$db = Connection::connect();
+				$db->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
 			} catch(Exception $e) {
 				$message .= " [CreateAlert:Database] ".$e->getMessage();
 			}

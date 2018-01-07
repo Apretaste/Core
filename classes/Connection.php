@@ -2,6 +2,41 @@
 
 class Connection
 {
+	private static $db = false;
+
+	/**
+	 * Open a mysql connection or returns the active connection
+	 *
+	 * @author salvipascual
+	 * @return Mysqli Resource
+	 */
+	public static function connect()
+	{
+		// return active connection if exist
+		if(self::$db && self::$db->ping()) return self::$db;
+
+		// get the conection params
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$config = $di->get('config');
+		$host = $config['database']['host'];
+		$username = $config['database']['user'];
+		$password = $config['database']['password'];
+		$dbname = $config['database']['database'];
+
+		// connect to mysql and save new active connection
+		self::$db = new mysqli($host, $username, $password, $dbname);
+		if (self::$db->connect_error) error_log("[Connection] ".self::$db->connect_error);
+		return self::$db;
+	}
+
+	/**
+	 * Closes the active mysql connection
+	 */
+	public static function close()
+	{
+		if(self::$db && self::$db->ping()) self::$db->close();
+	}
+
 	/**
 	 * Query the database and returs an array of objects
 	 * Please use escape() for all texts before creating the $sql
@@ -12,26 +47,21 @@ class Connection
 	 */
 	public static function query($sql)
 	{
-		// get the database connection
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		self::connect();
 		try {
+			$result = self::$db->query($sql);
+
 			// only fetch for selects
 			if(stripos(trim($sql), "select") === 0)
 			{
-				// query the database
-				$result = $di->get('db')->query($sql);
-				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
-
-				// convert to array of objects
 				$rows = [];
-				while ($data = $result->fetch()) $rows[] = $data;
+				while ($data = $result->fetch_object()) $rows[] = $data;
 				return $rows;
 			}
 			else
 			{
-				// run query and return last insertd id
-				$di->get('db')->execute($sql);
-				return $di->get('db')->lastInsertId();
+				// return last insertd id
+				return self::$db->insert_id;
 			}
 		}
 		catch(PDOException $e) // log the error and rethrow it
@@ -41,6 +71,7 @@ class Connection
 			$message = $e->getMessage() . "\nQUERY: $query\n";
 
 			// save the bad queries log
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/badqueries.log");
 			$logger->log($message);
@@ -70,17 +101,12 @@ class Connection
 	 */
 	public static function escape($str, $cut=false)
 	{
-		// get the escaped string
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$safeStr = $di->get('db')->escapeString($str);
-
-		// remove the ' at the beginning and end of the string
-		$safeStr = trim($safeStr, "'");
+		// escape the string
+		self::connect();
+		$safeStr = self::$db->real_escape_string($str);
 
 		// cut the string if a max number is passed
 		if($cut) $safeStr = trim(substr($safeStr, 0, $cut));
-
-		$safeStr = rtrim($safeStr, "\\");
 
 		return $safeStr;
 	}
