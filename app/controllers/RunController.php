@@ -381,7 +381,7 @@ class RunController extends Controller
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
-		if(is_object($input)) {
+		if($input) {
 			$text = $input->command;
 			$appversion = $input->appversion;
 			$osversion = $input->osversion;
@@ -391,17 +391,17 @@ class RunController extends Controller
 		// get the input if the data is plain text (version <= 2.5)
 		// @TODO remove when v2.5 is not in use anymore
 		else {
-			$appversion = "";
 			$osversion = false;
-			$nautaPass = false;
 			$timestamp = time(); // get only notifications
-			$text = '';
-
 			$file = file("$temp/$folderName/$textFile");
 
-			if (isset($file[0])) $text = trim($file[0]); else $utils->createAlert("[RunController::runApp] WARNING: Empty file $temp/$folderName/$textFile");
-			if (isset($file[1]) && is_numeric(trim($file[1]))) $appversion = trim($file[1]);
-			if (isset($file[2]) && ! empty($file[2])) $nautaPass = base64_decode(trim($file[2]));
+			if (isset($file[0]))
+				$text = trim($file[0]);
+			else
+				$utils->createAlert("[RunController::runApp] WARNING: Empty file $temp/$folderName/$textFile");
+
+			$appversion = isset($file[1]) && is_numeric(trim($file[1])) ? $appversion = trim($file[1]) : "";
+			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
 
 		// save Nauta password if passed
@@ -468,7 +468,6 @@ class RunController extends Controller
 			$email->attachments = $response->attachments;
 			$email->setImageQuality();
 			$email->setContentAsZipAttachment();
-			$output = $email->send(); // TODO: $output is never used
 		}
 
 		// update values in the delivery table
