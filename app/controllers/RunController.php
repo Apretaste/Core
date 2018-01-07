@@ -381,7 +381,7 @@ class RunController extends Controller
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
-		if(is_object($input)) {
+		if($input) {
 			$text = $input->command;
 			$appversion = $input->appversion;
 			$osversion = $input->osversion;
