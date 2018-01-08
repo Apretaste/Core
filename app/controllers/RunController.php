@@ -468,6 +468,7 @@ class RunController extends Controller
 			$email->attachments = $response->attachments;
 			$email->setImageQuality();
 			$email->setContentAsZipAttachment();
+			$email->send();
 		}
 
 		// update values in the delivery table
