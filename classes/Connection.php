@@ -49,18 +49,19 @@ class Connection
 	{
 		self::connect();
 		try {
-			$result = self::$db->query($sql);
-
 			// only fetch for selects
 			if(stripos(trim($sql), "select") === 0)
 			{
+				$result = self::$db->query($sql);
+
 				$rows = [];
 				while ($data = $result->fetch_object()) $rows[] = $data;
 				return $rows;
 			}
+			// fetch insert, update and delete
 			else
 			{
-				// return last insertd id
+				self::$db->multi_query($sql);
 				return self::$db->insert_id;
 			}
 		}
