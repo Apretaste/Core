@@ -222,8 +222,8 @@ class ApiController extends Controller
 
 		// params from GEt and default options
 		$email = trim($this->request->get('email'));
-		$lang = trim($this->request->get('lang'));
-		if(empty($lang)) $lang = "es";
+		$lang = strtolower(trim($this->request->get('lang')));
+		if(array_search($lang, ['es', 'en']) === false) $lang = "es";
 
 		// check if the email is valid
 		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
