@@ -64,8 +64,16 @@ try
 		return $view;
 	});
 
-	// Set the tier (sandbox | stage | production)
+	// Setup the database service
 	$config = $di->get('config');
+	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
+		"host" => $config['database']['host'],
+		"username" => $config['database']['user'],
+		"password" => $config['database']['password'],
+		"dbname"   => $config['database']['database']
+	]));
+
+	// Set the tier (sandbox | stage | production)
 	$di->set('tier', function () use ($config) {
 		if(isset($config['global']['tier'])) return $config['global']['tier'];
 		else return "production";
@@ -111,8 +119,4 @@ catch(Exception $e)
 	// show 404 page
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
-}
-finally
-{
-	Connection::close();
 }
