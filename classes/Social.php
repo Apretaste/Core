@@ -360,6 +360,7 @@ class Social
 			$wwwhttp = $di->get('path')['http'];
 			$profile->picture_internal = "$wwwroot/public/profile/{$profile->picture}.jpg";
 			$profile->picture_public = "$wwwhttp/profile/{$profile->picture}.jpg";
+			$profile->pictureURL = $profile->picture;
 			$profile->picture = true;
 		}
 
