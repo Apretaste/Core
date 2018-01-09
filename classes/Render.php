@@ -210,7 +210,9 @@ class Render
 	 */
 	public static function renderJSON($response)
 	{
-		if(empty($response->json)) return json_encode($response->content, JSON_PRETTY_PRINT);
-		else return $response->json;
+		if(empty($response->json)) {
+			$json = json_encode($response->content, JSON_PRETTY_PRINT);
+			return str_replace("\/", "/", $json); // remove \ from the URLs
+		} else return $response->json;
 	}
 }

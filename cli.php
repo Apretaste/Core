@@ -43,15 +43,12 @@ $di->set('config', function (){
 
 // Setup the database service
 $config = $di->get('config');
-$di->set('db', function () use($config) {
-	return new \Phalcon\Db\Adapter\Pdo\Mysql(
-		array(
-			"host" => $config['database']['host'],
-			"username" => $config['database']['user'],
-			"password" => $config['database']['password'],
-			"dbname" => $config['database']['database']
-		));
-});
+$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
+	"host" => $config['database']['host'],
+	"username" => $config['database']['user'],
+	"password" => $config['database']['password'],
+	"dbname"   => $config['database']['database']
+]));
 
 // get the environment
 $di->set('environment', function() use ($config) {
