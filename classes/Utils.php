@@ -294,7 +294,7 @@ class Utils
 	 *
 	 * @return boolean
 	 */
-	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'image/jpeg')
+	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'jpeg', $newImagePath = null)
 	{
 		// include SimpleImage class
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -310,7 +310,7 @@ class Utils
 				$img->load($imagePath);
 				if ( ! empty($width)) $img->fit_to_width($width);
 				if ( ! empty($height)) $img->fit_to_height($height);
-				$img->save($imagePath, $quality, $format);
+				$img->save(is_null($newImagePath) ? $imagePath : $newImagePath, $quality, $format);
 			}
 
 		}
