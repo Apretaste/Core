@@ -420,8 +420,7 @@ class Email
 					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
 
 					if( ! file_exists($thumbnail)) {
-						copy($file, $thumbnail);
-						$utils->optimizeImage($thumbnail, $width, "", $qualityImage, $format);
+						$utils->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
 					}
 
 					// use the image only if it can be compressed
