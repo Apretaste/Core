@@ -396,6 +396,11 @@ class Email
 		if(empty($quality)) $quality = "ORIGINAL";
 		else $quality = $quality[0]->img_quality;
 
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+		$width = $quality == "ORIGINAL" ? "" : 150;
+		$qualityImage = $quality == "ORIGINAL" ? null: 70;
+
 		// get rid of images
 		if($quality == "SIN_IMAGEN")
 		{
@@ -403,7 +408,7 @@ class Email
 		}
 
 		// create thumbnails for images
-		if($quality == "REDUCIDA")
+		if($quality == "REDUCIDA" || $quality == "ORIGINAL")
 		{
 			$utils = new Utils();
 			$images = array();
@@ -413,12 +418,10 @@ class Email
 				{
 					// thumbnail the image or use thumbnail cache
 					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+
 					if( ! file_exists($thumbnail)) {
 						copy($file, $thumbnail);
-
-						$di = \Phalcon\DI\FactoryDefault::getDefault();
-						$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-						$utils->optimizeImage($thumbnail, 100, "", 70, $format);
+						$utils->optimizeImage($thumbnail, $width, "", $qualityImage, $format);
 					}
 
 					// use the image only if it can be compressed
