@@ -3,7 +3,6 @@
 <head>
 	<title>Bienvenido a Apretaste</title>
 
-	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Conéctate a la internet por Nauta. Redes Sociales, Noticias, Web, Entretenimiento y mucho más.">
@@ -140,7 +139,7 @@
 					<h2>Nuesto servicio en vivo</h2>
 					<hr class="small">
 					<div class="videoWrapper">
-						<iframe src="https://www.youtube.com/embed/50dXn2XzN5k?version=2&vq=hd720" frameborder="0" allowfullscreen></iframe>
+						<iframe id="youtubevideo" src="" frameborder="0" allowfullscreen></iframe>
 					</div>
 				</div>
 			</div>
@@ -658,6 +657,7 @@
 	});
 
 	function checkVideo(){
+		$('#youtubevideo').attr('src', 'https://www.youtube.com/embed/50dXn2XzN5k?version=2&vq=hd720');
 		$('.tryit-show').slideDown('slow');
 		$('html,body').animate({
 			scrollTop: $('#tryit').offset().top

@@ -8,8 +8,9 @@ use Phalcon\Mvc\Url as UrlProvider;
 use Phalcon\Config\Adapter\Ini as ConfigIni;
 use Phalcon\Session\Adapter\Files as Session;
 
-// set the date to come in Spanish
+// locate language and charset
 setlocale(LC_TIME, "es_ES");
+header("Content-Type: text/html; charset=utf-8");
 
 // include composer
 include_once "../vendor/autoload.php";
