@@ -75,10 +75,12 @@ class Connection
 		$safeStr = $di->get('db')->escapeString($str);
 
 		// remove the ' at the beginning and end of the string
-		$safeStr = substr(substr($safeStr, 0, - 1), 1);
+		$safeStr = trim($safeStr, "'");
 
 		// cut the string if a max number is passed
 		if($cut) $safeStr = trim(substr($safeStr, 0, $cut));
+
+		$safeStr = rtrim($safeStr, "\\");
 
 		return $safeStr;
 	}
