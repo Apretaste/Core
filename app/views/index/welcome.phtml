@@ -3,7 +3,6 @@
 <head>
 	<title>Welcome to Apretaste</title>
 
-	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Access the internet via email. Social Network, News, Web, Entertaining y much more.">
@@ -139,7 +138,7 @@
 					<h2>Our service in motion</h2>
 					<hr class="small">
 					<div class="videoWrapper">
-						<iframe src="https://www.youtube.com/embed/50dXn2XzN5k?version=2&vq=hd720" frameborder="0" allowfullscreen></iframe>
+						<iframe id="youtubevideo" src="" frameborder="0" allowfullscreen></iframe>
 					</div>
 				</div>
 			</div>
@@ -657,6 +656,7 @@
 	});
 
 	function checkVideo(){
+		$('#youtubevideo').attr('src', 'https://www.youtube.com/embed/50dXn2XzN5k?version=2&vq=hd720');
 		$('.tryit-show').slideDown('slow');
 		$('html,body').animate({
 			scrollTop: $('#tryit').offset().top
