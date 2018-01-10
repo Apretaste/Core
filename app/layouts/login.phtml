@@ -50,7 +50,14 @@
 </html>
 
 <style>
-	body {
+	body:after { /*hack for the bgimage to work on mobile*/
+		content:"";
+		position:fixed;
+		top:0;
+		height:100vh;
+		left:0;
+		right:0;
+		z-index:-1;
 		background: #E3E7D0 url('/images/background3.jpg') no-repeat center center fixed;
 		-webkit-background-size: cover;
 		-moz-background-size: cover;
