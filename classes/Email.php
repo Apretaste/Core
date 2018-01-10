@@ -417,8 +417,8 @@ class Email
 						copy($file, $thumbnail);
 
 						$di = \Phalcon\DI\FactoryDefault::getDefault();
-						$environment = $di->get('environment');
-						$utils->optimizeImage($thumbnail, 100, "", $environment == 'app' ? 'webp' : 'jpeg');
+						$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+						$utils->optimizeImage($thumbnail, 100, "", 70, $format);
 					}
 
 					// use the image only if it can be compressed
