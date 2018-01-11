@@ -402,14 +402,10 @@ class Email
 		$qualityImage = $quality == "ORIGINAL" ? null: 70;
 
 		// get rid of images
-		if($quality == "SIN_IMAGEN")
+		if($quality == "SIN_IMAGEN") $this->images = array();
+		else
 		{
-			$this->images = array();
-		}
-
-		// create thumbnails for images
-		if($quality == "REDUCIDA" || $quality == "ORIGINAL")
-		{
+			// create thumbnails for images
 			$utils = new Utils();
 			$images = array();
 			if(is_array($this->images)) foreach ($this->images as $file)
