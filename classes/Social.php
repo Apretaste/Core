@@ -319,9 +319,11 @@ class Social
 	 * Prepare a user profile to be displayed properly
 	 *
 	 * @author salvipascual
-	 * @param Object $profile
-	 * @param String $lang, language to return the profile text
-	 * @return Number, percentage of completion
+	 *
+	 * @param object $profile
+	 * @param mixed $lang, language to return the profile text
+	 *
+	 * @return object
 	 * */
 	public function prepareUserProfile($profile, $lang=false)
 	{

@@ -115,7 +115,7 @@ catch(Exception $e)
 	}
 
 	// log error
-	$utils->createAlert($message.' | '.$e->getFile().':'.$e->getLine()." | ".$e->getTraceAsString(), 'ERROR');
+	$utils->createAlert(Debug::getReadableException($e), 'ERROR');
 
 	// show 404 page
 	header('HTTP/1.0 404 Not Found');

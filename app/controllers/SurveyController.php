@@ -31,7 +31,7 @@ class SurveyController extends Controller
 				$customer = $this->request->getPost("surveyCustomer");
 				$title = $this->request->getPost("surveyTitle");
 				$deadline = $this->request->getPost("surveyDeadline");
-				$sql = "INSERT INTO _survey (customer, title, deadline) VALUES ('$customer', '$title', '$deadline'); ";
+				$sql = "INSERT INTO _survey (customer, title, deadline, details) VALUES ('$customer', '$title', '$deadline', ''); ";
 				$this->view->message = 'The survey was inserted successfull';
 				break;
 
