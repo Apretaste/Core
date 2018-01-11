@@ -396,15 +396,15 @@ class Email
 		if(empty($quality)) $quality = "ORIGINAL";
 		else $quality = $quality[0]->img_quality;
 
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-		$width = $quality == "ORIGINAL" ? "" : 150;
-		$qualityImage = $quality == "ORIGINAL" ? null: 70;
-
 		// get rid of images
 		if($quality == "SIN_IMAGEN") $this->images = array();
 		else
 		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+			$width = $quality == "ORIGINAL" ? "" : 150;
+			$qualityImage = $quality == "ORIGINAL" ? null: 70;
+
 			// create thumbnails for images
 			$utils = new Utils();
 			$images = array();
