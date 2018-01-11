@@ -12,8 +12,10 @@ class RunController extends Controller
 	private $messageId;
 	private $subject;
 	private $body;
-	private $attachments = array();
-	private $idEmail; // @TODO remove after unifiying the tables
+	private $attachments = [];
+	private $idEmail;
+	private $resPath = false; // path to the response zip
+	private $sendEmails = true;
 
 	/**
 	 * Receives an HTTP petition and display to the web
@@ -152,114 +154,73 @@ class RunController extends Controller
 	 */
 	public function appAction()
 	{
-		$this->fromEmail = $this->request->get("email");
-		$text = $this->request->get("command");
-		$appversion = $this->request->get("appversion");
-		$osversion = $this->request->get("osversion");
-		$timestamp = $this->request->get("timestamp");
-		$token = $this->request->get("token"); // base64 nauta pass
-		$this->attachments = []; // @TODO find the way to upload files
+		// get the token from the URL
+		$token = $this->request->get("token");
 
-		// ensure the person has access
-		$utils = new Utils();
-		$pass = $utils->getNautaPassword($this->fromEmail);
-		if($pass != base64_decode($token)) {
-			echo '{"code":"300", "message":"El token es incorrecto o el usuario no existe"}';
+		// get the user from the token
+		$security = new Security();
+		$user = $security->loginByToken($token);
+
+		// error if the token is incorrect
+		if(empty($user)) {
+			echo '{"code":"300", "message":"Bad or empty token"}';
 			return false;
 		}
 
-		// error if we don't have the password
-		if(empty($pass)) {
-			$output = new stdClass();
-			$output->code = "300";
-			$output->message = "No password for {$this->to}";
-			return $output;
+		// get uploaded files in a programmer friendly array
+		$attachments = php::getFriendlyUploadedFiles('attachments');
+
+		// error if no files were sent
+		if(empty($attachments)) {
+			echo '{"code":"301", "message":"No content file was received"}';
+			return false;
 		}
 
-		// set the running environment
-		$this->di->set('environment', function() {return 'app';});
+		// create attachments array
+		$utils = new Utils();
+		$this->fromEmail = $user->email;
+		foreach ($attachments as $attach) {
+			if($attach['size'] < 1048576) {
+				$file = $utils->getTempDir().$attach['name'];
+				move_uploaded_file($attach['tmp_name'], $file);
+				$this->attachments[] = $file;
+			}
+		}
 
-		// update last access time and make person active
+		// get the time when the service started executing
+		$execStartTime = date("Y-m-d H:i:s");
+
+		// create a new entry on the delivery table
 		$connection = new Connection();
-		$personExist = $utils->personExist($this->fromEmail);
-		if ($personExist) $connection->query("UPDATE person SET active=1, appversion='$appversion', last_access=CURRENT_TIMESTAMP WHERE email='{$this->fromEmail}'");
-		else {
-			// create a unique username, save the new person and add a notification
-			$username = $utils->usernameFromEmail($this->fromEmail);
-			$connection->query("INSERT INTO person (email, username, last_access, appversion, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$appversion', 'app')");
-			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
-		}
+		$this->idEmail = $connection->query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'app')");
 
-		// run the request
-		$ret = Render::runRequest($this->fromEmail, $text, '', $this->attachments);
-		$service = $ret->service;
-		$response = $ret->response;
+		// execute the service as app
+		$this->sendEmails = false;
+		$this->runApp();
 
-		// if the request needs an email back
-		if($response->render)
-		{
-			// set the layout to blank
-			$response->setEmailLayout('email_text.tpl');
-			$temp = $utils->getTempDir();
+		// get the current execution time
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
 
-			// is there is a cache time, add it
-			if($response->cache) {
-				$cache = "{$temp}{$response->cache}.cache";
-				file_put_contents($cache, "");
-				$response->attachments[] = $cache;
-			}
-
-			// render the HTML, unless it is a status call
-			if($text == "status") $this->body = "{}";
-			else $this->body = Render::renderHTML($service, $response);
-
-			// get extra data for the app
-			// if the old version is calling status, do not get extra data
-			// @TODO remove when we get rid of the old version
-			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
-			if($isPerfilStatus) $extra = "{}";
-			else {
-				$res = $utils->getExternalAppData($this->fromEmail, $timestamp);
-				$response->attachments = array_merge($response->attachments, $res["attachments"]);
-				$extra = $res["json"];
-			}
-
-			// create an attachment file for the extra structure
-			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";
-			file_put_contents($ntfFile, $extra);
-			$response->attachments[] = $ntfFile;
-
-			// get a random name for the file and folder
-			$fileName = substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
-			$zipFile = $utils->getPublicTempDir() . $fileName;
-			$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
-
-			// create the zip file
-			$zip = new ZipArchive;
-			$zip->open($zipFile, ZipArchive::CREATE);
-			$zip->addFromString($htmlFile, $this->body);
-
-			// add all attachments to the zip and close it
-			foreach ($response->attachments as $a) $zip->addFile($a, basename($a));
-			$zip->close();
-		}
-
-		// update values in the delivery table
-		$safeQuery = $connection->escape($service->request->query);
+		// save final data to the db
 		$connection->query("
-			INSERT INTO delivery SET
-			user='{$this->fromEmail}',
-			request_service='{$service->serviceName}',
-			request_subservice='{$service->request->subservice}',
-			request_query='$safeQuery',
-			environment='app',
+			UPDATE delivery
+			SET process_time='$executionTime',
 			delivery_code='200',
 			delivery_method='internet',
-			delivery_date=CURRENT_TIMESTAMP");
+			delivery_date=CURRENT_TIMESTAMP
+			WHERE id='{$this->idEmail}'");
+
+		// move the file to the public temp folder
+		$path = "";
+		if($this->resPath) {
+			copy($this->resPath, $utils->getPublicTempDir().basename($this->resPath));
+			$path = $utils->getPublicTempDir('http').basename($this->resPath);
+		}
 
 		// display ok response
-		$path = $response->render ? $utils->getPublicTempDir('http').$fileName : "";
-		echo '{"code":"200", "message":"", "render":"'.$response->render.'", "file":"'.$path.'"}';
+		echo '{"code":"200", "message":"", "file":"'.$path.'"}';
 	}
 
 	/**
@@ -398,9 +359,9 @@ class RunController extends Controller
 		$connection = new Connection();
 		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
-			$connection->query("
-				DELETE FROM authentication WHERE email = '{$this->fromEmail}' AND appname = 'apretaste';
-				INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion');");
+			$auth = $connection->query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			if(empty($auth)) $connection->query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion')");
+			else $connection->query("UPDATE authentication SET pass='$encryptPass', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
@@ -457,8 +418,8 @@ class RunController extends Controller
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
 			$email->setImageQuality();
-			$email->setContentAsZipAttachment();
-			$output = $email->send();
+			$this->resPath = $email->setContentAsZipAttachment();
+			if($this->sendEmails) $email->send();
 		}
 
 		// update values in the delivery table

@@ -354,6 +354,7 @@ class Email
 	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
 	 *
 	 * @author salvipascual
+	 * @return String, path to the file created
 	 */
 	public function setContentAsZipAttachment()
 	{
@@ -375,8 +376,11 @@ class Email
 		$zip->close();
 
 		// add to the attachments and clean the body
-		$this->attachments = array($zipFile);
+		$this->attachments = [$zipFile];
 		$this->body = "";
+
+		// return the path to the file
+		return $zipFile;
 	}
 
 	/**
