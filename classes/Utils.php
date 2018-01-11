@@ -345,7 +345,7 @@ class Utils
 				if(file_exists($file))
 				{
 					// thumbnail the image or use thumbnail cache
-					$thumbnail = "$tempDir/thumbnails/" . basename($file);
+					$thumbnail = "$tempDir/thumbnails/" . pathinfo(basename($file), PATHINFO_FILENAME) . ".$format";
 
 					if( ! file_exists($thumbnail)) {
 						$this->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
