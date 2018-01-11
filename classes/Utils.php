@@ -336,7 +336,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
 			$width = $quality == "ORIGINAL" ? "" : 150;
-			$qualityImage = $quality == "ORIGINAL" ? null : 70;
+			$qualityImage = $quality == "ORIGINAL" ? null : 85;
 
 			// create thumbnails for images
 			$images = [];
