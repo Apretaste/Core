@@ -316,6 +316,67 @@ class Utils
 	}
 
 	/**
+	 * Optimize images of response and associated html
+	 * @param $response
+	 * @param $html
+	 */
+	public function optimizeImagesOf(&$response, &$html = "")
+	{
+		$tempDir = $this->getTempDir();
+		// get the image quality
+		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		if(empty($res)) $quality = "ORIGINAL";
+		else $quality = $res[0]->img_quality;
+
+		// get rid of images
+		if($quality == "SIN_IMAGEN") $response->images = [];
+		else
+		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwhttp = $di->get('path')['http'];
+			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+			$width = $quality == "ORIGINAL" ? "" : 150;
+			$qualityImage = $quality == "ORIGINAL" ? null : 70;
+
+			// create thumbnails for images
+			$images = [];
+			if(is_array($response->images)) foreach ($response->images as $file)
+			{
+				if(file_exists($file))
+				{
+					// thumbnail the image or use thumbnail cache
+					$thumbnail = "$tempDir/thumbnails/" . basename($file);
+
+					if( ! file_exists($thumbnail)) {
+						$this->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
+					}
+
+					// use the image only if it can be compressed
+					$better = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+					$images[] = $better;
+
+					$original = basename($file);
+					$better = basename($better);
+
+					$html = str_replace([
+						"'$original'",
+						"\"$original\"",
+						"'cid:$original'",
+						"\"cid:$original\"",
+						"$wwwhttp/temp/$original"
+					],[
+						"'$better'",
+						"\"$better\"",
+						"'cid:$better'",
+						"\"cid:$better\"",
+						"$wwwhttp/temp/$better"
+					], $html);
+				}
+			}
+			$response->images = $images;
+		}
+	}
+	/**
 	 * Get the pieces of names from the full name
 	 *
 	 * @author hcarras

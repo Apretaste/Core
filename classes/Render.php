@@ -114,7 +114,7 @@ class Render
 	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public static function renderHTML($service, Response $response)
+	public static function renderHTML($service, Response &$response)
 	{
 		// if the response includes json, don't render HTML
 		// this is used mainly to build email APIs
@@ -196,6 +196,9 @@ class Render
 			// add at the end of the <body> of the page
 			$rendered = str_replace("</body>", "$linkPopup</body>", $rendered);
 		}
+
+		// optimize images
+ 		$utils->optimizeImagesOf($response, $rendered);
 
 		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $rendered);
