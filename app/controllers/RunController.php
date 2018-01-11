@@ -415,7 +415,7 @@ class RunController extends Controller
 			$email->replyId = $this->messageId;
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
-			$email->setImageQuality();
+			//$email->setImageQuality();
 			$this->resPath = $email->setContentAsZipAttachment();
 			if($this->sendEmails) $email->send();
 		}
@@ -462,7 +462,7 @@ class RunController extends Controller
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
 			$email->replyId = $this->messageId;
-			$email->setImageQuality();
+			//$email->setImageQuality();
 			$email->send();
 		}
 

@@ -130,7 +130,9 @@ class Email
 		$response->internal = true;
 
 		// get the body from the template
+		$response->images = $this->images;
 		$html = Render::renderHTML(new Service(), $response);
+		$this->images = $response->images;
 
 		// send the email
 		$this->body = $html;
