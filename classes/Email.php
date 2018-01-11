@@ -413,8 +413,7 @@ class Email
 				if(file_exists($file))
 				{
 					// thumbnail the image or use thumbnail cache
-					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
-					$thumbnail = pathinfo($thumbnail, PATHINFO_FILENAME) . ".$format";
+					$thumbnail = $utils->getTempDir() . "thumbnails/" . pathinfo(basename($file), PATHINFO_FILENAME) . ".$format";
 
 					if( ! file_exists($thumbnail)) {
 						$utils->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
