@@ -396,20 +396,16 @@ class Email
 		if(empty($quality)) $quality = "ORIGINAL";
 		else $quality = $quality[0]->img_quality;
 
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-		$width = $quality == "ORIGINAL" ? "" : 150;
-		$qualityImage = $quality == "ORIGINAL" ? null: 70;
-
 		// get rid of images
-		if($quality == "SIN_IMAGEN")
+		if($quality == "SIN_IMAGEN") $this->images = array();
+		else
 		{
-			$this->images = array();
-		}
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+			$width = $quality == "ORIGINAL" ? "" : 150;
+			$qualityImage = $quality == "ORIGINAL" ? null: 70;
 
-		// create thumbnails for images
-		if($quality == "REDUCIDA" || $quality == "ORIGINAL")
-		{
+			// create thumbnails for images
 			$utils = new Utils();
 			$images = array();
 			if(is_array($this->images)) foreach ($this->images as $file)
@@ -418,6 +414,7 @@ class Email
 				{
 					// thumbnail the image or use thumbnail cache
 					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
+					$thumbnail = pathinfo($thumbnail, PATHINFO_FILENAME) . ".$format";
 
 					if( ! file_exists($thumbnail)) {
 						$utils->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
