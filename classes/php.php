@@ -77,28 +77,4 @@ class php
 		else if(getenv('REMOTE_ADDR')) return getenv('REMOTE_ADDR');
 		else return false;
 	}
-
-	/**
-	 * Get multiple uploaded files as a programmer-friendly array
-	 *
-	 * @author salvipascual
-	 * @param String $arrkey, key of array of files
-	 * @return Array
-	 */
-	function getFriendlyUploadedFiles($arrkey)
-	{
-		if(empty($_FILES[$arrkey])) return [];
-
-		$file_ary = [];
-		$file_count = count($_FILES[$arrkey]['name']);
-		$file_keys = array_keys($_FILES[$arrkey]);
-
-		for ($i=0; $i<$file_count; $i++) {
-			foreach ($file_keys as $key) {
-				$file_ary[$i][$key] = $_FILES[$arrkey][$key][$i];
-			}
-		}
-
-		return $file_ary;
-	}
 }

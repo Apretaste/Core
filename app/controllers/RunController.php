@@ -167,25 +167,18 @@ class RunController extends Controller
 			return false;
 		}
 
-		// get uploaded files in a programmer friendly array
-		$attachments = php::getFriendlyUploadedFiles('attachments');
-
 		// error if no files were sent
-		if(empty($attachments)) {
+		if(empty($_FILES['attachments'])) {
 			echo '{"code":"301", "message":"No content file was received"}';
 			return false;
 		}
 
 		// create attachments array
 		$utils = new Utils();
+		$file = $utils->getTempDir().$_FILES['attachments']['name'];
+		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
+		$this->attachments[] = $file;
 		$this->fromEmail = $user->email;
-		foreach ($attachments as $attach) {
-			if($attach['size'] < 1048576) {
-				$file = $utils->getTempDir().$attach['name'];
-				move_uploaded_file($attach['tmp_name'], $file);
-				$this->attachments[] = $file;
-			}
-		}
 
 		// get the time when the service started executing
 		$execStartTime = date("Y-m-d H:i:s");
@@ -325,8 +318,7 @@ class RunController extends Controller
 		// get the text file and attached files
 		$zip = new ZipArchive;
 		$result = $zip->open($attachEmail);
-		if ($result === true)
-		{
+		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if(substr($filename, -4) == ".txt") $textFile = $filename;
@@ -336,9 +328,9 @@ class RunController extends Controller
 			// extract file contents
 			$zip->extractTo("$temp/$folderName");
 			$zip->close();
-		}
-		else
+		} else {
 			$utils->createAlert("[RunController::runApp] Error when open ZIP file $attachEmail (error code: $result)");
+		}
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
@@ -350,17 +342,13 @@ class RunController extends Controller
 			$timestamp = $input->timestamp;
 		}
 		// get the input if the data is plain text (version <= 2.5)
-		// @TODO remove when v2.5 is not in use anymore
 		else {
 			$osversion = false;
 			$timestamp = time(); // get only notifications
 			$file = file("$temp/$folderName/$textFile");
 
-			if (isset($file[0]))
-				$text = trim($file[0]);
-			else
-				$utils->createAlert("[RunController::runApp] WARNING: Empty file $temp/$folderName/$textFile");
-
+			if (isset($file[0])) $text = trim($file[0]);
+			else $utils->createAlert("[RunController::runApp] WARNING: Empty file $temp/$folderName/$textFile");
 			$appversion = isset($file[1]) && is_numeric(trim($file[1])) ? $appversion = trim($file[1]) : "";
 			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
