@@ -291,7 +291,7 @@ class Utils
 	 * @param string $format Convert to format
 	 * @return boolean
 	 */
-	public function optimizeImage($imagePath, $width="", $height="", $quality=70, $format='jpeg', $newImagePath=null)
+	public function optimizeImage($imagePath, $width="", $height="", $quality=70, $format='jpg', $newImagePath=null)
 	{
 		// include SimpleImage class
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
