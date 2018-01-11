@@ -359,6 +359,7 @@ class Email
 	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
 	 *
 	 * @author salvipascual
+	 * @return String, path to the file created
 	 */
 	public function setContentAsZipAttachment()
 	{
@@ -380,51 +381,11 @@ class Email
 		$zip->close();
 
 		// add to the attachments and clean the body
-		$this->attachments = array($zipFile);
+		$this->attachments = [$zipFile];
 		$this->body = "";
-	}
 
-	/**
-	 * Adjust the quality of the images on the email body
-	 *
-	 * @author salvipascual
-	 */
-	public function setImageQuality()
-	{
-		// get the image quality
-		$quality = Connection::query("SELECT img_quality FROM person WHERE email='{$this->to}'");
-		if(empty($quality)) $quality = "ORIGINAL";
-		else $quality = $quality[0]->img_quality;
-
-		// get rid of images
-		if($quality == "SIN_IMAGEN") $this->images = array();
-		else
-		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-			$width = $quality == "ORIGINAL" ? "" : 150;
-			$qualityImage = $quality == "ORIGINAL" ? null: 70;
-
-			// create thumbnails for images
-			$utils = new Utils();
-			$images = array();
-			if(is_array($this->images)) foreach ($this->images as $file)
-			{
-				if(file_exists($file))
-				{
-					// thumbnail the image or use thumbnail cache
-					$thumbnail = $utils->getTempDir() . "thumbnails/" . basename($file);
-
-					if( ! file_exists($thumbnail)) {
-						$utils->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
-					}
-
-					// use the image only if it can be compressed
-					$images[] = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
-				}
-			}
-			$this->images = $images;
-		}
+		// return the path to the file
+		return $zipFile;
 	}
 
 	/**
