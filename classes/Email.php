@@ -359,6 +359,7 @@ class Email
 	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
 	 *
 	 * @author salvipascual
+	 * @return String, path to the file created
 	 */
 	public function setContentAsZipAttachment()
 	{
@@ -380,8 +381,11 @@ class Email
 		$zip->close();
 
 		// add to the attachments and clean the body
-		$this->attachments = array($zipFile);
+		$this->attachments = [$zipFile];
 		$this->body = "";
+
+		// return the path to the file
+		return $zipFile;
 	}
 
 	/**
@@ -392,22 +396,22 @@ class Email
 	public function setImageQuality()
 	{
 		// get the image quality
-		$quality = Connection::query("SELECT img_quality FROM person WHERE email='{$this->to}'");
-		if(empty($quality)) $quality = "ORIGINAL";
-		else $quality = $quality[0]->img_quality;
+		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$this->to}'");
+		if(empty($res)) $quality = "ORIGINAL";
+		else $quality = $res[0]->img_quality;
 
 		// get rid of images
-		if($quality == "SIN_IMAGEN") $this->images = array();
+		if($quality == "SIN_IMAGEN") $this->images = [];
 		else
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
 			$width = $quality == "ORIGINAL" ? "" : 150;
-			$qualityImage = $quality == "ORIGINAL" ? null: 70;
+			$qualityImage = $quality == "ORIGINAL" ? null : 70;
 
 			// create thumbnails for images
 			$utils = new Utils();
-			$images = array();
+			$images = [];
 			if(is_array($this->images)) foreach ($this->images as $file)
 			{
 				if(file_exists($file))

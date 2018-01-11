@@ -61,8 +61,6 @@ class php
 		return strpos($haystack, $needle) !== false;
 	}
 
-	// Function to get the client IP address
-
 	/**
 	 * Get the user's IP address
 	 *

@@ -19,7 +19,7 @@ class Utils
 		$environment = $di->get('environment');
 
 		// get a random mailbox
-		
+
 		$node = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='$environment' AND active=1
@@ -44,7 +44,7 @@ class Utils
 	public function getSupportEmailAddress()
 	{
 		// get a random support email
-		
+
 		$support = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='support' AND active=1
@@ -123,7 +123,7 @@ class Utils
 	 */
 	public function personExist($email)
 	{
-		
+
 		$res = Connection::query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
 		return count($res) > 0;
 	}
@@ -137,7 +137,7 @@ class Utils
 	public function getPerson($email)
 	{
 		// get the person
-		
+
 		$person = Connection::query("SELECT * FROM person WHERE email = '$email'");
 
 		// return false if person cannot be found
@@ -166,7 +166,7 @@ class Utils
 		$shortmail = substr($shortmail, 0, 5); // get the first 5 chars
 
 		// contatenate a random unique number
-		
+
 		do {
 			$username = $shortmail . rand(100, 999);
 			$exist = Connection::query("SELECT username FROM person WHERE username='$username'");
@@ -188,7 +188,7 @@ class Utils
 		$username = str_replace("@", "", $username);
 
 		// get the email
-		
+
 		$email = Connection::query("SELECT email FROM person WHERE username='$username'");
 
 		// return the email or false if not found
@@ -206,7 +206,7 @@ class Utils
 	public function getUsernameFromEmail($email)
 	{
 		// get the username
-		
+
 		$username = Connection::query("SELECT username FROM person WHERE email='$email'");
 
 		// return the email or false if not found
@@ -283,38 +283,32 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @author kuma
-	 *
 	 * @version 2.0
-	 *
 	 * @param String $imagePath, path to the image
 	 * @param mixed $width Fit to width
 	 * @param mixed $height Fit to height
 	 * @param mixed $quality Decrease/increase quality
 	 * @param string $format Convert to format
-	 *
 	 * @return boolean
 	 */
-	public function optimizeImage($imagePath, $width = "", $height = "", $quality = 70, $format = 'jpeg', $newImagePath = null)
+	public function optimizeImage($imagePath, $width="", $height="", $quality=70, $format='jpeg', $newImagePath=null)
 	{
 		// include SimpleImage class
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$www_root = $di->get('path')['root'];
-		include_once "$www_root/lib/SimpleImage.php";
+		require_once $di->get('path')['root']."/lib/SimpleImage.php";
 
 		// optimize image
-		try
-		{
+		try {
 			if (file_exists($imagePath))
 			{
 				$img = new \abeautifulsite\SimpleImage();
 				$img->load($imagePath);
 				if ( ! empty($width)) $img->fit_to_width($width);
 				if ( ! empty($height)) $img->fit_to_height($height);
-				$img->save(is_null($newImagePath) ? $imagePath : $newImagePath, $quality, $format);
+				$path = is_null($newImagePath) ? $imagePath : $newImagePath;
+				$img->save($path, $quality, $format);
 			}
-
-		}
-		catch (Exception $e) {
+		} catch (Exception $e) {
 			$this->createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
 			return false;
 		}
@@ -395,7 +389,7 @@ class Utils
 	public function deliveryStatus($email)
 	{
 		// check if we already have a status for the email
-		
+
 		$res = Connection::query("SELECT status FROM delivery_checked WHERE email='$email'");
 		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
 
@@ -485,7 +479,7 @@ class Utils
 	public function detokenize($token)
 	{
 		// get the email for a token
-		
+
 		$auth = Connection::query("SELECT id, email FROM authentication WHERE token='$token'");
 
 		if(empty($auth)) return false;
@@ -764,7 +758,7 @@ class Utils
 	public function getNumberOfNotifications($email)
 	{
 		// temporal mechanism?
-		
+
 		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
 		if ( ! isset($r[0]))
 		{
@@ -837,7 +831,7 @@ class Utils
 	public function getNautaPassword($email)
 	{
 		// check if we have the nauta pass for the user
-		
+
 		$pass = Connection::query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
 
 		// return false if the password do not exist
@@ -904,7 +898,7 @@ class Utils
 	 */
 	public function subscribeToEmailList($email)
 	{
-		
+
 		Connection::query("UPDATE person SET mail_list=1 WHERE email='$email'");
 	}
 
@@ -916,7 +910,7 @@ class Utils
 	 */
 	public function unsubscribeFromEmailList($email)
 	{
-		
+
 		Connection::query("UPDATE person SET mail_list=0 WHERE email='$email'");
 	}
 
@@ -1066,7 +1060,7 @@ class Utils
 		$countryCode = strtoupper($countryCode);
 
 		// get the country
-		
+
 		$country = Connection::query("SELECT $lang FROM countries WHERE code = '$countryCode'");
 
 		// return the country name or empty string
@@ -1095,7 +1089,7 @@ class Utils
 	 * Create an alert and notify the alert group
 	 *
 	 * @author salvipascual
-	 * 
+	 *
 	 * @param string $text
 	 * @param string $severity NOTICE,WARNING,ERROR
 	 *
@@ -1192,7 +1186,7 @@ class Utils
 		$attachments = array();
 
 		// get the person object
-		
+
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
 		$person = $person[0];
 
@@ -1203,7 +1197,7 @@ class Utils
 		$res->credit = number_format($person->credit, 2, '.', '');
 
 		// get the list of mailboxes
-		
+
 		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
 
 		// add the response mailbox

@@ -24,6 +24,7 @@ public/products/*
 migration/*
 services/*
 app/controllers/TestController.php
+app/views/test/*
 .idea/*
 public/courses/*
 public/campaign/*

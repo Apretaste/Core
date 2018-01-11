@@ -161,7 +161,7 @@ class MarketController extends Controller
 		$fname = "$wwwroot/public/products/$code.jpg";
 		copy($_FILES['file_data']['tmp_name'], $fname);
 		$utils = new Utils();
-		$utils->optimizeImage($fname, '', '', 100, 'image/jpeg');
+		$utils->optimizeImage($fname, '', '', 100);
 
 		echo '{}';
 		$this->view->disable();
