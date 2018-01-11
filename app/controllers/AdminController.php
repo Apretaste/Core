@@ -96,10 +96,6 @@ class AdminController extends Controller
 			$picPath = "$wwwroot/public/raffle/$fileName.jpg";
 			move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
 
-			// optimize the image
-			$utils = new Utils();
-			$utils->optimizeImage($picPath, 400);
-
 			// go to the list of raffles
 			$this->response->redirect("admin/raffles");
 		}
@@ -157,10 +153,6 @@ class AdminController extends Controller
 			$wwwroot = $this->di->get('path')['root'];
 			$picPath = "$wwwroot/public/ads/".md5($queryGetAdsID).".jpg";
 			move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);
-
-			// optimize the image
-			$utils = new Utils();
-			$utils->optimizeImage($picPath, 728, 90);
 
 			// confirm by email that the ad was inserted
 			$email = new Email();
