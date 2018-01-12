@@ -226,9 +226,6 @@ class Render
 	 */
 	private static function optimizeImages(&$response, &$html = "")
 	{
-		$utils = new Utils();
-		$tempDir = $utils->getTempDir();
-
 		// get the image quality
 		$connection = new Connection();
 		$res = $connection->query("SELECT img_quality FROM person WHERE email='{$response->email}'");
@@ -245,7 +242,8 @@ class Render
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwhttp = $di->get('path')['http'];
 			$format = $di->get('environment') == 'app' ? 'webp' : 'jpg';
-			$quality = $di->get('environment') == 'app' ? 30 : 50;
+			$quality = $di->get('environment') == 'app' ? 10 : 50;
+			$utils = new Utils();
 
 			// create thumbnails for images
 			$images = [];
@@ -254,11 +252,11 @@ class Render
 				if(file_exists($file))
 				{
 					// thumbnail the image or use thumbnail cache
-					$thumbnail = "$tempDir/thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
+					$thumbnail = $utils->getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
 
 					// optimize image or use the optimized cache
 					if( ! file_exists($thumbnail)) {
-						$utils->optimizeImage($file, "", "", $quality, $format, $thumbnail);
+						$utils->optimizeImage($file, $thumbnail, $quality);
 					}
 
 					// use the image only if it can be compressed
