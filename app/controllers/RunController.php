@@ -548,9 +548,7 @@ class RunController extends Controller
 		// save the attachment to the temp folder
 		if(isset($attachs[0])) {
 			@mkdir($temp."attachments");
-			$ext = pathinfo($attachs[0]->getFilename(), PATHINFO_EXTENSION);
-			$name = pathinfo($attachs[0]->getFilename(), PATHINFO_FILENAME);
-			$newFile = $temp."attachments/$name.$ext";
+			$newFile = $temp."attachments/".basename($attachs[0]->getFilename());
 			rename($attachs[0]->getFilename(), $newFile);
 			$this->attachment = $newFile;
 		}
