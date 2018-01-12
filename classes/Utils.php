@@ -324,22 +324,22 @@ class Utils
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 
-		if ($di->get('environment') != 'web') // no optimize for web
+		// get the image quality
+		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		if(empty($res)) $quality = "ORIGINAL";
+		else $quality = $res[0]->img_quality;
+
+		if ($di->get('environment') != 'web' && $quality != 'ORIGINAL') // no optimize for web
 		{
 			$tempDir = $this->getTempDir();
-
-			// get the image quality
-			$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
-			if(empty($res)) $quality = "ORIGINAL";
-			else $quality = $res[0]->img_quality;
 
 			// get rid of images
 			if($quality == "SIN_IMAGEN") $response->images = [];
 			else {
 				$wwwhttp = $di->get('path')['http'];
 				$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-				$width = $quality == "ORIGINAL" ? "" : 150;
-				$qualityImage = $quality == "ORIGINAL" ? null : 85;
+				$width = 150;
+				$qualityImage = 85;
 
 				// create thumbnails for images
 				$images = [];
