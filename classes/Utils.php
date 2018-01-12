@@ -358,18 +358,27 @@ class Utils
 					$original = basename($file);
 					$better = basename($better);
 
+					if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
+						stripos($html, "\"$wwwhttp/temp/$original\"") !== false)
+					{
+						$wwwroot = $di->get('path')['root'];
+						@copy($thumbnail,"$wwwroot/public/temp/$better");
+					}
+					
 					$html = str_replace([
 						"'$original'",
 						"\"$original\"",
 						"'cid:$original'",
 						"\"cid:$original\"",
-						"$wwwhttp/temp/$original"
+						"'$wwwhttp/temp/$original'",
+						"\"$wwwhttp/temp/$original\""
 					],[
 						"'$better'",
 						"\"$better\"",
 						"'cid:$better'",
 						"\"cid:$better\"",
-						"$wwwhttp/temp/$better"
+						"'$wwwhttp/temp/$better'",
+						"\"$wwwhttp/temp/$better\""
 					], $html);
 				}
 			}
