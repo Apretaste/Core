@@ -546,10 +546,12 @@ class RunController extends Controller
 		$logger->close();
 
 		// save the attachment to the temp folder
-		if($attachs) {
-			$ext = pathinfo($attach[0], PATHINFO_EXTENSION);
+		if(isset($attachs[0])) {
+			@mkdir($temp."attachments");
+			$ext = pathinfo($attachs[0]->getFilename(), PATHINFO_EXTENSION);
+			$name = pathinfo($attachs[0]->getFilename(), PATHINFO_FILENAME);
 			$newFile = $temp."attachments/$name.$ext";
-			rename($attach[0], $newFile);
+			rename($attachs[0]->getFilename(), $newFile);
 			$this->attachment = $newFile;
 		}
 
