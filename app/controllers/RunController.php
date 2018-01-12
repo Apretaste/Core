@@ -555,10 +555,10 @@ $this->sendEmails = false;
 
 		// save the attachment to the temp folder
 		if($attachs) {
-			$name = $utils->generateRandomHash();
-			$ext = pathinfo($attachs[0], PATHINFO_EXTENSION);
-			$newFile = $temp."attachments/$name.$ext";
-			rename($attachs[0], $newFile);
+			$att = $parser->saveAttachments($temp."attachments/");
+			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
+			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.$ext';
+			rename($att[0], $newFile);
 			$this->attachment = $newFile;
 		}
 
