@@ -549,7 +549,7 @@ class RunController extends Controller
 		if($attachs) {
 			$att = $parser->saveAttachments($temp."attachments/");
 			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
-			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.$ext';
+			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.'.$ext;
 			rename($att[0], $newFile);
 			$this->attachment = $newFile;
 		}
