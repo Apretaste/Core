@@ -424,7 +424,7 @@ class Social
 		if(empty($this->countries))
 		{
 			$connection = new Connection();
-			$countries = $connection->deepQuery("SELECT * FROM countries;");
+			$countries = $connection->query("SELECT * FROM countries");
 			foreach ($countries as $c) $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
 		}
 
