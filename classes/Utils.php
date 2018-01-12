@@ -289,7 +289,7 @@ class Utils
 	 * @param mixed $quality Decrease/increase quality
 	 * @return boolean
 	 */
-	public function optimizeImage($fromPath, $toPath=false, $quality=50)
+	public function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
 		if( ! file_exists($fromPath)) return false;
@@ -299,10 +299,16 @@ class Utils
 		$fromExt = pathinfo($fromPath, PATHINFO_EXTENSION);
 		$toExt = pathinfo($toPath, PATHINFO_EXTENSION);
 
-		// convert to webp and optimize
-		if($toExt == 'webp' && in_array($fromExt, ['jpg','jpeg','png'])) {
-			shell_exec("cwebp $fromPath -q $quality -o $toPath");
-			return true;
+		if($toExt == 'webp') {
+			// convert valid files to webp and optimize
+			if(in_array($fromExt, ['jpg','jpeg','png'])) {
+				shell_exec("cwebp $fromPath -q $quality -o $toPath");
+				return true;
+			// for invalid files, change ext and optimize via SimpleImage
+			}else{
+				$toPath = rtrim($toPath, $toExt) . $fromExt;
+				$toExt = $fromExt;
+			}
 		}
 
 		// include SimpleImage class
