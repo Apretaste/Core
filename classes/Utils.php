@@ -284,18 +284,24 @@ class Utils
 	 * @author salvipascual
 	 * @author kuma
 	 * @version 2.0
-	 * @param String $imagePath, path to the image
-	 * @param mixed $width Fit to width
-	 * @param mixed $height Fit to height
+	 * @param String $fromPath, path to load the image
+	 * @param String $toPath, path to save the image
 	 * @param mixed $quality Decrease/increase quality
-	 * @param string $format Convert to format
 	 * @return boolean
 	 */
-	public function optimizeImage($imagePath, $width="", $height="", $quality=70, $format='jpg', $newImagePath=null)
+	public function optimizeImage($fromPath, $toPath=false, $quality=50)
 	{
+		// do not accept non-existing images
+		if( ! file_exists($fromPath)) return false;
+
+		// get path to save and extensions
+		if(empty($toPath)) $toPath = $fromPath;
+		$fromExt = pathinfo($fromPath, PATHINFO_EXTENSION);
+		$toExt = pathinfo($toPath, PATHINFO_EXTENSION);
+
 		// convert to webp and optimize
-		if($format == 'webp') {
-			shell_exec("cwebp $imagePath -q $quality -o $newImagePath");
+		if($toExt == 'webp' && in_array($fromExt, ['jpg','jpeg','png'])) {
+			shell_exec("cwebp $fromPath -q $quality -o $toPath");
 			return true;
 		}
 
@@ -305,19 +311,14 @@ class Utils
 
 		// optimize image
 		try {
-			if (file_exists($imagePath))
-			{
-				$img = new \abeautifulsite\SimpleImage();
-				$img->load($imagePath);
-				if ( ! empty($width)) $img->fit_to_width($width);
-				if ( ! empty($height)) $img->fit_to_height($height);
-				$path = is_null($newImagePath) ? $imagePath : $newImagePath;
-				$img->save($path, $quality, $format);
-			}
+			$img = new \abeautifulsite\SimpleImage();
+			$img->load($fromPath);
+			$img->save($toPath, $quality, $toExt);
 		} catch (Exception $e) {
 			$this->createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
 			return false;
 		}
+
 		return true;
 	}
 
