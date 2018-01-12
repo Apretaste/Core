@@ -22,10 +22,9 @@ class ContestsController extends Controller
 		$this->view->title = "Contests";
 		$this->view->message = false;
 
-		$sql = "SELECT * FROM _concurso;";
-
 		$connection = new Connection();
-		$this->view->contests = $connection->deepQuery($sql);
+		$this->view->contests = $connection->query("SELECT * FROM _concurso");
+		$this->view->buttons = [["caption"=>"New contest", "href"=>"/contests/add", "icon"=>"plus"]];
 	}
 
 	/**
@@ -72,8 +71,7 @@ class ContestsController extends Controller
 
 		// 2. save concurso
 		$body = base64_encode($body);
-		$sql = "INSERT INTO _concurso (id, title, body, end_date, prize1, prize2, prize3) VALUES ('$id', '$title','$body','$end_date $end_hour','$prize1', '$prize2', '$prize3');";
-		$connection->deepQuery($sql);
+		$connection->query("INSERT INTO _concurso (id, title, body, end_date, prize1, prize2, prize3) VALUES ('$id', '$title','$body','$end_date $end_hour','$prize1', '$prize2', '$prize3')");
 
 		// 3. save images
 		if (!file_exists($contestFolder))
@@ -93,7 +91,7 @@ class ContestsController extends Controller
 			}
 		}
 
-		$this->response->redirect("/contests");
+		$this->response->redirect("contests");
 	}
 
 	private function getContestImages($id)
@@ -116,20 +114,17 @@ class ContestsController extends Controller
 
 	public function deleteAction($id)
 	{
-
-		$sql = "DELETE FROM _concurso WHERE id ='$id';";
 		$connection = new Connection();
-		$connection->deepQuery($sql);
+		$connection->query("DELETE FROM _concurso WHERE id ='$id'");
 
-		$this->response->redirect("/contests");
+		$this->response->redirect("contests");
 	}
 
 	public function editAction($id)
 	{
 		$connection =  new Connection();
 		$utils = new Utils();
-		$sql = "SELECT * FROM _concurso WHERE id = '$id';";
-		$r = $connection->query($sql);
+		$r = $connection->query("SELECT * FROM _concurso WHERE id = '$id'");
 
 		if (isset($r[0]))
 		{
@@ -178,9 +173,7 @@ class ContestsController extends Controller
 			$body = base64_encode($body);
 
 			// 3. save concurso
-			$sql = "UPDATE _concurso SET title = '$title', end_date = '$end_date $end_hour', body='$body', prize1='$prize1',prize2='$prize2',prize3='$prize3',  winner1 = '$winner1', winner2 = '$winner2', winner3 = '$winner3' WHERE id = '$id';";
-
-			$connection->deepQuery($sql);
+			$connection->query("UPDATE _concurso SET title = '$title', end_date = '$end_date $end_hour', body='$body', prize1='$prize1',prize2='$prize2',prize3='$prize3',  winner1 = '$winner1', winner2 = '$winner2', winner3 = '$winner3' WHERE id = '$id'");
 
 			// 4. save contest images
 			if (!file_exists($contestFolder))
@@ -200,7 +193,7 @@ class ContestsController extends Controller
 				}
 			}
 
-			$this->response->redirect("/contests");
+			$this->response->redirect("contests");
 		}
 	}
 
