@@ -12,7 +12,7 @@ class RunController extends Controller
 	private $messageId;
 	private $subject;
 	private $body;
-	private $attachments = [];
+	private $attachment;
 	private $idEmail;
 	private $resPath = false; // path to the response zip
 	private $sendEmails = true;
@@ -100,7 +100,7 @@ class RunController extends Controller
 		}
 
 		// download attachments and save the paths in the array
-		$attach = array();
+		$attach = [];
 		if ($attachment)
 		{
 			// get the path for the image
@@ -115,11 +115,6 @@ class RunController extends Controller
 			$im = imagecreatefromstring(base64_decode($data));
 			imagejpeg($im, $temp);
 			imagedestroy($im);
-
-			// optimize the image and grant full permits
-			$utils->optimizeImage($temp);
-			chmod($temp, 0777);
-
 			$attach[] = $temp;
 		}
 
@@ -177,7 +172,7 @@ class RunController extends Controller
 		$utils = new Utils();
 		$file = $utils->getTempDir().$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
-		$this->attachments[] = $file;
+		$this->attachment = $file;
 		$this->fromEmail = $user->email;
 
 		// get the time when the service started executing
@@ -259,14 +254,12 @@ class RunController extends Controller
 		}
 
 		// insert a new email in the delivery table and get the ID
-		$attachs = array();
-		foreach ($this->attachments as $a) $attachs[] = basename($a);
-		$attachsStr = implode(",", $attachs);
+		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
 		$this->subject = substr($this->subject, 0, 1023);
 		$this->idEmail = $connection->query("
 			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attachsStr')");
+			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// set the running environment
 		$this->di->set('environment', function() use($environment) {return $environment;});
@@ -299,12 +292,11 @@ class RunController extends Controller
 	private function runApp()
 	{
 		// error if no attachment is received
-		if(isset($this->attachments[0]) && file_exists($this->attachments[0])) {
-			$attachEmail = $this->attachments[0];
-		} else {
+		if($this->attachment && file_exists($this->attachment)) $attachEmail = $this->attachment;
+		else {
 			$output = new stdClass();
 			$output->code = "515";
-			$output->message = "Error on attachment file";
+			$output->message = "Error on attached file";
 			echo json_encode($output);
 			return false;
 		}
@@ -415,7 +407,6 @@ class RunController extends Controller
 			$email->replyId = $this->messageId;
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
-			$email->setImageQuality();
 			$this->resPath = $email->setContentAsZipAttachment();
 			if($this->sendEmails) $email->send();
 		}
@@ -443,7 +434,7 @@ class RunController extends Controller
 	private function runEmail()
 	{
 		// run the request and get the service and response
-		$ret = Render::runRequest($this->fromEmail, $this->subject, $this->body, $this->attachments);
+		$ret = Render::runRequest($this->fromEmail, $this->subject, $this->body, [$this->attachment]);
 		$service = $ret->service;
 		$response = $ret->response;
 
@@ -462,7 +453,6 @@ class RunController extends Controller
 			$email->images = $response->images;
 			$email->attachments = $response->attachments;
 			$email->replyId = $this->messageId;
-			$email->setImageQuality();
 			$email->send();
 		}
 
@@ -555,36 +545,13 @@ class RunController extends Controller
 		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
-		// save attachments to the temp folder
-		$attachments = array();
-		if($attachs)
-		{
-			$attachs = $parser->saveAttachments($temp."attachments/");
-			foreach ($attachs as $attach)
-			{
-				$name = $utils->generateRandomHash();
-				$mimeType = mime_content_type($attach);
-
-				// convert to JPG and optimize image
-				if(substr($mimeType, 0, strlen("image")) === "image")
-				{
-					$newFile = $temp."attachments/$name.jpg";
-					imagejpeg(imagecreatefromstring(file_get_contents($attach)), $newFile);
-					$utils->optimizeImage($newFile);
-					unlink($attach);
-				}
-				// save any other file to the temporals
-				else
-				{
-					// rename the file
-					$ext = pathinfo($attach, PATHINFO_EXTENSION);
-					$newFile = $temp."attachments/$name.$ext";
-					rename($attach, $newFile);
-				}
-
-				// add to array of attachments
-				$attachments[] = $newFile;
-			}
+		// save the attachment to the temp folder
+		if($attachs) {
+			$att = $parser->saveAttachments($temp."attachments/");
+			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
+			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.'.$ext;
+			rename($att[0], $newFile);
+			$this->attachment = $newFile;
 		}
 
 		// save variables in the class
@@ -593,6 +560,5 @@ class RunController extends Controller
 		$this->toEmail = $toEmail;
 		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 		$this->body = str_replace("'", "", $body);
-		$this->attachments = $attachments;
 	}
 }

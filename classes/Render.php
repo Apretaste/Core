@@ -114,7 +114,7 @@ class Render
 	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public static function renderHTML($service, Response $response)
+	public static function renderHTML($service, Response &$response)
 	{
 		// if the response includes json, don't render HTML
 		// this is used mainly to build email APIs
@@ -197,6 +197,9 @@ class Render
 			$rendered = str_replace("</body>", "$linkPopup</body>", $rendered);
 		}
 
+		// optimize images for the app
+ 		self::optimizeImages($response, $rendered);
+
 		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $rendered);
 	}
@@ -214,5 +217,80 @@ class Render
 			$json = json_encode($response->content, JSON_PRETTY_PRINT);
 			return str_replace("\/", "/", $json); // remove \ from the URLs
 		} else return $response->json;
+	}
+
+	/**
+	 * Optimize images of response and associated html
+	 * @param $response
+	 * @param $html
+	 */
+	private static function optimizeImages(&$response, &$html = "")
+	{
+		// get the image quality
+		$connection = new Connection();
+		$res = $connection->query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		if(empty($res)) $quality = "ORIGINAL";
+		else $quality = $res[0]->img_quality;
+
+		// do not optmize for original quality
+		if($quality == "ORIGINAL") return false;
+
+		// get rid of images
+		if($quality == "SIN_IMAGEN") $response->images = [];
+		else
+		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwhttp = $di->get('path')['http'];
+			$format = $di->get('environment') == 'app' ? 'webp' : 'jpg';
+			$quality = $di->get('environment') == 'app' ? 10 : 50;
+			$utils = new Utils();
+
+			// create thumbnails for images
+			$images = [];
+			if(is_array($response->images)) foreach ($response->images as $file)
+			{
+				if(file_exists($file))
+				{
+					// thumbnail the image or use thumbnail cache
+					$thumbnail = $utils->getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
+
+					// optimize image or use the optimized cache
+					if( ! file_exists($thumbnail)) {
+						$utils->optimizeImage($file, $thumbnail, $quality);
+					}
+
+					// use the image only if it can be compressed
+					$better = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+					$images[] = $better;
+					$original = basename($file);
+					$better = basename($better);
+
+					if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
+						stripos($html, "\"$wwwhttp/temp/$original\"") !== false)
+					{
+						$wwwroot = $di->get('path')['root'];
+						@copy($thumbnail,"$wwwroot/public/temp/$better");
+					}
+
+					// replace old image in the html by new image
+					$html = str_replace([
+						"'$original'",
+						"\"$original\"",
+						"'cid:$original'",
+						"\"cid:$original\"",
+						"'$wwwhttp/temp/$original'",
+						"\"$wwwhttp/temp/$original\""
+					],[
+						"'$better'",
+						"\"$better\"",
+						"'cid:$better'",
+						"\"cid:$better\"",
+						"'$wwwhttp/temp/$better'",
+						"\"$wwwhttp/temp/$better\""
+					], $html);
+				}
+			}
+			$response->images = $images;
+		}
 	}
 }
