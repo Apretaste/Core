@@ -322,67 +322,68 @@ class Utils
 	 */
 	public function optimizeImagesOf(&$response, &$html = "")
 	{
-		$tempDir = $this->getTempDir();
-		// get the image quality
-		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
-		if(empty($res)) $quality = "ORIGINAL";
-		else $quality = $res[0]->img_quality;
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
 
-		// get rid of images
-		if($quality == "SIN_IMAGEN") $response->images = [];
-		else
+		if ($di->get('environment') != 'web') // no optimize for web
 		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$wwwhttp = $di->get('path')['http'];
-			$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
-			$width = $quality == "ORIGINAL" ? "" : 150;
-			$qualityImage = $quality == "ORIGINAL" ? null : 85;
+			$tempDir = $this->getTempDir();
 
-			// create thumbnails for images
-			$images = [];
-			if(is_array($response->images)) foreach ($response->images as $file)
-			{
-				if(file_exists($file))
-				{
-					// thumbnail the image or use thumbnail cache
-					$thumbnail = "$tempDir/thumbnails/" . pathinfo(basename($file), PATHINFO_FILENAME) . ".$format";
+			// get the image quality
+			$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+			if(empty($res)) $quality = "ORIGINAL";
+			else $quality = $res[0]->img_quality;
 
-					if( ! file_exists($thumbnail)) {
-						$this->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
+			// get rid of images
+			if($quality == "SIN_IMAGEN") $response->images = [];
+			else {
+				$wwwhttp = $di->get('path')['http'];
+				$format = $di->get('environment') == 'app' ? 'webp' : 'jpeg';
+				$width = $quality == "ORIGINAL" ? "" : 150;
+				$qualityImage = $quality == "ORIGINAL" ? null : 85;
+
+				// create thumbnails for images
+				$images = [];
+				if (is_array($response->images)) foreach ($response->images as $file) {
+					if (file_exists($file)) {
+						// thumbnail the image or use thumbnail cache
+						$thumbnail = "$tempDir/thumbnails/" . pathinfo(basename($file), PATHINFO_FILENAME) . ".$format";
+
+						if (!file_exists($thumbnail)) {
+							$this->optimizeImage($file, $width, "", $qualityImage, $format, $thumbnail);
+						}
+
+						// use the image only if it can be compressed
+						$better = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+						$images[] = $better;
+
+						$original = basename($file);
+						$better = basename($better);
+
+						if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
+							stripos($html, "\"$wwwhttp/temp/$original\"") !== false) {
+							$wwwroot = $di->get('path')['root'];
+							@copy($thumbnail, "$wwwroot/public/temp/$better");
+						}
+
+						$html = str_replace([
+							"'$original'",
+							"\"$original\"",
+							"'cid:$original'",
+							"\"cid:$original\"",
+							"'$wwwhttp/temp/$original'",
+							"\"$wwwhttp/temp/$original\""
+						], [
+							"'$better'",
+							"\"$better\"",
+							"'cid:$better'",
+							"\"cid:$better\"",
+							"'$wwwhttp/temp/$better'",
+							"\"$wwwhttp/temp/$better\""
+						], $html);
 					}
-
-					// use the image only if it can be compressed
-					$better = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
-					$images[] = $better;
-
-					$original = basename($file);
-					$better = basename($better);
-
-					if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
-						stripos($html, "\"$wwwhttp/temp/$original\"") !== false)
-					{
-						$wwwroot = $di->get('path')['root'];
-						@copy($thumbnail,"$wwwroot/public/temp/$better");
-					}
-					
-					$html = str_replace([
-						"'$original'",
-						"\"$original\"",
-						"'cid:$original'",
-						"\"cid:$original\"",
-						"'$wwwhttp/temp/$original'",
-						"\"$wwwhttp/temp/$original\""
-					],[
-						"'$better'",
-						"\"$better\"",
-						"'cid:$better'",
-						"\"cid:$better\"",
-						"'$wwwhttp/temp/$better'",
-						"\"$wwwhttp/temp/$better\""
-					], $html);
 				}
+				$response->images = $images;
 			}
-			$response->images = $images;
 		}
 	}
 	/**
