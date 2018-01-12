@@ -224,15 +224,7 @@ class RunController extends Controller
 
 		// get data from Amazon AWS webhook
 		$this->callAmazonWebhook();
-/*
-$this->fromName = "Salvi Pascual";
-$this->fromEmail = "salvi.pascual@gmail.com";
-$this->toEmail = "carmonaletrina@gmail.com";
-$this->subject = "hello world";
-$this->body = "Hola Mundo";
-$this->attachment = "/home/salvipascual/g4X34mc7.zip";
-$this->sendEmails = false;
-*/
+
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$connection = new Connection();
