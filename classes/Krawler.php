@@ -80,7 +80,7 @@ class Krawler {
 	 * @param array $info
 	 * @return mixed
 	 */
-	public function getRemoteContent($url = null, &$info = [])
+	public function getRemoteContent($url = null, &$info = [], $proxy = false)
 	{
 		if (is_null($url))
 			$url = $this->url;
@@ -107,6 +107,12 @@ class Krawler {
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $hhs);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+		if ($proxy!==false)
+		{
+			curl_setopt($ch, CURLOPT_PROXY, $proxy['host']);
+			curl_setopt($ch, CURLOPT_PROXYTYPE, $proxy['type']);
+		}
 
 		$html = curl_exec($ch);
 		$info = curl_getinfo($ch);
