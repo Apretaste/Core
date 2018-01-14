@@ -83,7 +83,7 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
-
+		$this->setProxy();
 		$this->detectUriGame();
 	}
 
@@ -215,8 +215,30 @@ class NautaClient
 	 * @param string $host
 	 * @param int $type
 	 */
-	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
+	public function setProxy($host = null, $type = CURLPROXY_SOCKS5)
 	{
+		if (is_null($host))
+		{
+			$proxies = ['110.77.206.190:32318',
+				'99.194.128.215:13853',
+				'216.47.216.113:34560',
+				'97.89.254.140:19415',
+				'115.127.27.98:26653',
+				'88.249.95.243:48152',
+				'99.194.145.40:17922',
+				'123.207.58.149:1080',
+				'122.192.32.76:7280',
+				'84.43.90.42:46355',
+				'99.194.120.173:63351',
+				'184.7.245.57:41254',
+				'208.180.142.167:58625',
+				'202.73.34.201:21394'];
+
+			$index = rand(0,count($proxies)-1);
+			$host = $proxies[$index];
+			$host = '184.7.245.57:41254';
+		}
+
 		// @TODO add a SOCKS proxy
 		// https://www.privateinternetaccess.com/pages/buy-vpn/
 		// https://www.socks-proxy.net/
@@ -280,8 +302,8 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_URL, $this->getLoginUrl());
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, $this->getLoginParams([
 			'user' => urlencode($this->user),
-            'pass' => urlencode($this->pass),
-            'captcha' => urlencode($captchaText)
+			'pass' => urlencode($this->pass),
+			'captcha' => urlencode($captchaText)
 		]));
 
 		$response = curl_exec($this->client);
