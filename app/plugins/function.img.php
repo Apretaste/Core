@@ -35,7 +35,7 @@ function smarty_function_img($params, $template)
 	}
 	if($di->get('environment') == "app")
 	{
-		return "<a href=\"file:///mnt/storage/0/Android/data/com.apretaste.apretaste/files/$destination\"><img src='$destination' alt='$alt' $width $height $style /></a>";
+		return "<a href=\"file:///storage/sdcard0/Android/data/com.apretaste.apretaste/files/$destination\"><img src='$destination' alt='$alt' $width $height $style /></a>";
 	}
 	// create and return image
 	return "<img src='$destination' alt='$alt' $width $height $style />";
