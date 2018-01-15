@@ -257,6 +257,7 @@ class Render
 					// optimize image or use the optimized cache
 					if( ! file_exists($thumbnail)) {
 						$utils->optimizeImage($file, $thumbnail, $quality);
+						if( ! file_exists($thumbnail)) $thumbnail = $file;
 					}
 
 					// use the image only if it can be compressed
