@@ -65,9 +65,16 @@ try
 		return $view;
 	});
 
+	class SuperMySQL extends \Phalcon\Db\Adapter\Pdo\Mysql {
+		public function __destruct()
+		{
+			$this->close();
+		}
+	}
+
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', new \Phalcon\Db\Adapter\Pdo\Mysql([
+	$di->set('db', new SuperMySQL([
 		"host" => $config['database']['host'],
 		"username" => $config['database']['user'],
 		"password" => $config['database']['password'],
