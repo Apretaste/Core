@@ -1099,10 +1099,8 @@ class Utils
 	 * Create an alert and notify the alert group
 	 *
 	 * @author salvipascual
-	 *
 	 * @param string $text
 	 * @param string $severity NOTICE,WARNING,ERROR
-	 *
 	 * @return mixed
 	 */
 	public function createAlert($text, $severity = "WARNING")
