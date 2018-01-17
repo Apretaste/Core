@@ -321,7 +321,7 @@ class RunController extends Controller
 			$zip->extractTo("$temp/$folderName");
 			$zip->close();
 		} else {
-			$utils->createAlert("[RunController::runApp] Error when open ZIP file $attachEmail (error code: $result)");
+			return $utils->createAlert("[RunController::runApp] Error when open ZIP file $attachEmail (error code: $result)");
 		}
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
@@ -340,7 +340,7 @@ class RunController extends Controller
 			$file = file("$temp/$folderName/$textFile");
 
 			if (isset($file[0])) $text = trim($file[0]);
-			else $utils->createAlert("[RunController::runApp] WARNING: Empty file $temp/$folderName/$textFile");
+			else return $utils->createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
 			$appversion = isset($file[1]) && is_numeric(trim($file[1])) ? $appversion = trim($file[1]) : "";
 			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}

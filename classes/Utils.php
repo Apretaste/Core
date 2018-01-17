@@ -19,7 +19,6 @@ class Utils
 		$environment = $di->get('environment');
 
 		// get a random mailbox
-
 		$node = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='$environment' AND active=1
@@ -716,13 +715,11 @@ class Utils
 	 * Insert a notification in the database
 	 *
 	 * @author kumahacker
-	 *
 	 * @param string $email
 	 * @param string $origin
 	 * @param string $text
 	 * @param string $link
 	 * @param string $tag
-	 *
 	 * @return array
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
@@ -1102,10 +1099,8 @@ class Utils
 	 * Create an alert and notify the alert group
 	 *
 	 * @author salvipascual
-	 *
 	 * @param string $text
 	 * @param string $severity NOTICE,WARNING,ERROR
-	 *
 	 * @return mixed
 	 */
 	public function createAlert($text, $severity = "WARNING")
