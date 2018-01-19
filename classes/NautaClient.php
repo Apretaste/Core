@@ -22,13 +22,13 @@ class NautaClient
 
 	private $uriGame = [
 		0 => [
-			'base' => 'http://webmail.nauta.cu/',
-			'captcha' => false,
-			'login' => 'horde/login.php',
-			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
-			'compose' => 'horde/imp/compose-mimp.php?u={token}',
-			'composePost' => 'horde/imp/compose-mimp.php',
-			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
+			'base' => 'https://webmail.nauta.cu/',
+			'captcha' => '/securimage/securimage_show.php',
+			'login' => 'login.php',
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&captcha_code={captcha}&horde_select_view=mobile&new_lang=en_US",
+			'compose' => 'imp/minimal.php?page=compose&u={token}',
+			"composePost' => 'imp/minimal.php?page=compose&u={token}",
+			'logout' => "login.php?horde_logout_token={token}&logout_reason=4"
 		],
 		1 => [
 			'base' => 'https://webmail.nauta.cu/',
@@ -40,14 +40,14 @@ class NautaClient
 			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
 		],
 		2 => [
-			'base' => 'https://webmail.nauta.cu/',
-			'captcha' => '/securimage/securimage_show.php',
-			'login' => 'login.php',
-			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&captcha_code={captcha}&horde_select_view=mobile&new_lang=en_US",
-			'compose' => 'imp/minimal.php?page=compose&u={token}',
-			"composePost' => 'imp/minimal.php?page=compose&u={token}",
-			'logout' => "login.php?horde_logout_token={token}&logout_reason=4"
-		]
+			'base' => 'http://webmail.nauta.cu/',
+			'captcha' => false,
+			'login' => 'horde/login.php',
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
+			'compose' => 'horde/imp/compose-mimp.php?u={token}',
+			'composePost' => 'horde/imp/compose-mimp.php',
+			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
+		],
 	];
 
 	private $currentUriGame = 0;
