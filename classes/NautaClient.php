@@ -277,11 +277,20 @@ class NautaClient
 		}
 
 		// send details to login
+		if ($cliOfflineTest) echo $this->getLoginUrl();
 		curl_setopt($this->client, CURLOPT_URL, $this->getLoginUrl());
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, $this->getLoginParams([
+			'horde_user' => urlencode($this->user),
+			'horde_pass' => urlencode($this->pass),
 			'user' => urlencode($this->user),
             'pass' => urlencode($this->pass),
-            'captcha' => urlencode($captchaText)
+            'captcha' => urlencode($captchaText),
+			'captcha_code' => urlencode($captchaText),
+			'app' => '',
+			'login_post' => '0',
+			'url' => '',
+			'anchor_string' => '',
+			'horde_select_view' => 'mobile'
 		]));
 
 		$response = curl_exec($this->client);
@@ -290,6 +299,10 @@ class NautaClient
 
 		if (stripos($response, 'digo de verificaci') !== false &&
 			stripos($response, 'n incorrecto') !== false)
+			return false;
+
+		if (stripos($response, 'Login failed') !== false &&
+			stripos($response, '<ul class="notices">') !== false)
 			return false;
 
 		// get tokens
@@ -440,13 +453,17 @@ class NautaClient
 	private function setHttpHeaders($headers = [])
 	{
 		// set default headers
+
 		$default_headers = [
+			"Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+			"Accept-Encoding" => "gzip, deflate",
 			"Cache-Control" => "max-age=0",
 			"Origin" => $this->getBaseUrl(),
-			"User-Agent" => "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36",
+			"User-Agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0",
 			"Content-Type" => "application/x-www-form-urlencoded",
-			"Connection" => "Keep-Alive",
-			"Keep-Alive" => 86400 //secs
+			"Connection" => "keep-alive",
+			"Keep-Alive" => 86400, //secs,
+			"Referer" => "http://webmail.nauta.cu/imp/minimal.php?mailbox=SU5CT1g&page=mailbox"
 		];
 
 		// add custom headers
