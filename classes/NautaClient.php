@@ -242,7 +242,7 @@ class NautaClient
 
 					if ($result !== false) {
 						$host = "{$proxy['host']}:{$proxy['port']}";
-						$this->proxy_host = $host;
+						$this->proxy_host = $proxy['host'];
 						break;
 					}
 				}
