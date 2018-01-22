@@ -225,18 +225,22 @@ class NautaClient
 			$proxies = file_get_contents( "$www_root/../config/socks.json");
 			$proxies = json_decode($proxies);
 
-			$counter = 0;
-			while (is_null($host))
+			shuffle($proxies);
+			foreach($proxies as $proxy)
 			{
-				$counter++;
-				foreach($proxies as $proxy)
+				$kk = new Krawler("http://example.com");
+				$result = $kk->getRemoteContent("http://example.com", $info, [
+					"host" => "{$proxy['host']}:{$proxy['port']}",
+					"type" => CURLPROXY_SOCKS5
+				]);
+
+				if ($result !== false)
 				{
-					if ((mt_rand(1, 1000) > 500 || $counter > 5)) {
-						$host = "{$proxy['host']}:{$proxy['port']}";
-						break;
-					}
+					$host = "{$proxy['host']}:{$proxy['port']}";
+					break;
 				}
 			}
+
 		}
 
 		if ( ! is_null($host))
