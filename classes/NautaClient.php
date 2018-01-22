@@ -230,7 +230,7 @@ class NautaClient
 				$proxies = file_get_contents("$www_root/configs/socks.json");
 				$proxies = json_decode($proxies);
 
-				shuffle($proxies);
+				//shuffle($proxies);
 				foreach ($proxies as $proxy) {
 					if (is_object($proxy)) $proxy = get_object_vars($proxy);
 
