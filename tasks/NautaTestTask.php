@@ -13,7 +13,7 @@ class NautaTestTask extends \Phalcon\Cli\Task
 		$pass = $this->input('Password');
 
 		$proxy_host = $this->input('Proxy host');
-		$proxy_port = $this->input('Proxy host');
+		$proxy_port = $this->input('Proxy port');
 
 		$client = new NautaClient($user, $pass);
 
