@@ -215,13 +215,35 @@ class NautaClient
 	 * @param string $host
 	 * @param int $type
 	 */
-	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
+	public function setProxy($host = null, $type = CURLPROXY_SOCKS5)
 	{
-		// @TODO add a SOCKS proxy
-		// https://www.privateinternetaccess.com/pages/buy-vpn/
-		// https://www.socks-proxy.net/
-		curl_setopt($this->client, CURLOPT_PROXY, $host);
-		curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
+		if (is_null($host))
+		{
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$www_root = $di->get('path')['root'];
+
+			$proxies = file_get_contents( "$www_root/../config/socks.json");
+			$proxies = json_decode($proxies);
+
+			$counter = 0;
+			while (is_null($host))
+			{
+				$counter++;
+				foreach($proxies as $proxy)
+				{
+					if ((mt_rand(1, 1000) > 500 || $counter > 5)) {
+						$host = "{$proxy['host']}:{$proxy['port']}";
+						break;
+					}
+				}
+			}
+		}
+
+		if ( ! is_null($host))
+		{
+			curl_setopt($this->client, CURLOPT_PROXY, $host);
+			curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
+		}
 	}
 
 	/**
