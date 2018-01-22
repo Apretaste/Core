@@ -231,6 +231,15 @@ class RunController extends Controller
 		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
 
+		// set the running environment
+		$this->di->set('environment', function() use($environment) {return $environment;});
+
+		// if the app is reporting a failure
+		if($environment == "failure") {
+			$this->runFailure();
+			return false;
+		}
+
 		// stop procesing if the sender is invalid
 		$utils = new Utils();
 		if($environment != "app") { // no need to test for the app
@@ -261,9 +270,6 @@ class RunController extends Controller
 			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
 			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
-		// set the running environment
-		$this->di->set('environment', function() use($environment) {return $environment;});
-
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
 		elseif($environment == "email") $log = $this->runEmail();
@@ -287,7 +293,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives email from the webhook and parse it for the app
+	 * Fires when we receive a an email from the app
 	 */
 	private function runApp()
 	{
@@ -427,7 +433,36 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives email from the webhook and parse it for the email tool
+	 * Fires when the app reports an email was not received
+	 */
+	private function runFailure()
+	{
+		// update code for failure emails
+		$connection = new Connection();
+		$connection->query("
+			UPDATE delivery SET
+			delivery_code='555', delivery_message='app failure reported'
+			WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
+
+		// create entry in the error log
+		$utils = new Utils();
+		$text = "[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}";
+		$utils->createAlert($text, "NOTICE");
+
+		// calculate failure percentage
+		$failuresCount = 0;
+		$last100codes = $connection->query("SELECT delivery_code FROM delivery WHERE id > (SELECT MAX(id)-100 FROM delivery)");
+		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
+
+		// alert developers if failures are over 20%
+		if($failuresCount > 20) {
+			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses";
+			$utils->createAlert($text, "ERROR");
+		}
+	}
+
+	/**
+	 * Fires when we receive an email sent directly to Apretaste
 	 *
 	 * @return string
 	 */
@@ -471,7 +506,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Send the email to the support team
+	 * Fires when an email is sent to the support team
 	 */
 	private function runSupport()
 	{
