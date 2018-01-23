@@ -30,7 +30,8 @@ class Email
 		if( ! $isCuba) $res = $this->sendEmailViaAmazon();
 		// if is Nauta and we have the user's password
 		elseif($isNauta) {
-			$res = $this->sendEmailViaWebmail();
+			$res = $this->sendEmailViaExternal();
+			if($res->code != "200") $res = $this->sendEmailViaWebmail();
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
 		}
 		// for all other Cuban emails
@@ -358,6 +359,41 @@ class Email
 	}
 
 	/**
+	 * Sends an email using an external sender
+	 *
+	 * @author salvipascual
+	 * @return string {"code", "message"}
+	 */
+	public function sendEmailViaExternal()
+	{
+		$this->method = "external";
+
+		// create the email array request
+		$params['to'] = $this->to;
+		$params['subject'] = $this->subject;
+		$params['body'] = $this->body;
+		$params['attach'] = isset($this->attachments[0]) ? base64_encode(file_get_contents($this->attachments[0])) : "";
+
+		// contact the Sender to send the email
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'http://54.198.106.10');
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$output = json_decode(curl_exec($ch));
+		curl_close ($ch);
+
+		// if error
+		if(empty($output)) {
+			$output = new stdClass();
+			$output->code = "504";
+			$output->message = "Error connecting to extenal source for email {$this->to} with ID {$this->id}";
+		}
+
+		return $output;
+	}
+
+	/**
 	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
 	 *
 	 * @author salvipascual
@@ -395,7 +431,7 @@ class Email
 	 *
 	 * @author salvipascual
 	 */
-	private function smtp($host, $user, $pass, $port, $security)
+	public function smtp($host, $user, $pass, $port, $security)
 	{
 		// create mailer
 		$mailer = new Nette\Mail\SmtpMailer([
