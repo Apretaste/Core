@@ -19,6 +19,7 @@ class NautaClient
 	private $sessionFile = "";
 	private $logoutToken = "";
 	private $composeToken = "";
+	private $proxy_host = null;
 
 	private $uriGame = [
 		0 => [
@@ -64,15 +65,23 @@ class NautaClient
 		$this->user = $user;
 		$this->pass = $pass;
 
+		// init curl
+		$this->client = curl_init();
+
+		$this->setProxy();
+
 		// save cookie file
 		$utils = new Utils();
-		$this->sessionFile = $utils->getTempDir() . "nautaclient/{$this->user}.session";
-		$this->cookieFile  = $utils->getTempDir() . "nautaclient/{$this->user}.cookie";
+		$proxy_host = '';
+
+		if (!is_null($this->proxy_host))
+			$proxy_host = ".{$this->proxy_host}";
+
+		$this->sessionFile = $utils->getTempDir() . "nautaclient/{$this->user}$proxy_host.session";
+		$this->cookieFile = $utils->getTempDir() . "nautaclient/{$this->user}$proxy_host.cookie";
 
 		$this->loadSession();
 
-		// init curl
-		$this->client = curl_init();
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($this->client, CURLOPT_SSL_VERIFYPEER, 0);
@@ -83,26 +92,23 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
-
 		$this->detectUriGame();
 	}
 
 	public function detectUriGame()
 	{
-		foreach($this->uriGame as $key => $urls)
-		{
-			try
-			{
+		foreach ($this->uriGame as $key => $urls) {
+			try {
 				//echo "checking {$urls['base']}\n";
-				$check= $this->checkLogin();
+				$check = $this->checkLogin();
 				$this->currentUriGame = $key;
 				return $check;
-			} catch (Exception $e)
-			{
+			} catch (Exception $e) {
 				continue;
 			}
 		}
 	}
+
 	/**
 	 * Return the current set of URL of webmail
 	 *
@@ -124,9 +130,8 @@ class NautaClient
 	public function replaceParams($str, $params)
 	{
 		if ($str == false) return false;
-		foreach($params as $var => $value)
-		{
-			$str = str_replace('{'.$var.'}', $value, $str);
+		foreach ($params as $var => $value) {
+			$str = str_replace('{' . $var . '}', $value, $str);
 		}
 		return $str;
 	}
@@ -149,7 +154,7 @@ class NautaClient
 	{
 		$uri = $this->getUriGame()['captcha'];
 		if ($uri == false) return false;
-		return $this->getBaseUrl().$uri;
+		return $this->getBaseUrl() . $uri;
 	}
 
 	/**
@@ -158,7 +163,7 @@ class NautaClient
 	 */
 	public function getLoginUrl()
 	{
-		return $this->getBaseUrl().$this->getUriGame()['login'];
+		return $this->getBaseUrl() . $this->getUriGame()['login'];
 	}
 
 	/**
@@ -182,7 +187,7 @@ class NautaClient
 	 */
 	public function getComposeUrl($params = [])
 	{
-		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['compose'], $params);
+		return $this->getBaseUrl() . $this->replaceParams($this->getUriGame()['compose'], $params);
 	}
 
 	/**
@@ -194,7 +199,7 @@ class NautaClient
 	 */
 	public function getComposePostUrl($params = [])
 	{
-		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['composePost'], $params);
+		return $this->getBaseUrl() . $this->replaceParams($this->getUriGame()['composePost'], $params);
 	}
 
 	/**
@@ -206,7 +211,7 @@ class NautaClient
 	 */
 	public function getLogoutUrl($params = [])
 	{
-		return $this->getBaseUrl().$this->replaceParams($this->getUriGame()['logout'], $params);
+		return $this->getBaseUrl() . $this->replaceParams($this->getUriGame()['logout'], $params);
 	}
 
 	/**
@@ -215,13 +220,39 @@ class NautaClient
 	 * @param string $host
 	 * @param int $type
 	 */
-	public function setProxy($host = "localhost:8082", $type = CURLPROXY_SOCKS5)
+	public function setProxy($host = null, $type = CURLPROXY_SOCKS5)
 	{
-		// @TODO add a SOCKS proxy
-		// https://www.privateinternetaccess.com/pages/buy-vpn/
-		// https://www.socks-proxy.net/
-		curl_setopt($this->client, CURLOPT_PROXY, $host);
-		curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
+		if (is_null($host)) {
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$www_root = $di->get('path')['root'];
+			$configFile = "$www_root/configs/socks.json";
+			if (file_exists($configFile)) {
+				$proxies = file_get_contents("$www_root/configs/socks.json");
+				$proxies = json_decode($proxies);
+
+				//shuffle($proxies);
+				foreach ($proxies as $proxy) {
+					if (is_object($proxy)) $proxy = get_object_vars($proxy);
+
+					$kk = new Krawler("http://example.com");
+					$result = $kk->getRemoteContent("http://example.com", $info, [
+						"host" => "{$proxy['host']}:{$proxy['port']}",
+						"type" => CURLPROXY_SOCKS5
+					]);
+
+					if ($result !== false) {
+						$host = "{$proxy['host']}:{$proxy['port']}";
+						$this->proxy_host = $proxy['host'];
+						break;
+					}
+				}
+			}
+		}
+
+		if (!is_null($host)) {
+			curl_setopt($this->client, CURLOPT_PROXY, $host);
+			curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
+		}
 	}
 
 	/**
@@ -241,36 +272,28 @@ class NautaClient
 		$captchaUrl = $this->getCaptchaUrl();
 
 		$img = false; // maybe, uri game have captcha url and webmail not
-		if ($captchaUrl !== false)
-		{
+		if ($captchaUrl !== false) {
 			curl_setopt($this->client, CURLOPT_URL, $captchaUrl);
 			$img = curl_exec($this->client);
 		}
 
 		$captchaText = '';
 
-		if ($img !== false)
-		{
+		if ($img !== false) {
 			file_put_contents($captchaImage, $img);
 
-			if($cliOfflineTest)
-			{
+			if ($cliOfflineTest) {
 				echo "[INFO] Captcha image store in: $captchaImage \n";
 				echo "Please enter captcha test:";
 				$cli = fopen("php://stdin", "r");
 				$captchaText = fgets($cli);
-			}
-			else
-			{
+			} else {
 				// break the captcha
 				$captcha = $this->breakCaptcha($captchaImage);
-				if($captcha->code == "200")
-				{
+				if ($captcha->code == "200") {
 					$captchaText = $captcha->message;
 					rename($captchaImage, $utils->getTempDir() . "capcha/$captchaText.jpg");
-				}
-				else
-				{
+				} else {
 					return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
 				}
 			}
@@ -283,8 +306,8 @@ class NautaClient
 			'horde_user' => urlencode($this->user),
 			'horde_pass' => urlencode($this->pass),
 			'user' => urlencode($this->user),
-            'pass' => urlencode($this->pass),
-            'captcha' => urlencode($captchaText),
+			'pass' => urlencode($this->pass),
+			'captcha' => urlencode($captchaText),
 			'captcha_code' => urlencode($captchaText),
 			'app' => '',
 			'login_post' => '0',
@@ -306,7 +329,7 @@ class NautaClient
 			return false;
 
 		// get tokens
-		$this->logoutToken  = php::substring($response, 'horde_logout_token=', '&');
+		$this->logoutToken = php::substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = php::substring($response, 'u=', '">New');
 
 		$this->saveSession();
@@ -354,11 +377,11 @@ class NautaClient
 	 */
 	public function loadSession()
 	{
-		if( ! file_exists($this->sessionFile)) $this->saveSession();
+		if (!file_exists($this->sessionFile)) $this->saveSession();
 
 		$sessionData = unserialize(file_get_contents($this->sessionFile));
 
-		$this->logoutToken  = $sessionData['logoutToken'];
+		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
 		return $sessionData;
 	}
@@ -369,7 +392,7 @@ class NautaClient
 	 * @param String $to
 	 * @param String $subject
 	 * @param String $body
-	 * @param mixed  $attachment
+	 * @param mixed $attachment
 	 * @return mixed
 	 */
 	public function send($to, $subject, $body, $attachment = false)
@@ -402,7 +425,7 @@ class NautaClient
 		$data['subject'] = $subject;
 		$data['priority'] = "normal";
 		$data['message'] = $body;
-		if($attachment) $data['upload_1'] = new CURLFile($attachment);
+		if ($attachment) $data['upload_1'] = new CURLFile($attachment);
 		$data['a'] = 'Send';
 
 		// set headers
@@ -421,7 +444,7 @@ class NautaClient
 		//var_dump($data);
 
 		// alert if there are errors
-		if(curl_errno($this->client)) {
+		if (curl_errno($this->client)) {
 			$utils = new Utils();
 			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)");
 		}
@@ -434,8 +457,7 @@ class NautaClient
 	 */
 	public function logout()
 	{
-		if($this->client)
-		{
+		if ($this->client) {
 			curl_setopt($this->client, CURLOPT_URL, $this->getLogoutUrl([
 				'token' => $this->logoutToken
 			]));
@@ -471,7 +493,7 @@ class NautaClient
 
 		// convert headers array into string
 		$headerStr = [];
-		foreach($default_headers as $key => $val) $headerStr[] = "$key:$val";
+		foreach ($default_headers as $key => $val) $headerStr[] = "$key:$val";
 
 		// add headers to cURL
 		curl_setopt($this->client, CURLOPT_HTTPHEADER, $headerStr);
@@ -502,8 +524,7 @@ class NautaClient
 		$api->setFile($image);
 
 		// create the task
-		if( ! $api->createTask())
-		{
+		if (!$api->createTask()) {
 			$ret = new stdClass();
 			$ret->code = "500";
 			$ret->message = "API v2 send failed: " . $api->getErrorMessage();
@@ -512,8 +533,7 @@ class NautaClient
 
 		// wait for results
 		$taskId = $api->getTaskId();
-		if( ! $api->waitForResult())
-		{
+		if (!$api->waitForResult()) {
 			$ret = new stdClass();
 			$ret->code = "510";
 			$ret->message = "Could not solve captcha: " . $api->getErrorMessage();
