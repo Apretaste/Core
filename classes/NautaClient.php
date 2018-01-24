@@ -21,6 +21,7 @@ class NautaClient
 	private $composeToken = "";
 	private $captchaText = "";
 	private $mobileToken = "";
+	private $proxy_host = null;
 
 	public function show() {
 		echo "USER: {$this->user}<br/>";
