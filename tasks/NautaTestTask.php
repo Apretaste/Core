@@ -13,7 +13,7 @@ class NautaTestTask extends \Phalcon\Cli\Task
 		$pass = $this->input('Password');
 
 		$proxy_host = $this->input('Proxy host');
-		$proxy_port = $this->input('Proxy host');
+		$proxy_port = $this->input('Proxy port');
 
 		$client = new NautaClient($user, $pass);
 
@@ -27,9 +27,11 @@ class NautaTestTask extends \Phalcon\Cli\Task
 		{
 			echo "Login...\n";
 
+			$offline = strtolower($this->input("Offline (Y/N)"));
+
 			do
 			{
-				$login = $client->login(true);
+				$login = $client->login($offline == 'y');
 
 				if($login == false)
 				{
@@ -56,7 +58,7 @@ class NautaTestTask extends \Phalcon\Cli\Task
 
 			echo "Sending email...\n";
 
-			echo $client->send($to, $subject, $body, $attach);
+			echo $client->send($to, $subject, $body, $attachment);
 			echo "\n";
 		}
 
