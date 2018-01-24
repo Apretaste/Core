@@ -18,10 +18,10 @@ include_once "../vendor/autoload.php";
 // set the memory to be used by php
 ini_set('memory_limit', '1024M');
 
-// handle php errors as exceptions
+/*// handle php errors as exceptions
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
 	throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
-}
+}*/
 
 set_error_handler("exception_error_handler");
 
