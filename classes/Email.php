@@ -376,7 +376,7 @@ class Email
 
 		// contact the Sender to send the email
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, 'http://54.198.106.10');
+		curl_setopt($ch, CURLOPT_URL, 'http://54.82.205.71');
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
