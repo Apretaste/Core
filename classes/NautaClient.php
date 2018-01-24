@@ -369,7 +369,10 @@ class NautaClient
 		$html = curl_exec($this->client);
 		$html = "$html";
 
-		if (stripos($html, 'Message Composition') === false) return false;
+		if (stripos($html, 'Message Composition') === false
+			&& stripos($html, '<form id="compose"') === false
+			&& stripos($html, '<form id="imp-compose-form"') === false
+		) return false;
 		else return true;
 	}
 
