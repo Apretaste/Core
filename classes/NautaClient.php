@@ -19,14 +19,27 @@ class NautaClient
 	private $sessionFile = "";
 	private $logoutToken = "";
 	private $composeToken = "";
-	private $proxy_host = null;
+	private $captchaText = "";
+	private $mobileToken = "";
+
+	public function show() {
+		echo "USER: {$this->user}<br/>";
+		echo "PASS: {$this->pass}<br/>";
+		echo "CLIENT: {$this->client}<br/>";
+		echo "COOKIEFILE: {$this->cookieFile}<br/>";
+		echo "SESSIONFILE: {$this->sessionFile}<br/>";
+		echo "LOGOUTTOKEN: {$this->logoutToken}<br/>";
+		echo "COMPOSETOKEN: {$this->composeToken}<br/>";
+		echo "MOBILETOKEN: {$this->mobileToken}<br/>";
+		echo "CAPTCHATEXT: {$this->captchaText}<br/>";
+	}
 
 	private $uriGame = [
 		0 => [
-			'base' => 'https://webmail.nauta.cu/',
+			'base' => 'http://webmail.nauta.cu/',
 			'captcha' => '/securimage/securimage_show.php',
 			'login' => 'login.php',
-			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&captcha_code={captcha}&horde_select_view=mobile&new_lang=en_US",
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&captcha_code={captcha}&horde_select_view=smartmobile&new_lang=en_US",
 			'compose' => 'imp/minimal.php?page=compose&u={token}',
 			"composePost' => 'imp/minimal.php?page=compose&u={token}",
 			'logout' => "login.php?horde_logout_token={token}&logout_reason=4"
@@ -35,7 +48,7 @@ class NautaClient
 			'base' => 'https://webmail.nauta.cu/',
 			'captcha' => false,
 			'login' => 'horde/login.php',
-			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=smartmobile&new_lang=en_US",
 			'compose' => 'horde/imp/compose-mimp.php?u={token}',
 			'composePost' => 'horde/imp/compose-mimp.php',
 			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
@@ -44,7 +57,7 @@ class NautaClient
 			'base' => 'http://webmail.nauta.cu/',
 			'captcha' => false,
 			'login' => 'horde/login.php',
-			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=mobile&new_lang=en_US",
+			'loginParams' => "app=&login_post=1&url=&anchor_string=&ie_version=&horde_user={user}&horde_pass={pass}&horde_select_view=smartmobile&new_lang=en_US",
 			'compose' => 'horde/imp/compose-mimp.php?u={token}',
 			'composePost' => 'horde/imp/compose-mimp.php',
 			'logout' => 'horde/imp/login.php?horde_logout_token={token}'
@@ -313,7 +326,7 @@ class NautaClient
 			'login_post' => '0',
 			'url' => '',
 			'anchor_string' => '',
-			'horde_select_view' => 'mobile'
+			'horde_select_view' => 'smartmobile'  // mobile @salvi
 		]));
 
 		$response = curl_exec($this->client);
@@ -329,8 +342,10 @@ class NautaClient
 			return false;
 
 		// get tokens
-		$this->logoutToken = php::substring($response, 'horde_logout_token=', '&');
+		$this->mobileToken  = php::substring($response, '"token":"', '"}');
+		$this->logoutToken  = php::substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = php::substring($response, 'u=', '">New');
+		$this->captchaText = $captchaText;
 
 		$this->saveSession();
 		return true;
@@ -395,53 +410,57 @@ class NautaClient
 	 * @param mixed $attachment
 	 * @return mixed
 	 */
-	public function send($to, $subject, $body, $attachment = false)
+	public function send($to, $subject, $body, $attachment=false)
 	{
-		// get the HTML of the compose window
+		// attaching file if exist
+		$composeCache = "";
+		$composeHmac = "";
+		if($attachment)
+		{
+			// create emails params
+			$url = 'http://webmail.nauta.cu/services/ajax.php/imp/addAttachment';
+			$params['MAX_FILE_SIZE'] = "20971520";
+			$params['file_upload'] = new CURLFile($attachment);
+			$params['composeCache'] = "";
+			$params['json_return'] = "true";
+			$params['token'] = $this->mobileToken;
 
-		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
-			'token' => $this->composeToken
-		]));
+			// add stuff to cURL
+			$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
+			curl_setopt($this->client, CURLOPT_URL, $url);
+			curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
+			curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
+			curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
+			curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+			$output = gzdecode(curl_exec($this->client));
 
-		$html = curl_exec($this->client);
+			// get the cacheid and hmac for the attachment
+			$output = php::substring($output, '/*-secure-', '*/');
+			$output = json_decode($output);
+			$composeCache = $output->tasks->{'imp:compose'}->cacheid;
+			$composeHmac = $output->tasks->{'imp:compose'}->hmac;
+		}
 
-		// get the value of hidden fields from the HTML
-		$action = php::substring($html, 'u=', '"');
-		$composeCache = php::substring($html, 'composeCache" value="', '"');
-		$compose_formToken = php::substring($html, 'compose_formToken" value="', '"');
-		$compose_requestToken = php::substring($html, 'compose_requestToken" value="', '"');
-		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
-		$user = php::substring($html, 'user" value="', '"');
+		// create emails params
+		$url = 'http://webmail.nauta.cu/services/ajax.php/imp/smartmobileSendMessage';
+		$params['composeCache'] = $composeCache;
+		$params['composeHmac'] = $composeHmac;
+		$params['user'] = "{$this->user}@nauta.cu";
+		$params['to[]'] = $to;
+		$params['cc[]'] = "";
+		$params['subject'] = $subject;
+		$params['message'] = $body;
+		$params['token'] = $this->mobileToken;
 
-		// create the body of the image
-		$data['composeCache'] = $composeCache;
-		$data['composeHmac'] = $composeHmac;
-		$data['compose_formToken'] = $compose_formToken;
-		$data['compose_requestToken'] = $compose_requestToken;
-		$data['user'] = $user;
-		$data['to'] = $to;
-		$data['cc'] = "";
-		$data['bcc'] = "";
-		$data['subject'] = $subject;
-		$data['priority'] = "normal";
-		$data['message'] = $body;
-		if ($attachment) $data['upload_1'] = new CURLFile($attachment);
-		$data['a'] = 'Send';
-
-		// set headers
-		$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
-
-		// send email
-		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
-			'token' => $action
-		]));
-
+		// send the email
+		$this->setHttpHeaders(["Content-Type" => "application/x-www-form-urlencoded"]);
+		curl_setopt($this->client, CURLOPT_URL, $url);
 		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
 		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, $data);
-		curl_exec($this->client);
-
-		//var_dump($data);
+		curl_setopt($this->client, CURLOPT_POST, 1);
+		curl_setopt($this->client, CURLOPT_POSTFIELDS, http_build_query($params));
+		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+		$output = curl_exec($this->client);
 
 		// alert if there are errors
 		if (curl_errno($this->client)) {
@@ -475,7 +494,6 @@ class NautaClient
 	private function setHttpHeaders($headers = [])
 	{
 		// set default headers
-
 		$default_headers = [
 			"Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 			"Accept-Encoding" => "gzip, deflate",
