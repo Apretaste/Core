@@ -33,7 +33,10 @@ function smarty_function_img($params, $template)
 	{
 		$destination = "cid:$file";
 	}
-
+	if($di->get('environment') == "app")
+	{
+		return "<a href=\"file:///storage/sdcard0/Android/data/com.apretaste.apretaste/files/$destination\"><img src='$destination' alt='$alt' $width $height $style /></a>";
+	}
 	// create and return image
 	return "<img src='$destination' alt='$alt' $width $height $style />";
 }
