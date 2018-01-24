@@ -248,7 +248,7 @@ class NautaClient
 	public function login($cliOfflineTest = false)
 	{
 		if ($this->checkLogin()) return true;
-echo "***LOGIN IN<br/>";
+
 		// save the captcha image in the temp folder
 		$utils = new Utils();
 		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
@@ -390,33 +390,39 @@ echo "***LOGIN IN<br/>";
 	 */
 	public function send($to, $subject, $body, $attachment=false)
 	{
-echo "***ATTACHING FILE<br/>";
+		// attaching file if exist
+		$composeCache = "";
+		$composeHmac = "";
+		if($attachment)
+		{
+			// create emails params
+			$url = 'http://webmail.nauta.cu/services/ajax.php/imp/addAttachment';
+			$params['MAX_FILE_SIZE'] = "20971520";
+			$params['file_upload'] = new CURLFile($attachment);
+			$params['composeCache'] = "";
+			$params['json_return'] = "true";
+			$params['token'] = $this->mobileToken;
 
-		// create emails params
-		$url = 'http://webmail.nauta.cu/services/ajax.php/imp/addAttachment';
-		$cfile = new CURLFile($attachment);
-		$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
+			// add stuff to cURL
+			$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
+			curl_setopt($this->client, CURLOPT_URL, $url);
+			curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
+			curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
+			curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
+			curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+			$output = gzdecode(curl_exec($this->client));
 
-		// add stuff to cURL
-		curl_setopt($this->client, CURLOPT_URL, $url);
-		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, 1);
-		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
-		curl_setopt($this->client, CURLOPT_POST, 1);
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, ["file_upload"=>$cfile]);
-		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-		$output = curl_exec($this->client);
-
-		// what is going on?
-		file_put_contents("/var/www/Core/temp/file.gz", $output);
-		print_r($output);
-exit;
-
-echo "***SENDING EMAIL<br/>";
+			// get the cacheid and hmac for the attachment
+			$output = php::substring($output, '/*-secure-', '*/');
+			$output = json_decode($output);
+			$composeCache = $output->tasks->{'imp:compose'}->cacheid;
+			$composeHmac = $output->tasks->{'imp:compose'}->hmac;
+		}
 
 		// create emails params
 		$url = 'http://webmail.nauta.cu/services/ajax.php/imp/smartmobileSendMessage';
-		$params['composeCache'] = "";
-		$params['composeHmac'] = "";
+		$params['composeCache'] = $composeCache;
+		$params['composeHmac'] = $composeHmac;
 		$params['user'] = "{$this->user}@nauta.cu";
 		$params['to[]'] = $to;
 		$params['cc[]'] = "";
@@ -424,7 +430,8 @@ echo "***SENDING EMAIL<br/>";
 		$params['message'] = $body;
 		$params['token'] = $this->mobileToken;
 
-		// add stuff to cURL
+		// send the email
+		$this->setHttpHeaders(["Content-Type" => "application/x-www-form-urlencoded"]);
 		curl_setopt($this->client, CURLOPT_URL, $url);
 		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
 		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
@@ -433,55 +440,12 @@ echo "***SENDING EMAIL<br/>";
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		$output = curl_exec($this->client);
 
-		// what is going on?
-		file_put_contents("/var/www/Core/temp/file.gz", $output);
-		print_r($output);
-
-/*
-		// get the value of hidden fields from the HTML
-		$action = php::substring($html, 'u=', '"');
-		$composeCache = php::substring($html, 'composeCache" value="', '"');
-		$compose_formToken = php::substring($html, 'compose_formToken" value="', '"');
-		$compose_requestToken = php::substring($html, 'compose_requestToken" value="', '"');
-		$composeHmac = php::substring($html, 'composeHmac" value="', '"');
-		$user = php::substring($html, 'user" value="', '"');
-
-		// create the body of the image
-		$data['composeCache'] = $composeCache;
-		$data['composeHmac'] = $composeHmac;
-		$data['compose_formToken'] = $compose_formToken;
-		$data['compose_requestToken'] = $compose_requestToken;
-		$data['user'] = $user;
-		$data['to'] = $to;
-		$data['cc'] = "";
-		$data['bcc'] = "";
-		$data['subject'] = $subject;
-		$data['priority'] = "normal";
-		$data['message'] = $body;
-		if($attachment) $data['upload_1'] = new CURLFile($attachment);
-		$data['a'] = 'Send';
-
-		// set headers
-		$this->setHttpHeaders(["Content-Type" => "multipart/form-data"]);
-
-		// send email
-		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
-			'token' => $action
-		]));
-
-		curl_setopt($this->client, CURLOPT_SAFE_UPLOAD, true);
-		curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, $data);
-		curl_exec($this->client);
-
-		//var_dump($data);
-
 		// alert if there are errors
 		if(curl_errno($this->client)) {
 			$utils = new Utils();
 			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)");
 		}
-*/
+
 		return true;
 	}
 
