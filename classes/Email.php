@@ -30,9 +30,9 @@ class Email
 		if( ! $isCuba) $res = $this->sendEmailViaAmazon();
 		// if is Nauta and we have the user's password
 		elseif($isNauta) {
-			$res = $this->sendEmailViaExternal();
-			if($res->code != "200") $res = $this->sendEmailViaWebmail();
+			$res = $this->sendEmailViaWebmail();
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
+			if($res->code != "200") $res = $this->sendEmailViaExternal();
 		}
 		// for all other Cuban emails
 		else $res = $this->sendEmailViaAlias();
