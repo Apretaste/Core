@@ -155,38 +155,6 @@ class DeveloperController extends Controller
 		$this->view->pick(['developer/errors']);
 	}
 
-	/**
-	 * Test different email providers
-	 */
-	public function testEmailAction()
-	{
-		// get a random sentense
-		$utils = new Utils();
-		$text = $utils->randomSentence();
-
-		// create the global email object
-		$email = new Email();
-		$email->to = "reynapoveda@nauta.cu";
-		$email->body = $text;
-
-		// test gmail
-		$email->subject = "gmail $text";
-		$res = $email->sendEmailViaGmail();
-		echo "<h1>GMAIL</h1>" . print_r($res, true) . "<br/><br/><br/>";
-
-		// test sparkpost
-		$email->subject = "sparkpost $text";
-		$res = $email->sendEmailViaSparkPost();
-		echo "<h1>SPARKPOST</h1>" . print_r($res, true) . "<br/><br/><br/>";
-
-		// test sparkpost
-		$email->subject = "hillary $text";
-		$res = $email->sendEmailViaWebmail();
-		echo "<h1>HILLARY</h1>" . print_r($res, true) . "<br/><br/><br/>";
-
-		exit;
-	}
-
 	public function alertsAction()
 	{
 		$default_query = "SELECT * FROM alerts WHERE fixed = 0 ORDER BY created DESC;";

@@ -46,6 +46,5 @@ class ManageController extends Controller
 		$this->view->tasksWidget = $tasksWidget;
 		$this->view->alertsTotal = $alertsTotal[0]->cnt;
 		$this->view->alertsFixed = $alertsFixed[0]->cnt;
-
 	}
 }
