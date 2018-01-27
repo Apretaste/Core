@@ -361,8 +361,9 @@ class NautaClient
 	public function checkLogin()
 	{
 		$this->loadSession();
-		$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
-
+		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
+		$url = "http://webmail.nauta.cu/";
+		/*
 		$params = [
 			'view' => 'SU5CT1g',
 			'viewport' => '{"view":"SU5CT1g","initial":1,"force":1,"slice":"1:30"}',
@@ -370,19 +371,29 @@ class NautaClient
 			'token' => $this->mobileToken
 		];
 
+		$params = [
+			'all' => '0',
+			'token' => $this->mobileToken
+		];
 		//var_dump($params);
-
+		*/
 		curl_setopt($this->client, CURLOPT_URL, $url);
-		curl_setopt($this->client, CURLOPT_POST, true);
-		curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
+		//curl_setopt($this->client, CURLOPT_POST, true);
+		//curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		$result = curl_exec($this->client);
-		$output = gzdecode($result);
 
-		$output = php::substring($output, '/*-secure-', '*/');
-		//echo $output;
-		$output = json_decode($output);
-		return $output->response;
+		//$info = curl_getinfo($this->client);
+		//var_dump($info);
+		//if ($infp['http_c'])
+		//$output = gzdecode($result);
+		// $output = $result;
+		//$output = php::substring($output, '/*-secure-', '*/');
+		//echo "CHECKLOGIN: ". $output;
+		//$output = json_decode($output);
+		//return stripos($output->response,'"tasks":') !== false;
+
+		return stripos($result, '<form id="imp-compose-form"') !== false;
 
 		/*curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
 			'token' => $this->mobileToken
@@ -391,7 +402,7 @@ class NautaClient
 		/*$html = curl_exec($this->client);
 		$html = "$html";
 		echo $html;
-//echo gzdecode($html);
+		//echo gzdecode($html);
 		if (stripos($html, 'Message Composition') === false
 			&& stripos($html, '<form id="compose"') === false
 			&& stripos($html, '<form id="imp-compose-form"') === false
