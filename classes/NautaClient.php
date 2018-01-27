@@ -370,7 +370,7 @@ class NautaClient
 			'token' => $this->mobileToken
 		];
 
-		var_dump($params);
+		//var_dump($params);
 
 		curl_setopt($this->client, CURLOPT_URL, $url);
 		curl_setopt($this->client, CURLOPT_POST, true);
@@ -424,7 +424,7 @@ class NautaClient
 		if (!file_exists($this->sessionFile)) $this->saveSession();
 
 		$sessionData = unserialize(file_get_contents($this->sessionFile));
-var_dump($sessionData);
+//var_dump($sessionData);
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
 		if (isset($sessionData['mobileToken'])) $this->mobileToken = $sessionData['mobileToken'];
