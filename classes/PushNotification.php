@@ -263,6 +263,7 @@ class PushNotification
 			'message' => $message,
 			'subscriber_id' => $appid
 		];
+
 		if($url) $fields['url'] = $url;
 		if($img) $fields['image_url'] = $img;
 

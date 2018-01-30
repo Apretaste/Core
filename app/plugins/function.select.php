@@ -18,6 +18,7 @@ function smarty_function_select($params, $template)
 	{
 		// create select for the web
 		$select = '<select class="dropdown" onchange="apretaste.onSelect(this.value);">';
+		if(empty($selected)) $select .= '<option value=""></option>';
 		foreach($options as $option) {
 			$optionSelected = (strtoupper($option->caption) == strtoupper($selected)) ? "selected='selected'" : "";
 			$select .= "<option value='{$option->href}' $optionSelected>{$option->caption}</option>";

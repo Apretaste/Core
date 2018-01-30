@@ -183,11 +183,13 @@ class Utils
 	 */
 	public function getEmailFromUsername($username)
 	{
+		// do not try empty inputs
+		if(empty($username)) return false;
+
 		// remove the @ symbol
 		$username = str_replace("@", "", $username);
 
 		// get the email
-
 		$email = Connection::query("SELECT email FROM person WHERE username='$username'");
 
 		// return the email or false if not found
@@ -1070,11 +1072,29 @@ class Utils
 		$countryCode = strtoupper($countryCode);
 
 		// get the country
-
 		$country = Connection::query("SELECT $lang FROM countries WHERE code = '$countryCode'");
 
 		// return the country name or empty string
 		return isset($country[0]->$lang) ? $country[0]->$lang : '';
+	}
+
+	/**
+	 * Get the US state name based on the code
+	 *
+	 * @author salvipascual
+	 * @param String $stateCode
+	 * @return String
+	 */
+	function getStateNameByCode($stateCode)
+	{
+		$usstates = [
+			"AL"=>"Alabama","AK"=>"Alaska","AZ"=>"Arizona","AR"=>"Arkansas","CA"=>"California","CO"=>"Colorado","CT"=>"Connecticut","DE"=>"Delaware","FL"=>"Florida","GA"=>"Georgia","HI"=>"Hawaii",
+			"ID"=>"Idaho","IL"=>"Illinois","IN"=>"Indiana","IA"=>"Iowa","KS"=>"Kansas","KY"=>"Kentucky","LA"=>"Louisiana","ME"=>"Maine","MD"=>"Maryland","MA"=>"Massachusetts","MI"=>"Michigan",
+			"MN"=>"Minnesota","MS"=>"Mississippi","MO"=>"Missouri","MT"=>"Montana","NE"=>"Nebraska","NV"=>"Nevada","NH"=>"New","NJ"=>"New","NM"=>"New","NY"=>"New","NC"=>"North",
+			"ND"=>"North","OH"=>"Ohio","OK"=>"Oklahoma","OR"=>"Oregon","PA"=>"Pennsylvania","RI"=>"Rhode","SC"=>"South","SD"=>"South","TN"=>"Tennessee","TX"=>"Texas","UT"=>"Utah","VT"=>"Vermont",
+			"VA"=>"Virginia","WA"=>"Washington","WV"=>"West","WI"=>"Wisconsin","W"=>"Wyoming"];
+		$stateCode = strtoupper($stateCode);
+		return isset($usstates[$stateCode]) ? $usstates[$stateCode] : "";
 	}
 
 	/**
