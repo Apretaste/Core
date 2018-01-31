@@ -46,37 +46,39 @@
 				</div>
 			</div>
 		</div>
+
+		<style>
+			body:after { /*hack for the bgimage to work on mobile*/
+				content:"";
+				position:fixed;
+				top:0;
+				height:100vh;
+				left:0;
+				right:0;
+				z-index:-1;
+				background: #E3E7D0 url('/images/background3.jpg') no-repeat center center fixed;
+				-webkit-background-size: cover;
+				-moz-background-size: cover;
+				-o-background-size: cover;
+				background-size: cover;
+			}
+
+			.form-control {
+				max-width: 350px;
+				display: inline-block;
+			}
+		</style>
+
+		<script>
+			$(document).ready(function(){
+				$('.form-control').focus();
+
+				<?php if($shake == "true") { ?>
+					$('#shake').effect('shake');
+				<?php } ?>
+			});
+		</script>
+
+		<?php require_once "../lib/googleAnalyticsTracking.php" ?>
 	</body>
 </html>
-
-<style>
-	body:after { /*hack for the bgimage to work on mobile*/
-		content:"";
-		position:fixed;
-		top:0;
-		height:100vh;
-		left:0;
-		right:0;
-		z-index:-1;
-		background: #E3E7D0 url('/images/background3.jpg') no-repeat center center fixed;
-		-webkit-background-size: cover;
-		-moz-background-size: cover;
-		-o-background-size: cover;
-		background-size: cover;
-	}
-
-	.form-control {
-		max-width: 350px;
-		display: inline-block;
-	}
-</style>
-
-<script>
-	$(document).ready(function(){
-		$('.form-control').focus();
-
-		<?php if($shake == "true") { ?>
-			$('#shake').effect('shake');
-		<?php } ?>
-	});
-</script>
