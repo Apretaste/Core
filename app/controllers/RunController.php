@@ -162,6 +162,11 @@ class RunController extends Controller
 			return false;
 		}
 
+		// do not respond to blocked accounts
+		$connection = new Connection();
+		$blocked = $connection->query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
+		if($blocked) return false;
+
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
 			echo '{"code":"301", "message":"No content file was received"}';
@@ -179,7 +184,6 @@ class RunController extends Controller
 		$execStartTime = date("Y-m-d H:i:s");
 
 		// create a new entry on the delivery table
-		$connection = new Connection();
 		$this->idEmail = $connection->query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'app')");
 
 		// execute the service as app
@@ -225,9 +229,13 @@ class RunController extends Controller
 		// get data from Amazon AWS webhook
 		$this->callAmazonWebhook();
 
+		// do not respond to blocked accounts
+		$connection = new Connection();
+		$blocked = $connection->query("SELECT email FROM person WHERE email='{$this->toEmail}' AND blocked=1");
+		if($blocked) return false;
+
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		$connection = new Connection();
 		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
 
