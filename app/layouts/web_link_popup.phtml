@@ -124,6 +124,7 @@
 			else if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
 				$.each(desc.split("|"), function(i, val) {
+					var isTextArea = val.indexOf('textarea:') > -1;
 					var isDropDown = val.indexOf('[');
 					var html = '<div style="text-align:left; margin-bottom:15px;"><small>';
 
@@ -138,6 +139,12 @@
 							html += '<option value="'+element+'">'+element+'</option>';
 						}
 						html += '</selects>';
+					}
+					else if(isTextArea)
+					{
+						var label = val.substring(9);
+						html += '<label for="field'+i+'">'+label+'</label></small><br/>';
+						html += '<textarea id="field'+i+'" style="width:100%;" rows="4" class="input"></textarea>';
 					}
 					else
 					{
