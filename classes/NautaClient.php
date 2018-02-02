@@ -288,7 +288,11 @@ class NautaClient
 		$img = false; // maybe, uri game have captcha url and webmail not
 		if ($captchaUrl !== false) {
 			curl_setopt($this->client, CURLOPT_URL, $captchaUrl);
-			$img = curl_exec($this->client);
+			for($i =0; $i<3; $i++)
+			{
+				$img = curl_exec($this->client);
+				if ($img !== false) break;
+			}
 		}
 
 		$captchaText = '';
@@ -330,7 +334,12 @@ class NautaClient
 			'horde_select_view' => 'smartmobile'  // mobile @salvi
 		]));
 
-		$response = curl_exec($this->client);
+		$response = false;
+		for($i =0; $i<3; $i++)
+		{
+			$response = curl_exec($this->client);
+			if ($response !== false) break;
+		}
 
 		if ($response === false) return false;
 
@@ -381,7 +390,12 @@ class NautaClient
 		//curl_setopt($this->client, CURLOPT_POST, true);
 		//curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-		$result = curl_exec($this->client);
+
+		for($i =0; $i<3; $i++)
+		{
+			$result = curl_exec($this->client);
+			if ($result !== false) break;
+		}
 
 		//$info = curl_getinfo($this->client);
 		//var_dump($info);
@@ -473,7 +487,16 @@ class NautaClient
 			curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
 			curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 			curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-			$output = gzdecode(curl_exec($this->client));
+
+			$output = false;
+
+			for($i =0; $i<3; $i++)
+			{
+				$output = curl_exec($this->client);
+				if ($output !== false) break;
+			}
+
+			$output = @gzdecode($output);
 
 			// get the cacheid and hmac for the attachment
 			$output = php::substring($output, '/*-secure-', '*/');
@@ -527,7 +550,12 @@ class NautaClient
 				'token' => $this->logoutToken
 			]));
 
-			curl_exec($this->client);
+			for($i =0; $i<3; $i++)
+			{
+				$output = curl_exec($this->client);
+				if ($output !== false) break;
+			}
+
 			curl_close($this->client);
 		}
 	}
