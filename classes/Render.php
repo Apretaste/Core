@@ -186,7 +186,7 @@ class Render
 		// add link popups for the web
 		if($di->get('environment') == "web") {
 			// get page content
-			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_link_popup.phtml");
+			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_includes.phtml");
 
 			// replace system variables
 			foreach ($systemVariables as $key=>$value) {
