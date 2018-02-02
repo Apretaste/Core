@@ -25,6 +25,7 @@
 					<form id="shake" action="/login/<?=$phase?>Submit" method="get">
 						<input type="hidden" name="email" value="<?=$email?>">
 						<input type="hidden" name="redirect" value="<?=$redirect?>">
+						<input type="hidden" name="action" value="<?=$action?>">
 
 						<?php if($phase == "email") { ?>
 							<label for="email">ESCRIBA SU EMAIL</label><br/>
