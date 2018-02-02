@@ -165,7 +165,6 @@ class Utils
 		$shortmail = substr($shortmail, 0, 5); // get the first 5 chars
 
 		// contatenate a random unique number
-
 		do {
 			$username = $shortmail . rand(100, 999);
 			$exist = Connection::query("SELECT username FROM person WHERE username='$username'");

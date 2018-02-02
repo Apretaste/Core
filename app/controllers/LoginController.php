@@ -10,6 +10,7 @@ class LoginController extends Controller
 	public function indexAction()
 	{
 		$this->view->phase = "email";
+		$this->view->action = "";
 		$this->view->email = $this->request->get('email');
 		$this->view->redirect = $this->request->get('redirect');
 		$this->view->icon = $this->getIcon($this->request->get('redirect'));
@@ -23,6 +24,7 @@ class LoginController extends Controller
 	public function codeAction()
 	{
 		$this->view->phase = "code";
+		$this->view->action = $this->request->get('action');
 		$this->view->email = $this->request->get('email');
 		$this->view->redirect = $this->request->get('redirect');
 		$this->view->icon = $this->getIcon($this->request->get('redirect'));
@@ -65,7 +67,7 @@ class LoginController extends Controller
 			// get redirect link and redirect
 			$redirect = empty($redirect) ? "servicios" : $redirect;
 			if($user->isManager) $this->response->redirect($user->startPage);
-			else $this->response->redirect("run/display?subject=$redirect");
+			else $this->response->redirect("run/display?subject=$redirect&action=login");
 			$this->view->disable();
 			return false;
 		}
@@ -73,9 +75,11 @@ class LoginController extends Controller
 		// create the user if he/she does not exist
 		$utils = new Utils();
 		$connection = new Connection();
+		$action = "login";
 		if( ! $utils->personExist($email)) {
 			$username = $utils->usernameFromEmail($email);
 			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
+			$action = "register";
 		}
 
 		// create a new pin for the user
@@ -99,8 +103,9 @@ class LoginController extends Controller
 		$sender->body = $body;
 		$res = $sender->send();
 
-		// do not check from Development/Stage
-		$this->response->redirect("login/code?email=$email&redirect=$redirect");
+		// redirect to ask for code
+		$email = urlencode($email);
+		$this->response->redirect("login/code?email=$email&redirect=$redirect&action=$action");
 		$this->view->disable();
 	}
 
@@ -112,6 +117,7 @@ class LoginController extends Controller
 		// get data from post
 		$email = $this->request->get('email');
 		$pin = $this->request->get('pin');
+		$action = $this->request->get('action');
 		$redirect = $this->request->get('redirect');
 
 		// check if the email is valid
@@ -135,7 +141,7 @@ class LoginController extends Controller
 		// get redirect link and redirect
 		$redirect = empty($redirect) ? "servicios" : $redirect;
 		if($user->isManager) $redirectLink = $user->startPage;
-		else $redirectLink = "run/display?subject=$redirect";
+		else $redirectLink = "run/display?subject=$redirect&action=$action";
 
 		// redirect to page
 		$this->response->redirect($redirectLink);
