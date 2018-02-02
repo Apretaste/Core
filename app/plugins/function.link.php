@@ -13,6 +13,7 @@ function smarty_function_link($params, $template)
 	$caption = $params["caption"];
 	$desc = isset($params["desc"]) ? $params["desc"] : "Inserte una palabra o frase a buscar.";
 	$style = isset($params["style"]) ? "style='{$params["style"]}'" : "";
+	$title = isset($params["title"]) ? "title='{$params["title"]}'" : "";
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -36,5 +37,5 @@ function smarty_function_link($params, $template)
 		$href = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
-	return "<a href='$href' onclick='$onclick' $style>$caption</a>";
+	return "<a href='$href' onclick='$onclick' $title $style>$caption</a>";
 }

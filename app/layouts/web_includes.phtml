@@ -14,18 +14,6 @@
 	</div>
 </div>
 
-<!-- modal window to attach a file -->
-<div id="modalUploadFile" class="modal">
-	<div class="body">
-		<div style="text-align:left; margin-bottom:20px;">
-			<small><label for="attachment"></label></small>
-			<input id="attachment" type="file" name="attachment"/>
-		</div>
-		<button type="button" onclick="modalClose('modalUploadFile');">Cerrar</button>
-		<button type="button" class="green" onclick="apretaste.uploadFile();">Enviar</button>
-	</div>
-</div>
-
 <style type="text/css">
 	body {
 		padding: 10px 0px;
@@ -81,6 +69,14 @@
 		border-radius: 5px;
 	}
 
+	#modalRequestMoreDataBody label {
+		font-size: small;
+	}
+
+	.input {
+		width: 100%;
+	}
+
 	button {
 		border: none;
 		cursor: pointer;
@@ -117,32 +113,48 @@
 			apretaste.url = "/run/display?subject=" + href;
 			apretaste.wait = Boolean(wait);
 
-			if(popup == "upload") {
-				$('#modalUploadFile label').html(desc);
-				modalOpen('modalUploadFile');
-			}
-			else if(Boolean(popup)) {
+			if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
-				$.each(desc.split("|"), function(i, val) {
-					var isDropDown = val.indexOf('[');
-					var html = '<div style="text-align:left; margin-bottom:15px;"><small>';
 
-					if(isDropDown > -1)
-					{
-						var label = val.substring(0, val.lastIndexOf('['));
-						var elements = val.substring(isDropDown+1, val.lastIndexOf(']')).split(',');
-						html += '<label for="field'+i+'">'+label+'</label></small><br/>';
-						html += '<select id="field'+i+'" class="input" style="width:100%;">';
-						for (var i = 0; i < elements.length; i++) {
-							var element = elements[i].trim();
-							html += '<option value="'+element+'">'+element+'</option>';
+				$.each(desc.split("|"), function(i, val) {
+					var type = "t";
+					var label = val;
+
+					var p = val.split(":");
+					if(p.length == 2) {
+						type = p[0];
+						label = p[1];
+					}
+console.log(p);
+					var required = label.endsWith("*") ? 'required' : '';
+					var html = '<div style="text-align:left; margin-bottom:15px;">';
+
+					if($.inArray(type, ['t','d','n','e','p','u']) >= 0) {
+						if(type=='t') type = 'text';
+						if(type=='d') type = 'date';
+						if(type=='n') type = 'number';
+						if(type=='e') type = 'email';
+						if(type=='p') type = 'password';
+						if(type=='u') type = 'file';
+						html += '<label for="field'+i+'">'+label+'</label><br/>';
+						html += '<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" type="'+type+'" class="input" '+required+'/>';
+					}
+
+					if(type=="m") {
+						label = label.substring(0, label.lastIndexOf('['));
+						var options = val.substring(val.indexOf('[')+1, val.lastIndexOf(']')).split(',');
+						html += '<label for="field'+i+'">'+label+'</label><br/>';
+						html += '<select id="field'+i+'" class="input" '+required+'><option value=""></option>';
+						for (var i = 0; i < options.length; i++) {
+							var option = options[i].trim();
+							html += '<option value="'+option+'">'+option+'</option>';
 						}
 						html += '</selects>';
 					}
-					else
-					{
-						html += '<label for="field'+i+'">'+val+'</label></small><br/>';
-						html += '<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" style="width:100%;" type="text" class="input"/>';
+
+					if(type=="a") {
+						html += '<label for="field'+i+'">'+label+'</label><br/>';
+						html += '<textarea id="field'+i+'" rows="4" class="input" '+required+'></textarea>';
 					}
 
 					$('#modalRequestMoreDataBody').append(html+'</div>');
@@ -158,11 +170,25 @@
 			var redirect = true;
 			$('#modalRequestMoreDataBody .input').each(function(){
 				$(this).css("border", "1px solid #A9A9A9");
-				var value = this.value.trim();
-				if(value == "") {
+
+				var type = $(this).attr('type');
+				var required = $(this).attr('required');
+				var value = $(this).val().trim();
+
+				var invalid = false;
+				if(type=='email') invalid = !isEmail(value);
+
+				if(invalid || (required && value == "")) {
 					$(this).css("border", "1px solid red");
 					redirect = false;
+					return false;
 				}
+
+				if(type=='file') {
+					var id = $(this).attr('id');
+					value = apretaste.uploadFile(id);
+				}
+
 				params += encodeURIComponent(value) + " ";
 			});
 
@@ -173,27 +199,26 @@
 			}
 		},
 
-		uploadFile: function() {
-			var file = $("#attachment").prop("files")[0];
+		uploadFile: function(id) {
+			var file = $('#'+id).prop("files")[0];
 			var form = new FormData();
 			form.append("file", file);
 
+			var ret = "";
 			$.ajax({
-				url: "/api/upload",
-				dataType: 'json',
-				cache: false,
-				contentType: false,
-				processData: false,
+				url:'/api/upload',
+				dataType:'json',
+				cache:false,
+				contentType:false,
+				processData:false,
+				async:false,
 				data: form,
 				type: 'post',
 				success: function(data) {
-					if(data.code == "ok") {
-						apretaste.url += " " + data.message;
-						modalClose('modalUploadFile');
-						apretaste.send();
-					}
+					if(data.code=='ok') ret = data.message;
 				}
 			});
+			return ret;
 		},
 
 		send: function() {
@@ -231,6 +256,11 @@
 	function modalClose(id) {
 		$('#'+id).css('visibility', 'hidden');
 	}
+
+	function isEmail(email) {
+		const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		return re.test(email);
+	};
 </script>
 
 <!-- web push notifications -->
