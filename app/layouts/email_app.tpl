@@ -2,7 +2,7 @@
 <table width="100%" cellspacing="0" cellpadding="3">
 	<tr>
 		<td align="left" bgcolor="#FCF8E3">
-			<p><small>El 1ro de Febrero descontinuaremos la version {$APP_VERSION} de la app y debera instalar la ultima version</small></p>
+			<p><small>El 1ro de Marzo descontinuaremos la version {$APP_VERSION} de la app y debera instalar la ultima version</small></p>
 		</td>
 	</tr>
 </table>

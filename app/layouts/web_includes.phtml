@@ -154,7 +154,7 @@ console.log(p);
 
 					if(type=="a") {
 						html += '<label for="field'+i+'">'+label+'</label><br/>';
-						html += '<textarea id="field'+i+'" rows="4" class="input" '+required+'></textarea>';
+						html += '<textarea id="field'+i+'" onkeyup="apretaste.onControlPlusEnter(event);" rows="4" class="input" '+required+'></textarea>';
 					}
 
 					$('#modalRequestMoreDataBody').append(html+'</div>');
@@ -236,6 +236,12 @@ console.log(p);
 			apretaste.wait = false;
 			apretaste.url = "/run/display?subject=" + href;
 			apretaste.send();
+		},
+
+		onControlPlusEnter: function(e) {
+			if(e.ctrlKey && e.keyCode === 13) {
+				apretaste.onEnter(e);
+			}
 		},
 
 		onEnter: function(e) {
