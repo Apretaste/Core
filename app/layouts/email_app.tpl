@@ -31,6 +31,7 @@
 			</td>
 		</tr>
 	</table>
+	{space5}
 	{/if}
 
 	{include file="$APRETASTE_USER_TEMPLATE"}
