@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+require_once 'lib/Linfo/standalone_autoload.php';
 
 class ManageController extends Controller
 {
@@ -30,6 +31,13 @@ class ManageController extends Controller
 		$alertsTotal = $connection->query("SELECT COUNT(id) as cnt FROM alerts;");
 		$alertsFixed = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed = 1;");
 
+		// free space hdd
+		$linfo = new \Linfo\Linfo;
+		$parser = $linfo->getParser();
+		$hd = $parser->getMounts();
+
+		$hddFreeSpace = $hd[0]['free_percent'];
+
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 
@@ -46,5 +54,6 @@ class ManageController extends Controller
 		$this->view->tasksWidget = $tasksWidget;
 		$this->view->alertsTotal = $alertsTotal[0]->cnt;
 		$this->view->alertsFixed = $alertsFixed[0]->cnt;
+		$this->view->hddFreeSpace = $hddFreeSpace;
 	}
 }
