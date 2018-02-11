@@ -1,7 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-require_once 'lib/Linfo/standalone_autoload.php';
+require_once '../lib/Linfo/standalone_autoload.php';
 
 class ManageController extends Controller
 {
