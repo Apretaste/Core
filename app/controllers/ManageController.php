@@ -39,7 +39,7 @@ class ManageController extends Controller
 		$hddFreeSpace = "unknown";
 		foreach($hd as $mount)
 		{
-			if ($mount['mount'] == "/dev/sda1")
+			if ($mount['mount'] == "/")
 			{
 				$hddFreeSpace = $mount['free_percent'];
 				break;
