@@ -50,7 +50,7 @@ class ManageController extends Controller
 			}
 		}
 
-		$hddFreeSpaceStatus = $hddFreeSpace < 10 ? "danger" : ($hddFreeSpace < 50 ? "warning" : "success");
+		$hddFreeSpaceStatus = $hddFreeSpace < 10 ? "red" : ($hddFreeSpace < 50 ? "yellow" : "black");
 
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
