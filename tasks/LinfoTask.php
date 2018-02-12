@@ -6,7 +6,11 @@ class LinfoTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
 	{
-		$linfo = new \Linfo\Linfo;
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$settings = \Linfo\Common::getVarFromFile($wwwroot.'/config/linfo.inc.php', 'settings');
+
+		$linfo = new \Linfo\Linfo($settings);
 		$parser = $linfo->getParser();
 		$hd = $parser->getMounts();
 

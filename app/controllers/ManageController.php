@@ -31,8 +31,12 @@ class ManageController extends Controller
 		$alertsTotal = $connection->query("SELECT COUNT(id) as cnt FROM alerts;");
 		$alertsFixed = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed = 1;");
 
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$settings = \Linfo\Common::getVarFromFile($wwwroot.'/config/linfo.inc.php', 'settings');
+
 		// free space hdd
-		$linfo = new \Linfo\Linfo;
+		$linfo = new \Linfo\Linfo($settings);
 		$parser = $linfo->getParser();
 		$hd = $parser->getMounts();
 
