@@ -36,7 +36,7 @@ class ManageController extends Controller
 		$parser = $linfo->getParser();
 		$hd = $parser->getMounts();
 
-		$hddFreeSpace = "unknown";
+		$hddFreeSpace = 0;
 		foreach($hd as $mount)
 		{
 			if ($mount['mount'] == "/")
@@ -46,6 +46,7 @@ class ManageController extends Controller
 			}
 		}
 
+		$hddFreeSpaceStatus = $hddFreeSpace < 10 ? "danger" : ($hddFreeSpace < 50 ? "warning" : "success");
 
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
@@ -64,5 +65,6 @@ class ManageController extends Controller
 		$this->view->alertsTotal = $alertsTotal[0]->cnt;
 		$this->view->alertsFixed = $alertsFixed[0]->cnt;
 		$this->view->hddFreeSpace = $hddFreeSpace;
+		$this->view->hddFreeSpaceStatus = $hddFreeSpaceStatus;
 	}
 }
