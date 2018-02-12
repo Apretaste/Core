@@ -13,7 +13,7 @@ class LinfoTask extends \Phalcon\Cli\Task
 		$alert = false;
 		foreach($hd as $mount)
 		{
-			if ($mount['free_percent'] < 10)
+			if ($mount['free_percent'] < 10 && $mount['mount'] == "/")
 			{
 				echo "FREE SPACE OF ".$mount['mount'].' = '.$mount['free_percent']."\n";
 				$alert = true;
