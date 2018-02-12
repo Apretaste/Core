@@ -473,11 +473,11 @@ class Social
 			ORDER BY last DESC");
 
 		// add profiles to the list of notes
-		$unique = [];
-		$chats = [];
+		$chats = []; $unique = [];
 		foreach($notes as $n) {
 			// do not allow repeated or empty rows
 			if(empty($n->email) || in_array($n->email, $unique)) continue;
+			$unique[] = $n->email;
 
 			// create new chat object
 			$chat = new stdClass();
