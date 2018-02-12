@@ -32,3 +32,5 @@ chmod 777 public/tienda
 chmod 777 public/temp
 chmod 777 public/download
 chmod 777 public/products
+chown www-data logs/*.log
+chgrp www-data logs/*.log

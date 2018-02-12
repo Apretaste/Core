@@ -4,7 +4,11 @@
 
 class Social
 {
-	private $countries = array();
+	private $countries = [];
+
+	//
+	// FUNCTIONS FOR PROFILE
+	//
 
 	/**
 	 * Return description of profile as a paragraph, used for social services
@@ -350,18 +354,20 @@ class Social
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
 		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
 
-		// get the image of the person
-		$profile->picture_internal = "";
-		$profile->picture_public = "";
-		if($profile->picture)
-		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$wwwroot = $di->get('path')['root'];
-			$wwwhttp = $di->get('path')['http'];
+		// create paths to root and http
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$wwwhttp = $di->get('path')['http'];
+
+		// get the image of the person if exist
+		if($profile->picture) {
 			$profile->picture_internal = "$wwwroot/public/profile/{$profile->picture}.jpg";
 			$profile->picture_public = "$wwwhttp/profile/{$profile->picture}.jpg";
 			$profile->pictureURL = $profile->picture;
 			$profile->picture = true;
+		}else{
+			$profile->picture_internal = "$wwwroot/public/images/user.jpg";
+			$profile->picture_public = "$wwwhttp/images/user.jpg";
 		}
 
 		// get the interests as a lowercase array
@@ -421,10 +427,9 @@ class Social
 	public function getCountryNameFromCode($countryCode, $lang="es")
 	{
 		// load the list of countries on a cache if not loaded yet
-		if(empty($this->countries))
-		{
-			$connection = new Connection();
-			$countries = $connection->query("SELECT * FROM countries");
+		// @TODO save list of countries in a cache
+		if(empty($this->countries)) {
+			$countries = Connection::query("SELECT * FROM countries");
 			foreach ($countries as $c) $this->countries[$c->code] = ["es" => $c->es, "en" => $c->en];
 		}
 
@@ -433,5 +438,106 @@ class Social
 		if(isset($this->countries[$countryCode][$lang])) return $this->countries[$countryCode][$lang];
 		elseif(isset($this->countries[$countryCode]['es'])) return $this->countries[$countryCode]['es'];
 		else return $countryCode;
+	}
+
+	//
+	// FUNCTIONS FOR CHAT
+	//
+
+	/**
+	 * Return a list of Chats between $email1 & $email2
+	 *
+	 * @author salvipascual
+	 * @param String $email1
+	 * @param String $email2
+	 * @param String $lastID , get all from this ID
+	 * @param string $limit  , integer number of max rows
+	 * @return array
+	 */
+	public function chatsOpen($email)
+	{
+		// searching contacts of the current user
+		$notes = Connection::query("
+			SELECT * FROM (
+				SELECT B.*, MAX(A.send_date) AS last
+				FROM _note A JOIN person B
+				ON A.to_user = B.email
+				WHERE A.from_user = '$email'
+				GROUP BY A.to_user
+				UNION
+				SELECT B.*, MAX(A.send_date) AS last
+				FROM _note A JOIN person B
+				ON A.from_user = B.email
+				WHERE A.to_user = '$email'
+				GROUP BY A.from_user) A
+			ORDER BY last DESC");
+
+		// add profiles to the list of notes
+		$unique = [];
+		$chats = [];
+		foreach($notes as $n) {
+			// do not allow repeated or empty rows
+			if(empty($n->email) || in_array($n->email, $unique)) continue;
+
+			// create new chat object
+			$chat = new stdClass();
+			$chat->email = $n->email;
+			$chat->last_sent = $n->last;
+			$chat->profile = $this->prepareUserProfile($n);
+			$chats[] = $chat;
+		}
+
+		return $chats;
+	}
+
+	/**
+	 * Return a list of Chats between $email1 & $email2
+	 *
+	 * @author salvipascual
+	 * @param String $email1
+	 * @param String $email2
+	 * @param String $lastID , get all from this ID
+	 * @param string $limit  , integer number of max rows
+	 * @return array
+	 */
+	public function chatConversation($yourEmail, $friendEmail, $lastID=0, $limit=20)
+	{
+		// if a last ID is passed, do not cut the result based on the limit
+		$setLimit = ($lastID > 0) ? "" : "LIMIT $limit";
+
+		// retrieve conversation between users
+		$notes = Connection::query("
+			SELECT * FROM (
+				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, B.*
+				FROM _note A LEFT JOIN person B
+				ON A.from_user = B.email
+				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
+				AND A.id > '$lastID'
+				UNION
+				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, B.*
+				FROM _note A LEFT JOIN person B
+				ON A.from_user = B.email
+				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
+				AND A.id > '$lastID') C
+			ORDER BY sent DESC $setLimit");
+
+		// mark the other person notes as unread
+		if($notes) {
+			$lastNoteID = end($notes)->id;
+			Connection::query("
+				UPDATE _note
+				SET read_date = CURRENT_TIMESTAMP
+				WHERE read_date is NULL
+				AND from_user = '$friendEmail'
+				AND id >= $lastNoteID");
+		}
+
+		// format profile
+		$chats = [];
+		foreach($notes as $n) {
+			$chats[] = $this->prepareUserProfile($n);
+		}
+
+		return $chats;
 	}
 }
