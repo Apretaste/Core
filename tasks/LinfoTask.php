@@ -32,7 +32,7 @@ class LinfoTask extends \Phalcon\Cli\Task
 
 			foreach($hd as $mount)
 			{
-				$body .= "FREE SPACE OF ".$mount['label'].' = '.$mount['free_percent']."\n";
+				$body .= "FREE SPACE OF ".$mount['mount'].' = '.$mount['free_percent']."\n";
 			}
 
 			$email->body = $body;
