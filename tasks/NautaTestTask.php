@@ -58,7 +58,7 @@ class NautaTestTask extends \Phalcon\Cli\Task
 
 			echo "Sending email...\n";
 
-			echo $client->send($to, $subject, $body, $attachment);
+			echo $client->send($to, $subject, $body, $attach);
 			echo "\n";
 		}
 

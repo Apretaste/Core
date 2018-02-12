@@ -106,7 +106,7 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
-		$this->detectUriGame();
+		//$this->detectUriGame();
 	}
 
 	public function detectUriGame()
@@ -288,7 +288,11 @@ class NautaClient
 		$img = false; // maybe, uri game have captcha url and webmail not
 		if ($captchaUrl !== false) {
 			curl_setopt($this->client, CURLOPT_URL, $captchaUrl);
-			$img = curl_exec($this->client);
+			for($i =0; $i<3; $i++)
+			{
+				$img = curl_exec($this->client);
+				if ($img !== false) break;
+			}
 		}
 
 		$captchaText = '';
@@ -330,7 +334,12 @@ class NautaClient
 			'horde_select_view' => 'smartmobile'  // mobile @salvi
 		]));
 
-		$response = curl_exec($this->client);
+		$response = false;
+		for($i =0; $i<3; $i++)
+		{
+			$response = curl_exec($this->client);
+			if ($response !== false) break;
+		}
 
 		if ($response === false) return false;
 
@@ -361,16 +370,59 @@ class NautaClient
 	public function checkLogin()
 	{
 		$this->loadSession();
+		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
+		$url = "http://webmail.nauta.cu/";
+		/*
+		$params = [
+			'view' => 'SU5CT1g',
+			'viewport' => '{"view":"SU5CT1g","initial":1,"force":1,"slice":"1:30"}',
+			'flag_config' => 1,
+			'token' => $this->mobileToken
+		];
 
-		curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
-			'token' => $this->composeToken
-		]));
+		$params = [
+			'all' => '0',
+			'token' => $this->mobileToken
+		];
+		//var_dump($params);
+		*/
+		curl_setopt($this->client, CURLOPT_URL, $url);
+		//curl_setopt($this->client, CURLOPT_POST, true);
+		//curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
+		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 
-		$html = curl_exec($this->client);
+		for($i =0; $i<3; $i++)
+		{
+			$result = curl_exec($this->client);
+			if ($result !== false) break;
+		}
+
+		//$info = curl_getinfo($this->client);
+		//var_dump($info);
+		//if ($infp['http_c'])
+		//$output = gzdecode($result);
+		// $output = $result;
+		//$output = php::substring($output, '/*-secure-', '*/');
+		//echo "CHECKLOGIN: ". $output;
+		//$output = json_decode($output);
+		//return stripos($output->response,'"tasks":') !== false;
+
+		return stripos($result, '<form id="imp-compose-form"') !== false;
+
+		/*curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
+			'token' => $this->mobileToken
+		]));*/
+
+		/*$html = curl_exec($this->client);
 		$html = "$html";
-
-		if (stripos($html, 'Message Composition') === false) return false;
+		echo $html;
+		//echo gzdecode($html);
+		if (stripos($html, 'Message Composition') === false
+			&& stripos($html, '<form id="compose"') === false
+			&& stripos($html, '<form id="imp-compose-form"') === false
+		) return false;
 		else return true;
+		*/
 	}
 
 	/**
@@ -380,7 +432,8 @@ class NautaClient
 	{
 		$sessionData = [
 			'logoutToken' => $this->logoutToken,
-			'composeToken' => $this->composeToken
+			'composeToken' => $this->composeToken,
+			'mobileToken' => $this->mobileToken
 		];
 
 		file_put_contents($this->sessionFile, serialize($sessionData));
@@ -396,9 +449,10 @@ class NautaClient
 		if (!file_exists($this->sessionFile)) $this->saveSession();
 
 		$sessionData = unserialize(file_get_contents($this->sessionFile));
-
+//var_dump($sessionData);
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
+		if (isset($sessionData['mobileToken'])) $this->mobileToken = $sessionData['mobileToken'];
 		return $sessionData;
 	}
 
@@ -433,13 +487,27 @@ class NautaClient
 			curl_setopt($this->client, CURLOPT_CUSTOMREQUEST, 'POST');
 			curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 			curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
-			$output = gzdecode(curl_exec($this->client));
+
+			$output = false;
+
+			for($i =0; $i<3; $i++)
+			{
+				$output = curl_exec($this->client);
+				if ($output !== false) break;
+			}
+
+			$output = @gzdecode($output);
 
 			// get the cacheid and hmac for the attachment
 			$output = php::substring($output, '/*-secure-', '*/');
+			//echo $output;
 			$output = json_decode($output);
-			$composeCache = $output->tasks->{'imp:compose'}->cacheid;
-			$composeHmac = $output->tasks->{'imp:compose'}->hmac;
+
+			if (isset($output->tasks))
+			{
+				$composeCache = $output->tasks->{'imp:compose'}->cacheid;
+				$composeHmac = $output->tasks->{'imp:compose'}->hmac;
+			}
 		}
 
 		// create emails params
@@ -462,7 +530,7 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		$output = curl_exec($this->client);
-
+		//echo gzdecode($output);
 		// alert if there are errors
 		if (curl_errno($this->client)) {
 			$utils = new Utils();
@@ -482,7 +550,12 @@ class NautaClient
 				'token' => $this->logoutToken
 			]));
 
-			curl_exec($this->client);
+			for($i =0; $i<3; $i++)
+			{
+				$output = curl_exec($this->client);
+				if ($output !== false) break;
+			}
+
 			curl_close($this->client);
 		}
 	}

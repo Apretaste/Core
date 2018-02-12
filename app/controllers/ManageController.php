@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+require_once '../lib/Linfo/standalone_autoload.php';
 
 class ManageController extends Controller
 {
@@ -26,9 +27,31 @@ class ManageController extends Controller
 		$queryRunningAds = $connection->query("SELECT COUNT(active) AS cnt FROM ads WHERE active=1");
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='NEW'");
 		$supportPendingCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='PENDING'");
-		$mailListRegisteredUsers = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE mail_list=1");
+		//
+		$mailListRegisteredUsers = $connection->query("SELECT count(email) as cnt FROM person WHERE active=1 and appversion<>'' and mail_list=1");
 		$alertsTotal = $connection->query("SELECT COUNT(id) as cnt FROM alerts;");
 		$alertsFixed = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed = 1;");
+
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$settings = \Linfo\Common::getVarFromFile($wwwroot.'/configs/linfo.inc.php', 'settings');
+
+		// free space hdd
+		$linfo = new \Linfo\Linfo($settings);
+		$parser = $linfo->getParser();
+		$hd = $parser->getMounts();
+
+		$hddFreeSpace = 0;
+		foreach($hd as $mount)
+		{
+			if ($mount['mount'] == "/")
+			{
+				$hddFreeSpace = $mount['free_percent'];
+				break;
+			}
+		}
+
+		$hddFreeSpaceStatus = $hddFreeSpace < 10 ? "red" : ($hddFreeSpace < 50 ? "yellow" : "black");
 
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
@@ -46,5 +69,7 @@ class ManageController extends Controller
 		$this->view->tasksWidget = $tasksWidget;
 		$this->view->alertsTotal = $alertsTotal[0]->cnt;
 		$this->view->alertsFixed = $alertsFixed[0]->cnt;
+		$this->view->hddFreeSpace = $hddFreeSpace;
+		$this->view->hddFreeSpaceStatus = $hddFreeSpaceStatus;
 	}
 }
