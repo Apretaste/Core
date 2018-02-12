@@ -23,26 +23,13 @@ class LinfoTask extends \Phalcon\Cli\Task
 
 		if ($alert)
 		{
-			// send file as email attachment
-			$email = new Email();
-			$email->to = 'team@apretaste.com';
-			$email->subject = "Alert: FREE SPACE WARNING";
-
 			$body = date("Y-m-d h:i:s")."\n";
 
 			foreach($hd as $mount)
-			{
 				$body .= "FREE SPACE OF ".$mount['mount'].' = '.$mount['free_percent']."\n";
-			}
-
-			$email->body = $body;
-			$email->send();
 
 			$utils = new Utils();
-			$utils->createAlert($body);
+			$utils->createAlert($body, 'ERROR');
 		}
-
-		//var_dump($hd[0]['partitions']);
-		//var_dump($hd); // and a whole lot more
 	}
 }
