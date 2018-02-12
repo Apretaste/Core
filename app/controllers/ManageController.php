@@ -36,7 +36,16 @@ class ManageController extends Controller
 		$parser = $linfo->getParser();
 		$hd = $parser->getMounts();
 
-		$hddFreeSpace = $hd[0]['free_percent'];
+		$hddFreeSpace = "unknown";
+		foreach($hd as $mount)
+		{
+			if ($mount['mount'] == "/dev/sdb1")
+			{
+				$hddFreeSpace = $mount['free_percent'];
+				break;
+			}
+		}
+
 
 		// get data for the Tasks widget
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
