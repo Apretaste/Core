@@ -27,7 +27,8 @@ class ManageController extends Controller
 		$queryRunningAds = $connection->query("SELECT COUNT(active) AS cnt FROM ads WHERE active=1");
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='NEW'");
 		$supportPendingCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='PENDING'");
-		$mailListRegisteredUsers = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE mail_list=1");
+		//
+		$mailListRegisteredUsers = $connection->query("SELECT count(email) as cnt FROM person WHERE active=1 and appversion<>'' and mail_list=1");
 		$alertsTotal = $connection->query("SELECT COUNT(id) as cnt FROM alerts;");
 		$alertsFixed = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed = 1;");
 
