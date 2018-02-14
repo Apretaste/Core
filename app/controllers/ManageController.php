@@ -23,6 +23,8 @@ class ManageController extends Controller
 		$numberActiveUsers = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
 		$numberTotalUsers = $connection->query("SELECT COUNT(email) as cnt FROM person");
 		$numberUserProfiles = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
+		$emailsNotSentLastWeek = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code<>'200' AND delivery_code<>'555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
+		$emailsNotReceivedByTheAppLastWeek = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code='555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
 		$creditsOffered = $connection->query("SELECT SUM(credit) AS cnt FROM person WHERE active=1");
 		$queryRunningAds = $connection->query("SELECT COUNT(active) AS cnt FROM ads WHERE active=1");
 		$supportNewCount = $connection->query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='NEW'");
@@ -42,6 +44,8 @@ class ManageController extends Controller
 		$this->view->numberActiveUsers = $numberActiveUsers[0]->cnt;
 		$this->view->numberTotalUsers = $numberTotalUsers[0]->cnt;
 		$this->view->numberUserProfiles = $numberUserProfiles[0]->cnt;
+		$this->view->emailsNotSentLastWeek = $emailsNotSentLastWeek[0]->cnt;
+		$this->view->emailsNotReceivedByTheAppLastWeek = $emailsNotReceivedByTheAppLastWeek[0]->cnt;
 		$this->view->creditsOffered = $creditsOffered[0]->cnt;
 		$this->view->queryRunningAds = $queryRunningAds[0]->cnt;
 		$this->view->supportNewCount = $supportNewCount[0]->cnt;

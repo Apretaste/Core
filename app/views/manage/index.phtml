@@ -1,5 +1,4 @@
-
-<!-- BLOCKS -->
+<h3>General</h3>
 
 <div class="row">
 	<!-- ACTIVE USERS BLOCK -->
@@ -45,25 +44,66 @@
 			</div>
 		</div>
 	</div>
+</div>
 
-	<!-- CUSTOMER SUPPORT BLOCK -->
-	<div class="col-sm-2">
+<h3>Technical</h3>
+
+<div class="row">
+	<!-- OPENED ALERTS -->
+	<div class="col-xs-2">
 		<div class="panel panel-default">
-			<div class="panel-body">
-				<span class="glyphicon glyphicon-headphones pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?> <small>Tickets</small></big><br/>
-				<small>Open/Pending</small>
+			<div class="panel-body <?= $openedAlerts>100 ? "danger" : ($openedAlerts>50 ? "warning" : "") ?>">
+				<i class="fa fa-bug pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><a href="/developer/alerts"><?= number_format($openedAlerts) ?></a></big><br/>
+				<small>Errors to fix</small>
 			</div>
 		</div>
 	</div>
 
-	<!-- SURVEYS RUNNUNG -->
+	<!-- EMAILS NOT SENT BY APRETASTE -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $emailsNotSentLastWeek>100 ? "danger" : ($emailsNotSentLastWeek>50 ? "warning" : "") ?>">
+				<i class="fa fa-exclamation-circle pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= number_format($emailsNotSentLastWeek) ?></big> <small>last week</small><br/>
+				<small>Unsent emails</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- EMAILS NOT RECEIVED BY THE APP LAST WEEK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $emailsNotReceivedByTheAppLastWeek>100 ? "danger" : ($emailsNotReceivedByTheAppLastWeek>50 ? "warning" : "") ?>">
+				<i class="fa fa-exclamation-triangle pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= number_format($emailsNotReceivedByTheAppLastWeek) ?></big> <small>last week</small><br/>
+				<small>Unreceived emails</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- HDD FREE SPACE -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $hddFreeSpace<10 ? "danger" : ($hddFreeSpace<50 ? "warning" : "") ?>">
+				<i class="fa fa-hdd-o pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $hddFreeSpace ?>%</big><br/>
+				<small>HDD Free Space</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+<h3>Marketing</h3>
+
+<div class="row">
+	<!-- MAIL LIST REGISTRERED USERS -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
-			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : "" ?>">
-				<span class="glyphicon glyphicon-signal pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= $openedSurveysCount ?></big> <small>Surveys</small><br/>
-				<small>Surveys running</small>
+			<div class="panel-body">
+				<i class="fa fa-envelope pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= number_format($mailListRegisteredUsers) ?></big><br/>
+				<small>Mail list size</small>
 			</div>
 		</div>
 	</div>
@@ -79,45 +119,23 @@
 		</div>
 	</div>
 
+	<!-- SURVEYS RUNNUNG -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : "" ?>">
+				<span class="glyphicon glyphicon-signal pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $openedSurveysCount ?></big> <small>Surveys</small><br/>
+				<small>Surveys running</small>
+			</div>
+		</div>
+	</div>
+
 	<!-- MONTHLY RAFFLE RUNNING -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
 			<div class="panel-body text-center <?= $isMonthlyRaffleOpen=="off" ? "danger" : "" ?>">
 				<i class="fa fa-toggle-<?= $isMonthlyRaffleOpen ?> pull-left" style="font-size:37px;"></i>
 				<small>Is a raffle running?</small>
-			</div>
-		</div>
-	</div>
-
-	<!-- MAIL LIST REGISTRERED USERS -->
-	<div class="col-sm-2">
-		<div class="panel panel-default">
-			<div class="panel-body">
-				<i class="fa fa-envelope pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><?= number_format($mailListRegisteredUsers) ?></big><br/>
-				<small>Mail list size</small>
-			</div>
-		</div>
-	</div>
-
-	<!-- OPENED ALERTS -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<div class="panel-body <?= $openedAlerts>100 ? "danger" : ($openedAlerts>50 ? "warning" : "") ?>">
-				<i class="fa fa-bug pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><a href="/developer/alerts"><?= number_format($openedAlerts) ?></a></big><br/>
-				<small>Errors to fix</small>
-			</div>
-		</div>
-	</div>
-
-	<!-- HDD FREE SPACE -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<div class="panel-body <?= $hddFreeSpace<10 ? "danger" : ($hddFreeSpace<50 ? "warning" : "") ?>">
-				<i class="fa fa-hdd-o pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><?= $hddFreeSpace ?>%</big><br/>
-				<small>HDD Free Space</small>
 			</div>
 		</div>
 	</div>
@@ -134,7 +152,22 @@
 	</div>
 </div>
 
-<!-- WIDGETS -->
+<h3>Support</h3>
+
+<div class="row">
+	<!-- CUSTOMER SUPPORT BLOCK -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<span class="glyphicon glyphicon-headphones pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?> <small>Tickets</small></big><br/>
+				<small>Open/Pending</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+<h3>Widgets</h3>
 
 <div class="row">
 	<!-- COLUMN #1 -->
