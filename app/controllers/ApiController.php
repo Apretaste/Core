@@ -22,7 +22,7 @@ class ApiController extends Controller
 		$email = trim($this->request->get('email'));
 		$pin = trim($this->request->get('pin'));
 		$appid = trim($this->request->get('appid'));
-		$appname = trim($this->request->get('appname'));
+		$appname = trim($this->request->get('appname')); // apretaste, pizarra, piropazo
 		$platform = trim($this->request->get('platform')); // android, web, ios
 
 		// check if user/pass is correct
@@ -34,12 +34,11 @@ class ApiController extends Controller
 		}
 
 		// check if the token exist and grab it
-		$token = $connection->query("SELECT token FROM authentication WHERE email='$email' AND appname='$appname'");
-		if(isset($token[0]->token)) $token = $token[0]->token;
+		$token = $connection->query("SELECT token FROM authentication WHERE email='$email' AND appname='$appname' AND token<>'' AND token IS NOT NULL");
+		if(count($token) > 0) $token = $token[0]->token;
 
 		// else create a new one and save it to the databae
-		if(empty($token))
-		{
+		if(empty($token)) {
 			$token = md5($email.$pin.rand());
 			$connection->query("INSERT INTO authentication (token,email,appid,appname,platform) VALUES ('$token','$email','$appid','$appname','$platform')");
 		}

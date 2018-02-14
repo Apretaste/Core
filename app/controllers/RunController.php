@@ -150,7 +150,7 @@ class RunController extends Controller
 	public function appAction()
 	{
 		// get the token from the URL
-		$token = $this->request->get("token");
+		$token = trim($this->request->get("token"));
 
 		// get the user from the token
 		$security = new Security();

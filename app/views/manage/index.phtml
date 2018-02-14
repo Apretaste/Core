@@ -7,7 +7,7 @@
 		<div class="panel panel-default">
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-user pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= number_format($numberActiveUsers, 0) ?></big><small>/<?= number_format($numberTotalUsers, 0) ?></small><br/>
+				<big><b><?= number_format($numberActiveUsers) ?></b></big><small>/<?= number_format($numberTotalUsers) ?></small><br/>
 				<small>Active/Total users</small>
 			</div>
 		</div>
@@ -17,8 +17,8 @@
 	<div class="col-xs-2">
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<span class="glyphicon glyphicon-thumbs-up pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= number_format($numberUserProfiles, 0) ?></big><br/>
+				<span class="glyphicon glyphicon-star-empty pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><b><?= number_format($numberUserProfiles) ?></b></big><small>/<?= number_format($numberActiveUsers) ?></small><br/>
 				<small>Users with profile</small>
 			</div>
 		</div>
@@ -30,7 +30,7 @@
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><?= number_format($creditsOffered, 2) ?></big><br/>
-				<small>Total credits</small>
+				<small>Credits granted</small>
 			</div>
 		</div>
 	</div>
@@ -39,8 +39,8 @@
 	<div class="col-sm-2">
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<span class="glyphicon glyphicon-usd pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= number_format($queryRunningAds, 0) ?></big><br/>
+				<span class="glyphicon glyphicon-text-color pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= number_format($queryRunningAds) ?></big><br/>
 				<small>Ads running</small>
 			</div>
 		</div>
@@ -57,39 +57,81 @@
 		</div>
 	</div>
 
+	<!-- SURVEYS RUNNUNG -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : "" ?>">
+				<span class="glyphicon glyphicon-signal pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $openedSurveysCount ?></big> <small>Surveys</small><br/>
+				<small>Surveys running</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- CONTESTS RUNNUNG -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $openedContestsCount<=1 ? "danger" : "" ?>">
+				<span class="glyphicon glyphicon-glass pull-left" style="font-size:37px; margin-right:10px;"></span>
+				<big><?= $openedContestsCount ?></big> <small>Contests</small><br/>
+				<small>Contests running</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- MONTHLY RAFFLE RUNNING -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<div class="panel-body text-center <?= $isMonthlyRaffleOpen=="off" ? "danger" : "" ?>">
+				<i class="fa fa-toggle-<?= $isMonthlyRaffleOpen ?>" style="font-size:37px;"></i><br/>
+				<small>Is raffle running?</small>
+			</div>
+		</div>
+	</div>
+
 	<!-- MAIL LIST REGISTRERED USERS -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<span class="glyphicon glyphicon-envelope pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= number_format($mailListRegisteredUsers, 0) ?></big><br/>
+				<i class="fa fa-envelope pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= number_format($mailListRegisteredUsers) ?></big><br/>
 				<small>Mail list size</small>
 			</div>
 		</div>
 	</div>
-</div>
 
-<div class="row">
-	<!-- ALERTS -->
+	<!-- OPENED ALERTS -->
 	<div class="col-xs-2">
 		<div class="panel panel-default">
-			<div class="panel-body">
+			<div class="panel-body <?= $openedAlerts>100 ? "danger" : ($openedAlerts>50 ? "warning" : "") ?>">
 				<i class="fa fa-bug pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><a href="/developer/alerts"><?= number_format($alertsTotal-$alertsFixed, 0) ?></a></big><br/>
+				<big><a href="/developer/alerts"><?= number_format($openedAlerts) ?></a></big><br/>
 				<small>Errors to fix</small>
 			</div>
 		</div>
 	</div>
-    <!-- ALERTS -->
-    <div class="col-xs-2">
-        <div class="panel panel-default">
-            <div class="panel-body" style="color:<?= $hddFreeSpaceStatus ?>;">
-                <i class="fa fa-hdd-o pull-left" style="font-size:37px; margin-right:10px;"></i>
-                <big><?= $hddFreeSpace ?>%</big><br/>
-                <small>HDD Free Space</small>
-            </div>
-        </div>
-    </div>
+
+	<!-- HDD FREE SPACE -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body <?= $hddFreeSpace<10 ? "danger" : ($hddFreeSpace<50 ? "warning" : "") ?>">
+				<i class="fa fa-hdd-o pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $hddFreeSpace ?>%</big><br/>
+				<small>HDD Free Space</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- POSTS IN FACEBOOK THIS MONTH -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<i class="fa fa-facebook-square pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><b><?= count($fbPostCurrentMonth) ?></b></big><small>/60 (<?= number_format(count($fbPostCurrentMonth)*100/60) ?>%)</small><br/>
+				<small>Posts in Facebook</small>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- WIDGETS -->
@@ -125,9 +167,36 @@
 
 	<!-- COLUMN #2 -->
 	<div class="col-xs-4">
+		<!-- TRELLO TASKS BY DEPARTMENT -->
+		<div class="panel panel-default">
+			<div class="panel-heading"><a href="https://trello.com/b/SfAGG9cZ/apretaste" target="_blank">Tasks by department in Trello</a></div>
+			<div class="panel-body">
+				<table class="table-condensed fullscreen">
+					<tr>
+						<th class="text-center">Department</th>
+						<th class="text-center">ToDo</th>
+						<th class="text-center">Done</th>
+						<th class="text-center">Finished</th>
+					</tr>
+					<?php foreach ($trelloByDept as $name=>$dept) { ?>
+					<tr>
+						<td><?= ucfirst(strtolower(str_replace('_', ' ', $name))) ?></td>
+						<td class="text-center"><?= $dept['WAITING'] ?></td>
+						<td class="text-center"><?= $dept['DONE'] ?></td>
+						<td class="text-center"><b><?= number_format(($dept['DONE']*100)/$dept['TOTAL']) ?>%</b></td>
+					</tr>
+					<?php } ?>
+				</table>
+			</div>
+		</div>
 	</div>
 
 	<!-- COLUMN #3 -->
 	<div class="col-xs-4">
 	</div>
 </div>
+
+<style>
+	.danger{color:#CE403C; background-color:#F2DEDE;}
+	.warning{color:#AA6708; background-color:#FCF8E3;}
+</style>
