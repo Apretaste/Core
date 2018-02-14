@@ -111,7 +111,7 @@
 	<!-- CONTESTS RUNNUNG -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
-			<div class="panel-body <?= $openedContestsCount<=1 ? "danger" : "" ?>">
+			<div class="panel-body <?= $openedContestsCount==0 ? "danger" : ($openedContestsCount==1 ? "warning" : "") ?>">
 				<span class="glyphicon glyphicon-glass pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><?= $openedContestsCount ?></big> <small>Contests</small><br/>
 				<small>Contests running</small>
@@ -122,7 +122,7 @@
 	<!-- SURVEYS RUNNUNG -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
-			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : "" ?>">
+			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : ($openedSurveysCount==3 ? "warning" : "") ?>">
 				<span class="glyphicon glyphicon-signal pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><?= $openedSurveysCount ?></big> <small>Surveys</small><br/>
 				<small>Surveys running</small>
@@ -133,8 +133,9 @@
 	<!-- MONTHLY RAFFLE RUNNING -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
-			<div class="panel-body text-center <?= $isMonthlyRaffleOpen=="off" ? "danger" : "" ?>">
-				<i class="fa fa-toggle-<?= $isMonthlyRaffleOpen ?> pull-left" style="font-size:37px;"></i>
+			<div class="panel-body <?= $isMonthlyRaffleOpen=="off" ? "danger" : "" ?>">
+				<i class="fa fa-toggle-<?= $isMonthlyRaffleOpen ?> pull-left" style="font-size:37px;  margin-right:10px;"></i>
+				<big><?= strtoupper($isMonthlyRaffleOpen) ?></big><br/>
 				<small>Is a raffle running?</small>
 			</div>
 		</div>
