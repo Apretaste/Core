@@ -4,22 +4,26 @@
 	<!-- ACTIVE USERS BLOCK -->
 	<div class="col-xs-2">
 		<div class="panel panel-default">
+			<a href="/analytics/audience">
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-user pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><b><?= number_format($numberActiveUsers) ?></b></big><small>/<?= number_format($numberTotalUsers) ?></small><br/>
 				<small>Active/Total users</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
 	<!-- USER PROFILES BLOCK -->
 	<div class="col-xs-2">
 		<div class="panel panel-default">
+			<a href="/analytics/profile">
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-star-empty pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><b><?= number_format($numberUserProfiles) ?></b></big><small>/<?= number_format($numberActiveUsers) ?></small><br/>
 				<small>Users with profile</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
@@ -37,11 +41,13 @@
 	<!-- NUMBER OF ADS RUNNING -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
+			<a href="/admin/ads">
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-text-color pull-left" style="font-size:37px; margin-right:10px;"></span>
 				<big><?= number_format($queryRunningAds) ?></big><br/>
 				<small>Ads running</small>
 			</div>
+			</a>
 		</div>
 	</div>
 </div>
@@ -52,11 +58,13 @@
 	<!-- OPENED ALERTS -->
 	<div class="col-xs-2">
 		<div class="panel panel-default">
+			<a href="/developer/alerts">
 			<div class="panel-body <?= $openedAlerts>100 ? "danger" : ($openedAlerts>50 ? "warning" : "") ?>">
 				<i class="fa fa-bug pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><a href="/developer/alerts"><?= number_format($openedAlerts) ?></a></big><br/>
+				<big><?= number_format($openedAlerts) ?></big><br/>
 				<small>Errors to fix</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
@@ -111,33 +119,39 @@
 	<!-- CONTESTS RUNNUNG -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
+			<a href="/contests">
 			<div class="panel-body <?= $openedContestsCount==0 ? "danger" : ($openedContestsCount==1 ? "warning" : "") ?>">
 				<span class="glyphicon glyphicon-glass pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= $openedContestsCount ?></big> <small>Contests</small><br/>
+				<big><?= $openedContestsCount ?></big><small>/2</small><br/>
 				<small>Contests running</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
 	<!-- SURVEYS RUNNUNG -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
+			<a href="/survey/surveys">
 			<div class="panel-body <?= $openedSurveysCount<=2 ? "danger" : ($openedSurveysCount==3 ? "warning" : "") ?>">
-				<span class="glyphicon glyphicon-signal pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= $openedSurveysCount ?></big> <small>Surveys</small><br/>
+				<i class="fa fa-pie-chart pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $openedSurveysCount ?></big><small>/4</small><br/>
 				<small>Surveys running</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
 	<!-- MONTHLY RAFFLE RUNNING -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
+			<a href="/admin/raffles">
 			<div class="panel-body <?= $isMonthlyRaffleOpen=="off" ? "danger" : "" ?>">
 				<i class="fa fa-toggle-<?= $isMonthlyRaffleOpen ?> pull-left" style="font-size:37px;  margin-right:10px;"></i>
 				<big><?= strtoupper($isMonthlyRaffleOpen) ?></big><br/>
 				<small>Is a raffle running?</small>
 			</div>
+			</a>
 		</div>
 	</div>
 
@@ -156,14 +170,29 @@
 <h3>Support</h3>
 
 <div class="row">
-	<!-- CUSTOMER SUPPORT BLOCK -->
+	<!-- OPEN/PENDING TICKETS -->
 	<div class="col-sm-2">
 		<div class="panel panel-default">
+			<a href="/support">
 			<div class="panel-body">
 				<span class="glyphicon glyphicon-headphones pull-left" style="font-size:37px; margin-right:10px;"></span>
-				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?> <small>Tickets</small></big><br/>
+				<big><?= $supportNewCount ?>/<?= $supportPendingCount ?></big> <small>Tickets</small><br/>
 				<small>Open/Pending</small>
 			</div>
+			</a>
+		</div>
+	</div>
+
+	<!-- UNRESPONDED CHATS -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<a href="/support/notes">
+			<div class="panel-body <?= $unrespondedNotes>20 ? "danger" : ($unrespondedNotes>10 ? "warning" : "") ?>">
+				<i class="fa fa-comments pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $unrespondedNotes ?></big> <small>Chats</small><br/>
+				<small>Unresponded chats</small>
+			</div>
+			</a>
 		</div>
 	</div>
 </div>
@@ -233,4 +262,5 @@
 <style>
 	.danger{color:#CE403C; background-color:#F2DEDE;}
 	.warning{color:#AA6708; background-color:#FCF8E3;}
+	.panel a{color:#676A6C;}
 </style>

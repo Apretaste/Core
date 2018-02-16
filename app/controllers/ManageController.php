@@ -38,6 +38,7 @@ class ManageController extends Controller
 		$hddFreeSpace = $this->getFreeSpaceHDD();
 		$trelloByDept = $this->getTrelloTasksByDepartment();
 		$fbPostCurrentMonth = $this->getPostFacebookPageCurrentMonth();
+		$unrespondedNotes = SupportController::getUnrespondedNotesToApretaste();
 
 		// send data to the view
 		$this->view->title = "Dashboard";
@@ -59,6 +60,7 @@ class ManageController extends Controller
 		$this->view->trelloByDept = $trelloByDept;
 		$this->view->fbPostCurrentMonth = $fbPostCurrentMonth;
 		$this->view->hddFreeSpace = $hddFreeSpace;
+		$this->view->unrespondedNotes = count($unrespondedNotes);
 	}
 
 	/**
@@ -70,7 +72,7 @@ class ManageController extends Controller
 		// get settings
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
-		$settings = \Linfo\Common::getVarFromFile($wwwroot.'/configs/linfo.inc.php', 'settings');
+		$settings = \Linfo\Common::getVarFromFile("$wwwroot/configs/linfo.inc.php", 'settings');
 
 		// get free space hdd
 		$linfo = new \Linfo\Linfo($settings);
