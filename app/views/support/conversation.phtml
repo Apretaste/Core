@@ -19,7 +19,7 @@
 					<td width="10"><img src="<?=$note->picture_public?>" style="width:35px; heigth:35px;" alt="picture"></td>
 					<td>
 						<a target="_blank" href="/admin/profilesearch?email=<?=$note->email?>">@<?=$note->username?></a><br/>
-						<?=date("m/d h:i A", strtotime($note->sent))?>
+						<small><nobr><?=date("m/d h:i A", strtotime($note->sent))?></nobr></small>
 					</td>
 					<td><?=$note->text?></td>
 				</tr>

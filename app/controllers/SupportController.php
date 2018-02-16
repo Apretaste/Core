@@ -271,7 +271,7 @@ class SupportController extends Controller
 	public function notesAction()
 	{
 		$notes = self::getUnrespondedNotesToApretaste();
-		$this->view->title = "Unresponded notes (".count($notes).")";
+		$this->view->title = "Open chats (".count($notes).")";
 		$this->view->notes = $notes;
 	}
 
@@ -307,7 +307,7 @@ class SupportController extends Controller
 		$social = new Social();
 		$notes = $social->chatConversation("salvi@apretaste.com", $email);
 
-		$this->view->title = "Conversation";
+		$this->view->title = "Chat";
 		$this->view->notes = $notes;
 		$this->view->email = $email;
 		$this->view->buttons = [["caption"=>"Go back", "href"=>"notes"]];
