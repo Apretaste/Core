@@ -264,4 +264,67 @@ class SupportController extends Controller
 		$this->view->title = "Tickets ($unresponded)";
 		$this->view->tickets = $tickets;
 	}
+
+	/**
+	 * Notes not responded
+	 */
+	public function notesAction()
+	{
+		$notes = $this->getUnrespondedNotesToApretaste();
+		$this->view->title = "Unresponded notes (".count($notes).")";
+		$this->view->notes = $notes;
+	}
+
+	/**
+	 * Post the response
+	 */
+	public function noteSubmitAction()
+	{
+		$email = $this->request->get("email");
+		$text = $this->request->get("text");
+
+		// store the note in the database
+		$connection = new Connection();
+		$text = $connection->escape($text, 499);
+		$connection->query("INSERT INTO _note (from_user, to_user, `text`) VALUES ('salvi@apretaste.com','$email','$text')");
+
+		// send notification for the app
+		$utils = new Utils();
+		$friendEmail = $utils->getUsernameFromEmail($email);
+		$utils->addNotification($friendEmail, "chat", "@apretaste le ha enviado una nota", "CHAT @apretaste");
+
+		// go to the list of notes
+		$this->response->redirect("support/notes");
+	}
+
+	/**
+	 * Conversation between Apretaste and somebody
+	 */
+	public function conversationAction()
+	{
+		$email = $this->request->get("email");
+
+		$social = new Social();
+		$notes = $social->chatConversation("salvi@apretaste.com", $email);
+
+		$this->view->title = "Conversation";
+		$this->view->notes = $notes;
+		$this->view->email = $email;
+		$this->view->buttons = [["caption"=>"Go back", "href"=>"notes"]];
+	}
+
+	/**
+	 * Get unread notes sent to Apretaste but never responded
+	 */
+	public function getUnrespondedNotesToApretaste()
+	{
+		return Connection::query("
+			SELECT i.from_user AS email, IF(o.last_chat IS NULL, i.last_chat, o.last_chat) AS last_chat
+			FROM (SELECT from_user, MAX(send_date) AS last_chat FROM _note WHERE to_user='salvi@apretaste.com' GROUP BY from_user) i
+			LEFT JOIN (SELECT to_user, MAX(send_date) AS last_chat FROM _note WHERE from_user='salvi@apretaste.com' GROUP BY to_user) o
+			ON o.to_user = i.from_user
+			WHERE o.to_user IS NULL
+			OR o.last_chat < i.last_chat
+			ORDER BY last_chat DESC");
+	}
 }
