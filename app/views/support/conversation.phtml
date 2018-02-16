@@ -1,9 +1,22 @@
 <div class="row">
+	<!--MACROS -->
+	<div class="col-xs-12">
+		<div class="form-group">
+			<label for="cans">Macro</label>
+			<select id="cans" class="form-control" onchange="loadCanResponse(this);">
+				<?php foreach($cans as $can) { ?>
+					<option value="<?=$can->body?>"><?=$can->name?></option>
+				<?php } ?>
+			</select>
+		</div>
+	</div>
+
+	<!--TEXT FIELD-->
 	<div class="col-xs-12">
 		<form action="noteSubmit" method="get">
 			<div class="input-group">
 				<input type="hidden" name="email" value="<?=$email?>"/>
-				<input required type="text" class="form-control" name="text"/>
+				<input id="note" type="text" class="form-control" name="text" required/>
 				<span class="input-group-btn">
 					<button type="submit" class="btn btn-success">Respond</button>
 				</span>
@@ -12,6 +25,7 @@
 		<br/>
 	</div>
 
+	<!--CONVERSATION-->
 	<div class="col-xs-12">
 		<table class="table">
 			<?php foreach ($notes as $note) { ?>
@@ -27,3 +41,10 @@
 		</table>
 	</div>
 </div>
+
+<script type="text/javascript">
+	function loadCanResponse(element) {
+		console.log(element.value);
+		$('#note').val(element.value);
+	}
+</script>

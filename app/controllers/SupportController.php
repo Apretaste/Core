@@ -303,13 +303,18 @@ class SupportController extends Controller
 	{
 		$email = $this->request->get("email");
 
+		// get conversation
 		$social = new Social();
 		$notes = $social->chatConversation("salvi@apretaste.com", $email);
 
+		// get the list of macros
+		$cans = Connection::query("SELECT name, body FROM support_cans");
+
 		$this->view->title = "Chat";
+		$this->view->buttons = [["caption"=>"Go back", "href"=>"notes"]];
 		$this->view->notes = $notes;
 		$this->view->email = $email;
-		$this->view->buttons = [["caption"=>"Go back", "href"=>"notes"]];
+		$this->view->cans = $cans;
 	}
 
 	/**
