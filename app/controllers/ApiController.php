@@ -26,21 +26,17 @@ class ApiController extends Controller
 		$platform = trim($this->request->get('platform')); // android, web, ios
 
 		// check if user/pass is correct
-		$connection = new Connection();
-		$auth = $connection->query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
+		$auth = Connection::query("SELECT email,token FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
 		if(empty($auth)) {
 			echo '{"code":"error","message":"invalid email or pin"}';
 			return false;
 		}
 
-		// check if the token exist and grab it
-		$token = $connection->query("SELECT token FROM authentication WHERE email='$email' AND appname='$appname' AND token<>'' AND token IS NOT NULL");
-		if(count($token) > 0) $token = $token[0]->token;
-
-		// else create a new one and save it to the databae
+		// save token in the database if it does not exist
+		$token = trim($auth[0]->token);
 		if(empty($token)) {
 			$token = md5($email.$pin.rand());
-			$connection->query("INSERT INTO authentication (token,email,appid,appname,platform) VALUES ('$token','$email','$appid','$appname','$platform')");
+			Connection::query("UPDATE person SET token='$token' WHERE email='$email'");
 		}
 
 		// save the API log
@@ -51,53 +47,6 @@ class ApiController extends Controller
 
 		// return ok response
 		echo '{"code":"ok","token":"'.$token.'"}';
-	}
-
-	/**
-	 * Update the appid and appname for a certain token
-	 *
-	 * @author salvipascual
-	 * @version 1.0
-	 * @param POST token
-	 * @param POST appid
-	 * @param POST appname
-	 * @return JSON with code
-	 */
-	public function updateAppIdAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
-
-		// get params from GET
-		$token = $this->request->get("token");
-		$appid = trim($this->request->get('appid'));
-		$appname = trim($this->request->get('appname'));
-
-		// force appid and appname
-		if(empty($appid) || empty($appname)) {
-			echo '{"code":"error","message":"missing appid or appname"}';
-			return false;
-		}
-
-		// check if token exists
-		$connection = new Connection();
-		$exist = $connection->query("SELECT COUNT(id) AS exist FROM authentication WHERE token = '$token'")[0]->exist;
-		if(empty($exist)) {
-			echo '{"code":"error","message":"invalid token"}';
-			return false;
-		}
-
-		// update appid and appname
-		$connection->query("UPDATE authentication SET appid='$appid', appname='$appname' WHERE token='$token'");
-
-		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
-		$logger->log("UPDATEAPPID token:$token, appid:$appid, appname:$appname");
-		$logger->close();
-
-		// return ok response
-		echo '{"code":"ok"}';
 	}
 
 	/**
@@ -117,9 +66,8 @@ class ApiController extends Controller
 		// get the values from the post
 		$token = trim($this->request->get('token'));
 
-		// delete the row for the token
-		$connection = new Connection();
-		$connection->query("DELETE FROM authentication WHERE token='$token'");
+		// delete the token
+		Connection::query("UPDATE person SET token=NULL WHERE token='$token'");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -146,7 +94,6 @@ class ApiController extends Controller
 		$email = trim($this->request->get('email'));
 
 		$utils = new Utils();
-		$connection = new Connection();
 
 		// check if the email is valid
 		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -162,7 +109,7 @@ class ApiController extends Controller
 
 		// create the new profile
 		$username = $utils->usernameFromEmail($email);
-		$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
+		Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -189,8 +136,7 @@ class ApiController extends Controller
 		$email = trim($this->request->get('email'));
 
 		// check if the user exist
-		$connection = new Connection();
-		$res = $connection->query("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
+		$res = Connection::query("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
 		$exist = empty($res) ? 'false' : 'true';
 
 		// check if the user already created a pin
@@ -230,21 +176,19 @@ class ApiController extends Controller
 			return false;
 		}
 
-		$utils = new Utils();
-		$connection = new Connection();
-
 		// if user does not exist, create it
 		$newUser = "false";
+		$utils = new Utils();
 		if( ! $utils->personExist($email))
 		{
 			$newUser = "true";
 			$username = $utils->usernameFromEmail($email);
-			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
+			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 		}
 
 		// create a new pin for the user
 		$pin = mt_rand(1000, 9999);
-		$connection->query("UPDATE person SET pin='$pin' WHERE email='$email'");
+		Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
 		// create response to email the new code
 		$subject = "Code: $pin";
@@ -303,36 +247,51 @@ class ApiController extends Controller
 	}
 
 	/**
-	 * Save a user's appid to contact him/her later via web push notifications
+	 * Update the appid and appname for a certain token
 	 *
 	 * @author salvipascual
-	 * @param POST email
+	 * @version 1.0
+	 * @param POST token
 	 * @param POST appid
+	 * @param POST appname
+	 * @return JSON with code
 	 */
-	public function saveAppIdAction()
+	public function updateAppIdAction()
 	{
-		$email = $this->request->get('email');
-		$appid = $this->request->get('appid');
+		// allow JS clients to use the API
+		header("Access-Control-Allow-Origin: *");
 
-		// escape values before saving to the db
-		$email = Connection::escape($email);
-		$appid = Connection::escape($appid);
+		// get params from GET
+		$token = $this->request->get("token");
+		$appid = trim($this->request->get('appid'));
+		$appname = trim($this->request->get('appname'));
 
-		// create login token
+		// force appid and appname
+		if(empty($appid) || empty($appname)) {
+			echo '{"code":"error","message":"missing appid or appname"}';
+			return false;
+		}
+
+		// check if token exists
 		$utils = new Utils();
-		$token = $utils->generateRandomHash();
-
-		// check if the row already exists
-		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
-
-		// if the row do not exist, create it
-		if(empty($row)) {
-			Connection::query("INSERT INTO authentication(token,email,appid,appname,platform) VALUES ('$token','$email','$appid','apretaste','web')");
+		$email = $utils->detokenize($token);
+		if(empty($email)) {
+			echo '{"code":"error","message":"invalid token"}';
+			return false;
 		}
 
-		// if the row exist and the appid is different, update it
-		elseif($row[0]->appid != $appid) {
-			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE email='$email' AND appname='apretaste' AND platform='web'");
-		}
+		// update appid and appname
+		Connection::query("
+			DELETE FROM authentication WHERE appname='$appname' AND email='$email';
+			INSERT INTO authentication (email,appid,appname) VALUES ('$email','$appid','$appname')");
+
+		// save the API log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger->log("UPDATEAPPID token:$token, appid:$appid, appname:$appname");
+		$logger->close();
+
+		// return ok response
+		echo '{"code":"ok"}';
 	}
 }
