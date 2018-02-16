@@ -290,8 +290,7 @@ class SupportController extends Controller
 
 		// send notification for the app
 		$utils = new Utils();
-		$friendEmail = $utils->getUsernameFromEmail($email);
-		$utils->addNotification($friendEmail, "chat", "@apretaste le ha enviado una nota", "CHAT @apretaste");
+		$utils->addNotification($email, "chat", "@apretaste le ha enviado una nota", "CHAT @apretaste");
 
 		// go to the list of notes
 		$this->response->redirect("support/notes");
