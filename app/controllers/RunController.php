@@ -92,8 +92,7 @@ class RunController extends Controller
 		}
 
 		// check if the user is blocked
-		$connection = new Connection();
-		$blocked = $connection->query("SELECT email FROM person WHERE email='$email' AND blocked=1");
+		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1");
 		if(count($blocked)>0) {
 			echo '{"code":"error","message":"user blocked"}';
 			return false;
@@ -134,7 +133,7 @@ class RunController extends Controller
 		}
 
 		// update last access time to current
-		$connection->query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+		Connection::query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
 
 		// respond to the API
 		if($response->render) echo Render::renderJSON($response);
@@ -152,6 +151,9 @@ class RunController extends Controller
 		// get the token from the URL
 		$token = trim($this->request->get("token"));
 
+		// get the time when the service started executing
+		$execStartTime = date("Y-m-d H:i:s");
+
 		// get the user from the token
 		$security = new Security();
 		$user = $security->loginByToken($token);
@@ -163,8 +165,7 @@ class RunController extends Controller
 		}
 
 		// do not respond to blocked accounts
-		$connection = new Connection();
-		$blocked = $connection->query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
+		$blocked = Connection::query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
 		if($blocked) return false;
 
 		// error if no files were sent
@@ -180,11 +181,11 @@ class RunController extends Controller
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
 
-		// get the time when the service started executing
-		$execStartTime = date("Y-m-d H:i:s");
-
 		// create a new entry on the delivery table
-		$this->idEmail = $connection->query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'app')");
+		$this->idEmail = Connection::query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'appweb')");
+
+		// set up environment
+		$this->di->set('environment', function() {return "web";});
 
 		// execute the service as app
 		$this->sendEmails = false;
@@ -196,7 +197,7 @@ class RunController extends Controller
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
 
 		// save final data to the db
-		$connection->query("
+		Connection::query("
 			UPDATE delivery
 			SET process_time='$executionTime',
 			delivery_code='200',
@@ -230,13 +231,12 @@ class RunController extends Controller
 		$this->callAmazonWebhook();
 
 		// do not respond to blocked accounts
-		$connection = new Connection();
-		$blocked = $connection->query("SELECT email FROM person WHERE email='{$this->toEmail}' AND blocked=1");
+		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->toEmail}' AND blocked=1");
 		if($blocked) return false;
 
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		$res = $connection->query("SELECT environment FROM delivery_input WHERE email='$email'");
+		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$email'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
 
 		// set the running environment
@@ -256,15 +256,15 @@ class RunController extends Controller
 		}
 
 		// update the number of emails received
-		$connection->query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
+		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// update last access time and make person active
 		$personExist = $utils->personExist($this->fromEmail);
-		if ($personExist) $connection->query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='{$this->fromEmail}'");
+		if ($personExist) Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE email='{$this->fromEmail}'");
 		else {
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($this->fromEmail);
-			$connection->query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+			Connection::query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
 
 			// add the welcome notification
 			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
@@ -274,7 +274,7 @@ class RunController extends Controller
 		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
 		$this->subject = substr($this->subject, 0, 1023);
-		$this->idEmail = $connection->query("
+		$this->idEmail = Connection::query("
 			INSERT INTO delivery (user, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
 			VALUES ('{$this->fromEmail}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
@@ -291,7 +291,7 @@ class RunController extends Controller
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		$connection->query("UPDATE delivery SET process_time='$executionTime' WHERE id='{$this->idEmail}'");
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id='{$this->idEmail}'");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -360,16 +360,15 @@ class RunController extends Controller
 		}
 
 		// save Nauta password if passed
-		$connection = new Connection();
 		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
-			$auth = $connection->query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
-			if(empty($auth)) $connection->query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion')");
-			else $connection->query("UPDATE authentication SET pass='$encryptPass', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			$auth = Connection::query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
-		$connection->query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
+		Connection::query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
 		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs);
@@ -426,8 +425,8 @@ class RunController extends Controller
 		}
 
 		// update values in the delivery table
-		$safeQuery = $connection->escape($service->request->query);
-		$connection->query("
+		$safeQuery = Connection::escape($service->request->query);
+		Connection::query("
 			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
@@ -446,8 +445,7 @@ class RunController extends Controller
 	private function runFailure()
 	{
 		// update code for failure emails
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			UPDATE delivery SET
 			delivery_code='555', delivery_message='app failure reported'
 			WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
@@ -459,7 +457,7 @@ class RunController extends Controller
 
 		// calculate failure percentage
 		$failuresCount = 0;
-		$last100codes = $connection->query("SELECT delivery_code FROM delivery WHERE id > (SELECT MAX(id)-100 FROM delivery)");
+		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE id > (SELECT MAX(id)-100 FROM delivery)");
 		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
 
 		// alert developers if failures are over 20%
@@ -500,9 +498,8 @@ class RunController extends Controller
 		}
 
 		// update values in the delivery table
-		$connection = new Connection();
-		$safeQuery = $connection->escape($service->request->query);
-		$connection->query("
+		$safeQuery = Connection::escape($service->request->query);
+		Connection::query("
 			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
@@ -519,14 +516,13 @@ class RunController extends Controller
 	private function runSupport()
 	{
 		// save the new ticket into the database
-		$connection = new Connection();
-		$subject = $connection->escape($this->subject, 250);
-		$body = $connection->escape($this->body, 1024);
-		$connection->query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '$subject', '$body')");
+		$subject = Connection::escape($this->subject, 250);
+		$body = Connection::escape($this->body, 1024);
+		Connection::query("INSERT INTO support_tickets (`from`, subject, body) VALUES ('{$this->fromEmail}', '$subject', '$body')");
 
 		// save the new ticket in the reports table
 		$mysqlDateToday = date("Y-m-d");
-		$connection->query("
+		Connection::query("
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET new_count = new_count+1 WHERE inserted = '$mysqlDateToday';");
 

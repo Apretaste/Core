@@ -79,12 +79,11 @@ class Security
 	 */
 	public function loginByToken($token)
 	{
-		// get the lastest IP and date
-		$person = Connection::query("
-			SELECT A.email, A.pin
-			FROM person A JOIN authentication B
-			ON A.email = B.email
-			WHERE B.token='$token'");
+		// do not allow empty tokens
+		if(empty($token)) return false;
+
+		// get the email and pin using the token
+		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token'");
 		if(empty($person)) return false;
 
 		// log in the user and return

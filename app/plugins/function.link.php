@@ -17,7 +17,7 @@ function smarty_function_link($params, $template)
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), array("app", "web")))
+	if(in_array($di->get('environment'), ["app", "web"]))
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
