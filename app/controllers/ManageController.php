@@ -38,9 +38,7 @@ class ManageController extends Controller
 		$hddFreeSpace = $this->getFreeSpaceHDD();
 		$trelloByDept = $this->getTrelloTasksByDepartment();
 		$fbPostCurrentMonth = $this->getPostFacebookPageCurrentMonth();
-
-		$supportController = new SupportController();
-		$unrespondedNotes = $supportController->getUnrespondedNotesToApretaste();
+		$unrespondedNotes = SupportController::getUnrespondedNotesToApretaste();
 
 		// send data to the view
 		$this->view->title = "Dashboard";

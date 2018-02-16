@@ -270,7 +270,7 @@ class SupportController extends Controller
 	 */
 	public function notesAction()
 	{
-		$notes = $this->getUnrespondedNotesToApretaste();
+		$notes = self::getUnrespondedNotesToApretaste();
 		$this->view->title = "Unresponded notes (".count($notes).")";
 		$this->view->notes = $notes;
 	}
@@ -316,7 +316,7 @@ class SupportController extends Controller
 	/**
 	 * Get unread notes sent to Apretaste but never responded
 	 */
-	public function getUnrespondedNotesToApretaste()
+	public static function getUnrespondedNotesToApretaste()
 	{
 		return Connection::query("
 			SELECT i.from_user AS email, IF(o.last_chat IS NULL, i.last_chat, o.last_chat) AS last_chat
