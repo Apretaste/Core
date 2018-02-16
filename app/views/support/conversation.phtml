@@ -14,8 +14,9 @@
 	<!--TEXT FIELD-->
 	<div class="col-xs-12">
 		<form action="noteSubmit" method="get">
+			<input type="hidden" name="email" value="<?=$email?>"/>
+			<label for="note">Response</label>
 			<div class="input-group">
-				<input type="hidden" name="email" value="<?=$email?>"/>
 				<input id="note" type="text" class="form-control" name="text" required/>
 				<span class="input-group-btn">
 					<button type="submit" class="btn btn-success">Respond</button>
