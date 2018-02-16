@@ -1,0 +1,29 @@
+<div class="row">
+	<div class="col-xs-12">
+		<form action="noteSubmit" method="get">
+			<div class="input-group">
+				<input type="hidden" name="email" value="<?=$email?>"/>
+				<input required type="text" class="form-control" name="text"/>
+				<span class="input-group-btn">
+					<button type="submit" class="btn btn-success">Respond</button>
+				</span>
+			</div>
+		</form>
+		<br/>
+	</div>
+
+	<div class="col-xs-12">
+		<table class="table">
+			<?php foreach ($notes as $note) { ?>
+				<tr <?php if($note->username == "apretaste") echo 'style="background-color:white;"'; ?>>
+					<td width="10"><img src="<?=$note->picture_public?>" style="width:35px; heigth:35px;" alt="picture"></td>
+					<td>
+						<a target="_blank" href="/admin/profilesearch?email=<?=$note->email?>">@<?=$note->username?></a><br/>
+						<?=date("m/d h:i A", strtotime($note->sent))?>
+					</td>
+					<td><?=$note->text?></td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div>
+</div>
