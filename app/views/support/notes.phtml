@@ -12,8 +12,8 @@
 			<?php foreach ($notes as $note) { ?>
 				<tr>
 					<td class="text-center"><?=$note->email?></td>
-					<td class="text-center nobr"><?=date("m/d h:i A", strtotime($note->last_chat))?></td>
-					<td class="text-center"><a class="btn btn-xs btn-primary" href="conversation?email=<?=$note->email?>">Chats</a></td>
+					<td class="text-center nobr"><?=date("m/d/Y h:i A", strtotime($note->last_chat))?></td>
+					<td class="text-center"><a class="btn btn-xs btn-primary" href="conversation?email=<?=$note->email?>">Chat</a></td>
 				</tr>
 			<?php } ?>
 			</tbody>
