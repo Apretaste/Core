@@ -32,12 +32,15 @@ class ManageController extends Controller
 		$mailListRegisteredUsers = $connection->query("SELECT COUNT(email) as cnt FROM person WHERE active=1 and appversion<>'' and mail_list=1");
 		$openedSurveysCount = $connection->query("SELECT COUNT(id) AS cnt FROM _survey WHERE deadline > CURRENT_TIMESTAMP AND active=1");
 		$openedContestsCount = $connection->query("SELECT COUNT(id) AS cnt FROM _concurso WHERE end_date > CURRENT_TIMESTAMP");
+		$emailCampaignsCurrentMonth = $connection->query("SELECT COUNT(id) AS cnt FROM widgets WHERE item='campaign' AND inserted > DATE_FORMAT(NOW(),'%Y-%m-01')");
+		$unsentStoreItems = $connection->query("SELECT COUNT(id) AS cnt FROM _tienda_orders WHERE received=0");
 		$isMonthlyRaffleOpen = $connection->query("SELECT raffle_id AS cnt FROM raffle WHERE end_date > CURRENT_TIMESTAMP");
 		$openedAlerts = $connection->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed=0");
 		$tasksWidget = $connection->query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 		$hddFreeSpace = $this->getFreeSpaceHDD();
 		$trelloByDept = $this->getTrelloTasksByDepartment();
 		$fbPostCurrentMonth = $this->getPostFacebookPageCurrentMonth();
+		$blogPostsCurrentMonth = $this->getBlogPostsCurrentMonth();
 		$unrespondedNotes = SupportController::getUnrespondedNotesToApretaste();
 
 		// send data to the view
@@ -54,13 +57,30 @@ class ManageController extends Controller
 		$this->view->mailListRegisteredUsers = $mailListRegisteredUsers[0]->cnt;
 		$this->view->openedSurveysCount = $openedSurveysCount[0]->cnt;
 		$this->view->openedContestsCount = $openedContestsCount[0]->cnt;
+		$this->view->emailCampaignsCurrentMonth = $emailCampaignsCurrentMonth[0]->cnt;
+		$this->view->unsentStoreItems = $unsentStoreItems[0]->cnt;
 		$this->view->isMonthlyRaffleOpen = empty($isMonthlyRaffleOpen) ? "off" : "on";
 		$this->view->tasksWidget = $tasksWidget;
 		$this->view->openedAlerts = $openedAlerts[0]->cnt;
 		$this->view->trelloByDept = $trelloByDept;
 		$this->view->fbPostCurrentMonth = $fbPostCurrentMonth;
+		$this->view->blogPostsCurrentMonth = empty($blogPostsCurrentMonth->items) ? 0 : count($blogPostsCurrentMonth->items);
 		$this->view->hddFreeSpace = $hddFreeSpace;
 		$this->view->unrespondedNotes = count($unrespondedNotes);
+	}
+
+	/**
+	 * Submit a new item to mark as completed
+	 */
+	public function itemSubmitAction()
+	{
+		$item = $this->request->get("item");
+
+		// get and insert item
+		if($item) Connection::query("INSERT INTO widgets (item) VALUES ('$item')");
+
+		// go back to the dashboard
+		$this->response->redirect('manage');
 	}
 
 	/**
@@ -189,4 +209,34 @@ class ManageController extends Controller
 
 		return $posts;
 	}
+
+	/**
+	 * Get post in our blog this month
+	 * @author salvipascual
+	 */
+	private function getBlogPostsCurrentMonth()
+	{
+		// create cache file
+		$utils = new Utils();
+		$cache = $utils->getTempDir() . "blog" . date("Ymd") . ".cache";
+
+		// use cache if exist
+		if(file_exists($cache)) $posts = unserialize(file_get_contents($cache));
+		else {
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$key = $di->get('config')['google']['key'];
+
+			// get all the cards
+			$krawler = new Krawler();
+			$postsjson = $krawler->getRemoteContent("https://www.googleapis.com/blogger/v3/blogs/8901196033255440299/posts?startDate=".date('Y-m')."-01T00:00:00z&key=$key");
+			$posts = json_decode($postsjson);
+
+			// save cache
+			file_put_contents($cache, serialize($posts));
+		}
+
+		return $posts;
+	}
+
+
 }
