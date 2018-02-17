@@ -491,10 +491,7 @@ class Utils
 	 */
 	public function detokenize($token)
 	{
-		// get the email for a token
-
-		$auth = Connection::query("SELECT id, email FROM authentication WHERE token='$token'");
-
+		$auth = Connection::query("SELECT email FROM person WHERE token='$token'");
 		if(empty($auth)) return false;
 		return $auth[0]->email;
 	}
@@ -508,45 +505,15 @@ class Utils
 	public function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
 	{
 		$l = strlen($name);
-
 		$newname = '';
 		$chars .= $extra_chars;
 
-		for ($i = 0; $i < $l; $i++)
-		{
+		for ($i = 0; $i < $l; $i++) {
 			$ch = $name[$i];
-			if (stripos($chars, $ch) !== false)
-				$newname .= $ch;
+			if (stripos($chars, $ch) !== false) $newname .= $ch;
 		}
 
 		return $newname;
-	}
-
-	/**
-	 * Recursive str replace
-	 *
-	 * @param mixed $search
-	 * @param mixed $replace
-	 * @param String $subject
-	 *
-	 * @return string
-	 */
-	public function recursiveReplace($search, $replace, $subject)
-	{
-		$MAX = 1000;
-		$i = 0;
-
-		while (stripos($subject, $search))
-		{
-			$i++;
-
-			$subject = str_ireplace($search, $replace, $subject);
-
-			if ($i > $MAX)
-				break;
-		}
-
-		return $subject;
 	}
 
 	/**
@@ -610,54 +577,8 @@ class Utils
 	 */
 	public function getFriendlySize($size)
 	{
-		$unit = array(
-			'b',
-			'kb',
-			'mb',
-			'gb',
-			'tb',
-			'pb'
-		);
+		$unit = ['b','kb','mb','gb','tb','pb'];
 		return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
-	}
-
-	/**
-	 * Convert date from spanish to mysql
-	 *
-	 * @param string $spanishDate
-	 * @return string
-	 */
-	public function dateSpanishToMySQL($spanishDate)
-	{
-		$months = array(
-			"Enero",
-			"Febrero",
-			"Marzo",
-			"Abril",
-			"Mayo",
-			"Junio",
-			"Julio",
-			"Agosto",
-			"Septiembre",
-			"Octubre",
-			"Noviembre",
-			"Diciembre"
-		);
-
-		// separate each piece of the date
-		$spanishDate = preg_replace("/\s+/", " ", $spanishDate);
-		$spanishDate = str_replace(",", "", $spanishDate);
-		$arrDate = explode(" ", $spanishDate);
-
-		// create the standar, english date
-		$month = array_search($arrDate[3], $months) + 1;
-		$day = $arrDate[1];
-		$year = $arrDate[5];
-		$time = $arrDate[6] . " " . $arrDate[7];
-		$date = "$month/$day/$year $time";
-
-		// format and return date
-		return date("Y-m-d H:i:s", strtotime($date));
 	}
 
 	/**
@@ -687,32 +608,6 @@ class Utils
 	}
 
 	/**
-	 * Get today date in spanish
-	 *
-	 * @return string
-	 */
-	public function getTodaysDateSpanishString()
-	{
-		$months = array(
-			"Enero",
-			"Febrero",
-			"Marzo",
-			"Abril",
-			"Mayo",
-			"Junio",
-			"Julio",
-			"Agosto",
-			"Septiembre",
-			"Octubre",
-			"Noviembre",
-			"Diciembre"
-		);
-
-		$today = explode(" ", date("j n Y"));
-		return $today[0] . " de " . $months[$today[1] - 1] . " del " . $today[2];
-	}
-
-	/**
 	 * Insert a notification in the database
 	 *
 	 * @author kumahacker
@@ -726,19 +621,20 @@ class Utils
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// check if we should send a web push
-		$row = Connection::query("SELECT token, appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
-		$ispush = 0;
+		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		$ispush = empty($row[0]->appid) ? 0 : 1;
 
 		// if the person has a valid appid, send a web push
-		if( ! empty($row[0]->appid))
+		if($ispush)
 		{
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 			$wwwhttp = $di->get('path')['http'];
-			$ispush = 1;
 
 			// convert the link to URL
-			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link&token={$row[0]->token}";
+			$token = $this->detokenize($email);
+			$tokenStr = $token ? "&token=$token" : "";
+			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link{$tokenStr}";
 
 			// get the image for the service
 			$service = strtolower($origin);
@@ -1209,11 +1105,7 @@ class Utils
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
-		// variable to store attach images
-		$attachments = array();
-
 		// get the person object
-
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
 		$person = $person[0];
 
@@ -1223,8 +1115,14 @@ class Utils
 		$res->username = $person->username;
 		$res->credit = number_format($person->credit, 2, '.', '');
 
-		// get the list of mailboxes
+		// get or create the user's token
+		$res->token = $person->token;
+		if(empty($res->token)) {
+			$res->token = md5(time().rand());
+			Connection::query("UPDATE person SET token='{$res->token}' WHERE email='$email'");
+		}
 
+		// get the list of mailboxes
 		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
 
 		// add the response mailbox
@@ -1235,6 +1133,7 @@ class Utils
 
 		// check if there is any change in the profile
 		$res->profile = new stdClass();
+		$attachments = [];
 		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
@@ -1322,8 +1221,6 @@ class Utils
 		$res->img_quality = $person->img_quality;
 
 		// convert to JSON and return array
-		return array(
-			"attachments" => $attachments,
-			"json" => json_encode($res));
+		return ["attachments" => $attachments, "json" => json_encode($res)];
 	}
 }
