@@ -85,7 +85,7 @@ class AnalyticsController extends Controller
 			WHERE appversion <> ''
 			GROUP BY appversion");
 		foreach($versions as $version) {
-			$appVersions[] = ["people"=>$version->people, "version"=>"Version {$version->appversion}"];
+			$appVersions[] = ["people"=>$version->people, "version"=>"v{$version->appversion}"];
 		}
 
 		// Last 30 days of service usage

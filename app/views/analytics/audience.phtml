@@ -43,7 +43,7 @@
 </div>
 
 <div class="row">
-	<div class="col-xs-6">
+	<div class="col-xs-3">
 		<!-- LAST 30 SERVICE USAGE -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Last 30 days of service usage</div>
@@ -166,7 +166,7 @@
 				['<?= $data['environment'] ?>', <?= $data['number'] ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
+		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('last30EnvironmentUsage'));
 		chart.draw(data, options);
 	}
@@ -181,7 +181,7 @@
 				['<?= $data['version'] ?>',<?=$data['people'] ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
+		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('appVersions'));
 		chart.draw(data, options);
 	}
@@ -210,7 +210,7 @@
 			['Sent', <?= $lastWeekEmailsSent ?>],
 			['Not sent', <?= $lastWeekEmailsNotSent ?>]
 		]);
-		var options = {legend: 'none'};
+		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
 		chart.draw(data, options);
 	}
@@ -225,7 +225,7 @@
 				['<?=$data['domain']; ?>',<?=$data['usage']; ?>],
 			<?php } ?>
 		]);
-		var options = {legend: 'none'};
+		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('last30DaysActiveDomains'));
 		chart.draw(data, options);
 	}
