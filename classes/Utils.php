@@ -1115,13 +1115,6 @@ class Utils
 		$res->username = $person->username;
 		$res->credit = number_format($person->credit, 2, '.', '');
 
-		// get or create the user's token
-		$res->token = $person->token;
-		if(empty($res->token)) {
-			$res->token = md5(time().rand());
-			Connection::query("UPDATE person SET token='{$res->token}' WHERE email='$email'");
-		}
-
 		// get the list of mailboxes
 		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
 
@@ -1219,6 +1212,13 @@ class Utils
 
 		// get image quality
 		$res->img_quality = $person->img_quality;
+
+		// get or create the user's token
+		$res->token = $person->token;
+		if(empty($res->token)) {
+			$res->token = md5(time().rand());
+			Connection::query("UPDATE person SET token='{$res->token}' WHERE email='$email'");
+		}
 
 		// convert to JSON and return array
 		return ["attachments" => $attachments, "json" => json_encode($res)];
