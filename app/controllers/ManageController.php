@@ -224,7 +224,7 @@ class ManageController extends Controller
 		if(file_exists($cache)) $posts = unserialize(file_get_contents($cache));
 		else {
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$key = $di->get('config')['google']['key'];
+			$key = $di->get('config')['google']['apikey'];
 
 			// get all the cards
 			$krawler = new Krawler();
