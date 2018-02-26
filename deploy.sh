@@ -15,6 +15,7 @@ mkdir public/tienda
 mkdir public/temp
 mkdir public/download
 mkdir public/products
+mkdir public/recetas
 touch logs/error.log
 touch logs/access.log
 touch logs/badqueries.log
@@ -32,5 +33,6 @@ chmod 777 public/tienda
 chmod 777 public/temp
 chmod 777 public/download
 chmod 777 public/products
+chmod 777 public/recetas
 chown www-data logs/*.log
 chgrp www-data logs/*.log

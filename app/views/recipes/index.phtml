@@ -1,0 +1,24 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center"></th>
+					<th class="text-center">Recipes</th>
+					<th class="text-center">Difficulty</th>
+					<th class="text-center">Preparation time</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($recipes as $r) { ?>
+				<tr>
+					<td class="text-center"><img style="width:30px; height:30px;" src="/recetas/<?= $r->image ?>.jpg" alt="<?= $r->title ?>"/></td>
+					<td class="text-center"><a href="/recipes/edit?id=<?= $r->id ?>"><?= $r->title ?></a></td>
+					<td class="text-center"><?= $r->difficulty ?></td>
+					<td class="text-center nobr"><?= $r->cooking_time ?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>

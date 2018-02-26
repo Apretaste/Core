@@ -1,0 +1,152 @@
+<div class="row">
+	<div class="col-xs-12">
+		<form action="/recipes/recipeSubmit" method="post" enctype="multipart/form-data">
+			<input type="hidden" name="type" value="<?=$type?>" required />
+
+			<!-- Upload an image -->
+			<div class="form-group">
+				<?php if ($image) { ?><img style="width:150px; height:150px;" src="/recetas/<?=$image?>" alt="foto"/><br/><?php } ?>
+				<label for="image">Upload an image</label>
+				<input id="image" type="file" class="form-control" name="image" />
+			</div>
+
+			<!-- Recipe name -->
+			<div class="form-group">
+				<label for="title">Recipe name</label>
+				<input id="title" type="text" class="form-control" name="title" value="<?=$title?>" required />
+			</div>
+
+			<!-- Preparation time -->
+			<div class="form-group">
+				<label for="cooking_time">Preparation time</label>
+				<input id="cooking_time" type="number" class="form-control" name="cooking_time" value="<?=$cookingTime?>" required />
+			</div>
+
+			<!-- Ingredients and measurements -->
+			<div class="form-group">
+				<label for="ingredients">Ingredients and measurements</label>
+				<input id="ingredients" type="text" onclick="format();" class="form-control" name="ingredients" value="<?=$ingredients?>" required />
+			</div>
+
+			<!-- Difficulty -->
+			<div class="form-group">
+				<label for="difficulty">Difficulty</label>
+				<select id="difficulty" class="form-control" name="difficulty" required>
+					<?php foreach ($difficulties as $d) { ?>
+						<?php $selected = $d==$difficulty ? "selected" : ""; ?>
+						<option value="<?=$d?>" <?=$selected?>><?=ucfirst(strtolower($d))?></option>
+					<?php } ?>
+				</select>
+			</div>
+
+			<!-- Directions -->
+			<div class="form-group">
+				<label for="directions">Directions</label>
+				<textarea id="directions" name="directions" class="form-control" rows="10" required><?=$directions?></textarea>
+			</div>
+
+			<div class="form-group">
+				<a class="btn btn-default" href="/recipes">Back</a>
+				<button class="btn btn-primary" type="submit">Save</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script type="text/javascript">
+	function format() {
+		$('.irow').remove();
+		var ingredients = $('#ingredients').val();
+
+		// if the text is not empty, format it
+		if(ingredients) {
+			var ing = ingredients.split(',');
+			$(ingredients.split(',')).each(function(){
+				// do not allow emprty rows
+				if($.trim(this) == '') return;
+
+				// get the ingredient, amount and meassure
+				var parStart = this.indexOf("(");
+				var parEnd = this.indexOf(")");
+				var ingredient = $.trim(this.substring(0, parStart));
+				var ending = this.substring(parStart+1, parEnd);
+				var endingArr = ending.split(' ');
+				var amount = $.trim(endingArr[0]);
+				var meassure = $.trim(endingArr[1]);
+
+				// create new row
+				var row = newRow();
+				row.find('.ingredient').val(ingredient);
+				row.find('.amount').val(amount);
+				row.find('.meassure').val(meassure);
+			});
+		// if no text, add new row
+		} else newRow();
+
+		// open modal box
+		$('#formatModal').modal('show');
+	}
+
+	function newRow() {
+		var clone = $('#row').clone();
+		$('#rows').append(clone);
+		clone.removeAttr('id');
+		clone.addClass('irow');
+		clone.show();
+		return clone;
+	}
+
+	function save() {
+		var ingredients = '';
+		$('#rows .irow').each(function(){
+			var ingredient = $(this).find('.ingredient').val();
+			var amount = $(this).find('.amount').val();
+			var meassure = $(this).find('.meassure').val();
+
+			if(ingredient != '' && amount != '') {
+				if(meassure != '') meassure = ' ' + meassure;
+				ingredients += ingredient + ' (' + amount + meassure + '), ';
+			}
+		});
+
+		$('#ingredients').val(ingredients);
+		$('#formatModal').modal('hide');
+	}
+</script>
+
+<div id="formatModal" class="modal fade" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Ingredients and meassures</h4>
+			</div>
+			<div class="modal-body">
+				<table id="rows" class="table table-striped table-condensed">
+					<tr>
+						<th class="text-center">Ingredient</th>
+						<th class="text-center">Amount</th>
+						<th class="text-center">Meassure</th>
+					</tr>
+					<tr id="row" style="display:none;">
+						<td><input type="text" class="input ingredient form-control"/></td>
+						<td><input type="number" class="input amount form-control"/></td>
+						<td>
+							<select class="input meassure form-control">
+								<option value=""></option>
+								<?php foreach ($meassures as $m) { ?>
+									<option value="<?=$m->meassure?>"><?=ucfirst($m->meassure)?></option>
+								<?php } ?>
+							</select>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" onclick="newRow()"><span class="glyphicon glyphicon-plus"></span> New</button>
+				<button type="button" class="btn btn-default" onclick="save()">Save</button>
+			</div>
+		</div>
+	</div>
+</div>
