@@ -94,6 +94,13 @@
 						</li>
 						<?php } ?>
 
+						<!-- RECIPES -->
+						<?php if($security->checkAccess("recipes")) { ?>
+						<li>
+							<a href="/recipes"><i class="fa fa-cutlery"></i> <span class="nav-label">Recipes</span></a>
+						</li>
+						<?php } ?>
+
 						<!-- SURVEY -->
 						<?php if($security->checkAccess("campaigns")) { ?>
 						<li>
