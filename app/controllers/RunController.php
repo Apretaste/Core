@@ -450,9 +450,13 @@ class RunController extends Controller
 			delivery_code='555', delivery_message='app failure reported'
 			WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
 
+		// update counter for failures
+		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
+		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
+
 		// create entry in the error log
 		$utils = new Utils();
-		$text = "[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}";
+		$text = "[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}";
 		$utils->createAlert($text, "NOTICE");
 
 		// calculate failure percentage
