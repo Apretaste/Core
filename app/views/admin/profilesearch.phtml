@@ -49,7 +49,7 @@
 		<p><b>Location:</b> <?= $profile->location ?></p>
 
 		<br/>
-		<a onclick="return confirm('Are you sure to exclude this user?');" href="submitExclude?email=<?= $email ?>" class="btn btn-danger">Excluir Usuario</a>
+		<a onclick="return confirm('Are you sure to exclude this user?');" href="submitExclude?email=<?= $profile->email ?>" class="btn btn-danger">Excluir Usuario</a>
 	</div>
 	<?php } ?>
 </div>
