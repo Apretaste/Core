@@ -548,7 +548,9 @@ class AdminController extends Controller
 
 		// get the user profile
 		$utils = new Utils();
-		$profile = $utils->getPerson($email);
+		if (stripos($email,'@') !== false)
+			$profile = $utils->getPerson($email);
+		else $profile = $utils->getPerson($utils->getEmailFromUsername($email));
 
 		$this->view->email = $email;
 		$this->view->profile = $profile;
