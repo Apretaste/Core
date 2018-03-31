@@ -47,6 +47,13 @@ class Render
 		$query = trim(implode(" ", $subjectPieces));
 		$query = substr($query, 0, 1024);
 
+		// create the params array
+		$params = [];
+		if(php::exists($query, "|")) {
+			$params = explode("|", $query);
+			$query = str_replace("|", " ", $query); // backward compatibility
+		}
+
 		// get the language of the user
 		$connection = new Connection();
 		$result = $connection->query("SELECT username, lang FROM person WHERE email = '$email'");
@@ -63,6 +70,7 @@ class Render
 		$request->service = $serviceName;
 		$request->subservice = trim($subServiceName);
 		$request->query = $query;
+		$request->params = $params;
 		$request->lang = $lang;
 
 		// create a new Service Object with info from the database
