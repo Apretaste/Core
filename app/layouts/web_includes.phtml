@@ -189,8 +189,10 @@
 					value = apretaste.uploadFile(id);
 				}
 
-				params += encodeURIComponent(value) + " ";
+				params += encodeURIComponent(value) + "|";
 			});
+
+			params = params.replace(/\|$/, "");
 
 			if(redirect) {
 				apretaste.url += " " + params;
