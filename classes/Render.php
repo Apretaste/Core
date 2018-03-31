@@ -48,11 +48,8 @@ class Render
 		$query = substr($query, 0, 1024);
 
 		// create the params array
-		$params = [];
-		if(php::exists($query, "|")) {
-			$params = explode("|", $query);
-			$query = str_replace("|", " ", $query); // backward compatibility
-		}
+		$params = explode("|", $query);
+		$query = str_replace("|", " ", $query); // backward compatibility
 
 		// get the language of the user
 		$connection = new Connection();
