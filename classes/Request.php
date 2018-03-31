@@ -10,4 +10,5 @@ class Request {
 	public $service;
 	public $subservice;
 	public $query;
+	public $params = [];
 }
