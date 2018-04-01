@@ -371,7 +371,7 @@ class RunController extends Controller
 		Connection::query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs);
+		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs, $appversion);
 		$service = $ret->service;
 		$response = $ret->response;
 
