@@ -57,6 +57,10 @@ class Render
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
 		$username = isset($result[0]->username) ? $result[0]->username : "";
 
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
 		// create a new Request object
 		$request = new Request();
 		$request->email = $email;
@@ -70,6 +74,7 @@ class Render
 		$request->params = $params;
 		$request->lang = $lang;
 		$request->appversion = floatval($appversion);
+		$request->environment = $environment;
 
 		// create a new Service Object with info from the database
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
