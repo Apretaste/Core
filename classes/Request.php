@@ -12,4 +12,5 @@ class Request {
 	public $params;
 	public $lang;
 	public $appversion;
+	public $environment;
 }
