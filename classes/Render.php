@@ -12,7 +12,7 @@ class Render
 	 * @param String[] $attachments
 	 * @return [Service, Response[]]
 	 */
-	public static function runRequest($email, $subject, $body, $attachments)
+	public static function runRequest($email, $subject, $body, $attachments, $appversion=1)
 	{
 		// sanitize subject and body to avoid mysql injections
 		$utils = new Utils();
@@ -69,6 +69,7 @@ class Render
 		$request->query = $query;
 		$request->params = $params;
 		$request->lang = $lang;
+		$request->appversion = floatval($appversion);
 
 		// create a new Service Object with info from the database
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
