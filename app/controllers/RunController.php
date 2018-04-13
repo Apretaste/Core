@@ -231,7 +231,7 @@ class RunController extends Controller
 		$this->callAmazonWebhook();
 
 		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->toEmail}' AND blocked=1");
+		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
 		if($blocked) return false;
 
 		// get the environment from the email
@@ -371,7 +371,7 @@ class RunController extends Controller
 		Connection::query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs);
+		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs, $appversion);
 		$service = $ret->service;
 		$response = $ret->response;
 

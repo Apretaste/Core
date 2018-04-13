@@ -12,7 +12,7 @@ class Render
 	 * @param String[] $attachments
 	 * @return [Service, Response[]]
 	 */
-	public static function runRequest($email, $subject, $body, $attachments)
+	public static function runRequest($email, $subject, $body, $attachments, $appversion=1)
 	{
 		// sanitize subject and body to avoid mysql injections
 		$utils = new Utils();
@@ -47,11 +47,19 @@ class Render
 		$query = trim(implode(" ", $subjectPieces));
 		$query = substr($query, 0, 1024);
 
+		// create the params array
+		$params = explode("|", $query);
+		$query = str_replace("|", " ", $query); // backward compatibility
+
 		// get the language of the user
 		$connection = new Connection();
 		$result = $connection->query("SELECT username, lang FROM person WHERE email = '$email'");
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
 		$username = isset($result[0]->username) ? $result[0]->username : "";
+
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
 
 		// create a new Request object
 		$request = new Request();
@@ -63,7 +71,10 @@ class Render
 		$request->service = $serviceName;
 		$request->subservice = trim($subServiceName);
 		$request->query = $query;
+		$request->params = $params;
 		$request->lang = $lang;
+		$request->appversion = floatval($appversion);
+		$request->environment = $environment;
 
 		// create a new Service Object with info from the database
 		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
