@@ -1,13 +1,13 @@
 [database]
 host=127.0.0.1
-user=USERNAME
-password=PASSWORD
-database=DBNAME
+user=root
+password=root
+database=apretaste
 
 [global]
 tier=development
 alerts=your@email.com
-seed=4f123338b54534ff8790a912556f1f5463453af0865
+seed=4f124338b54534ff8790a342553435f63453af0865
 appversion=3.0
 
 [google]
@@ -28,7 +28,7 @@ key=
 [smsapi]
 login=
 password=
-poolsize=400
+poolsize=
 
 [firebase]
 serverkey=

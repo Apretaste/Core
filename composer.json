@@ -3,7 +3,7 @@
 		"smarty/smarty": "~3.1",
 		"fabpot/goutte": "3.2.1",
 		"gregwar/captcha": "1.*",
-		"nette/mail": "2.2.0",
+		"nette/mail": "^2.4",
 		"daniel-zahariev/php-aws-ses": "^0.8.9",
 		"aws/aws-php-sns-message-validator": "^1.4",
 		"abraham/twitteroauth": "^0.7.2",
