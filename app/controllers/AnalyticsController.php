@@ -16,12 +16,14 @@ class AnalyticsController extends Controller
 	 */
 	public function audienceAction()
 	{
+		// get temp directory
 		$utils = new Utils();
+		$temp = $utils->getTempDir();
 
 		//
 		// WEEKLY GROSS TRAFFIC
 		//
-		$cache = $utils->getTempDir() . "weeklyGrossTraffic" . date("YmdH") . ".cache";
+		$cache = $temp . "weeklyGrossTraffic" . date("YmdH") . ".cache";
 		if(file_exists($cache)) $weeklyGrossTraffic = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -47,7 +49,7 @@ class AnalyticsController extends Controller
 		//
 		// MONTHLY GROSS TRAFFIC
 		//
-		$cache = $utils->getTempDir() . "monthlyGrossTraffic" . date("Ymd") . ".cache";
+		$cache = $temp . "monthlyGrossTraffic" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $monthlyGrossTraffic = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -73,7 +75,7 @@ class AnalyticsController extends Controller
 		//
 		// MONTHLY UNIQUE TRAFFIC
 		//
-		$cache = $utils->getTempDir() . "monthlyUniqueTraffic" . date("Ymd") . ".cache";
+		$cache = $temp . "monthlyUniqueTraffic" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $monthlyUniqueTraffic = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -95,7 +97,7 @@ class AnalyticsController extends Controller
 		//
 		// MONTHLY NEW USERS
 		//
-		$cache = $utils->getTempDir() . "monthlyNewUsers" . date("Ymd") . ".cache";
+		$cache = $temp . "monthlyNewUsers" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $monthlyNewUsers = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -117,7 +119,7 @@ class AnalyticsController extends Controller
 		//
 		// LAST 30 DAYS ENVIRONMENT USAGE
 		//
-		$cache = $utils->getTempDir() . "last30EnvironmentUsage" . date("Ymd") . ".cache";
+		$cache = $temp . "last30EnvironmentUsage" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $last30EnvironmentUsage = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -149,7 +151,7 @@ class AnalyticsController extends Controller
 		//
 		// LAST 30 DAYS SERVICE USAGE
 		//
-		$cache = $utils->getTempDir() . "last30DaysServiceUsage" . date("Ymd") . ".cache";
+		$cache = $temp . "last30DaysServiceUsage" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $last30DaysServiceUsage = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
@@ -176,7 +178,7 @@ class AnalyticsController extends Controller
 		//
 		// LAST 30 DAYS ACTIVE DOMAINS
 		//
-		$cache = $utils->getTempDir() . "last30DaysActiveDomains" . date("Ymd") . ".cache";
+		$cache = $temp . "last30DaysActiveDomains" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $last30DaysActiveDomains = unserialize(file_get_contents($cache));
 		else {
 			// get info from the database
