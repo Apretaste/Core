@@ -140,13 +140,23 @@ class AnalyticsController extends Controller
 		//
 		// APP VERSIONS
 		//
-		$appVersions = [];
-		$versions = Connection::query("
-			SELECT COUNT(email) AS people, appversion
-			FROM person
-			WHERE appversion <> ''
-			GROUP BY appversion");
-		foreach($versions as $version) $appVersions[] = ["people"=>$version->people, "version"=>"v{$version->appversion}"];
+		$cache = $temp . "appVersions" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $appVersions = unserialize(file_get_contents($cache));
+		else {
+			// get infom from the database
+			$versions = Connection::query("
+				SELECT COUNT(email) AS people, appversion
+				FROM person
+				WHERE appversion <> ''
+				GROUP BY appversion");
+
+			// format as JSON
+			$appVersions = [];
+			foreach($versions as $version) $appVersions[] = ["people"=>$version->people, "version"=>"v{$version->appversion}"];
+
+			// save cache
+			file_put_contents($cache, serialize($appVersions));
+		}
 
 		//
 		// LAST 30 DAYS SERVICE USAGE
@@ -170,10 +180,24 @@ class AnalyticsController extends Controller
 		}
 
 		//
-		// LAST WEEK EMAILS SENT VS NOT SENT
+		// LAST WEEK EMAILS SENT
 		//
-		$lastWeekEmailsSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-		$lastWeekEmailsNotSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		$cache = $temp . "lastWeekEmailsSent" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $lastWeekEmailsSent = unserialize(file_get_contents($cache));
+		else {
+			$lastWeekEmailsSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			file_put_contents($cache, serialize($lastWeekEmailsSent));
+		}
+
+		//
+		// LAST WEEK EMAILS NOT SENT
+		//
+		$cache = $temp . "lastWeekEmailsNotSent" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $lastWeekEmailsNotSent = unserialize(file_get_contents($cache));
+		else {
+			$lastWeekEmailsNotSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			file_put_contents($cache, serialize($lastWeekEmailsNotSent));
+		}
 
 		//
 		// LAST 30 DAYS ACTIVE DOMAINS
