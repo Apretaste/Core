@@ -488,6 +488,58 @@ class AdminController extends Controller
 	}
 
 	/**
+	 * Show list of coupons emails
+	 * @author salvipascual
+	 */
+	public function couponsAction()
+	{
+		// get coupons
+		$coupons = Connection::query("SELECT * FROM _cupones ORDER BY inserted DESC");
+
+		// get coupons usage
+		$numberCouponsUsed = [];
+		$couponsUsage = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		foreach($couponsUsage as $c) $numberCouponsUsed[] = ["coupon"=>$c->coupon, "usage"=>$c->usage];
+
+		// send data to the view
+		$this->view->title = "Coupons";
+		$this->view->buttons = [["caption"=>"New coupon", "href"=>"#", "icon"=>"plus", "modal"=>"newCoupon"]];
+		$this->view->coupons = $coupons;
+		$this->view->numberCouponsUsed = $numberCouponsUsed;
+	}
+
+	/**
+	 * Save a new input email to the list
+	 * @author salvipascual
+	 */
+	public function submitDeleteCouponAction()
+	{
+		$coupon = $this->request->get("coupon");
+		Connection::query("DELETE FROM _cupones WHERE coupon = '$coupon'");
+		$this->response->redirect('admin/coupons');
+	}
+
+	/**
+	 * Save a new input email to the list
+	 * @author salvipascual
+	 */
+	public function submitNewCouponAction()
+	{
+		// get params from the url
+		$coupon = strtoupper($this->request->get("coupon"));
+		$ruleNewUser = $this->request->get("rule_new_user");
+		$ruleDeadline = $this->request->get("rule_deadline");
+		$ruleLimit = $this->request->get("rule_limit");
+		$prizeCredits = $this->request->get("prize_credits");
+
+		// insert into the database
+		Connection::query("INSERT INTO _cupones(coupon, rule_new_user, rule_deadline, rule_limit, prize_credits) VALUES ('$coupon','$ruleNewUser','$ruleDeadline','$ruleLimit','$prizeCredits')");
+
+		// go back
+		$this->response->redirect('admin/coupons');
+	}
+
+	/**
 	 * Show list of input emails
 	 * @author salvipascual
 	 */
