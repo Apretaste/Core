@@ -19,11 +19,14 @@ class PizarraController extends Controller
 	{
 		// get the last 100 unclassified notes
 		$notes = Connection::query("
-			SELECT *
+			SELECT id, `text`, topic1, topic2, topic3
 			FROM _pizarra_notes
 			WHERE reviewed IS NULL
 			ORDER BY inserted DESC
 			LIMIT 100");
+
+		// get the notes count
+		$count = Connection::query("SELECT COUNT(id) AS cnt FROM _pizarra_notes WHERE reviewed IS NULL")[0]->cnt;
 
 		// get list of topics
 		$topics = Connection::query("
@@ -33,7 +36,7 @@ class PizarraController extends Controller
 			GROUP BY topic ORDER BY cnt DESC LIMIT 100");
 
 		// send values to the template
-		$this->view->title = "Classify notes";
+		$this->view->title = "Classify notes ($count)";
 		$this->view->notes = $notes;
 		$this->view->topics = $topics;
 	}
