@@ -1,0 +1,103 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table table-striped table-bordered table-hover">
+			<thead>
+				<tr>
+					<th>Note</th>
+					<th>Topic #1</th>
+					<th>Topic #2</th>
+					<th>Topic #3</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($notes as $n) { ?>
+				<tr>
+					<td><?= $n->text ?></td>
+					<td>
+						<span id="topic1_<?= $n->id ?>"><?= $n->topic1 ?></span>
+						<a class="btn btn-xs btn-default" href="#" onclick="updateTopic(1,'<?= $n->id ?>');"><span class="glyphicon glyphicon-pencil"></span></a>
+					</td>
+					<td>
+						<span id="topic2_<?= $n->id ?>"><?= $n->topic2 ?></span>
+						<a class="btn btn-xs btn-default" href="#" onclick="updateTopic(2,'<?= $n->id ?>');"><span class="glyphicon glyphicon-pencil"></span></a>
+					</td>
+					<td>
+						<span id="topic3_<?= $n->id ?>"><?= $n->topic3 ?></span>
+						<a class="btn btn-xs btn-default" href="#" onclick="updateTopic(3,'<?= $n->id ?>');"><span class="glyphicon glyphicon-pencil"></span></a>
+					</td>
+					<td class="text-center">
+						<a class="btn btn-xs btn-primary" href="#" onclick="sendTopics('<?= $n->id ?>');">Send</a>
+					</td>
+				</tr>
+			<?php } ?>
+		</table>
+	</div>
+</div>
+
+
+<!-- MODALS -->
+
+
+<div id="topicDialog" class="modal fade" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Update topic</h4>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="topic">Topic</label>
+					<input id="topic" type="text" class="form-control" required />
+				</div>
+
+				<p>
+					<?php foreach ($topics as $t) { ?>
+						<a href="#" onclick="pickTopic(this);">#<?= $t->name ?></a>&nbsp;&nbsp;&nbsp;
+					<?php } ?>
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" onclick="typeTopic();">Update</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- SCRIPT -->
+
+
+<script type='text/javascript'>
+	var currentTopicNumber = '';
+	var currentTopicID = '';
+
+	function updateTopic(number, id) {
+		currentTopicNumber = number;
+		currentTopicID = id;
+		$('#topicDialog').modal('show');
+		$('#topic').focus();
+	}
+
+	function pickTopic(topic) {
+		var topic = $(topic).html().replace('#', '');
+		$('#topic'+currentTopicNumber+'_'+currentTopicID).html(topic);
+		$('#topicDialog').modal('hide');
+	}
+
+	function typeTopic(topic) {
+		var topic = $('#topic').val().split('#').join('').split(' ').join('');
+		$('#topic'+currentTopicNumber+'_'+currentTopicID).html(topic);
+		$('#topic').val('');
+		$('#topicDialog').modal('hide');
+	}
+
+	function sendTopics(id) {
+		var topic1 = $('#topic1_'+id).html();
+		var topic2 = $('#topic2_'+id).html();
+		var topic3 = $('#topic3_'+id).html();
+		window.location.href = "submitTopics?id="+id+"&topic1="+topic1+"&topic2="+topic2+"&topic3="+topic3;
+	}
+</script>
