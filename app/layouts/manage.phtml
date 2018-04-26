@@ -139,6 +139,13 @@
 							</li>
 						<?php } ?>
 
+						<!-- PIZARRA -->
+						<?php if($security->checkAccess("pizarra")) { ?>
+							<li>
+								<a href="/pizarra/notes"><i class="fa fa-newspaper-o"></i> <span class="nav-label">Pizarra</span></a>
+							</li>
+						<?php } ?>
+
 						<!-- SUGGESTIONS -->
 						<?php if($security->checkAccess("suggestions")) { ?>
 							<li>
