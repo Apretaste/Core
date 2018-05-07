@@ -294,4 +294,16 @@ class ApiController extends Controller
 		// return ok response
 		echo '{"code":"ok"}';
 	}
+
+	/**
+	 * Used for the app to check if there is http conectivity
+	 *
+	 * @author salvipascual
+	 * @version 1.0
+	 * @return JSON with code
+	 */
+	public function checkAction()
+	{
+		echo '{"code":"200"}';
+	}
 }
