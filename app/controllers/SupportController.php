@@ -42,6 +42,52 @@ class SupportController extends Controller
 	}
 
 	/**
+	 * List all the archived tickets
+	 */
+	public function archiveAction()
+	{
+		// get the list of campaigns
+		$connection = new Connection();
+		$tickets = $connection->query("
+			SELECT *
+			FROM support_tickets
+			WHERE status = 'ARCHIVED'
+			ORDER BY creation_date DESC");
+
+		// get the list of macros
+		$cans = $connection->query("SELECT id, name FROM support_cans");
+
+		// create top buttons
+		$this->view->buttons = [
+			["caption"=>"Search", "href"=>"#", "modal"=>"searchTickets"]
+		];
+
+		// send variables to the view
+		$this->view->title = "Archived tickets";
+		$this->view->tickets = $tickets;
+		$this->view->cans = $cans;
+	}
+
+	/**
+	 * Send the ticket to the archive
+	 */
+	public function storeTicketAction()
+	{
+		$email = $this->request->get("email");
+
+		// update chats in the tickets with the status
+		$connection = new Connection();
+		$connection->query("
+			UPDATE support_tickets
+			SET status = 'ARCHIVED'
+			WHERE (`from` = '$email' OR requester = '$email')
+			AND (status = 'NEW' OR status = 'PENDING')");
+
+		// go to the list of tickets
+		$this->response->redirect("support/index");
+	}
+
+	/**
 	 * List all the opened tickets
 	 */
 	public function cansAction()
@@ -147,7 +193,7 @@ class SupportController extends Controller
 			UPDATE support_tickets
 			SET status = 'DONE'
 			WHERE (`from` = '$to' OR requester = '$to')
-			AND (status = 'NEW' OR status = 'PENDING')");
+			AND (status = 'NEW' OR status = 'PENDING' OR status = 'ARCHIVED')");
 
 		// get the manager information
 		$security = new Security();
