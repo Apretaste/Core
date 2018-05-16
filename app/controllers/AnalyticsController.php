@@ -16,103 +16,218 @@ class AnalyticsController extends Controller
 	 */
 	public function audienceAction()
 	{
-		$connection = new Connection();
+		// get temp directory
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
 
-		// weekly gross traffic
-		$weeklyGrossTraffic = array();
-		$visits = $connection->query("
-			SELECT COUNT(id) as visitors, DATE(request_date) as inserted
-			FROM delivery
-			GROUP BY DATE(request_date)
-			ORDER BY inserted DESC
-			LIMIT 7");
-		foreach($visits as $visit) {
-			if( ! $visit->visitors) $visit->visitors = 0;
-			$weeklyGrossTraffic[] = ["date"=>date("D jS", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		}
-		$weeklyGrossTraffic = array_reverse($weeklyGrossTraffic);
+		//
+		// WEEKLY GROSS TRAFFIC
+		//
+		$cache = $temp . "weeklyGrossTraffic" . date("YmdH") . ".cache";
+		if(file_exists($cache)) $weeklyGrossTraffic = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) as visitors, DATE(request_date) as inserted
+				FROM delivery
+				GROUP BY DATE(request_date)
+				ORDER BY inserted DESC
+				LIMIT 7");
 
-		// monthly gross traffic
-		$monthlyGrossTraffic = array();
-		$visits = $connection->query("
-			SELECT COUNT(id) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
-			FROM delivery
-			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-			ORDER BY inserted
-			DESC LIMIT 12");
-		foreach($visits as $visit) {
-			if( ! $visit->visitors) $visit->visitors = 0;
-			$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		}
-		$monthlyGrossTraffic = array_reverse($monthlyGrossTraffic);
+			// format as JSON
+			$weeklyGrossTraffic = [];
+			foreach($visits as $visit) {
+				if( ! $visit->visitors) $visit->visitors = 0;
+				$weeklyGrossTraffic[] = ["date"=>date("D jS", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+			}
 
-		// monthly unique traffic
-		$monthlyUniqueTraffic = array();
-		$visits = $connection->query("
-			SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
-			FROM delivery
-			GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-			ORDER BY inserted DESC LIMIT 12");
-		foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
-
-		// monthly new users
-		$monthlyNewUsers = array();
-		$visits = $connection->query("
-			SELECT COUNT(DISTINCT email) AS visitors, DATE_FORMAT(insertion_date,'%Y-%m') AS inserted
-			FROM person
-			GROUP BY DATE_FORMAT(insertion_date,'%Y-%m')
-			ORDER BY inserted DESC LIMIT 30");
-		foreach($visits as $visit) $monthlyNewUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-		$monthlyNewUsers = array_reverse($monthlyNewUsers);
-
-		// last 30 days environment usage
-		$last30EnvironmentUsage = array();
-		$visits = $connection->query("
-			SELECT COUNT(id) AS number, environment
-			FROM  delivery
-			WHERE request_date > (NOW() - INTERVAL 1 MONTH)
-			GROUP BY environment");
-		foreach($visits as $visit) {
-			$last30EnvironmentUsage[] = ["number"=>$visit->number, "environment"=>$visit->environment];
+			// save cache
+			$weeklyGrossTraffic = array_reverse($weeklyGrossTraffic);
+			file_put_contents($cache, serialize($weeklyGrossTraffic));
 		}
 
-		// app versions
-		$appVersions = array();
-		$versions = $connection->query("
-			SELECT COUNT(email) AS people, appversion
-			FROM person
-			WHERE appversion <> ''
-			GROUP BY appversion");
-		foreach($versions as $version) {
-			$appVersions[] = ["people"=>$version->people, "version"=>"v{$version->appversion}"];
+		//
+		// MONTHLY GROSS TRAFFIC
+		//
+		$cache = $temp . "monthlyGrossTraffic" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $monthlyGrossTraffic = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
+				FROM delivery
+				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
+				ORDER BY inserted
+				DESC LIMIT 12");
+
+			// format as JSON
+			$monthlyGrossTraffic = [];
+			foreach($visits as $visit) {
+				if( ! $visit->visitors) $visit->visitors = 0;
+				$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+			}
+
+			// save cache
+			$monthlyGrossTraffic = array_reverse($monthlyGrossTraffic);
+			file_put_contents($cache, serialize($monthlyGrossTraffic));
 		}
 
-		// Last 30 days of service usage
-		$last30DaysServiceUsage = array();
-		$visits = $connection->query("
-			SELECT COUNT(id) AS `usage`, request_service AS service
-			FROM delivery
-			WHERE request_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
-			GROUP BY request_service");
-		foreach($visits as $visit) {
-			$last30DaysServiceUsage[] = ["service"=>$visit->service, "usage"=>$visit->usage];
+		//
+		// MONTHLY UNIQUE TRAFFIC
+		//
+		$cache = $temp . "monthlyUniqueTraffic" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $monthlyUniqueTraffic = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
+				FROM delivery
+				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
+				ORDER BY inserted DESC LIMIT 12");
+
+			// format as JSON
+			$monthlyUniqueTraffic = [];
+			foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+			$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
+
+			// save cache
+			file_put_contents($cache, serialize($monthlyUniqueTraffic));
 		}
 
-		// Last week emails sent vs not sent
-		$lastWeekEmailsSent = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-		$lastWeekEmailsNotSent = $connection->query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+		//
+		// MONTHLY NEW USERS
+		//
+		$cache = $temp . "monthlyNewUsers" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $monthlyNewUsers = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(DISTINCT email) AS visitors, DATE_FORMAT(insertion_date,'%Y-%m') AS inserted
+				FROM person
+				GROUP BY DATE_FORMAT(insertion_date,'%Y-%m')
+				ORDER BY inserted DESC LIMIT 30");
 
-		// Last 30 days active domains
-		$last30DaysActiveDomains = array();
-		$visits = $connection->query("
-			SELECT COUNT(id) AS `usage`, request_domain AS domain
-			FROM delivery
-			WHERE request_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
-			GROUP BY request_domain");
-		foreach($visits as $visit) {
-			$last30DaysActiveDomains[] = ["domain"=>$visit->domain, "usage"=>$visit->usage];
+			// format as JSON
+			$monthlyNewUsers = [];
+			foreach($visits as $visit) $monthlyNewUsers[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
+			$monthlyNewUsers = array_reverse($monthlyNewUsers);
+
+			// save cache
+			file_put_contents($cache, serialize($monthlyNewUsers));
 		}
+
+		//
+		// LAST 30 DAYS ENVIRONMENT USAGE
+		//
+		$cache = $temp . "last30EnvironmentUsage" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $last30EnvironmentUsage = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) AS number, environment
+				FROM  delivery
+				WHERE request_date > (NOW() - INTERVAL 1 MONTH)
+				GROUP BY environment");
+
+			// format as JSON
+			$last30EnvironmentUsage = [];
+			foreach($visits as $visit) $last30EnvironmentUsage[] = ["number"=>$visit->number, "environment"=>$visit->environment];
+
+			// save cache
+			file_put_contents($cache, serialize($last30EnvironmentUsage));
+		}
+
+		//
+		// APP VERSIONS
+		//
+		$cache = $temp . "appVersions" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $appVersions = unserialize(file_get_contents($cache));
+		else {
+			// get infom from the database
+			$versions = Connection::query("
+				SELECT COUNT(email) AS people, appversion
+				FROM person
+				WHERE appversion <> ''
+				GROUP BY appversion");
+
+			// format as JSON
+			$appVersions = [];
+			foreach($versions as $version) $appVersions[] = ["people"=>$version->people, "version"=>"v{$version->appversion}"];
+
+			// save cache
+			file_put_contents($cache, serialize($appVersions));
+		}
+
+		//
+		// LAST 30 DAYS SERVICE USAGE
+		//
+		$cache = $temp . "last30DaysServiceUsage" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $last30DaysServiceUsage = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) AS `usage`, request_service AS service
+				FROM delivery
+				WHERE request_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
+				GROUP BY request_service");
+
+			// format as JSON
+			$last30DaysServiceUsage = [];
+			foreach($visits as $visit) $last30DaysServiceUsage[] = ["service"=>$visit->service, "usage"=>$visit->usage];
+
+			// save cache
+			file_put_contents($cache, serialize($last30DaysServiceUsage));
+		}
+
+		//
+		// LAST WEEK EMAILS SENT
+		//
+		$cache = $temp . "lastWeekEmailsSent" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $lastWeekEmailsSent = unserialize(file_get_contents($cache));
+		else {
+			$lastWeekEmailsSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			file_put_contents($cache, serialize($lastWeekEmailsSent));
+		}
+
+		//
+		// LAST WEEK EMAILS NOT SENT
+		//
+		$cache = $temp . "lastWeekEmailsNotSent" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $lastWeekEmailsNotSent = unserialize(file_get_contents($cache));
+		else {
+			$lastWeekEmailsNotSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			file_put_contents($cache, serialize($lastWeekEmailsNotSent));
+		}
+
+		//
+		// LAST 30 DAYS ACTIVE DOMAINS
+		//
+		$cache = $temp . "last30DaysActiveDomains" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $last30DaysActiveDomains = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) AS `usage`, request_domain AS domain
+				FROM delivery
+				WHERE request_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
+				GROUP BY request_domain");
+
+			// format as JSON
+			$last30DaysActiveDomains = [];
+			foreach($visits as $visit) {
+				$last30DaysActiveDomains[] = ["domain"=>$visit->domain, "usage"=>$visit->usage];
+			}
+
+			// save cache
+			file_put_contents($cache, serialize($last30DaysActiveDomains));
+		}
+
+		//
+		// NUMBERS OF COUPONS USED
+		//
+		$numberCouponsUsed = [];
+		$visits = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		foreach($visits as $visit) $numberCouponsUsed[] = ["coupon"=>$visit->coupon, "usage"=>$visit->usage];
 
 		// send variables to the view
 		$this->view->title = "Audience";
@@ -126,6 +241,7 @@ class AnalyticsController extends Controller
 		$this->view->lastWeekEmailsSent = $lastWeekEmailsSent[0]->cnt;
 		$this->view->lastWeekEmailsNotSent = $lastWeekEmailsNotSent[0]->cnt;
 		$this->view->last30DaysActiveDomains = $last30DaysActiveDomains;
+		$this->view->numberCouponsUsed = $numberCouponsUsed;
 	}
 
 	/**
@@ -133,15 +249,14 @@ class AnalyticsController extends Controller
 	 */
 	public function profileAction()
 	{
-		//Users with profiles
-		$connection = new Connection();
-		$usersWithProfile = $connection->query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
+		// users with profiles
+		$usersWithProfile = Connection::query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
 
-		//Users without profiles
-		$usersWithOutProfile = $connection->query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=0 AND active=1");
+		// users without profiles
+		$usersWithOutProfile = Connection::query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=0 AND active=1");
 
 		// Profile completion
-		$profileData = $connection->query("
+		$profileData = Connection::query("
 			SELECT 'Name' AS Caption, COUNT(first_name) AS Number FROM person WHERE updated_by_user IS NOT NULL AND (first_name IS NOT NULL OR last_name IS NOT NULL OR middle_name IS NOT NULL OR mother_name IS NOT NULL) AND active=1
 			UNION
 			SELECT 'DOB' AS Caption, COUNT(date_of_birth) AS Number FROM person WHERE updated_by_user IS NOT NULL AND date_of_birth IS NOT NULL AND active=1
@@ -169,7 +284,7 @@ class AnalyticsController extends Controller
 
 		// Numbers of profiles per province
 		// https://en.wikipedia.org/wiki/ISO_3166-2:CU
-		$prefilesPerPravinceList = $connection->query("
+		$prefilesPerPravinceList = Connection::query("
 			SELECT c.ProvCount,
 				CASE c.mnth
 					WHEN 'PINAR_DEL_RIO' THEN 'Pinar del Río'
@@ -238,7 +353,7 @@ class AnalyticsController extends Controller
 		}
 
 		// START updated profiles
-		$visits = $connection->query("
+		$visits = Connection::query("
 			SELECT COUNT(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
 			FROM person
 			WHERE last_update_date IS NOT NULL

@@ -1220,6 +1220,10 @@ class Utils
 			Connection::query("UPDATE person SET token='{$res->token}' WHERE email='$email'");
 		}
 
+		// get a random input domain
+		$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
+		$res->domain = $domain[0]->email;
+
 		// convert to JSON and return array
 		return ["attachments" => $attachments, "json" => json_encode($res)];
 	}

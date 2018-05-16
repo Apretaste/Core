@@ -92,6 +92,16 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="col-xs-3">
+		<!-- NUMBER OF COUPONS USED -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Coupons usage</div>
+			<div class="panel-body">
+				<div id="numberCouponsUsed" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
 </div>
 
 
@@ -100,6 +110,8 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
+	google.load("visualization", "1", {packages:["corechart"]});
+
 	// WEEKLY GROSS TRAFFIC
 	google.setOnLoadCallback(weeklyGrossTraffic);
 	function weeklyGrossTraffic() {
@@ -157,7 +169,6 @@
 	}
 
 	// Last 30 days Environment
-	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(last30EnvironmentUsage);
 	function last30EnvironmentUsage() {
 		var data = google.visualization.arrayToDataTable([
@@ -172,7 +183,6 @@
 	}
 
 	// App versions
-	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(appVersions);
 	function appVersions() {
 		var data = google.visualization.arrayToDataTable([
@@ -187,7 +197,6 @@
 	}
 
 	// Last 30 days service usage
-	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(last30DaysServiceUsage);
 	function last30DaysServiceUsage() {
 		var data = google.visualization.arrayToDataTable([
@@ -202,7 +211,6 @@
 	}
 
 	// Last week emails sent vs not sent
-	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(lastWeekSentVsNotSent);
 	function lastWeekSentVsNotSent() {
 		var data = google.visualization.arrayToDataTable([
@@ -216,7 +224,6 @@
 	}
 
 	// Last 30 days domains usage
-	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(last30DaysActiveDomains);
 	function last30DaysActiveDomains() {
 		var data = google.visualization.arrayToDataTable([
@@ -227,6 +234,20 @@
 		]);
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('last30DaysActiveDomains'));
+		chart.draw(data, options);
+	}
+
+	// Number of each coupons used
+	google.setOnLoadCallback(numberCouponsUsed);
+	function numberCouponsUsed() {
+		var data = google.visualization.arrayToDataTable([
+			['Coupon', 'Number'],
+			<?php foreach ($numberCouponsUsed as $data) { ?>
+				['<?=$data['coupon']; ?>',<?=$data['usage']; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('numberCouponsUsed'));
 		chart.draw(data, options);
 	}
 </script>

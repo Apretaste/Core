@@ -174,6 +174,10 @@ class RunController extends Controller
 			return false;
 		}
 
+		// mark the domain as used
+		$inputDomain = $_SERVER['HTTP_HOST'];
+		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
+
 		// create attachments array
 		$utils = new Utils();
 		$file = $utils->getTempDir().$_FILES['attachments']['name'];

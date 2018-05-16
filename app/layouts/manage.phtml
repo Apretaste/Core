@@ -83,6 +83,7 @@
 								<li><a href="/admin/dropped">Dropped emails</a></li>
 								<li><a href="/admin/delivery">Delivery</a></li>
 								<li><a href="/admin/input">Input emails</a></li>
+								<li><a href="/admin/coupons">Coupons</a></li>
 							</ul>
 						</li>
 						<?php } ?>
@@ -98,13 +99,6 @@
 						<?php if($security->checkAccess("recipes")) { ?>
 						<li>
 							<a href="/recipes"><i class="fa fa-cutlery"></i> <span class="nav-label">Recipes</span></a>
-						</li>
-						<?php } ?>
-
-						<!-- SURVEY -->
-						<?php if($security->checkAccess("campaigns")) { ?>
-						<li>
-							<a href="/campaigns"><i class="fa fa-paper-plane-o"></i> <span class="nav-label">Campaigns</span></a>
 						</li>
 						<?php } ?>
 
@@ -138,6 +132,13 @@
 							</li>
 						<?php } ?>
 
+						<!-- PIZARRA -->
+						<?php if($security->checkAccess("adminpizarra")) { ?>
+							<li>
+								<a href="/adminpizarra/notes"><i class="fa fa-newspaper-o"></i> <span class="nav-label">Pizarra</span></a>
+							</li>
+						<?php } ?>
+
 						<!-- SUGGESTIONS -->
 						<?php if($security->checkAccess("suggestions")) { ?>
 							<li>
@@ -157,6 +158,7 @@
 							<ul class="nav nav-second-level">
 								<li><a href="/support/notes">Open chats</a></li>
 								<li><a href="/support">Open tickets</a></li>
+								<li><a href="/support/archive">Archived Tickets</a></li>
 								<li><a href="/support/cans">Macros</a></li>
 								<li><a href="/support/reports">Reports</a></li>
 							</ul>
