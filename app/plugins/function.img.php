@@ -15,6 +15,7 @@ function smarty_function_img($params, $template)
 	$width =  isset($params["width"]) ? "width='{$params["width"]}'" : "";
 	$height =  isset($params["height"]) ? "height='{$params["height"]}'" : "";
 	$style = isset($params["style"]) ? "style='{$params["style"]}'" : "";
+	$class = isset($params["class"]) ? "class='{$params["class"]}'" : "";
 
 	$file = basename($href);
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -35,5 +36,5 @@ function smarty_function_img($params, $template)
 	}
 
 	// create and return image
-	return "<img src='$destination' alt='$alt' $width $height $style />";
+	return "<img src='$destination' alt='$alt' $width $height $style $class />";
 }
