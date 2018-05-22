@@ -140,7 +140,7 @@ class Social
 		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
 		if ( ! empty($age)) $message .= ", tengo $age annos";
 		if ( ! empty($gender)) $message .= ", soy $gender";
-		if ( ! empty($religion)) $message .= ", soy $religion";
+		if ( ! empty($religion)) $message .= ", $religion";
 		if ( ! empty($skin)) $message .= ", soy $skin";
 		if ( ! empty($eyes)) $message .= ", de ojos $eyesTone (color $eyes)";
 		if ( ! empty($hair)) $message .= ", soy de pelo $hair ";
@@ -454,12 +454,14 @@ class Social
 				FROM _note A JOIN person B
 				ON A.to_user = B.email
 				WHERE A.from_user = '$email'
+				AND (A.active=10 OR A.active=11)
 				GROUP BY A.to_user
 				UNION
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
 				ON A.from_user = B.email
 				WHERE A.to_user = '$email'
+				AND (A.active=01 OR A.active=11)
 				GROUP BY A.from_user) A
 			ORDER BY last DESC");
 
@@ -482,6 +484,22 @@ class Social
 	}
 
 	/**
+	 *Ocults a conversation for a user, with another user
+	 *
+	 *@param String $from_user
+	 *@param String $to_user
+	 */
+public function chatOcult($from_user,$to_user){
+	Connection::query("
+	 START TRANSACTION;
+	 UPDATE _note SET active=01 WHERE from_user='$from_user' AND to_user='$to_user' AND active=11;
+	 UPDATE _note SET active=10 WHERE from_user='$to_user' AND to_user='$from_user' AND active=11;
+	 UPDATE _note SET active=00 WHERE (from_user='$from_user' AND to_user='$to_user' AND active=10);
+	 UPDATE _note SET active=00 WHERE (from_user='$to_user' AND to_user='$from_user' AND active=01);
+	 COMMIT
+	 ");
+}
+	/**
 	 * Return a list of Chats between $email1 & $email2
 	 *
 	 * @author salvipascual
@@ -503,12 +521,14 @@ class Social
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
+				AND NOT (A.active=00 OR A.active=01)
 				AND A.id > '$lastID'
 				UNION
 				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
+				AND NOT (A.active=00 OR A.active=10)
 				AND A.id > '$lastID') C
 			ORDER BY sent DESC $setLimit");
 
