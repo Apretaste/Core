@@ -1,0 +1,119 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="text-center">From</th>
+					<th class="text-center">Subject</th>
+					<th class="text-center">Status</th>
+					<th class="text-center">Received</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($tickets as $ticket) { ?>
+				<?php $badgeColor = $ticket->status=="NEW" ? "badge-info" : ($ticket->status=="PENDING" ? "badge-warning" : ""); ?>
+				<?php $ticketEmail = $ticket->requester=="" ? $ticket->from : $ticket->requester; ?>
+				<tr>
+					<td class="text-center"><a href="/support/view?email=<?=$ticketEmail?>"><?=$ticketEmail?></a></td>
+					<td class="text-center"><?=$ticket->subject?></td>
+					<td class="text-center"><span class="badge <?=$badgeColor?>"><?=$ticket->status?></span></td>
+					<td class="text-center nobr"><?=date("m/d h:i A", strtotime($ticket->creation_date))?></td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+<!-- MODALS -->
+
+
+<div id="searchTickets" class="modal fade" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Tickets search</h4>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="email">Type an email to lookup tickets</label>
+					<input id="email" type="email" class="form-control" required />
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" onclick="search();" data-dismiss="modal"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Search</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="newTicket" class="modal fade" role="dialog">
+	<form action="/support/saveTicketSubmit" method="POST">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">New ticket</h4>
+				</div>
+				<div class="modal-body">
+					<!-- list of macros -->
+					<div class="form-group">
+						<label for="cans">Macro</label>
+						<select id="cans" class="form-control" onchange="loadCanResponse();">
+							<option value="">Macro (optional)</option>
+							<?php foreach($cans as $can) { ?>
+								<option value="<?=$can->id?>"><?=$can->name?></option>
+							<?php } ?>
+						</select>
+					</div>
+
+					<!-- email to send the ticket -->
+					<div class="form-group">
+						<label for="email">Email to send the ticket</label>
+						<input id="email" type="email" name="email" class="form-control" required />
+					</div>
+
+					<!-- subject of the ticket -->
+					<div class="form-group">
+						<label for="subject">Subject of the ticket</label>
+						<input id="subject" type="text" name="subject" class="form-control" required />
+					</div>
+
+					<!-- body to send the ticket -->
+					<div class="form-group">
+						<label for="content">Body of the ticket</label>
+						<textarea id="content" name="content" style="width:100%; height:300px;" required></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<input id="status" type="hidden" name="status" value="PENDING"/>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<input type="submit" class="btn btn-primary" value="Submit"/>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<script type="text/javascript">
+	function search(){
+		var email = $('#email').val();
+		if(email != "") window.location = '/support/view?email='+email;
+	}
+
+	// load a macro async
+	function loadCanResponse(){
+		var canId = $('#cans').val();
+		$.ajax({
+			url: "/support/loadCanResponseAsync",
+			method: "POST",
+			data: {"id":canId, "name":'', "username":'username'},
+			async: false
+		}).done(function(data) {
+			$('#content').html(data);
+		});
+	}
+</script>

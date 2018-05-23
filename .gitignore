@@ -12,7 +12,6 @@ attic/*
 .project
 .htpasswd
 composer.lock
-composer.phar
 configs/config.ini
 public/profile/*
 public/ads/*
