@@ -347,13 +347,15 @@ class RunController extends Controller
 		if($input) {
 			$text = $input->command;
 			$appversion = $input->appversion;
+			$ostype = isset($input->ostype) ? $input->ostype : "android";
 			$osversion = $input->osversion;
 			$nautaPass = base64_decode($input->token);
 			$timestamp = $input->timestamp;
 		}
 		// get the input if the data is plain text (version <= 2.5)
 		else {
-			$osversion = false;
+			$osversion = "";
+			$ostype = "";
 			$timestamp = time(); // get only notifications
 			$file = file("$temp/$folderName/$textFile");
 
@@ -367,8 +369,8 @@ class RunController extends Controller
 		if($nautaPass) {
 			$encryptPass = $utils->encrypt($nautaPass);
 			$auth = Connection::query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', 'android', '$osversion')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', '$ostype', '$osversion')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='$ostype', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
