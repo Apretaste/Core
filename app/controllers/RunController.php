@@ -354,8 +354,8 @@ class RunController extends Controller
 		}
 		// get the input if the data is plain text (version <= 2.5)
 		else {
-			$osversion = "";
-			$ostype = "";
+			$osversion = false;
+			$ostype = "android";
 			$timestamp = time(); // get only notifications
 			$file = file("$temp/$folderName/$textFile");
 
