@@ -58,7 +58,7 @@ class AnalyticsController extends Controller
 				FROM delivery
 				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
 				ORDER BY inserted
-				DESC LIMIT 12");
+				DESC LIMIT 4");
 
 			// format as JSON
 			$monthlyGrossTraffic = [];
@@ -83,7 +83,7 @@ class AnalyticsController extends Controller
 				SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
 				FROM delivery
 				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-				ORDER BY inserted DESC LIMIT 12");
+				ORDER BY inserted DESC LIMIT 4");
 
 			// format as JSON
 			$monthlyUniqueTraffic = [];
