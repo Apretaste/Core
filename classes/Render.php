@@ -180,11 +180,13 @@ class Render
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
-			'USER_USERNAME' => $username,
-			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
-			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
-			'USER_EMAIL' => isset($person->email) ? $person->email : "",
-			'USER_MAILBOX' => $utils->getUserPersonalAddress($response->email)
+			"USER_USERNAME" => $username,
+			"USER_NAME" => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
+			"USER_FULL_NAME" => isset($person->full_name) ? $person->full_name : "",
+			"USER_EMAIL" => isset($person->email) ? $person->email : "",
+			"USER_MAILBOX" => $utils->getUserPersonalAddress($response->email),
+			// advertisement
+			"TOP_AD" => self::getAd()
 		];
 
 		// merge all variable sets and assign them to Smarty
@@ -192,7 +194,8 @@ class Render
 		$smarty->assign($templateVariables);
 
 		// render the template
-		$rendered = $smarty->fetch($response->layout);
+//		$rendered = $smarty->fetch($response->layout);
+$rendered = $smarty->fetch("email_app.tpl");
 
 		// add link popups for the web
 		if($di->get('environment') == "web") {
@@ -307,5 +310,19 @@ class Render
 			}
 			$response->images = $images;
 		}
+	}
+
+	/**
+	 * Get the most current ad to be shown in the response
+	 *
+	 * @author salvipascual
+	 * @return Array
+	 */
+	public static function getAd()
+	{
+		return [
+			"icon" => "&hearts;",
+			"text" => "Hemos creado una encuesta para usted",
+			"link" => "ENCUESTA 10"];
 	}
 }
