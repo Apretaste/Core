@@ -186,7 +186,7 @@ class Render
 			"USER_EMAIL" => isset($person->email) ? $person->email : "",
 			"USER_MAILBOX" => $utils->getUserPersonalAddress($response->email),
 			// advertisement
-			"TOP_AD" => self::getAd()
+			"TOP_AD" => self::getAd($service)
 		];
 
 		// merge all variable sets and assign them to Smarty
@@ -194,8 +194,7 @@ class Render
 		$smarty->assign($templateVariables);
 
 		// render the template
-//		$rendered = $smarty->fetch($response->layout);
-$rendered = $smarty->fetch("email_app.tpl");
+		$rendered = $smarty->fetch($response->layout);
 
 		// add link popups for the web
 		if($di->get('environment') == "web") {
@@ -204,6 +203,7 @@ $rendered = $smarty->fetch("email_app.tpl");
 
 			// replace system variables
 			foreach ($systemVariables as $key=>$value) {
+				if(is_array($value)) continue;
 				$linkPopup = str_replace('{$'.$key.'}', $value, $linkPopup);
 			}
 
@@ -318,11 +318,36 @@ $rendered = $smarty->fetch("email_app.tpl");
 	 * @author salvipascual
 	 * @return Array
 	 */
-	public static function getAd()
+	public static function getAd($service)
 	{
-		return [
-			"icon" => "&hearts;",
-			"text" => "Hemos creado una encuesta para usted",
-			"link" => "ENCUESTA 10"];
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
+		// get app versions
+		$appVersion = floatval($service->appversion);
+		$appLatestVersion = floatval($di->get('config')['global']['appversion']);
+
+		// display ads 80% of the times
+		$displayDownloadApp = rand(0, 100) < 20;
+
+		// display message if app is not to the latest version
+		if($appVersion < $appLatestVersion && $displayDownloadApp) {
+			return [
+				"icon" => "&DownArrow;",
+				"text" => "App desactualizada; baje la version " . number_format($appLatestVersion, 1),
+				"caption" => "Descargar",
+				"link" => "APP"
+			];
+		}
+		// else display an ad
+		else {
+			return [
+				"icon" => "&#9786;",
+				"text" => "Responda nuestras encuestas y gane creditos",
+				"caption" => "Responder",
+				"link" => "ENCUESTA"
+			];
+		}
 	}
 }
