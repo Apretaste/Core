@@ -344,7 +344,7 @@ class Render
 		else {
 			return [
 				"icon" => "&#9786;",
-				"text" => "Responda nuestras encuestas y gane creditos",
+				"text" => "Responda Encuestas y gane creditos!",
 				"caption" => "Responder",
 				"link" => "ENCUESTA"
 			];
