@@ -438,7 +438,8 @@ class RunController extends Controller
 			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
-			request_query='$safeQuery'
+			request_query='$safeQuery',
+			request_method='$method'
 			WHERE id='{$this->idEmail}'");
 
 		// return message for the log
