@@ -186,10 +186,10 @@ class RunController extends Controller
 		$this->fromEmail = $user->email;
 
 		// create a new entry on the delivery table
-		$this->idEmail = Connection::query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'appweb')");
+		$this->idEmail = Connection::query("INSERT INTO delivery (user, environment) VALUES ('{$this->fromEmail}', 'appnet')");
 
 		// set up environment
-		$this->di->set('environment', function() {return "web";});
+		$this->di->set('environment', function() {return "appnet";});
 
 		// execute the service as app
 		$this->sendEmails = false;
@@ -348,6 +348,7 @@ class RunController extends Controller
 			$text = $input->command;
 			$appversion = $input->appversion;
 			$ostype = isset($input->ostype) ? $input->ostype : "android";
+			$method = isset($input->method) ? $input->method : "email";
 			$osversion = $input->osversion;
 			$nautaPass = base64_decode($input->token);
 			$timestamp = $input->timestamp;
@@ -356,6 +357,7 @@ class RunController extends Controller
 		else {
 			$osversion = false;
 			$ostype = "android";
+			$method = "email";
 			$timestamp = time(); // get only notifications
 			$file = file("$temp/$folderName/$textFile");
 
@@ -436,7 +438,8 @@ class RunController extends Controller
 			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
-			request_query='$safeQuery'
+			request_query='$safeQuery',
+			request_method='$method'
 			WHERE id='{$this->idEmail}'");
 
 		// return message for the log
