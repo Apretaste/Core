@@ -21,6 +21,13 @@ class AnalyticsController extends Controller
 		$temp = $utils->getTempDir();
 
 		//
+		// USERS AND PROFILES
+		//
+		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
+		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
+		$numberUserProfiles = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
+
+		//
 		// WEEKLY GROSS TRAFFIC
 		//
 		$cache = $temp . "weeklyGrossTraffic" . date("YmdH") . ".cache";
@@ -233,6 +240,9 @@ class AnalyticsController extends Controller
 
 		// send variables to the view
 		$this->view->title = "Audience";
+		$this->view->numberActiveUsers = $numberActiveUsers[0]->cnt;
+		$this->view->numberTotalUsers = $numberTotalUsers[0]->cnt;
+		$this->view->numberUserProfiles = $numberUserProfiles[0]->cnt;
 		$this->view->weeklyGrossTraffic = $weeklyGrossTraffic;
 		$this->view->monthlyGrossTraffic = $monthlyGrossTraffic;
 		$this->view->monthlyUniqueTraffic = $monthlyUniqueTraffic;
