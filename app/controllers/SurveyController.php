@@ -377,12 +377,13 @@ class SurveyController extends Controller
 					foreach($question['a'] as $kk => $ans){
 						$report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] = $totals[$ans['i']*1];
 						foreach($ans['p'] as $kkk => $pivot){
+							if ($kkk!="_UNKNOW") {
 							$report[$field]['results'][$k]['a'][$kk]['p']['_UNKNOW'] -= $pivot;
 						}
 					}
 				}
 			}
-
+		}
 			return $report;
 		}
 
