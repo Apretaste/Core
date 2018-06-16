@@ -163,11 +163,15 @@ class Render
 		// get a valid email address
 		$validEmailAddress = $utils->getValidEmailAddress($username);
 
+		// get app environment
+		$environment = $di->get('environment');
+		if($environment == 'appnet') $environment = 'app';
+
 		// list the system variables
 		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
-			"APRETASTE_ENVIRONMENT" => $di->get('environment'),
+			"APRETASTE_ENVIRONMENT" => $environment,
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
@@ -197,7 +201,7 @@ class Render
 		$rendered = $smarty->fetch($response->layout);
 
 		// add link popups for the web
-		if($di->get('environment') == "web") {
+		if($environment == "web") {
 			// get page content
 			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_includes.phtml");
 
@@ -342,12 +346,13 @@ class Render
 		}
 		// else display an ad
 		else {
-			return [
-				"icon" => "&#9786;",
-				"text" => "Responda Encuestas y gane creditos!",
-				"caption" => "Responder",
-				"link" => "ENCUESTA"
-			];
+			return false;
+			// return [
+			// 	"icon" => "&#9786;",
+			// 	"text" => "Responda Encuestas y gane creditos!",
+			// 	"caption" => "Responder",
+			// 	"link" => "ENCUESTA"
+			// ];
 		}
 	}
 }
