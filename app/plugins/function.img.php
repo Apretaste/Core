@@ -26,7 +26,7 @@ function smarty_function_img($params, $template)
 		@copy($href, "$wwwroot/public/temp/$file");
 		$destination = "$wwwhttp/temp/$file";
 	}
-	elseif($di->get('environment') == "app")
+	elseif(in_array($di->get('environment'), ["app", "appnet"]))
 	{
 		$destination = $file;
 	}
