@@ -346,13 +346,13 @@ class Render
 		}
 		// else display an ad
 		else {
-			return false;
-			// return [
-			// 	"icon" => "&#9786;",
-			// 	"text" => "Responda Encuestas y gane creditos!",
-			// 	"caption" => "Responder",
-			// 	"link" => "ENCUESTA"
-			// ];
+//			return false;
+			return [
+				"icon" => "&#9786;",
+				"text" => "Triple-Recarga Cubacel en Apretaste",
+				"caption" => "Recargar",
+				"link" => "PUBLICIDAD 1030"
+			];
 		}
 	}
 }

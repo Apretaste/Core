@@ -170,41 +170,6 @@ class Deploy
 			$connection->deepQuery("INSERT IGNORE INTO service_alias (service, alias) VALUES ('{$service['serviceName']}','$alias');");
 		}
 
-		// clear old ads
-		$connection->deepQuery("DELETE FROM ads WHERE related_service = '{$service['serviceName']}';");
-
-		// create the owner of ad
-		$sql = "INSERT IGNORE INTO person (email, username, credit) VALUES ('soporte@apretaste.com', 'soporteap', 1000000);";
-		$sql .= "UPDATE person SET credit = 1000000 WHERE email = 'soporte@apretaste.com';";
-
-		$connection->deepQuery($sql);
-		$serviceName = strtoupper($service['serviceName']);
-		$serviceDesc = $connection->escape($service['serviceDescription']);
-		$toaddress = $utils->getValidEmailAddress();
-
-		// create an Ad for new service
-		$body =  "<p>Hola,<br/><br/>Nos alegra decir que tenemos un servicio nuevo en Apretatse. El servicio es $serviceName y $serviceDesc. ";
-		$body .= "Espero que le sea de su agrado, y si quiere saber mas al respecto, el enlace a continuacion le explicar&aacute; como se usa y detallar&aacute; m&aacute;s sobre el mismo.";
-		$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$serviceName.'">Conocer m&aacute;s sobre este servicio</a></center>';
-		$body .= "<br/><br/>Gracias por usar Apretaste.<p>";
-
-		if ($updating) {
-			$body =  "<p>Hola,<br/><br/>Tenemos una actualizaci&oacute;n al servicio $serviceName en Apretaste!";
-			$body .= "Con las actualizaciones vienen mejoras, nuevas funciones y soluciones a problemas antiguos. Espero que le sea de su agrado, y si quiere saber mas al respecto, el enlace a continuacion le explicar&aacute; como se usa y detallar&aacute; m&aacute;s sobre el mismo.";
-			$body .= '<center><a href="mailto:'.$toaddress.'?subject=AYUDA '.$serviceName.'">Conocer m&aacute;s sobre este servicio</a></center>';
-			$body .= "<br/><br/>Gracias por usar Apretaste.<p>";
-		}
-
-		$title = 'Presentando el servicio '.$serviceName.' a nuestros usuarios de Apretaste';
-
-		if ($updating)
-			$title = 'Buenas noticias! Hemos realizado mejoras al servicio '.$serviceName;
-
-		$sql = "INSERT INTO ads (title,description,owner,expiration_date,related_service)
-			    VALUES ('$title', '$body','soporte@apretaste.com', DATE_ADD(CURRENT_DATE, INTERVAL 1 WEEK), '{$service['serviceName']}');";
-
-		$connection->deepQuery($sql);
-
 		// copy files to the service folder and remove temp files
 		rename($pathToService, "$wwwroot/services/{$service['serviceName']}");
 		unlink($pathToZip);
