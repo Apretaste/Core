@@ -505,15 +505,15 @@ class SurveyController extends Controller
 			$PieChart = null;
 			$chart = $this->getPieChart($question->title, $values, $PieChart);
 
-			$html .= '<table width="100%"><tr><td valign="top" width="250">';
-			$html .= '<thead><caption>'.$question->title.'</caption></thead>';
-			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
-			$html .="</td><td valign=\"top\">";
+			$html .= '<table width="100%" align="center">';
+			$html .= '<tr><th align="left" colspan="2"><caption>'.$question->title.'</caption></th></tr>';
+			$html .= '<tr><td width="70%"><img src="data:image/png;base64,'.$chart.'"></td>';
+			$html .= '<td width="30%">';
+			$html .= '<table width="100%">';
 
 			$Data	= $PieChart->pDataObject->getData();
 			$Palette = $PieChart->pDataObject->getPalette();
 
-			$html .= "<table width=\"100%\">";
 			foreach($Data["Series"][$Data["Abscissa"]]["Data"] as $Key => $Value)
 			{
 				$R = $Palette[$Key]["R"];
@@ -522,8 +522,7 @@ class SurveyController extends Controller
 				$html .= "<tr><td>";
 				$html .= "<tr><td><span style=\"width:30px;height:30px;background:rgb($R,$G,$B);\">&nbsp;&nbsp;</span></td><td>$Value</td></tr>";
 			}
-			$html .= "</table>";
-			$html .= "</td></tr></table><br/>";
+			$html .= '</table></td></tr></table>';
 
 			$i++;
 			//if ($i % 4 == 0 && $i < $total) $html .= '<pagebreak />';
@@ -562,11 +561,11 @@ class SurveyController extends Controller
 		$MyData->addPoints(array_keys($values),"Labels");
 		$MyData->setAbscissa("Labels");
 
-		$myPicture = new pImage(250,150,$MyData);
+		$myPicture = new pImage(500,300,$MyData);
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
 			"FontSize" => 13, "R" => 0, "G" => 0, "B" => 0));
-
+		
 		$myPicture->drawText(10, 23, $title, array(
 			"R" => 255,
 			"G" => 255,
@@ -583,8 +582,8 @@ class SurveyController extends Controller
 		));
 
 		$PieChart = new pPie($myPicture,$MyData);
-		$PieChart->draw2DPie(125, 80, array(
-			"Radius" => 50,
+		$PieChart->draw2DPie(250, 160, array(
+			"Radius" => 120,
 			"WriteValues" => PIE_VALUE_PERCENTAGE,
 			"ValuePadding" => 10,
 			"DataGapAngle" => 0,
