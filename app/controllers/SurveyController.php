@@ -235,7 +235,8 @@ class SurveyController extends Controller
 					'person.age' => 'By age',
 					'person.province' => "By location",
 					'person.gender' => 'By gender',
-					'person.highest_school_level' => 'By level of education'
+					'person.highest_school_level' => 'By level of education',
+					'person.skin' => 'By skin'
 			);
 
 			$report = array();
