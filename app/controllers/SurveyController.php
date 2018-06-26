@@ -282,7 +282,6 @@ class SurveyController extends Controller
 						$item->total = intval($item->total);
 						$q = intval($item->question_id);
 						$a = intval($item->answer_id);
-						
 						if (!isset($results[$q]))
 							$results[$q] = array(
 									"i" => $q,
@@ -319,23 +318,23 @@ class SurveyController extends Controller
 
 								if ($field == 'person.date_of_birth'){
 									$pivot = empty($pivot) ? 0 : intval(date_diff(date_create($pivot), date_create('today'))->y);
-									if ($pivot<=0) $results[$q]['a'][$a]['p']['_UNKNOW']++;
-									elseif ($pivot < 17) $results[$q]['a'][$a]['p']['0-16']++;
-									elseif ($pivot > 16 && $pivot < 22) $results[$q]['a'][$a]['p']['17-21']++;
-									elseif ($pivot > 21 && $pivot < 36) $results[$q]['a'][$a]['p']['22-35']++;
-									elseif ($pivot > 35 && $pivot < 56) $results[$q]['a'][$a]['p']['36-55']++;
-									elseif ($pivot > 55) $results[$q]['a'][$a]['p']['56-130']++;
+									if ($pivot<=0) $results[$q]['a'][$a]['p']['_UNKNOW']+=$item->total;
+									elseif ($pivot < 17) $results[$q]['a'][$a]['p']['0-16']+=$item->total;
+									elseif ($pivot > 16 && $pivot < 22) $results[$q]['a'][$a]['p']['17-21']+=$item->total;
+									elseif ($pivot > 21 && $pivot < 36) $results[$q]['a'][$a]['p']['22-35']+=$item->total;
+									elseif ($pivot > 35 && $pivot < 56) $results[$q]['a'][$a]['p']['36-55']+=$item->total;
+									elseif ($pivot > 55) $results[$q]['a'][$a]['p']['56-130']+=$item->total;
 								}
+								if (!isset($totals[$a]))
+									$totals[$a] = 0;
 
-								if (!isset($totals[$a])) $totals[$a] = 0;
-
-								$totals[$a] += $item->total;
-								$results[$q]['a'][$a]['total'] += $item->total;
-								$results[$q]['total'] += $item->total;
-								if ($field != 'person.date_of_birth') {
-									$results[$q]['a'][$a]['p'][$pivot] = $item->total;
-									$pivots[$pivot] = str_replace("_"," ", $pivot);
-								}
+									$totals[$a] += $item->total;
+									$results[$q]['a'][$a]['total'] += $item->total;
+									$results[$q]['total'] += $item->total;
+									if ($field != 'person.date_of_birth') {
+										$results[$q]['a'][$a]['p'][$pivot] = $item->total;
+										$pivots[$pivot] = str_replace("_"," ", $pivot);
+									}
 					}
 				}
 
@@ -378,8 +377,6 @@ class SurveyController extends Controller
 								$totals[$a] = 0;
 				}
 
-
-
 				asort($pivots);
 				unset($pivots['_UNKNOW']);
 				$pivots['_UNKNOW'] = 'UNKNOW';
@@ -390,7 +387,6 @@ class SurveyController extends Controller
 						'pivots' => $pivots,
 						'totals' => $totals
 				);
-
 				// adding unknow labels
 
 				foreach ($report[$field]['results'] as $k => $question){
