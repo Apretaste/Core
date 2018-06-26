@@ -231,13 +231,14 @@ class SurveyController extends Controller
 				'17-21' => 0,
 				'22-35' => 0,
 				'36-55' => 0,
-				'56-130' => 0
+				'56-130' => 0,
+				'_UNKNOW' => 0
 		);
 
 		if ($survey !== false){
 
 			$enums = array(
-					'person.age' => 'By age',
+					'person.date_of_birth' => 'By age',
 					'person.province' => "By location",
 					'person.gender' => 'By gender',
 					'person.highest_school_level' => 'By level of education',
@@ -281,6 +282,7 @@ class SurveyController extends Controller
 						$item->total = intval($item->total);
 						$q = intval($item->question_id);
 						$a = intval($item->answer_id);
+						
 						if (!isset($results[$q]))
 							$results[$q] = array(
 									"i" => $q,
@@ -299,24 +301,41 @@ class SurveyController extends Controller
 
 								$pivot = $item->pivote;
 
-								if ($field == 'person.age'){
-									if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
-									elseif ($pivot*1 < 17) $pivot = '0-16';
-									elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
-									elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
-									elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
-									elseif ($pivot*1 > 55) $pivot = '56-130';
+								if ($field == 'person.date_of_birth' and !isset($results[$q]['a'][$a]['p']['_UNKNOW'])) {
+									$results[$q]['a'][$a]['p']['0-16']=0;
+									$results[$q]['a'][$a]['p']['17-21']=0;
+									$results[$q]['a'][$a]['p']['22-35']=0;
+									$results[$q]['a'][$a]['p']['36-55']=0;
+									$results[$q]['a'][$a]['p']['56-130']=0;
+									$results[$q]['a'][$a]['p']['_UNKNOW']=0;
+
+									$pivots['0-16'] = '0-16';
+									$pivots['17-21'] = '17-21';
+									$pivots['22-35'] = '22-35';
+									$pivots['36-55'] = '36-55';
+									$pivots['56-130'] = '56-130';
+									$pivots['_UNKNOW'] = 'UNKNOW';
 								}
 
-								$results[$q]['a'][$a]['p'][$pivot] = $item->total;
+								if ($field == 'person.date_of_birth'){
+									$pivot = empty($pivot) ? 0 : intval(date_diff(date_create($pivot), date_create('today'))->y);
+									if ($pivot<=0) $results[$q]['a'][$a]['p']['_UNKNOW']++;
+									elseif ($pivot < 17) $results[$q]['a'][$a]['p']['0-16']++;
+									elseif ($pivot > 16 && $pivot < 22) $results[$q]['a'][$a]['p']['17-21']++;
+									elseif ($pivot > 21 && $pivot < 36) $results[$q]['a'][$a]['p']['22-35']++;
+									elseif ($pivot > 35 && $pivot < 56) $results[$q]['a'][$a]['p']['36-55']++;
+									elseif ($pivot > 55) $results[$q]['a'][$a]['p']['56-130']++;
+								}
 
-								if (!isset($totals[$a]))
-									$totals[$a] = 0;
+								if (!isset($totals[$a])) $totals[$a] = 0;
 
-									$totals[$a] += $item->total;
-									$results[$q]['a'][$a]['total'] += $item->total;
-									$results[$q]['total'] += $item->total;
+								$totals[$a] += $item->total;
+								$results[$q]['a'][$a]['total'] += $item->total;
+								$results[$q]['total'] += $item->total;
+								if ($field != 'person.date_of_birth') {
+									$results[$q]['a'][$a]['p'][$pivot] = $item->total;
 									$pivots[$pivot] = str_replace("_"," ", $pivot);
+								}
 					}
 				}
 
