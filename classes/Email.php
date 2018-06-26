@@ -323,8 +323,10 @@ class Email
 
 		// connect to the client
 		$client = new NautaClient($user, $pass);
+		$tries = 3; // number of times to try if the email fails
 
 		// login and send the email
+		TryAgain:
 		if ($client->login())
 		{
 			// prepare the attachment
@@ -337,16 +339,19 @@ class Email
 			$output = new stdClass();
 			if($res) {
 				$output->code = "200";
-				$output->message = "Sent to {$this->to}";
+				$output->message = "Sent to {$this->to} with $tries tries left";
 			} else {
 				$output->code = "520";
 				$output->message = "Error sending to {$this->to}";
 				$utils->createAlert("[{$this->method}] {$output->message}");
 			}
 		}
-		// if the client cannot login show error
 		else
 		{
+			// try sending the email again
+			if($tries-- <= 0) goto TryAgain;
+
+			// if the client cannot login show error
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
