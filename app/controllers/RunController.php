@@ -349,7 +349,7 @@ class RunController extends Controller
 			$appversion = $input->appversion;
 			$ostype = isset($input->ostype) ? $input->ostype : "android";
 			$method = isset($input->method) ? $input->method : "email";
-			$osversion = $input->osversion;
+			$osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 			$nautaPass = base64_decode($input->token);
 			$timestamp = $input->timestamp;
 		}
