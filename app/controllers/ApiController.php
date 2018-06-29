@@ -207,7 +207,13 @@ class ApiController extends Controller
 		$sender->to = $email;
 		$sender->subject = $subject;
 		$sender->body = $body;
-		$sender->send();
+		$res = $sender->send();
+
+		// return error response
+		if($res->message != "200") {
+			echo '{"code":"error", "message":"'.$res->message.'"}';
+			return false;
+		}
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
