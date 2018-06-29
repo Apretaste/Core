@@ -231,16 +231,18 @@ class SurveyController extends Controller
 				'17-21' => 0,
 				'22-35' => 0,
 				'36-55' => 0,
-				'56-130' => 0
+				'56-130' => 0,
+				'_UNKNOW' => 0
 		);
 
 		if ($survey !== false){
 
 			$enums = array(
-					'person.age' => 'By age',
+					'person.date_of_birth' => 'By age',
 					'person.province' => "By location",
 					'person.gender' => 'By gender',
-					'person.highest_school_level' => 'By level of education'
+					'person.highest_school_level' => 'By level of education',
+					'person.skin' => 'By skin'
 			);
 
 			$report = array();
@@ -298,24 +300,41 @@ class SurveyController extends Controller
 
 								$pivot = $item->pivote;
 
-								if ($field == 'person.age'){
-									if (trim($pivot)=='' || $pivot=='0' || $pivot =='NULL') $pivot='_UNKNOW';
-									elseif ($pivot*1 < 17) $pivot = '0-16';
-									elseif ($pivot*1 > 16 && $pivot*1 < 22) $pivot = '17-21';
-									elseif ($pivot*1 > 21 && $pivot*1 < 36) $pivot = '22-35';
-									elseif ($pivot*1 > 35 && $pivot*1 < 56) $pivot = '36-55';
-									elseif ($pivot*1 > 55) $pivot = '56-130';
+								if ($field == 'person.date_of_birth' and !isset($results[$q]['a'][$a]['p']['_UNKNOW'])) {
+									$results[$q]['a'][$a]['p']['0-16']=0;
+									$results[$q]['a'][$a]['p']['17-21']=0;
+									$results[$q]['a'][$a]['p']['22-35']=0;
+									$results[$q]['a'][$a]['p']['36-55']=0;
+									$results[$q]['a'][$a]['p']['56-130']=0;
+									$results[$q]['a'][$a]['p']['_UNKNOW']=0;
+
+									$pivots['0-16'] = '0-16';
+									$pivots['17-21'] = '17-21';
+									$pivots['22-35'] = '22-35';
+									$pivots['36-55'] = '36-55';
+									$pivots['56-130'] = '56-130';
+									$pivots['_UNKNOW'] = 'UNKNOW';
 								}
 
-								$results[$q]['a'][$a]['p'][$pivot] = $item->total;
-
+								if ($field == 'person.date_of_birth'){
+									$pivot = empty($pivot) ? 0 : intval(date_diff(date_create($pivot), date_create('today'))->y);
+									if ($pivot<=0) $results[$q]['a'][$a]['p']['_UNKNOW']+=$item->total;
+									elseif ($pivot < 17) $results[$q]['a'][$a]['p']['0-16']+=$item->total;
+									elseif ($pivot > 16 && $pivot < 22) $results[$q]['a'][$a]['p']['17-21']+=$item->total;
+									elseif ($pivot > 21 && $pivot < 36) $results[$q]['a'][$a]['p']['22-35']+=$item->total;
+									elseif ($pivot > 35 && $pivot < 56) $results[$q]['a'][$a]['p']['36-55']+=$item->total;
+									elseif ($pivot > 55) $results[$q]['a'][$a]['p']['56-130']+=$item->total;
+								}
 								if (!isset($totals[$a]))
 									$totals[$a] = 0;
 
 									$totals[$a] += $item->total;
 									$results[$q]['a'][$a]['total'] += $item->total;
 									$results[$q]['total'] += $item->total;
-									$pivots[$pivot] = str_replace("_"," ", $pivot);
+									if ($field != 'person.date_of_birth') {
+										$results[$q]['a'][$a]['p'][$pivot] = $item->total;
+										$pivots[$pivot] = str_replace("_"," ", $pivot);
+									}
 					}
 				}
 
@@ -358,8 +377,6 @@ class SurveyController extends Controller
 								$totals[$a] = 0;
 				}
 
-
-
 				asort($pivots);
 				unset($pivots['_UNKNOW']);
 				$pivots['_UNKNOW'] = 'UNKNOW';
@@ -370,7 +387,6 @@ class SurveyController extends Controller
 						'pivots' => $pivots,
 						'totals' => $totals
 				);
-
 				// adding unknow labels
 
 				foreach ($report[$field]['results'] as $k => $question){
@@ -509,15 +525,15 @@ class SurveyController extends Controller
 			$PieChart = null;
 			$chart = $this->getPieChart($question->title, $values, $PieChart);
 
-			$html .= '<table width="100%"><tr><td valign="top" width="250">';
-			$html .= '<thead><caption>'.$question->title.'</caption></thead>';
-			$html .= '<img src="data:image/png;base64,'.$chart.'"><br/>';
-			$html .="</td><td valign=\"top\">";
+			$html .= '<table width="100%" align="center">';
+			$html .= '<tr><th align="left" colspan="2"><caption>'.$question->title.'</caption></th></tr>';
+			$html .= '<tr><td width="70%"><img src="data:image/png;base64,'.$chart.'"></td>';
+			$html .= '<td width="30%">';
+			$html .= '<table width="100%">';
 
 			$Data	= $PieChart->pDataObject->getData();
 			$Palette = $PieChart->pDataObject->getPalette();
 
-			$html .= "<table width=\"100%\">";
 			foreach($Data["Series"][$Data["Abscissa"]]["Data"] as $Key => $Value)
 			{
 				$R = $Palette[$Key]["R"];
@@ -526,8 +542,7 @@ class SurveyController extends Controller
 				$html .= "<tr><td>";
 				$html .= "<tr><td><span style=\"width:30px;height:30px;background:rgb($R,$G,$B);\">&nbsp;&nbsp;</span></td><td>$Value</td></tr>";
 			}
-			$html .= "</table>";
-			$html .= "</td></tr></table><br/>";
+			$html .= '</table></td></tr></table>';
 
 			$i++;
 			//if ($i % 4 == 0 && $i < $total) $html .= '<pagebreak />';
@@ -566,11 +581,11 @@ class SurveyController extends Controller
 		$MyData->addPoints(array_keys($values),"Labels");
 		$MyData->setAbscissa("Labels");
 
-		$myPicture = new pImage(250,150,$MyData);
+		$myPicture = new pImage(500,300,$MyData);
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
 			"FontSize" => 13, "R" => 0, "G" => 0, "B" => 0));
-
+		
 		$myPicture->drawText(10, 23, $title, array(
 			"R" => 255,
 			"G" => 255,
@@ -587,8 +602,8 @@ class SurveyController extends Controller
 		));
 
 		$PieChart = new pPie($myPicture,$MyData);
-		$PieChart->draw2DPie(125, 80, array(
-			"Radius" => 50,
+		$PieChart->draw2DPie(250, 160, array(
+			"Radius" => 120,
 			"WriteValues" => PIE_VALUE_PERCENTAGE,
 			"ValuePadding" => 10,
 			"DataGapAngle" => 0,
