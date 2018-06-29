@@ -210,7 +210,7 @@ class ApiController extends Controller
 		$res = $sender->send();
 
 		// return error response
-		if($res->message != "200") {
+		if($res->code != "200") {
 			echo '{"code":"error", "message":"'.$res->message.'"}';
 			return false;
 		}
