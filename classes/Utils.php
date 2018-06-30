@@ -43,7 +43,6 @@ class Utils
 	public function getSupportEmailAddress()
 	{
 		// get a random support email
-
 		$support = Connection::query("
 			SELECT email FROM delivery_input
 			WHERE environment='support' AND active=1
