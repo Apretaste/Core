@@ -12,7 +12,7 @@ class Render
 	 * @param String[] $attachments
 	 * @return [Service, Response[]]
 	 */
-	public static function runRequest($email, $subject, $body, $attachments, $appversion=1)
+	public static function runRequest($email, $subject, $body, $attachments, $input=false)
 	{
 		// sanitize subject and body to avoid mysql injections
 		$utils = new Utils();
@@ -73,7 +73,7 @@ class Render
 		$request->query = $query;
 		$request->params = $params;
 		$request->lang = $lang;
-		$request->appversion = floatval($appversion);
+		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
 		$request->environment = $environment;
 
 		// create a new Service Object with info from the database
@@ -119,7 +119,6 @@ class Render
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
-	 * @author kuma
 	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
 	 * @return String, template in HTML
@@ -180,8 +179,9 @@ class Render
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
 			// app only variables
-			"APP_VERSION" => floatval($service->appversion),
+			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
+			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype,
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
 			"USER_USERNAME" => $username,
@@ -329,8 +329,12 @@ class Render
 		$environment = $di->get('environment');
 
 		// get app versions
-		$appVersion = floatval($service->appversion);
+		$appVersion = empty($service->input->appversion) ? 1 : floatval($service->input->appversion);
 		$appLatestVersion = floatval($di->get('config')['global']['appversion']);
+		$appType = empty($service->input->apptype) ? "original" : $service->input->apptype;
+
+		// only show ads on the original app
+		if($appType != "original") return false;
 
 		// display ads 80% of the times
 		$displayDownloadApp = rand(0, 100) < 20;
@@ -346,7 +350,7 @@ class Render
 		}
 		// else display an ad
 		else {
-//			return false;
+			return false;
 			return [
 				"icon" => "&#9786;",
 				"text" => "Triple-Recarga Cubacel en Apretaste",
