@@ -345,48 +345,47 @@ class RunController extends Controller
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
 		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
 		if($input) {
-			$text = $input->command;
-			$appversion = $input->appversion;
-			$ostype = isset($input->ostype) ? $input->ostype : "android";
-			$method = isset($input->method) ? $input->method : "email";
-			$osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-			$nautaPass = base64_decode($input->token);
-			$timestamp = $input->timestamp;
-		}
+			if( ! isset($input->ostype)) $input->ostype = "android";
+			if( ! isset($input->method)) $input->method = "email";
+			if( ! isset($input->apptype)) $input->apptype = "original";
+			$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+			$input->nautaPass = base64_decode($input->token);
 		// get the input if the data is plain text (version <= 2.5)
-		else {
-			$osversion = false;
-			$ostype = "android";
-			$method = "email";
-			$timestamp = time(); // get only notifications
-			$file = file("$temp/$folderName/$textFile");
+		} else {
+			$input = new stdClass();
+			$input->osversion = false;
+			$input->ostype = "android";
+			$input->method = "email";
+			$input->apptype = "original";
+			$input->timestamp = time(); // get only notifications
 
-			if (isset($file[0])) $text = trim($file[0]);
+			$file = file("$temp/$folderName/$textFile");
+			if (isset($file[0])) $input->command = trim($file[0]);
 			else return $utils->createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
-			$appversion = isset($file[1]) && is_numeric(trim($file[1])) ? $appversion = trim($file[1]) : "";
-			$nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
+			$input->appversion = isset($file[1]) && is_numeric(trim($file[1])) ? trim($file[1]) : "";
+			$input->nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
 
 		// save Nauta password if passed
-		if($nautaPass) {
-			$encryptPass = $utils->encrypt($nautaPass);
+		if($input->nautaPass) {
+			$encryptPass = $utils->encrypt($input->nautaPass);
 			$auth = Connection::query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', '$ostype', '$osversion')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='$ostype', version='$osversion' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
-		Connection::query("UPDATE person SET appversion='$appversion' WHERE email='{$this->fromEmail}'");
+		Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE email='{$this->fromEmail}'");
 
 		// run the request
-		$ret = Render::runRequest($this->fromEmail, $text, '', $attachs, $appversion);
+		$ret = Render::runRequest($this->fromEmail, $input->command, '', $attachs, $input);
 		$service = $ret->service;
 		$response = $ret->response;
 
 		// if the request needs an email back
 		if($response->render)
 		{
-			// set the layout to blank
+			// set the layout for the app
 			$response->setEmailLayout('email_app.tpl');
 
 			// is there is a cache time, add it
@@ -397,19 +396,19 @@ class RunController extends Controller
 			}
 
 			// render the HTML, unless it is a status call
-			if($text == "status") $this->body = "{}";
+			if($input->command == "status") $this->body = "{}";
 			else {
-				$service->appversion = $appversion;
+				$service->input = $input;
 				$this->body = Render::renderHTML($service, $response);
 			}
 
 			// get extra data for the app
 			// if the old version is calling status, do not get extra data
 			// @TODO remove when we get rid of the old version
-			$isPerfilStatus = substr($text, 0, strlen("perfil status")) === "perfil status";
+			$isPerfilStatus = substr($input->command, 0, strlen("perfil status")) === "perfil status";
 			if($isPerfilStatus) $extra = "{}";
 			else {
-				$res = $utils->getExternalAppData($this->fromEmail, $timestamp);
+				$res = $utils->getExternalAppData($this->fromEmail, $input->timestamp);
 				$response->attachments = array_merge($response->attachments, $res["attachments"]);
 				$extra = $res["json"];
 			}
@@ -439,12 +438,12 @@ class RunController extends Controller
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
-			request_method='$method'
+			request_method='{$input->method}'
 			WHERE id='{$this->idEmail}'");
 
 		// return message for the log
-		$hasNautaPass = $nautaPass ? 1 : 0;
-		$log = "Text:$text, Ticket:{$this->subject}, Version:$appversion, NautaPass:$hasNautaPass";
+		$hasNautaPass = $input->nautaPass ? 1 : 0;
+		$log = "Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}, NautaPass:$hasNautaPass";
 		return $log;
 	}
 
