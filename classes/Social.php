@@ -156,9 +156,6 @@ class Social
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 
-		// convert text to UTF-8
-		$message = utf8_encode($message);
-
 		return ucfirst($message);
 	}
 
@@ -287,9 +284,6 @@ class Social
 		// remove double spaces
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
-
-		// convert text to UTF-8
-		$message = utf8_encode($message);
 
 		return ucfirst($message);
 	}
