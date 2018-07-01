@@ -139,7 +139,7 @@ class Social
 		// create the message
 		$message = "Hola";
 		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
-		if ( ! empty($age)) $message .= ", tengo $age annos";
+		if ( ! empty($age)) $message .= ", tengo $age años";
 		if ( ! empty($gender)) $message .= ", soy $gender";
 		if ( ! empty($religion)) $message .= ", $religion";
 		if ( ! empty($skin)) $message .= ", soy $skin";
@@ -445,7 +445,7 @@ class Social
 	{
 		// searching contacts of the current user
 		$notes = Connection::query("
-			SELECT * FROM (
+			SELECT A.*,B.text AS lastNote,B.read_date,B.from_user FROM (
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
 				ON A.to_user = B.email
@@ -458,7 +458,8 @@ class Social
 				ON A.from_user = B.email
 				WHERE A.to_user = '$email'
 				AND (A.active=01 OR A.active=11)
-				GROUP BY A.from_user) A
+				GROUP BY A.from_user) A JOIN _note B
+				ON B.send_date=A.last
 			ORDER BY last DESC");
 
 		// add profiles to the list of notes
@@ -471,7 +472,11 @@ class Social
 			// create new chat object
 			$chat = new stdClass();
 			$chat->email = $n->email;
-			$chat->last_sent = $n->last;
+			$chat->last_sent = date('d/m/Y G:i',strtotime($n->last));
+			$chat->last_note_user = $n->from_user;
+			$chat->last_note_read = ($n->read_date!=null and $n->from_user==$email)?true:false;
+			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
+			$chat->last_note = ($n->from_user!=$email and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
 			$chat->profile = $this->prepareUserProfile($n);
 			$chats[] = $chat;
 		}
@@ -513,14 +518,14 @@ public function chatOcult($from_user,$to_user){
 		// retrieve conversation between users
 		$notes = Connection::query("
 			SELECT * FROM (
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, B.*
+				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
 				AND NOT (A.active=00 OR A.active=01)
 				AND A.id > '$lastID'
 				UNION
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, B.*
+				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
@@ -542,9 +547,9 @@ public function chatOcult($from_user,$to_user){
 		// format profile
 		$chats = [];
 		foreach($notes as $n) {
+			$n->readed = ($n->read!=null and $n->from_user==$yourEmail)?true:false;
 			$chats[] = $this->prepareUserProfile($n);
 		}
-
 		return $chats;
 	}
 
