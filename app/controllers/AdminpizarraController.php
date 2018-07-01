@@ -2,7 +2,7 @@
 
 use Phalcon\Mvc\Controller;
 
-class PizarraController extends Controller
+class AdminpizarraController extends Controller
 {
 	// do not let anonymous users pass
 	public function initialize()
@@ -64,6 +64,6 @@ class PizarraController extends Controller
 			WHERE id='$id'");
 
 		// go back to the notes
-		$this->response->redirect("pizarra/notes");
+		$this->response->redirect("adminpizarra/notes");
 	}
 }

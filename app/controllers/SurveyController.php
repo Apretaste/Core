@@ -12,6 +12,11 @@ class SurveyController extends Controller
 		$this->view->setLayout("manage");
 	}
 
+	public function indexAction()
+    {
+        return $this->response->redirect('survey/surveys');
+    }
+
 	/**
 	 * List of surveys
 	 *

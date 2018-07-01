@@ -131,7 +131,8 @@ class Social
 			'BUDISMO' => 'soy budista',
 			'CATOLICISMO' => "soy catolic$genderFinalVowel",
 			'OTRA' => '',
-			'CRISTIANISMO' => "soy cristian$genderFinalVowel"
+			'CRISTIANISMO' => "soy cristian$genderFinalVowel",
+			'PROTESTANTE' => "soy protestante"
 		);
 		$religion = empty($profile->religion) ? "" : $religions[$profile->religion];
 
@@ -259,6 +260,7 @@ class Social
 			'BUDISMO' => 'I am Buddhist',
 			'CATOLICISMO' => "I am Catholic",
 			'CRISTIANISMO' => "I am Christian",
+			'PROTESTANTE' => "I am Protestant",
 			'OTRA' => ''
 		);
 		$religion = empty($profile->religion) ? "" : $religions[$profile->religion];

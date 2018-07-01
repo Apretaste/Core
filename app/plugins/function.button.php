@@ -70,7 +70,7 @@ function smarty_function_button($params, $template)
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), array("app", "web")))
+	if(in_array($di->get('environment'), array("app", "appnet", "web")))
 	{
 		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];

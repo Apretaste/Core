@@ -12,7 +12,7 @@ class Render
 	 * @param String[] $attachments
 	 * @return [Service, Response[]]
 	 */
-	public static function runRequest($email, $subject, $body, $attachments, $appversion=1)
+	public static function runRequest($email, $subject, $body, $attachments, $input=false)
 	{
 		// sanitize subject and body to avoid mysql injections
 		$utils = new Utils();
@@ -73,7 +73,7 @@ class Render
 		$request->query = $query;
 		$request->params = $params;
 		$request->lang = $lang;
-		$request->appversion = floatval($appversion);
+		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
 		$request->environment = $environment;
 
 		// create a new Service Object with info from the database
@@ -119,7 +119,6 @@ class Render
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
-	 * @author kuma
 	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
 	 * @return String, template in HTML
@@ -163,11 +162,15 @@ class Render
 		// get a valid email address
 		$validEmailAddress = $utils->getValidEmailAddress($username);
 
+		// get app environment
+		$environment = $di->get('environment');
+		if($environment == 'appnet') $environment = 'app';
+
 		// list the system variables
 		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
-			"APRETASTE_ENVIRONMENT" => $di->get('environment'),
+			"APRETASTE_ENVIRONMENT" => $environment,
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
@@ -176,15 +179,18 @@ class Render
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
 			// app only variables
-			"APP_VERSION" => floatval($service->appversion),
+			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
+			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype,
 			// user variables
 			"num_notifications" => $utils->getNumberOfNotifications($response->email),
-			'USER_USERNAME' => $username,
-			'USER_NAME' => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
-			'USER_FULL_NAME' => isset($person->full_name) ? $person->full_name : "",
-			'USER_EMAIL' => isset($person->email) ? $person->email : "",
-			'USER_MAILBOX' => $utils->getUserPersonalAddress($response->email)
+			"USER_USERNAME" => $username,
+			"USER_NAME" => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
+			"USER_FULL_NAME" => isset($person->full_name) ? $person->full_name : "",
+			"USER_EMAIL" => isset($person->email) ? $person->email : "",
+			"USER_MAILBOX" => $utils->getUserPersonalAddress($response->email),
+			// advertisement
+			"TOP_AD" => self::getAd($service)
 		];
 
 		// merge all variable sets and assign them to Smarty
@@ -195,12 +201,13 @@ class Render
 		$rendered = $smarty->fetch($response->layout);
 
 		// add link popups for the web
-		if($di->get('environment') == "web") {
+		if($environment == "web") {
 			// get page content
 			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_includes.phtml");
 
 			// replace system variables
 			foreach ($systemVariables as $key=>$value) {
+				if(is_array($value)) continue;
 				$linkPopup = str_replace('{$'.$key.'}', $value, $linkPopup);
 			}
 
@@ -306,6 +313,50 @@ class Render
 				}
 			}
 			$response->images = $images;
+		}
+	}
+
+	/**
+	 * Get the most current ad to be shown in the response
+	 *
+	 * @author salvipascual
+	 * @return Array
+	 */
+	public static function getAd($service)
+	{
+		// get the current environment
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
+
+		// get app versions
+		$appVersion = empty($service->input->appversion) ? 1 : floatval($service->input->appversion);
+		$appLatestVersion = floatval($di->get('config')['global']['appversion']);
+		$appType = empty($service->input->apptype) ? "original" : $service->input->apptype;
+
+		// only show ads on the original app
+		if($appType != "original") return false;
+
+		// display ads 80% of the times
+		$displayDownloadApp = rand(0, 100) < 20;
+
+		// display message if app is not to the latest version
+		if($appVersion < $appLatestVersion && $displayDownloadApp) {
+			return [
+				"icon" => "&DownArrow;",
+				"text" => "App desactualizada; baje la version " . number_format($appLatestVersion, 1),
+				"caption" => "Descargar",
+				"link" => "APP"
+			];
+		}
+		// else display an ad
+		else {
+			return false;
+			return [
+				"icon" => "&#9786;",
+				"text" => "Triple-Recarga Cubacel en Apretaste",
+				"caption" => "Recargar",
+				"link" => "PUBLICIDAD 1030"
+			];
 		}
 	}
 }

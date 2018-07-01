@@ -609,23 +609,31 @@ class NautaClient
 		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
 		require_once("$wwwroot/lib/anticaptcha-php/imagetotext.php");
 
-		// set the file
+		// set the file & create the task, this API echoes
+		ob_start();
 		$api = new ImageToText();
 		$api->setVerboseMode(true);
 		$api->setKey($key);
 		$api->setFile($image);
+		$resTask = $api->createTask();
+		ob_end_clean();
 
-		// create the task
-		if (!$api->createTask()) {
+		// check the task ran well
+		if ( ! $resTask) {
 			$ret = new stdClass();
 			$ret->code = "500";
 			$ret->message = "API v2 send failed: " . $api->getErrorMessage();
 			return $ret;
 		}
 
-		// wait for results
+		// wait for results, this API echoes
+		ob_start();
 		$taskId = $api->getTaskId();
-		if (!$api->waitForResult()) {
+		$resWaitResult = $api->waitForResult();
+		ob_end_clean();
+
+		// check the task ran well
+		if ( ! $resWaitResult) {
 			$ret = new stdClass();
 			$ret->code = "510";
 			$ret->message = "Could not solve captcha: " . $api->getErrorMessage();

@@ -102,13 +102,6 @@
 						</li>
 						<?php } ?>
 
-						<!-- SURVEY -->
-						<?php if($security->checkAccess("campaigns")) { ?>
-						<li>
-							<a href="/campaigns"><i class="fa fa-paper-plane-o"></i> <span class="nav-label">Campaigns</span></a>
-						</li>
-						<?php } ?>
-
 						<!-- MARKET -->
 						<?php if($security->checkAccess("market")) { ?>
 						<li>
@@ -140,9 +133,9 @@
 						<?php } ?>
 
 						<!-- PIZARRA -->
-						<?php if($security->checkAccess("pizarra")) { ?>
+						<?php if($security->checkAccess("adminpizarra")) { ?>
 							<li>
-								<a href="/pizarra/notes"><i class="fa fa-newspaper-o"></i> <span class="nav-label">Pizarra</span></a>
+								<a href="/adminpizarra/notes"><i class="fa fa-newspaper-o"></i> <span class="nav-label">Pizarra</span></a>
 							</li>
 						<?php } ?>
 

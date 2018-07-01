@@ -207,7 +207,13 @@ class ApiController extends Controller
 		$sender->to = $email;
 		$sender->subject = $subject;
 		$sender->body = $body;
-		$sender->send();
+		$res = $sender->send();
+
+		// return error response
+		if($res->code != "200") {
+			echo '{"code":"error", "message":"'.$res->message.'"}';
+			return false;
+		}
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -293,6 +299,39 @@ class ApiController extends Controller
 
 		// return ok response
 		echo '{"code":"ok"}';
+	}
+
+	/**
+	 * Save a user's appid to contact him/her later via web push notifications
+	 *
+	 * @author salvipascual
+	 * @param POST email
+	 * @param POST appid
+	 */
+	public function saveAppIdAction()
+	{
+		$email = $this->request->get('email');
+		$appid = $this->request->get('appid');
+	
+		// escape values before saving to the db
+		$email = Connection::escape($email);
+		$appid = Connection::escape($appid);
+
+		// create login token
+		$utils = new Utils();
+		$token = $utils->generateRandomHash();
+
+		// check if the row already exists
+		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		
+		// if the row do not exist, create it
+		if(empty($row)) {
+			Connection::query("INSERT INTO authentication(token,email,appid,appname,platform) VALUES ('$token','$email','$appid','apretaste','web')");
+		}
+		// if the row exist and the appid is different, update it
+		elseif($row[0]->appid != $appid) {
+			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		}
 	}
 
 	/**

@@ -12,6 +12,14 @@ class AnalyticsController extends Controller
 	}
 
 	/**
+	 * By default, redirect to the Analytics page
+	 */
+	public function indexAction()
+    {
+        return $this->response->redirect('analytics/audience');
+    }
+
+	/**
 	 * Audience
 	 */
 	public function audienceAction()
@@ -19,6 +27,13 @@ class AnalyticsController extends Controller
 		// get temp directory
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
+
+		//
+		// USERS AND PROFILES
+		//
+		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
+		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
+		$numberUserProfiles = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
 
 		//
 		// WEEKLY GROSS TRAFFIC
@@ -57,8 +72,8 @@ class AnalyticsController extends Controller
 				SELECT COUNT(id) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
 				FROM delivery
 				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-				ORDER BY inserted
-				DESC LIMIT 12");
+				ORDER BY inserted DESC
+				LIMIT 4");
 
 			// format as JSON
 			$monthlyGrossTraffic = [];
@@ -83,7 +98,8 @@ class AnalyticsController extends Controller
 				SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
 				FROM delivery
 				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-				ORDER BY inserted DESC LIMIT 12");
+				ORDER BY inserted DESC
+				LIMIT 4");
 
 			// format as JSON
 			$monthlyUniqueTraffic = [];
@@ -105,7 +121,8 @@ class AnalyticsController extends Controller
 				SELECT COUNT(DISTINCT email) AS visitors, DATE_FORMAT(insertion_date,'%Y-%m') AS inserted
 				FROM person
 				GROUP BY DATE_FORMAT(insertion_date,'%Y-%m')
-				ORDER BY inserted DESC LIMIT 30");
+				ORDER BY inserted DESC
+				LIMIT 4");
 
 			// format as JSON
 			$monthlyNewUsers = [];
@@ -231,6 +248,9 @@ class AnalyticsController extends Controller
 
 		// send variables to the view
 		$this->view->title = "Audience";
+		$this->view->numberActiveUsers = $numberActiveUsers[0]->cnt;
+		$this->view->numberTotalUsers = $numberTotalUsers[0]->cnt;
+		$this->view->numberUserProfiles = $numberUserProfiles[0]->cnt;
 		$this->view->weeklyGrossTraffic = $weeklyGrossTraffic;
 		$this->view->monthlyGrossTraffic = $monthlyGrossTraffic;
 		$this->view->monthlyUniqueTraffic = $monthlyUniqueTraffic;
