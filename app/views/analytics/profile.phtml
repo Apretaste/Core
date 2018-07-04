@@ -1,90 +1,140 @@
 <div class="row">
-	<center>
-		<!-- ACTIVE USERS BLOCK -->
-	<div class="panel panel-default" style="display:inline-block;">
+	<!-- ACTIVE USERS BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
 			<div class="panel-body">
 				<i class="fa fa-user pull-left" style="font-size:37px; margin-right:10px;"></i>
 				<big><b><?= number_format($numberActiveUsers) ?></b></big><small>/<?= number_format($numberTotalUsers) ?></small><br/>
 				<small>Active/Total users</small>
 			</div>
+		</div>
 	</div>
-	</center>
-	
-	<div class="col-xs-5">
-		<!-- PROFILE VS NO PROFILE -->
+
+	<!-- USER PROFILES BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<i class="fa fa-user-secret pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><b><?= number_format($usersWithProfile) ?></b></big><small>/<?= number_format($numberActiveUsers) ?></small><br/>
+				<small>Users with profile</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE VS NO PROFILE -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Profile vs no profile</div>
 			<div class="panel-body">
 				<div id="chart_pie_profiles" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-
-		<!-- PROFILE BY GENDER -->
+	<!-- PROFILE BY GENDER -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Gender</div>
 			<div class="panel-body">
 				<div id="chart_pie_gender" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
+</div>
 
-		<!-- PROFILE BY SEXUAL ORIENTATION -->
+<div class="row">
+	<!-- PROFILE BY SEXUAL ORIENTATION -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Sexual Orientation</div>
 			<div class="panel-body">
 				<div id="chart_pie_orientation" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-		<!-- PROFILE BY RACE -->
+	<!-- PROFILE BY RACE -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Race</div>
 			<div class="panel-body">
 				<div id="chart_pie_race" style="width:100%;"></div>
 			</div>
 		</div>
-		<!-- UPDATED PROFILES -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Updated Profiles</div>
-			<div class="panel-body">
-				<div id="updatedProfiles" style="width:100%;"></div>
-			</div>
-		</div>
+	</div>
 </div>
-<div class="col-xs-5">
-		<!-- PROFILE BY CIVIL STATUS -->
+
+<div class="row">
+	<!-- PROFILE BY CIVIL STATUS -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Civil Status</div>
 			<div class="panel-body">
 				<div id="chart_pie_civil" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-		<!-- PROFILE BY SCHOOL LEVEL -->
+	<!-- PROFILE BY SCHOOL LEVEL -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By School Level</div>
 			<div class="panel-body">
 				<div id="chart_pie_school" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
+</div>
 
-		<!-- PROFILE BY PROFESSION -->
+<div class="row">
+	<!-- PROFILE BY PROFESSION -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Profession</div>
 			<div class="panel-body">
 				<div id="chart_pie_profession" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-		<!-- PROFILE BY AGE -->
+	<!-- PROFILE BY AGE -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Users By Age</div>
 			<div class="panel-body">
 				<div id="chart_pie_age" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
+</div>
 
-		<!-- PROFILE COMPLETION -->
+<div class="row">
+	<!-- PROFILE BY Religion -->
+	<div class="col-xs-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Religion</div>
+			<div class="panel-body">
+				<div id="chart_pie_religion" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- UPDATED PROFILES -->
+	<div class="col-xs-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Updated Profiles</div>
+			<div class="panel-body">
+				<div id="updatedProfiles" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE COMPLETION -->
+	<div class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">Profile completion</div>
 			<div class="panel-body">
@@ -103,15 +153,15 @@
 							<td class="text-center"><?php echo $data['number']; ?></td>
 							<td class="text-center"><?php echo $data['percent']; ?>%</td>
 						</tr>
-					<?php } ?>
+				<?php } ?>
 					</tbody>
 				</table>
 			</div>
 		</div>
 	</div>
 
-	<!-- PROFILES PER PROVINCE -->
-	<div class="col-xs-7">
+	<div class="col-xs-6">
+		<!-- PROFILES PER PROVINCE -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Profiles Per Province</div>
 			<div class="panel-body">
@@ -119,8 +169,8 @@
 			</div>
 		</div>
 	</div>
-</div>
 
+</div>
 
 <!-- JS TO LOAD CHARTS -->
 
@@ -235,6 +285,20 @@
 		]);
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_age'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY RELIGION
+	google.setOnLoadCallback(byReligion);
+	function byReligion() {
+		var data = google.visualization.arrayToDataTable([
+			['Religion', 'Total'],
+			<?php foreach ($usersByReligion as $religion) { ?>
+				['<?php echo $religion->religion; ?>',<?php echo $religion->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_religion'));
 		chart.draw(data, options);
 	}
 

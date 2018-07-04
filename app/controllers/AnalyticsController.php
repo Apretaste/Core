@@ -397,6 +397,7 @@ class AnalyticsController extends Controller
 		$usersByRace=Connection::query("SELECT COUNT(email) AS total, IFNULL(skin,'UNKNOW') AS race FROM person WHERE updated_by_user=1 AND active=1 GROUP BY race");
 		$usersByCivilStatus=Connection::query("SELECT COUNT(email) AS total, IFNULL(marital_status,'UNKNOW') AS `status` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `status`");
 		$usersBySchoolLevel=Connection::query("SELECT COUNT(email) AS total, IFNULL(highest_school_level,'UNKNOW') AS `level` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `level`");
+		$usersByReligion=Connection::query("SELECT COUNT(email) AS total, IFNULL(religion,'UNKNOW') AS religion FROM person WHERE updated_by_user=1 AND active=1 GROUP BY religion ORDER BY religion");
 		
 		$occupations="'TRABAJADOR_ESTATAL','CUENTAPROPISTA','ESTUDIANTE','AMA_DE_CASA','DESEMPLEADO','INFORMATICO','MEDICO','CONTADOR'";
 		$usersByProfession=Connection::query("SELECT
@@ -420,7 +421,8 @@ class AnalyticsController extends Controller
 		UNION SELECT COUNT(email) AS total, '17-21' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>16 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<22 AND updated_by_user=1 AND active=1
 		UNION SELECT COUNT(email) AS total, '22-35' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>21 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<36 AND updated_by_user=1 AND active=1
 		UNION SELECT COUNT(email) AS total, '36-55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>35 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<56 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, '>55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>55 AND updated_by_user=1 AND active=1");
+		UNION SELECT COUNT(email) AS total, '>55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>55 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(email) AS total, 'UNKNOW' AS age FROM person WHERE date_of_birth IS NULL AND updated_by_user=1 AND active=1");
 
 		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
 		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
@@ -440,6 +442,7 @@ class AnalyticsController extends Controller
 		$this->view->usersBySchoolLevel=$usersBySchoolLevel;
 		$this->view->usersByProfession=$usersByProfession;
 		$this->view->usersByAge=$usersByAge;
+		$this->view->usersByReligion=$usersByReligion;
 
 		$this->view->profilesData = $profilesData;
 		$this->view->profilesPerProvince = $profilesPerProvince;
