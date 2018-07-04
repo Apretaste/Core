@@ -475,6 +475,7 @@ class Social
 			$chat->last_sent = date('d/m/Y G:i',strtotime($n->last));
 			$chat->last_note_user = $n->from_user;
 			$chat->last_note_read = ($n->read_date!=null and $n->from_user==$email)?true:false;
+			$chat->last_note_readDate=($chat->last_note_read)?date('d/m/Y G:i',strtotime($n->read_date)):"";
 			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
 			$chat->last_note = ($n->from_user!=$email and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
 			$chat->profile = $this->prepareUserProfile($n);
