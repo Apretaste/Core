@@ -1,22 +1,126 @@
 <div class="row">
-	<div class="col-xs-5">
-		<!-- PROFILE VS NO PROFILE -->
+	<!-- ACTIVE USERS BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<i class="fa fa-user pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><b><?= number_format($numberActiveUsers) ?></b></big><small>/<?= number_format($numberTotalUsers) ?></small><br/>
+				<small>Active/Total users</small>
+			</div>
+		</div>
+	</div>
+
+	<!-- USER PROFILES BLOCK -->
+	<div class="col-xs-2">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<i class="fa fa-user-secret pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><b><?= number_format($usersWithProfile) ?></b></big><small>/<?= number_format($numberActiveUsers) ?></small><br/>
+				<small>Users with profile</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE VS NO PROFILE -->
+	<div class="col-xs-4">
 		<div class="panel panel-default">
 			<div class="panel-heading">Profile vs no profile</div>
 			<div class="panel-body">
 				<div id="chart_pie_profiles" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-		<!-- UPDATED PROFILES -->
+	<!-- PROFILE BY GENDER -->
+	<div class="col-xs-4">
 		<div class="panel panel-default">
-			<div class="panel-heading">Updated Profiles</div>
+			<div class="panel-heading">Users By Gender</div>
 			<div class="panel-body">
-				<div id="updatedProfiles" style="width:100%;"></div>
+				<div id="chart_pie_gender" style="width:100%;"></div>
 			</div>
 		</div>
+	</div>
 
-		<!-- PROFILE COMPLETION -->
+	<!-- PROFILE BY SEXUAL ORIENTATION -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Sexual Orientation</div>
+			<div class="panel-body">
+				<div id="chart_pie_orientation" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE BY RACE -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Race</div>
+			<div class="panel-body">
+				<div id="chart_pie_race" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- PROFILE BY CIVIL STATUS -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Civil Status</div>
+			<div class="panel-body">
+				<div id="chart_pie_civil" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- PROFILE BY SCHOOL LEVEL -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By School Level</div>
+			<div class="panel-body">
+				<div id="chart_pie_school" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE BY PROFESSION -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Profession</div>
+			<div class="panel-body">
+				<div id="chart_pie_profession" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- PROFILE BY AGE -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Age</div>
+			<div class="panel-body">
+				<div id="chart_pie_age" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- PROFILE BY Religion -->
+	<div class="col-xs-4">
+		<div class="panel panel-default">
+			<div class="panel-heading">Users By Religion</div>
+			<div class="panel-body">
+				<div id="chart_pie_religion" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- PROFILE COMPLETION -->
+	<div class="col-xs-5">
 		<div class="panel panel-default">
 			<div class="panel-heading">Profile completion</div>
 			<div class="panel-body">
@@ -35,19 +139,31 @@
 							<td class="text-center"><?php echo $data['number']; ?></td>
 							<td class="text-center"><?php echo $data['percent']; ?>%</td>
 						</tr>
-					<?php } ?>
+				<?php } ?>
 					</tbody>
 				</table>
 			</div>
 		</div>
 	</div>
 
-	<!-- PROFILES PER PROVINCE -->
 	<div class="col-xs-7">
+		<!-- PROFILES PER PROVINCE -->
 		<div class="panel panel-default">
-			<div class="panel-heading">Profiles per province</div>
+			<div class="panel-heading">Profiles Per Province</div>
 			<div class="panel-body">
 				<div id="chart_map_profiles" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- UPDATED PROFILES -->
+	<div class="col-xs-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">Updated Profiles</div>
+			<div class="panel-body">
+				<div id="updatedProfiles" style="width:100%;"></div>
 			</div>
 		</div>
 	</div>
@@ -70,6 +186,117 @@
 		]);
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_profiles'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY GENDER
+	google.setOnLoadCallback(byGender);
+	function byGender() {
+		var data = google.visualization.arrayToDataTable([
+			['Gender', 'Total'],
+			<?php foreach ($usersByGender as $gender) { ?>
+				['<?php echo $gender->gender; ?>',<?php echo $gender->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_gender'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY SEXUAL ORIENTATION
+	google.setOnLoadCallback(byOrientation);
+	function byOrientation() {
+		var data = google.visualization.arrayToDataTable([
+			['Sexual Orientation', 'Total'],
+			<?php foreach ($usersBySexualOrientation as $orientation) { ?>
+				['<?php echo $orientation->orientation; ?>',<?php echo $orientation->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_orientation'));
+		chart.draw(data, options);
+	}
+	
+	//PROFILES BY RACE
+	google.setOnLoadCallback(byRace);
+	function byRace() {
+		var data = google.visualization.arrayToDataTable([
+			['Race', 'Total'],
+			<?php foreach ($usersByRace as $race) { ?>
+				['<?php echo $race->race; ?>',<?php echo $race->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_race'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY CIVIL STATUS
+	google.setOnLoadCallback(byCivilStatus);
+	function byCivilStatus() {
+		var data = google.visualization.arrayToDataTable([
+			['Civil Status', 'Total'],
+			<?php foreach ($usersByCivilStatus as $status) { ?>
+				['<?php echo $status->status; ?>',<?php echo $status->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_civil'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY SCHOOL LEVEL
+	google.setOnLoadCallback(bySchoolLevel);
+	function bySchoolLevel() {
+		var data = google.visualization.arrayToDataTable([
+			['School Level', 'Total'],
+			<?php foreach ($usersBySchoolLevel as $level) { ?>
+				['<?php echo $level->level; ?>',<?php echo $level->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_school'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY PROFESSION
+	google.setOnLoadCallback(byProfession);
+	function byProfession() {
+		var data = google.visualization.arrayToDataTable([
+			['Profession', 'Total'],
+			<?php foreach ($usersByProfession as $profession) { ?>
+				['<?php echo $profession->profession; ?>',<?php echo $profession->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_profession'));
+		chart.draw(data, options);
+	}
+	//PROFILES BY AGE
+	google.setOnLoadCallback(byAge);
+	function byAge() {
+		var data = google.visualization.arrayToDataTable([
+			['Age', 'Total'],
+			<?php foreach ($usersByAge as $age) { ?>
+				['<?php echo $age->age; ?>',<?php echo $age->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_age'));
+		chart.draw(data, options);
+	}
+
+	//PROFILES BY RELIGION
+	google.setOnLoadCallback(byReligion);
+	function byReligion() {
+		var data = google.visualization.arrayToDataTable([
+			['Religion', 'Total'],
+			<?php foreach ($usersByReligion as $religion) { ?>
+				['<?php echo $religion->religion; ?>',<?php echo $religion->total; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_religion'));
 		chart.draw(data, options);
 	}
 

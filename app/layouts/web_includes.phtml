@@ -129,13 +129,14 @@
 					var required = label.endsWith("*") ? 'required' : '';
 					var html = '<div style="text-align:left; margin-bottom:15px;">';
 
-					if($.inArray(type, ['t','d','n','e','p','u']) >= 0) {
+					if($.inArray(type, ['t','d','n','e','p','u','c']) >= 0) {
 						if(type=='t') type = 'text';
 						if(type=='d') type = 'date';
 						if(type=='n') type = 'number';
 						if(type=='e') type = 'email';
 						if(type=='p') type = 'password';
 						if(type=='u') type = 'file';
+						if(type=='c') type = 'checkbox';
 						html += '<label for="field'+i+'">'+label+'</label><br/>';
 						html += '<input id="field'+i+'" onkeyup="apretaste.onEnter(event);" type="'+type+'" class="input" '+required+'/>';
 					}
@@ -177,6 +178,7 @@
 
 				var invalid = false;
 				if(type=='email') invalid = !isEmail(value);
+				if(type=='checkbox') invalid = !this.checked;
 
 				if(invalid || (required && value == "")) {
 					$(this).css("border", "1px solid red");
@@ -188,7 +190,7 @@
 					var id = $(this).attr('id');
 					value = apretaste.uploadFile(id);
 				}
-
+				if(type=='checkbox') value="";
 				params += encodeURIComponent(value) + "|";
 			});
 

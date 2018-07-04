@@ -50,19 +50,6 @@
 			</a>
 		</div>
 	</div>
-
-	<!-- NUMBER OF UNSENT ITEMS FROM THE STORE -->
-	<div class="col-sm-2">
-		<div class="panel panel-default">
-			<a href="/market/marketOrders">
-			<div class="panel-body <?= $unsentStoreItems>0 ? "warning" : "" ?>">
-				<i class="fa fa-shopping-cart pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><?= $unsentStoreItems ?></big><br/>
-				<small>Store items bought</small>
-			</div>
-			</a>
-		</div>
-	</div>
 </div>
 
 <h3>Technical</h3>
@@ -168,39 +155,14 @@
 		</div>
 	</div>
 
-	<!-- POSTS IN FACEBOOK THIS MONTH -->
-	<div class="col-xs-2">
+	<!-- NUMBER OF UNSENT ITEMS FROM THE STORE -->
+	<div class="col-sm-2">
 		<div class="panel panel-default">
-			<div class="panel-body">
-				<i class="fa fa-facebook-square pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><b><?= count($fbPostCurrentMonth) ?></b></big><small>/60 (<?= number_format(count($fbPostCurrentMonth)*100/60) ?>%)</small><br/>
-				<small>Posts in Facebook</small>
-			</div>
-		</div>
-	</div>
-
-	<!-- POSTS IN THE BLOG THIS MONTH -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<a target="_blank" href="http://blog.apretaste.com">
-			<div class="panel-body">
-				<i class="fa fa-rss-square pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><b><?= $blogPostsCurrentMonth ?></b></big><small>/4</small><br/>
-				<small>Posts in the blog</small>
-			</div>
-			</a>
-		</div>
-	</div>
-
-	<!-- EMAIL CAMPAIGNS SENT -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<a target="_blank" href="https://login.sendpulse.com/emailservice/">
-			<div class="panel-body">
-				<i class="fa fa-paper-plane-o pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<a class="btn btn-default btn-xs pull-right" onclick="return confirm('Report a new campaign sent?');" href="manage/itemSubmit?item=campaign"><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span></a>
-				<big><b><?= $emailCampaignsCurrentMonth ?></b></big><small>/4</small><br/>
-				<small>Email campaigns</small>
+			<a href="/market/marketOrders">
+			<div class="panel-body <?= $unsentStoreItems>0 ? "warning" : "" ?>">
+				<i class="fa fa-shopping-cart pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $unsentStoreItems ?></big><br/>
+				<small>Store items bought</small>
 			</div>
 			</a>
 		</div>
@@ -266,36 +228,6 @@
 				</table>
 			</div>
 		</div>
-	</div>
-
-	<!-- COLUMN #2 -->
-	<div class="col-xs-4">
-		<!-- TRELLO TASKS BY DEPARTMENT -->
-		<div class="panel panel-default">
-			<div class="panel-heading"><a href="https://trello.com/b/SfAGG9cZ/apretaste" target="_blank">Tasks by department in Trello</a></div>
-			<div class="panel-body">
-				<table class="table-condensed fullscreen">
-					<tr>
-						<th class="text-center">Department</th>
-						<th class="text-center">ToDo</th>
-						<th class="text-center">Done</th>
-						<th class="text-center">Finished</th>
-					</tr>
-					<?php foreach ($trelloByDept as $name=>$dept) { ?>
-					<tr>
-						<td><?= ucfirst(strtolower(str_replace('_', ' ', $name))) ?></td>
-						<td class="text-center"><?= $dept['WAITING'] ?></td>
-						<td class="text-center"><?= $dept['DONE'] ?></td>
-						<td class="text-center"><b><?= number_format(($dept['DONE']*100)/$dept['TOTAL']) ?>%</b></td>
-					</tr>
-					<?php } ?>
-				</table>
-			</div>
-		</div>
-	</div>
-
-	<!-- COLUMN #3 -->
-	<div class="col-xs-4">
 	</div>
 </div>
 
