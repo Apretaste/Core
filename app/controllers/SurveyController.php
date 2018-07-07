@@ -207,6 +207,7 @@ class SurveyController extends Controller
 		$this->view->buttons = [
 			["caption"=>"PDF", "href"=>"/survey/surveyReportPDF/{$survey->id}", "icon"=>"cloud-download"],
 			["caption"=>"CSV", "href"=>"/survey/surveyResultsCSV/{$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"XLSX", "href"=>"/survey/surveyResultsXLSX/{$survey->id}", "icon"=>"cloud-download"],
 			["caption"=>"Back", "href"=>"/survey/surveys"]
 		];
 
@@ -485,6 +486,108 @@ class SurveyController extends Controller
 	}
 
 	/**
+		 * Download survey's results as XLSX
+		 * @author ricardo@apretaste.com
+		 */
+
+		public function surveyResultsXLSXAction()
+		{
+			$url = $_GET['_url'];
+			$id =  explode("/",$url);
+			$id = intval($id[count($id)-1]);
+			$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;");
+			$survey = $survey[0];
+			$questions = Connection::query("SELECT title FROM _survey_question WHERE survey=$id");
+
+			$data=Connection::query("SELECT SUBSTR(A.email,1,INSTR(A.email,'@')-1) AS email, A.gender AS gender, A.province AS province,
+			TIMESTAMPDIFF(YEAR,A.date_of_birth,NOW()) AS age, A.highest_school_level AS school_level,
+			C.title AS question, D.title AS answer
+			FROM person A JOIN _survey_answer_choosen B
+			JOIN _survey_question C
+			JOIN _survey_answer D
+			ON A.email=B.email AND B.question=C.id AND B.answer=D.id WHERE B.survey=$id");
+
+			$answers=array();
+
+			foreach ($data as $answer) {
+				if (!array_key_exists($answer->email,$answers)) {
+					$answers[$answer->email]=array();
+					$answers[$answer->email]=['gender' => $answer->gender,
+											  'province' => $answer->province,
+											  'age' => $answer->age,
+											  'school_level' => $answer->school_level,
+											  'answers' => array()];
+				}
+				$answers[$answer->email]['answers'][$answer->question]= ($answer->answer);
+			}
+			foreach ($answers as $key => $person) {
+				foreach ($questions as $question) {
+					if (!array_key_exists($question->title,$person['answers'])) {
+						$answers[$key]['answers'][$question->title]="-";
+					}
+				}
+			}
+
+			$headerRow=array();
+			$headerRow=['Usuario','Genero','Localizacion','Edad','Nivel Escolar'];
+			foreach ($questions as $question) {
+				$headerRow[]=$question->title;
+			}
+
+			$dataRows=array();
+			foreach ($answers as $key => $person) {
+				$row=array();
+				$row[]=$key;
+				$row[]=$person['gender'];
+				$row[]=str_replace('_',' ',$person['province']);
+				$row[]=$person['age'];
+				$row[]=$person['school_level'];
+				foreach ($person['answers'] as $key => $answer) {
+					$row[]=$answer;
+				}
+				$dataRows[]=$row;
+			}
+
+			array_walk_recursive($dataRows, function (&$value) {
+					$value = htmlspecialchars(html_entity_decode($value, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+				});
+
+			array_walk_recursive($headerRow, function (&$value) {
+				$value = htmlspecialchars(html_entity_decode($value, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+			});
+
+			$filePath=Utils::getTempDir(). date("Ymd") ."Survey". $id.".xlsx";
+
+			$spreadsheet = new Spreadsheet();
+			$sheet = $spreadsheet->getActiveSheet();
+			$sheet->fromArray($headerRow);
+			$sheet->fromArray($dataRows,NULL,'A2');
+			$sheet->getStyle('1:1')->getFont()->setBold(true);
+
+			$cellIterator = $sheet->getRowIterator()->current()->getCellIterator();
+			$cellIterator->setIterateOnlyExistingCells(true);
+
+			foreach ($cellIterator as $cell) {
+				$width=mb_strwidth($cell->getValue());
+				$width=($width>50)?50:$width;
+				if (in_array($cell->getColumn(),range('A','E'))) $sheet->getColumnDimension($cell->getColumn())->setAutoSize(true);
+				else $sheet->getColumnDimension($cell->getColumn())->setWidth($width);
+			}
+
+
+			$writer = new Xlsx($spreadsheet);
+			$writer->save($filePath);
+
+			header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			header("Content-Transfer-Encoding: Binary");
+			header("Content-Disposition: attachment; filename=\"Survey$id-Report.xlsx\"");
+			header("Content-Length: ".filesize($filePath));
+			echo readfile($filePath);
+			$this->view->disable();
+
+		}
+		
+	/**
 	 * Download survey's results as PDF
 	 * @author kuma
 	 */
@@ -585,7 +688,7 @@ class SurveyController extends Controller
 		$myPicture->setFontProperties(array(
 			"FontName" => "../lib/pChart2.1.4/fonts/verdana.ttf",
 			"FontSize" => 13, "R" => 0, "G" => 0, "B" => 0));
-		
+
 		$myPicture->drawText(10, 23, $title, array(
 			"R" => 255,
 			"G" => 255,
