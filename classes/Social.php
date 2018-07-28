@@ -364,6 +364,19 @@ class Social
 			$profile->picture_public = "$wwwhttp/images/user.jpg";
 		}
 
+		// get the extra images of the person if exist
+		$profile->extra_pictures=json_decode($profile->extra_pictures,true);
+		$profile->extraPictures_internal=array();
+		$profile->extraPictures_public=array();
+		$profile->extraPicturesURL=array();
+		if(count($profile->extra_pictures)>0) {
+			foreach ($profile->extra_pictures as $key => $picture) {
+				$profile->extraPictures_internal[$key]= "$wwwroot/public/profile/{$picture}.jpg";
+				$profile->extraPictures_public[$key]= "$wwwhttp/profile/{$picture}.jpg";
+				$profile->extraPicturesURL[$key]= $picture;
+			}
+		}
+
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
 		for($i=0;$i<count($interests);$i++) $interests[$i]=trim(strtolower($interests[$i]));
