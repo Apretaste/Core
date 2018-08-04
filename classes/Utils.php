@@ -1096,9 +1096,10 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $timestamp
+	 * @param Service $serv
 	 * @return array (Object, Attachments)
 	 */
-	public function getExternalAppData($email, $timestamp)
+	public function getExternalAppData($email, $timestamp, $serv)
 	{
 		// get the last update date
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
@@ -1155,17 +1156,21 @@ class Utils
 			if($person->picture_internal) $attachments[] = $person->picture_internal;
 		}
 
-		// get unread notifications
+		// get unread notifications, by service if app only for one service
+		$name=$serv->serviceName;
+		$extraClause=($serv->input->apptype=="original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+
 		$res->notifications = Connection::query("
-			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
-			FROM notifications
-			WHERE email='$email' AND viewed = 0
-			ORDER BY inserted_date DESC");
+		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
+		FROM notifications
+		WHERE email='$email' AND viewed = 0 $extraClause 
+		ORDER BY inserted_date DESC");
 
 		// mark notifications as read
 		if($res->notifications) Connection::query("
-			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
-			WHERE email='$email' AND viewed = 0");
+		UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
+		WHERE email='$email' AND viewed = 0 $extraClause");
+		
 
 		// get list of active services
 		$res->active = array();
