@@ -1099,7 +1099,7 @@ class Utils
 	 * @param Service $serv
 	 * @return array (Object, Attachments)
 	 */
-	public function getExternalAppData($email, $timestamp, $serv)
+	public function getExternalAppData($email, $timestamp, $serv=null)
 	{
 		// get the last update date
 		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
@@ -1157,8 +1157,11 @@ class Utils
 		}
 
 		// get unread notifications, by service if app only for one service
-		$name=$serv->serviceName;
-		$extraClause=($serv->input->apptype=="original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+		if (isset($serv) && isset($serv->serviceName) && isset($serv->input->apptype)) {
+			$name=$serv->serviceName;
+			$extraClause=($serv->input->apptype=="original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+		}
+		else $extraClause="";
 
 		$res->notifications = Connection::query("
 		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
