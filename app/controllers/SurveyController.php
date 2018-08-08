@@ -1,6 +1,8 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+/*use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;*/
 
 class SurveyController extends Controller
 {
@@ -207,7 +209,7 @@ class SurveyController extends Controller
 		$this->view->buttons = [
 			["caption"=>"PDF", "href"=>"/survey/surveyReportPDF/{$survey->id}", "icon"=>"cloud-download"],
 			["caption"=>"CSV", "href"=>"/survey/surveyResultsCSV/{$survey->id}", "icon"=>"cloud-download"],
-			["caption"=>"XLSX", "href"=>"/survey/surveyResultsXLSX/{$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"CSV By User", "href"=>"/survey/surveyResultsCSVByUser/{$survey->id}", "icon"=>"cloud-download"],
 			["caption"=>"Back", "href"=>"/survey/surveys"]
 		];
 
@@ -486,11 +488,11 @@ class SurveyController extends Controller
 	}
 
 	/**
-		 * Download survey's results as XLSX
+		 * Download survey's results as CSV By User
 		 * @author ricardo@apretaste.com
 		 */
 
-		public function surveyResultsXLSXAction()
+		public function surveyResultsCSVByUserAction()
 		{
 			$url = $_GET['_url'];
 			$id =  explode("/",$url);
@@ -505,7 +507,7 @@ class SurveyController extends Controller
 			FROM person A JOIN _survey_answer_choosen B
 			JOIN _survey_question C
 			JOIN _survey_answer D
-			ON A.email=B.email AND B.question=C.id AND B.answer=D.id WHERE B.survey=$id");
+			ON A.email=B.email AND C.id=D.question AND B.answer=D.id WHERE B.survey=$id");
 
 			$answers=array();
 
@@ -518,13 +520,37 @@ class SurveyController extends Controller
 											  'school_level' => $answer->school_level,
 											  'answers' => array()];
 				}
-				$answers[$answer->email]['answers'][$answer->question]= ($answer->answer);
+				if (!array_key_exists($answer->question,$answers[$answer->email]['answers'])) {
+					$answers[$answer->email]['answers'][$answer->question]= ($answer->answer);
+				}
+				else{
+					$num=0;
+					while (isset($answers[$answer->email.$num]) && array_key_exists($answer->question,$answers[$answer->email.$num]['answers'])) $num++;
+
+					if (!array_key_exists($answer->email.$num,$answers)) {
+						$answers[$answer->email.$num]=array();
+						$answers[$answer->email.$num]=['gender' => $answer->gender,
+													   'province' => $answer->province,
+													   'age' => $answer->age,
+													   'school_level' => $answer->school_level,
+													   'answers' => array()];
+					}
+
+					$answers[$answer->email.$num]['answers'][$answer->question]= ($answer->answer);
+				}
 			}
+
 			foreach ($answers as $key => $person) {
 				foreach ($questions as $question) {
 					if (!array_key_exists($question->title,$person['answers'])) {
 						$answers[$key]['answers'][$question->title]="-";
 					}
+				}
+				$aux=$answers[$key]['answers'];
+				$answers[$key]['answers']=array();
+
+				foreach ($questions as $question){
+					$answers[$key]['answers'][$question->title]=$aux[$question->title];
 				}
 			}
 
@@ -556,7 +582,26 @@ class SurveyController extends Controller
 				$value = htmlspecialchars(html_entity_decode($value, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 			});
 
-			$filePath=Utils::getTempDir(). date("Ymd") ."Survey". $id.".xlsx";
+			$csvtext=$survey->title."\n\n";
+			$csvtext.='"'.implode('";"',$headerRow)."\"\n";
+
+			foreach ($dataRows as $row){
+				$csvtext.='"'.implode('";"',$row)."\"\n";
+			}
+
+			header("Content-type: text/csv");
+			header("Content-Type: application/force-download");
+			header("Content-Type: application/octet-stream");
+			header("Content-Type: application/download");
+			header("Content-Disposition: attachment; filename=\"Survey$id-ReportByUser-".date("Y-m-d-h-i-s").".csv\"");
+			header("Content-Length: ".strlen($csvtext));
+			header("Pragma: public");
+			header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+			header("Accept-Ranges: bytes");
+
+			echo $csvtext;
+
+			/*$filePath=Utils::getTempDir(). date("Ymd") ."Survey". $id.".xlsx";
 
 			$spreadsheet = new Spreadsheet();
 			$sheet = $spreadsheet->getActiveSheet();
@@ -582,11 +627,12 @@ class SurveyController extends Controller
 			header("Content-Transfer-Encoding: Binary");
 			header("Content-Disposition: attachment; filename=\"Survey$id-Report.xlsx\"");
 			header("Content-Length: ".filesize($filePath));
-			echo readfile($filePath);
+			echo readfile($filePath);*/
+
 			$this->view->disable();
 
 		}
-		
+
 	/**
 	 * Download survey's results as PDF
 	 * @author kuma
