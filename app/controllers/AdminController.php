@@ -48,14 +48,12 @@ class AdminController extends Controller
 
 		// get list of possible winners
 		$connection = new Connection();
-		$winners = $connection->query("
-			SELECT email, COUNT(email) AS cnt
-			FROM ticket
-			WHERE raffle_id IS NULL
-			AND email NOT IN (SELECT DISTINCT winner_1 FROM raffle)
-			GROUP BY email
-			ORDER BY cnt DESC
-			LIMIT 30");
+		$winners = $connection->query("SELECT email,COUNT(email) FROM ticket 
+		WHERE raffle_id IS NULL AND email NOT IN(
+			SELECT IFNULL(winner_1,'') as email FROM raffle UNION ALL 
+			SELECT IFNULL(winner_2,'') FROM raffle UNION ALL 
+			SELECT IFNULL(winner_3,'') FROM raffle) 
+			GROUP BY email ORDER BY COUNT(email) DESC LIMIT 30");
 
 		// get the three winners from their tickets
 		$winner1 = $winners[rand(0, 10)]->email;
