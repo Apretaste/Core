@@ -472,7 +472,7 @@ class Social
 				WHERE A.to_user = '$email'
 				AND (A.active=01 OR A.active=11)
 				GROUP BY A.from_user) A JOIN _note B
-				ON B.send_date=A.last
+				ON (B.to_user=A.email OR B.from_user=A.email) AND B.send_date=A.last
 			ORDER BY last DESC");
 
 		// add profiles to the list of notes
