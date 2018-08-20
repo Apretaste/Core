@@ -348,7 +348,8 @@ class RunController extends Controller
 			if( ! isset($input->ostype)) $input->ostype = "android";
 			if( ! isset($input->method)) $input->method = "email";
 			if( ! isset($input->apptype)) $input->apptype = "original";
-			$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+			if( ! isset($input->timestamp)) $input->timestamp = time();
+			$input->osversion = (isset($input->osversion))?filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION):"";
 			$input->nautaPass = base64_decode($input->token);
 		// get the input if the data is plain text (version <= 2.5)
 		} else {
@@ -375,7 +376,9 @@ class RunController extends Controller
 		}
 
 		// update the version of the app used
-		Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE email='{$this->fromEmail}'");
+		if (isset($input->appversion)) 
+			Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE email='{$this->fromEmail}'");
+		
 
 		// run the request
 		$ret = Render::runRequest($this->fromEmail, $input->command, '', $attachs, $input);
@@ -443,6 +446,7 @@ class RunController extends Controller
 
 		// return message for the log
 		$hasNautaPass = $input->nautaPass ? 1 : 0;
+		if( ! isset($input->appversion)) $input->appversion = "Unknown";
 		$log = "Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}, NautaPass:$hasNautaPass";
 		return $log;
 	}
