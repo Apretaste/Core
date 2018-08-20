@@ -15,9 +15,9 @@ class AnalyticsController extends Controller
 	 * By default, redirect to the Analytics page
 	 */
 	public function indexAction()
-    {
-        return $this->response->redirect('analytics/audience');
-    }
+	{
+		return $this->response->redirect('analytics/audience');
+	}
 
 	/**
 	 * Audience

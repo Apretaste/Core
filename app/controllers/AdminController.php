@@ -636,4 +636,56 @@ class AdminController extends Controller
 		// redirect back
 		header("Location: profilesearch?email=$email");
 	}
+
+	/**
+	 * Authorize Gmail accounts to send via the Gmail API
+	 * @author salvipascual
+	 */
+	public function gmailAction()
+	{
+		// get the Gmail client
+		$gmailClient = new GmailClient();
+		$client = $gmailClient->getClient();
+
+		// get gmails from the database
+		$temp = Utils::getTempDir();
+		$gmails = Connection::query("SELECT * FROM delivery_gmail");
+		foreach ($gmails as $gmail) {
+			$credentialsPath = $temp . 'gmailclient/' . str_replace(['_','-','@','.'], '', $gmail->email) . '.json';
+
+			if(file_exists($credentialsPath)) $gmail->auth = false;
+			else $gmail->auth = $client->createAuthUrl();
+		}
+
+		$this->view->gmails = $gmails;
+		$this->view->buttons = [["caption"=>"Add Code", "href"=>"#", "modal"=>"addCode"]];
+		$this->view->title = "Authorized gmails";
+	}
+
+	/**
+	 * Connect Gmail accounts to send via Gmail API
+	 * @author salvipascual
+	 */
+	public function gmailSubmitAction()
+	{
+		$email = $this->request->get("email");
+		$authCode = $this->request->get("code");
+
+		// get the Gmail client
+		$gmailClient = new GmailClient();
+		$client = $gmailClient->getClient();
+
+		// exchange authorization code for an access token
+		$accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
+
+		// store the credentials to the database IF no errors
+		if(empty($accessToken['error'])) {
+			$accessTokenJSON = json_encode($accessToken);
+			Connection::query("UPDATE delivery_gmail SET sent=0, active=1, access_token='$accessTokenJSON', token_created=CURRENT_TIMESTAMP WHERE email='$email'");
+		}
+		else die($accessToken['error']);
+
+		// redirect back
+		header("Location: gmail");
+	}
 }

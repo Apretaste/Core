@@ -100,6 +100,19 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- ACTIVE GMAIL ACCOUNTS -->
+	<div class="col-sm-2">
+		<div class="panel panel-default">
+			<a href="/admin/gmail">
+			<div class="panel-body <?= $gmailAccountsActive < 5 ? 'danger' : '' ?>">
+				<i class="fa fa-envelope pull-left" style="font-size:37px; margin-right:10px;"></i>
+				<big><?= $gmailAccountsActive ?>/<?= $gmailAccountsTotal ?></big> <small>Gmails</small><br/>
+				<small>Active/Total gmails</small>
+			</div>
+			</a>
+		</div>
+	</div>
 </div>
 
 <h3>Marketing</h3>
