@@ -13,6 +13,7 @@ attic/*
 .htpasswd
 composer.lock
 configs/config.ini
+configs/client_secret.json
 public/profile/*
 public/ads/*
 public/raffle/*
