@@ -183,7 +183,7 @@ class Render
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
 			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype,
 			// user variables
-			"num_notifications" => $utils->getNumberOfNotifications($response->email),
+			"num_notifications" => $utils->getNumberOfNotifications($person->id),
 			"USER_USERNAME" => $username,
 			"USER_NAME" => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			"USER_FULL_NAME" => isset($person->full_name) ? $person->full_name : "",

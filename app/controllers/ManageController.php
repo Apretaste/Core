@@ -18,16 +18,16 @@ class ManageController extends Controller
 	public function indexAction()
 	{
 		// get data for the blocks
-		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
-		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
-		$numberUserProfiles = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
-		$emailsNotSentLastWeek = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code<>'200' AND delivery_code<>'555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
-		$emailsNotReceivedByTheAppLastWeek = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code='555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
+		$numberActiveUsers = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE active=1");
+		$numberTotalUsers = Connection::query("SELECT COUNT(id) as cnt FROM person");
+		$numberUserProfiles = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
+		$emailsNotSentLastWeek = Connection::query("SELECT COUNT(id_person) AS cnt FROM delivery WHERE delivery_code<>'200' AND delivery_code<>'555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
+		$emailsNotReceivedByTheAppLastWeek = Connection::query("SELECT COUNT(id_person) AS cnt FROM delivery WHERE delivery_code='555' AND request_date > (CURDATE()-INTERVAL 7 DAY)");
 		$creditsOffered = Connection::query("SELECT SUM(credit) AS cnt FROM person WHERE active=1");
 		$queryRunningAds = Connection::query("SELECT COUNT(active) AS cnt FROM ads WHERE active=1");
 		$supportNewCount = Connection::query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='NEW'");
 		$supportPendingCount = Connection::query("SELECT COUNT(id) AS cnt FROM support_tickets WHERE status='PENDING'");
-		$mailListRegisteredUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1 and appversion<>'' and mail_list=1");
+		$mailListRegisteredUsers = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE active=1 and appversion<>'' and mail_list=1");
 		$openedSurveysCount = Connection::query("SELECT COUNT(id) AS cnt FROM _survey WHERE deadline > CURRENT_TIMESTAMP AND active=1");
 		$openedContestsCount = Connection::query("SELECT COUNT(id) AS cnt FROM _concurso WHERE end_date > CURRENT_TIMESTAMP");
 		$unsentStoreItems = Connection::query("SELECT COUNT(id) AS cnt FROM _tienda_orders WHERE received=0");

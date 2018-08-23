@@ -464,14 +464,14 @@ class Social
 				ON A.to_user = B.email
 				WHERE A.from_user = '$email'
 				AND (A.active=10 OR A.active=11)
-				GROUP BY A.to_user
+				GROUP BY B.id
 				UNION
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
 				ON A.from_user = B.email
 				WHERE A.to_user = '$email'
 				AND (A.active=01 OR A.active=11)
-				GROUP BY A.from_user) A JOIN _note B
+				GROUP BY B.id) A JOIN _note B
 				ON (B.to_user=A.email OR B.from_user=A.email) AND B.send_date=A.last
 			ORDER BY last DESC");
 
@@ -532,14 +532,14 @@ public function chatOcult($from_user,$to_user){
 		// retrieve conversation between users
 		$notes = Connection::query("
 			SELECT * FROM (
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
+				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
 				AND NOT (A.active=00 OR A.active=01)
 				AND A.id > '$lastID'
 				UNION
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
+				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
@@ -549,7 +549,7 @@ public function chatOcult($from_user,$to_user){
 
 		// mark the other person notes as unread
 		if($notes) {
-			$lastNoteID = end($notes)->id;
+			$lastNoteID = end($notes)->note_id;
 			Connection::query("
 				UPDATE _note
 				SET read_date = CURRENT_TIMESTAMP

@@ -16,6 +16,8 @@ function smarty_function_button($params, $template)
 	$color = isset($params["color"]) ? $params["color"] : "green";
 	$size = isset($params["size"]) ? $params["size"] : "medium";
 	$style = isset($params["style"]) ? $params["style"] : "";
+	$class = isset($params["class"]) ? "class='".$params["class"]."'" : "";
+	$id = isset($params["id"]) ? "id='".$params["id"]."'" : "";
 	$icon = isset($params["icon"]) ? "<b style='font-size: 25px;'>{$params["icon"]}</b><br/>": "";
 	$onclick = "";
 
@@ -92,6 +94,14 @@ function smarty_function_button($params, $template)
 		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
+	$truestyle=($class=="" && $id=="")?"style='background-color:$fill;border:1px solid $stroke;
+	border-radius:3px;color:$text;display:inline-block;
+	font-family:sans-serif;font-size:{$fontsize}px;
+	line-height:{$height}px;text-align:center;text-decoration:none;
+	width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'"
+	:"style='display:inline-block;font-family:sans-serif;text-align:center;text-decoration:none;
+	-webkit-text-size-adjust:none;mso-hide:all;{$style}'";
+	
 	// create and return button
 	return "<!--[if mso]>
 		<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' href='$linkto' style='height:{$height}px;v-text-anchor:middle;width:{$width}px;{$style}' arcsize='5%' strokecolor='$stroke' fillcolor='$fill'>
@@ -99,5 +109,5 @@ function smarty_function_button($params, $template)
 		<center style='color:$text;font-family:Helvetica, Arial,sans-serif;font-size:{$fontsize}px;'>{$icon}$caption</center>
 		</v:roundrect>
 	<![endif]-->
-	<a href='$linkto' $onclick style='background-color:$fill;border:1px solid $stroke;border-radius:3px;color:$text;display:inline-block;font-family:sans-serif;font-size:{$fontsize}px;line-height:{$height}px;text-align:center;text-decoration:none;width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'>{$icon}$caption</a>";
+	<a href='$linkto' $onclick $id $class $truestyle>{$icon}$caption</a>";
 }
