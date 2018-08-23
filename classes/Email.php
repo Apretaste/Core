@@ -190,7 +190,7 @@ class Email
 	}
 
 	/**
-	 * Sends an email using Gmail by an external node
+	 * Sends an email using Gmail
 	 *
 	 * @author salvipascual
 	 * @return string {"code", "message"}
@@ -199,89 +199,16 @@ class Email
 	{
 		$this->method = "gmail";
 
-		// every new day set the daily counter back to zero
-		Connection::query("UPDATE delivery_gmail SET daily=0 WHERE DATE(last_sent) < DATE(CURRENT_TIMESTAMP)");
+		// get attachment if exist
+		$attachment = false;
+		if( ! empty($this->attachments[0])) $attachment = $this->attachments[0];
 
-		// get an available gmail account randomly
-		$gmail = Connection::query("
-			SELECT * FROM delivery_gmail
-			WHERE active = 1
-			AND `limit` > daily
-			AND (blocked_until IS NULL OR CURRENT_TIMESTAMP >= blocked_until)
-			ORDER BY RAND() LIMIT 1");
+		// send via Gmail
+		$gmailClient = new GmailClient();
+		$output = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
 
-		// error if no account can be used
-		if(empty($gmail)) {
-			$output = new stdClass();
-			$output->code = "515";
-			$output->message = "NODE: No active account to send to {$this->to}";
-			$utils = new Utils();
-			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
-			return $output;
-		} $gmail = $gmail[0];
-
-		// transform images to base64
-		$imagesToUpload = array();
-		if(is_array($this->images)) foreach ($this->images as $image) {
-			$item = new stdClass();
-			$item->type = file_exists($image) ? mime_content_type($image) : '';
-			$item->name = basename($image);
-			$item->content = file_exists($image) ? base64_encode(file_get_contents($image)) : '';
-			$imagesToUpload[] = $item;
-		}
-
-		// transform attachments to base64
-		$attachmentsToUpload = array();
-		foreach ($this->attachments as $attachment) {
-			$item = new stdClass();
-			$item->type = file_exists($attachment) ? mime_content_type($attachment) : '';
-			$item->name = basename($attachment);
-			$item->content = file_exists($attachment) ? base64_encode(file_get_contents($attachment)) : '';
-			$attachmentsToUpload[] = $item;
-		}
-
-		// create the email array request
-		$params['key'] = $gmail->node_key;
-		$params['from'] = $gmail->email;
-		$params['host'] = "smtp.gmail.com";
-		$params['user'] = $gmail->email;
-		$params['pass'] = $gmail->password;
-		$params['id'] = $this->id;
-		$params['messageid'] = $this->replyId;
-		$params['to'] = $this->to;
-		$params['subject'] = $this->subject;
-		$params['body'] = base64_encode($this->body);
-		$params['attachments'] = serialize($attachmentsToUpload);
-		$params['images'] = serialize($imagesToUpload);
-
-		// contact the Sender to send the email
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "{$gmail->node_ip}/send.php");
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$output = json_decode(curl_exec($ch));
-		curl_close ($ch);
-
-		// treat node unreachable error
-		if(empty($output)) {
-			$output = new stdClass();
-			$output->code = "504";
-			$output->message = "Error reaching Node to email {$this->to} with ID {$this->id}";
-		}
-
-		// update delivery time if OK
-		if($output->code == "200") {
-			Connection::query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP, last_error=NULL WHERE email='{$gmail->email}'");
-			// insert in drops emails and add 24h of waiting time
-		} else {
-			// save error in the database
-			$lastError = str_replace("'", "", "CODE:{$output->code} | MESSAGE:{$output->message}");
-			$blockedUntil = date("Y-m-d H:i:s", strtotime("+24 hours"));
-
-			Connection::query("UPDATE delivery_gmail SET blocked_until='$blockedUntil', last_error='$lastError' WHERE email='{$gmail->email}'");
-
-			// create notice that the service failed
+		// create notice if Gmail fails
+		if($output->code != "200") {
 			$utils = new Utils();
 			$utils->createAlert("[{$this->method}] {$output->message}");
 		}

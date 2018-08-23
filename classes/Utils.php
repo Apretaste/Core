@@ -454,10 +454,10 @@ class Utils
 	/**
 	 * Return path to the temporal folder
 	 *
-	 * @author Kuma
+	 * @author salvipascual
 	 * @return string
 	 */
-	public function getTempDir()
+	public static function getTempDir()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
@@ -754,7 +754,7 @@ class Utils
 	 * @param Integer $count, number of words selected
 	 * @return String
 	 */
-	public function randomSentence($count=-1)
+	public static function randomSentence($count=-1)
 	{
 		// get the number of words when no param passed
 		if ($count == -1 || $count == 0) $count = rand(2, 10);

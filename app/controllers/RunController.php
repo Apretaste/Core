@@ -466,6 +466,10 @@ class RunController extends Controller
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
+		// if failed email is a Gmail account, make it inactive
+		$mailbox = Connection::query("SELECT mailbox FROM delivery WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
+		if( ! empty($mailbox[0]->mailbox)) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$mailbox[0]->mailbox}'");
+
 		// create entry in the error log
 		$utils = new Utils();
 		$text = "[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}";
