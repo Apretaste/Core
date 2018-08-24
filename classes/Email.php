@@ -15,6 +15,7 @@ class Email
 	public $attachments = []; // array of paths
 	public $images = []; // array of paths
 	public $method;
+	public $delivery_partition;
 	public $sent; // date
 
 	/**
@@ -42,7 +43,7 @@ class Email
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
 		if(isset($this->userId) && isset($this->requestDate)) //if the email comes from admin or support, nothing to update
 		Connection::query("
-			UPDATE delivery SET
+			UPDATE delivery PARTITION({$this->delivery_partition}) SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',

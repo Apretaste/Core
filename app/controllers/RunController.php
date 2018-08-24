@@ -15,6 +15,7 @@ class RunController extends Controller
 	private $subject;
 	private $body;
 	private $attachment;
+	private $partition;
 	private $idEmail;
 	private $resPath = false; // path to the response zip
 	private $sendEmails = true;
@@ -155,6 +156,7 @@ class RunController extends Controller
 
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
+		$this->partition=date('n')=="12"?"p0":'p'.date('n');
 
 		// get the user from the token
 		$security = new Security();
@@ -189,7 +191,7 @@ class RunController extends Controller
 		$this->fromEmailId = $utils->personExist($this->fromEmail);
 
 		// create a new entry on the delivery table
-		Connection::query("INSERT INTO delivery (user, id_person, request_date, environment) VALUES ('{$this->fromEmail}', {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
+		Connection::query("INSERT INTO delivery PARTITION({$this->partition}) (user, id_person, request_date, environment) VALUES ('{$this->fromEmail}', {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "appnet";});
@@ -233,8 +235,9 @@ class RunController extends Controller
 	public function webhookAction()
 	{
 		$utils = new Utils();
-		// get the time when the service started executing
+		// get the time when the service started executing and set the partition of the delivery table
 		$this->execStartTime = date("Y-m-d H:i:s");
+		$this->partition=date('n')=="12"?"p0":'p'.date('n');
 
 		// get data from Amazon AWS webhook
 		$this->callAmazonWebhook();
@@ -288,7 +291,7 @@ class RunController extends Controller
 		$domain = explode("@", $this->fromEmail)[1];
 		$this->subject = substr($this->subject, 0, 1023);
 		$this->idEmail = Connection::query("
-			INSERT INTO delivery (user, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			INSERT INTO delivery PARTITION({$this->partition}) (user, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
 			VALUES ('{$this->fromEmail}',{$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
@@ -304,7 +307,7 @@ class RunController extends Controller
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($this->execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id_person={$this->fromEmailId} AND request_date='{$this->execStartTime}'");
+		Connection::query("UPDATE delivery PARTITION({$this->partition}) SET process_time='$executionTime' WHERE id_person={$this->fromEmailId} AND request_date='{$this->execStartTime}'");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -385,9 +388,9 @@ class RunController extends Controller
 		}
 
 		// update the version of the app used
-		if (isset($input->appversion)) 
+		if (isset($input->appversion))
 			Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE email='{$this->fromEmail}'");
-		
+
 
 		// run the request
 		$ret = Render::runRequest($this->fromEmail, $input->command, '', $attachs, $input);
@@ -436,6 +439,7 @@ class RunController extends Controller
 			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
+			$email->delivery_partition = $this->partition;
 			$email->subject = $this->subject;
 			$email->body = $this->body;
 			$email->replyId = $this->messageId;
@@ -448,7 +452,7 @@ class RunController extends Controller
 		// update values in the delivery table
 		$safeQuery = Connection::escape($service->request->query);
 		Connection::query("
-			UPDATE delivery SET
+			UPDATE delivery PARTITION({$this->partition}) SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
@@ -471,7 +475,7 @@ class RunController extends Controller
 		// update code for failure emails
 		if($this->fromEmailId)
 		Connection::query("
-			UPDATE delivery SET
+			UPDATE delivery PARTITION({$this->partition}) SET
 			delivery_code='555', delivery_message='app failure reported'
 			WHERE `id_person`={$this->fromEmailId} AND email_subject='{$this->subject}'");
 
@@ -480,7 +484,7 @@ class RunController extends Controller
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// if failed email is a Gmail account, make it inactive
-		$mailbox = Connection::query("SELECT mailbox FROM delivery WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
+		$mailbox = Connection::query("SELECT mailbox FROM delivery PARTITION({$this->partition}) WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
 		if( ! empty($mailbox[0]->mailbox)) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$mailbox[0]->mailbox}'");
 
 		// create entry in the error log
@@ -490,7 +494,7 @@ class RunController extends Controller
 
 		// calculate failure percentage
 		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE TIMESTAMPDIFF(WEEK,request_date,NOW()) = 0 LIMIT 100");
+		$last100codes = Connection::query("SELECT delivery_code FROM delivery PARTITION({$this->partition}) WHERE TIMESTAMPDIFF(WEEK,request_date,NOW()) = 0 LIMIT 100");
 		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
 
 		// alert developers if failures are over 20%
@@ -521,7 +525,10 @@ class RunController extends Controller
 			// prepare and send the email
 			$email = new Email();
 			$email->id = $this->idEmail;
+			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
+			$email->requestDate = $this->execStartTime;
+			$email->delivery_partition = $this->partition;
 			$email->subject = $response->subject;
 			$email->body = $body;
 			$email->images = $response->images;
@@ -533,7 +540,7 @@ class RunController extends Controller
 		// update values in the delivery table
 		$safeQuery = Connection::escape($service->request->query);
 		Connection::query("
-			UPDATE delivery SET
+			UPDATE delivery PARTITION({$this->partition}) SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery'

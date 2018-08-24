@@ -419,7 +419,7 @@ class Utils
 
 		// block emails sending 30+ of the same request in 5 mins
 		if(empty($status)) {
-			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
+			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery PARTITION({$this->partition}) WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
 			if ($received[0]->total > 30) $status = 'loop';
 		}
 
