@@ -9,6 +9,7 @@ class Email
 	public $from;
 	public $to;
 	public $requestDate;
+	public $queryId;
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
@@ -41,15 +42,14 @@ class Email
 
 		// update the database with the email sent
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
-		if(isset($this->userId) && isset($this->requestDate)) //if the email comes from admin or support, nothing to update
+		if(isset($this->queryId)) //if the email comes from admin or support, nothing to update
 		Connection::query("
 			UPDATE delivery PARTITION({$this->delivery_partition}) SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id_person={$this->userId}
-			AND request_date='{$this->requestDate}'");
+			WHERE id={$this->queryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200")

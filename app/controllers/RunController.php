@@ -11,6 +11,7 @@ class RunController extends Controller
 	private $fromEmailId;
 	private $toEmail;
 	private $execStartTime;
+	private $queryId;
 	private $messageId;
 	private $subject;
 	private $body;
@@ -156,6 +157,7 @@ class RunController extends Controller
 
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
+		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
 		$this->partition=date('n')=="12"?"p0":'p'.date('n');
 
 		// get the user from the token
@@ -191,7 +193,7 @@ class RunController extends Controller
 		$this->fromEmailId = $utils->personExist($this->fromEmail);
 
 		// create a new entry on the delivery table
-		Connection::query("INSERT INTO delivery PARTITION({$this->partition}) (user, id_person, request_date, environment) VALUES ('{$this->fromEmail}', {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
+		Connection::query("INSERT INTO delivery (id, user, id_person, request_date, environment) VALUES ({$this->queryId}, '{$this->fromEmail}', {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "appnet";});
@@ -212,8 +214,7 @@ class RunController extends Controller
 			delivery_code='200',
 			delivery_method='internet',
 			delivery_date=CURRENT_TIMESTAMP
-			WHERE id_person={$this->fromEmailId}
-			AND request_date='{$this->execStartTime}'");
+			WHERE id={$this->queryId}");
 
 		// move the file to the public temp folder
 		$path = "";
@@ -237,6 +238,7 @@ class RunController extends Controller
 		$utils = new Utils();
 		// get the time when the service started executing and set the partition of the delivery table
 		$this->execStartTime = date("Y-m-d H:i:s");
+		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
 		$this->partition=date('n')=="12"?"p0":'p'.date('n');
 
 		// get data from Amazon AWS webhook
@@ -291,8 +293,8 @@ class RunController extends Controller
 		$domain = explode("@", $this->fromEmail)[1];
 		$this->subject = substr($this->subject, 0, 1023);
 		$this->idEmail = Connection::query("
-			INSERT INTO delivery PARTITION({$this->partition}) (user, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ('{$this->fromEmail}',{$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+			INSERT INTO delivery (id, user, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			VALUES ({$this->queryId}, '{$this->fromEmail}',{$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
@@ -307,7 +309,7 @@ class RunController extends Controller
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($this->execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery PARTITION({$this->partition}) SET process_time='$executionTime' WHERE id_person={$this->fromEmailId} AND request_date='{$this->execStartTime}'");
+		Connection::query("UPDATE delivery PARTITION({$this->partition}) SET process_time='$executionTime' WHERE id={$this->queryId}");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -439,6 +441,7 @@ class RunController extends Controller
 			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
+			$email->queryId = $this->queryId;
 			$email->delivery_partition = $this->partition;
 			$email->subject = $this->subject;
 			$email->body = $this->body;
@@ -457,8 +460,7 @@ class RunController extends Controller
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
 			request_method='{$input->method}'
-			WHERE id_person={$this->fromEmailId}
-			AND request_date='{$this->execStartTime}'");
+			WHERE id={$this->queryId}");
 
 		// return message for the log
 		$hasNautaPass = $input->nautaPass ? 1 : 0;
@@ -528,6 +530,7 @@ class RunController extends Controller
 			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
+			$email->queryId = $this->queryId;
 			$email->delivery_partition = $this->partition;
 			$email->subject = $response->subject;
 			$email->body = $body;
