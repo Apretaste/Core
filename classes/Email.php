@@ -5,14 +5,18 @@ use Nette\Mail\Message;
 class Email
 {
 	public $id;
+	public $userId;
 	public $from;
 	public $to;
+	public $requestDate;
+	public $queryId;
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
 	public $attachments = []; // array of paths
 	public $images = []; // array of paths
 	public $method;
+	public $delivery_partition;
 	public $sent; // date
 
 	/**
@@ -38,19 +42,20 @@ class Email
 
 		// update the database with the email sent
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
+		if(isset($this->queryId)) //if the email comes from admin or support, nothing to update
 		Connection::query("
-			UPDATE delivery SET
+			UPDATE delivery PARTITION({$this->delivery_partition}) SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id='{$this->id}'");
+			WHERE id={$this->queryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200")
 		{
 			$utils = new Utils();
-			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}");
+			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
 		}
 
 		// return {code, message} structure
