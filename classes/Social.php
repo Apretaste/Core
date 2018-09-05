@@ -562,6 +562,7 @@ public function chatOcult($from_user,$to_user){
 		$chats = [];
 		foreach($notes as $n) {
 			$n->readed = ($n->read!=null and $n->from_user==$yourEmail)?true:false;
+			$n->sender = ($n->from_user==$yourEmail)?"me":"you";
 			$chats[] = $this->prepareUserProfile($n);
 		}
 		return $chats;
