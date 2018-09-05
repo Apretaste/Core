@@ -65,7 +65,7 @@ try
 		return $view;
 	});
 
-	class SuperMySQL extends \Phalcon\Db\Adapter\Pdo\Mysql {
+	class SuperMySQL extends mysqli {
 		public function __destruct()
 		{
 			$this->close();
@@ -74,12 +74,12 @@ try
 
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', new SuperMySQL([
-		"host" => $config['database']['host'],
-		"username" => $config['database']['user'],
-		"password" => $config['database']['password'],
-		"dbname"   => $config['database']['database']
-	]));
+	$di->set('db', new SuperMySQL(
+		$config['database']['host'],
+		$config['database']['user'],
+		$config['database']['password'],
+		$config['database']['database']
+	));
 
 	// Set the tier (sandbox | stage | production)
 	$di->set('tier', function () use ($config) {
