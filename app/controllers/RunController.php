@@ -193,7 +193,7 @@ class RunController extends Controller
 		$this->fromEmailId = $utils->personExist($this->fromEmail);
 
 		// create a new entry on the delivery table
-		Connection::query("INSERT INTO delivery (id, user, id_person, request_date, environment) VALUES ({$this->queryId}, '{$this->fromEmail}', {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
+		Connection::query("INSERT INTO delivery (id, id_person, request_date, environment) VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "appnet";});
@@ -265,7 +265,7 @@ class RunController extends Controller
 
 		// stop procesing if the sender is invalid
 		if($environment != "app") { // no need to test for the app
-			$status = $utils->deliveryStatus($this->fromEmail,$this->fromEmailId);
+			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId, $this->partition);
 			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
 		}
 
@@ -293,8 +293,8 @@ class RunController extends Controller
 		$domain = explode("@", $this->fromEmail)[1];
 		$this->subject = substr($this->subject, 0, 1023);
 		$this->idEmail = Connection::query("
-			INSERT INTO delivery (id, user, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ({$this->queryId}, '{$this->fromEmail}',{$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
@@ -309,7 +309,7 @@ class RunController extends Controller
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($this->execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery PARTITION({$this->partition}) SET process_time='$executionTime' WHERE id={$this->queryId}");
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id_person={$this->fromEmailId} AND id={$this->queryId}");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -455,12 +455,12 @@ class RunController extends Controller
 		// update values in the delivery table
 		$safeQuery = Connection::escape($service->request->query);
 		Connection::query("
-			UPDATE delivery PARTITION({$this->partition}) SET
+			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
 			request_method='{$input->method}'
-			WHERE id={$this->queryId}");
+			WHERE id_person={$this->fromEmailId} AND id={$this->queryId}");
 
 		// return message for the log
 		$hasNautaPass = $input->nautaPass ? 1 : 0;
@@ -477,7 +477,7 @@ class RunController extends Controller
 		// update code for failure emails
 		if($this->fromEmailId)
 		Connection::query("
-			UPDATE delivery PARTITION({$this->partition}) SET
+			UPDATE delivery SET
 			delivery_code='555', delivery_message='app failure reported'
 			WHERE `id_person`={$this->fromEmailId} AND email_subject='{$this->subject}'");
 
@@ -486,7 +486,7 @@ class RunController extends Controller
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// if failed email is a Gmail account, make it inactive
-		$mailbox = Connection::query("SELECT mailbox FROM delivery PARTITION({$this->partition}) WHERE `user`='{$this->fromEmail}' AND email_subject='{$this->subject}'");
+		$mailbox = Connection::query("SELECT mailbox FROM delivery WHERE `id_person`='{$this->fromEmailId}' AND email_subject='{$this->subject}'");
 		if( ! empty($mailbox[0]->mailbox)) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$mailbox[0]->mailbox}'");
 
 		// create entry in the error log
@@ -496,7 +496,7 @@ class RunController extends Controller
 
 		// calculate failure percentage
 		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery PARTITION({$this->partition}) WHERE TIMESTAMPDIFF(WEEK,request_date,NOW()) = 0 LIMIT 100");
+		$last100codes = Connection::query("SELECT delivery_code FROM delivery  WHERE TIMESTAMPDIFF(WEEK,request_date,NOW()) = 0 LIMIT 100");
 		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
 
 		// alert developers if failures are over 20%
@@ -543,11 +543,11 @@ class RunController extends Controller
 		// update values in the delivery table
 		$safeQuery = Connection::escape($service->request->query);
 		Connection::query("
-			UPDATE delivery PARTITION({$this->partition}) SET
+			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery'
-			WHERE id='{$this->idEmail}'");
+			WHERE id_person={$this->fromEmailId} AND id='{$this->idEmail}'");
 
 		// return message for the log
 		return "Email received and sent";

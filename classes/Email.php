@@ -44,12 +44,12 @@ class Email
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
 		if(isset($this->queryId)) //if the email comes from admin or support, nothing to update
 		Connection::query("
-			UPDATE delivery PARTITION({$this->delivery_partition}) SET
+			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id={$this->queryId}");
+			WHERE id_person={$this->userId} AND id={$this->queryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200")
