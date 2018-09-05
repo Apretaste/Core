@@ -20,18 +20,18 @@ class Connection
 			{
 				// query the database
 				$result = $di->get('db')->query($sql);
-				$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
+				//$result->setFetchMode(Phalcon\Db::FETCH_OBJ);
 
 				// convert to array of objects
 				$rows = [];
-				while ($data = $result->fetch()) $rows[] = $data;
+				while ($data = $result->fetch_object()) $rows[] = $data;
 				return $rows;
 			}
 			else
 			{
 				// run query and return last insertd id
-				$di->get('db')->execute($sql);
-				return $di->get('db')->lastInsertId();
+				$di->get('db')->query($sql);
+				return $di->get('db')->insert_id;
 			}
 		}
 		catch(PDOException $e) // log the error and rethrow it
@@ -72,7 +72,7 @@ class Connection
 	{
 		// get the escaped string
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$safeStr = $di->get('db')->escapeString($str);
+		$safeStr = $di->get('db')->real_escape_string($str);
 
 		// remove the ' at the beginning and end of the string
 		$safeStr = trim($safeStr, "'");
