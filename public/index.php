@@ -65,21 +65,9 @@ try
 		return $view;
 	});
 
-	class SuperMySQL extends mysqli {
-		public function __destruct()
-		{
-			$this->close();
-		}
-	}
-
 	// Setup the database service
 	$config = $di->get('config');
-	$di->set('db', new SuperMySQL(
-		$config['database']['host'],
-		$config['database']['user'],
-		$config['database']['password'],
-		$config['database']['database']
-	));
+	mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 	// Set the tier (sandbox | stage | production)
 	$di->set('tier', function () use ($config) {
@@ -128,3 +116,4 @@ catch(Exception $e)
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
 }
+Connection::close();

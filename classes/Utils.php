@@ -398,7 +398,7 @@ class Utils
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 */
-	public function deliveryStatus($email, $id_person, $partition)
+	public function deliveryStatus($email, $id_person)
 	{
 		// check if we already have a status for the email
 
@@ -419,7 +419,7 @@ class Utils
 
 		// block emails sending 30+ of the same request in 5 mins
 		if(empty($status)) {
-			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery PARTITION({$partition}) WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
+			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
 			if ($received[0]->total > 30) $status = 'loop';
 		}
 
@@ -1031,7 +1031,17 @@ class Utils
 		if($severity != "NOTICE") {
 			try{
 				$safeStr = Connection::escape($text, 254);
-				$di->get('db')->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
+
+				$config = $di->get('config')['database'];
+				$host = $config['host'];
+				$user = $config['user'];
+				$pass = $config['password'];
+				$name = $config['database'];
+				$db = new mysqli($host, $user, $pass, $name);
+
+				$db->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
+				$db->close();
+
 			} catch(Exception $e) {
 				$message .= " [CreateAlert:Database] ".$e->getMessage();
 			}
@@ -1103,7 +1113,7 @@ class Utils
 	public function getExternalAppData($email, $timestamp, $serv=null)
 	{
 		// get the last update date
-		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
+		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
 		// get the person object
@@ -1174,7 +1184,7 @@ class Utils
 		if($res->notifications) Connection::query("
 		UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
 		WHERE id_person=$person->id AND viewed = 0 $extraClause");
-		
+
 
 		// get list of active services
 		$res->active = array();

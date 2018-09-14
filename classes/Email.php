@@ -16,7 +16,6 @@ class Email
 	public $attachments = []; // array of paths
 	public $images = []; // array of paths
 	public $method;
-	public $delivery_partition;
 	public $sent; // date
 
 	/**
@@ -49,7 +48,7 @@ class Email
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id_person={$this->userId} AND id={$this->queryId}");
+			WHERE id={$this->queryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200")
