@@ -243,7 +243,14 @@ class AnalyticsController extends Controller
 		// NUMBERS OF COUPONS USED
 		//
 		$numberCouponsUsed = [];
-		$visits = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		$visits = Connection::query("
+			SELECT 
+				COUNT(B.id) AS `usage`, 
+				A.coupon 
+			FROM _cupones A 
+			LEFT JOIN _cupones_used B 
+			ON A.coupon = B.coupon
+			GROUP BY A.coupon");
 		foreach($visits as $visit) $numberCouponsUsed[] = ["coupon"=>$visit->coupon, "usage"=>$visit->usage];
 
 		// send variables to the view
@@ -385,7 +392,7 @@ class AnalyticsController extends Controller
 			WHERE last_update_date IS NOT NULL
 			GROUP BY last_update
 			ORDER BY last_update DESC
-			LIMIT 30");
+			LIMIT 6");
 		$updatedProfilesMonthly = array();
 		foreach($visits as $visit) {
 			$updatedProfilesMonthly[] = ["date"=>date("M Y", strtotime($visit->last_update)), "profiles"=>$visit->num_profiles];
