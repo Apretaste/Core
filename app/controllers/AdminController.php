@@ -467,11 +467,13 @@ class AdminController extends Controller
 	 */
 	public function deliveryAction()
 	{
-		$email = $this->request->get('email');
+		$connection = new Connection();
+        $email = $this->request->get('email');
+        $id = $connection->query("SELECT id FROM person WHERE email='$email'");
 
-		$delivery = array();
-		if($email) {
-			$connection = new Connection();
+        $delivery = array();
+        if(isset($id[0])) {
+            $id = $id[0]->id;
 			$delivery = $connection->query("
 				SELECT id, request_date, request_service, request_subservice, request_query, environment, delivery_code
 				FROM delivery

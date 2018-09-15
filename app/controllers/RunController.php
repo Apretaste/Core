@@ -248,6 +248,8 @@ class RunController extends Controller
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
 		if($blocked) return false;
 
+		$this->fromEmailId = $utils->personExist($this->fromEmail);
+
 		// get the environment from the email
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$email'");
@@ -258,14 +260,13 @@ class RunController extends Controller
 
 		// if the app is reporting a failure
 		if($environment == "failure") {
-			$this->fromEmailId = $utils->personExist($this->fromEmail);
 			$this->runFailure();
 			return false;
 		}
 
 		// stop procesing if the sender is invalid
 		if($environment != "app") { // no need to test for the app
-			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId, $this->partition);
+			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId);
 			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
 		}
 
@@ -274,8 +275,7 @@ class RunController extends Controller
 
 		// update last access time and make person active
 		$personExist = $utils->personExist($this->fromEmail);
-		if ($personExist) {
-			$this->fromEmailId = $personExist;
+		if ($this->fromEmailId) { //if person exists
 			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->fromEmailId}");
 		}
 		else {
@@ -309,7 +309,7 @@ class RunController extends Controller
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($this->execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id_person={$this->fromEmailId} AND id={$this->queryId}");
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->queryId}");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -442,7 +442,6 @@ class RunController extends Controller
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
 			$email->queryId = $this->queryId;
-			$email->delivery_partition = $this->partition;
 			$email->subject = $this->subject;
 			$email->body = $this->body;
 			$email->replyId = $this->messageId;
@@ -460,7 +459,7 @@ class RunController extends Controller
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
 			request_method='{$input->method}'
-			WHERE id_person={$this->fromEmailId} AND id={$this->queryId}");
+			WHERE id={$this->queryId}");
 
 		// return message for the log
 		$hasNautaPass = $input->nautaPass ? 1 : 0;
@@ -531,7 +530,6 @@ class RunController extends Controller
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
 			$email->queryId = $this->queryId;
-			$email->delivery_partition = $this->partition;
 			$email->subject = $response->subject;
 			$email->body = $body;
 			$email->images = $response->images;
@@ -547,7 +545,7 @@ class RunController extends Controller
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery'
-			WHERE id_person={$this->fromEmailId} AND id='{$this->idEmail}'");
+			WHERE id={$this->idEmail}");
 
 		// return message for the log
 		return "Email received and sent";
