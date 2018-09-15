@@ -18,8 +18,7 @@ class SupportController extends Controller
 	public function indexAction()
 	{
 		// get the list of campaigns
-		$connection = new Connection();
-		$tickets = $connection->query("
+		$tickets = Connection::query("
 			SELECT *
 			FROM support_tickets
 			WHERE status = 'NEW'
@@ -27,7 +26,7 @@ class SupportController extends Controller
 			ORDER BY creation_date DESC");
 
 		// get the list of macros
-		$cans = $connection->query("SELECT id, name FROM support_cans");
+		$cans = Connection::query("SELECT id, name FROM support_cans");
 
 		// create top buttons
 		$this->view->buttons = [
@@ -47,15 +46,14 @@ class SupportController extends Controller
 	public function archiveAction()
 	{
 		// get the list of campaigns
-		$connection = new Connection();
-		$tickets = $connection->query("
+		$tickets = Connection::query("
 			SELECT *
 			FROM support_tickets
 			WHERE status = 'ARCHIVED'
 			ORDER BY creation_date DESC");
 
 		// get the list of macros
-		$cans = $connection->query("SELECT id, name FROM support_cans");
+		$cans = Connection::query("SELECT id, name FROM support_cans");
 
 		// create top buttons
 		$this->view->buttons = [
@@ -76,8 +74,7 @@ class SupportController extends Controller
 		$email = $this->request->get("email");
 
 		// update chats in the tickets with the status
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			UPDATE support_tickets
 			SET status = 'ARCHIVED'
 			WHERE (`from` = '$email' OR requester = '$email')
@@ -93,8 +90,7 @@ class SupportController extends Controller
 	public function cansAction()
 	{
 		// get the list of campaigns
-		$connection = new Connection();
-		$cans = $connection->query("SELECT * FROM support_cans");
+		$cans = Connection::query("SELECT * FROM support_cans");
 
 		// send variables to the view
 		$this->view->title = "Macros";
@@ -113,9 +109,8 @@ class SupportController extends Controller
 		$body = $this->request->get("body");
 
 		// create a new macro or update an existing one
-		$connection = new Connection();
-		if(empty($id)) $connection->query("INSERT INTO support_cans(name,body) VALUES ('$name','$body')");
-		else $connection->query("UPDATE support_cans SET name='$name',body='$body' WHERE id=$id");
+		if(empty($id)) Connection::query("INSERT INTO support_cans(name,body) VALUES ('$name','$body')");
+		else Connection::query("UPDATE support_cans SET name='$name',body='$body' WHERE id=$id");
 
 		// go to the list of tickets
 		$this->response->redirect("support/cans");
@@ -130,8 +125,7 @@ class SupportController extends Controller
 		$id = $this->request->get("id");
 
 		// delete macro
-		$connection = new Connection();
-		$connection->query("DELETE FROM support_cans WHERE id=$id");
+		Connection::query("DELETE FROM support_cans WHERE id=$id");
 
 		// go to the list of tickets
 		$this->response->redirect("support/cans");
@@ -145,8 +139,7 @@ class SupportController extends Controller
 		$email = $this->request->get("email");
 
 		// get the list of campaigns
-		$connection = new Connection();
-		$chats = $connection->query("
+		$chats = Connection::query("
 			SELECT *
 			FROM support_tickets
 			WHERE `from` = '$email'
@@ -161,7 +154,7 @@ class SupportController extends Controller
 		}
 
 		// get the list of macros
-		$cans = $connection->query("SELECT id, name FROM support_cans");
+		$cans = Connection::query("SELECT id, name FROM support_cans");
 
 		// get info from the requestor
 		$utils = new Utils();
@@ -188,8 +181,7 @@ class SupportController extends Controller
 		$status = $this->request->get("status");
 
 		// update chats in the tickets with the status
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			UPDATE support_tickets
 			SET status = 'DONE'
 			WHERE (`from` = '$to' OR requester = '$to')
@@ -202,7 +194,7 @@ class SupportController extends Controller
 		// save response in the database
 		$subClean = $connection->escape($subject, 250);
 		$conClean = $connection->escape($content, 1024);
-		$connection->query("
+		Connection::query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subClean', '$conClean', '$status', '$to')");
 
@@ -212,7 +204,7 @@ class SupportController extends Controller
 
 		// save report
 		$mysqlDateToday = date('Y-m-d');
-		$connection->query("
+		Connection::query("
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET response_count = response_count+1 WHERE inserted = '$mysqlDateToday';");
 
@@ -235,8 +227,7 @@ class SupportController extends Controller
 		$email = $this->request->get("email");
 
 		// update chats in the tickets with the status
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			UPDATE support_tickets
 			SET status = 'CLOSED'
 			WHERE (`from` = '$email' OR requester = '$email')
@@ -244,7 +235,7 @@ class SupportController extends Controller
 
 		// save report
 		$mysqlDateToday = date('Y-m-d');
-		$connection->query("
+		Connection::query("
 			INSERT IGNORE INTO support_reports (inserted) VALUES ('$mysqlDateToday');
 			UPDATE support_reports SET closed_count = closed_count+1 WHERE inserted = '$mysqlDateToday';");
 
@@ -262,8 +253,7 @@ class SupportController extends Controller
 		$username = $this->request->get("username");
 
 		// get the list of macros
-		$connection = new Connection();
-		$can = $connection->query("SELECT body FROM support_cans WHERE id=$id");
+		$can = Connection::query("SELECT body FROM support_cans WHERE id=$id");
 		$content = $can[0]->body;
 
 		// add manager name and position
@@ -291,24 +281,23 @@ class SupportController extends Controller
 	public function reportsAction()
 	{
 		// get total of new tickets
-		$connection = new Connection();
-		$unresponded = $connection->query("
+		$unresponded = Connection::query("
 			SELECT COUNT(id) AS count
 			FROM support_tickets
 			WHERE status = 'NEW'
 			OR status = 'PENDING'")[0]->count;
 
-		// get the last 30 days of tickets
-		$mysqlDateLastMonth = date('Y-m-d', strtotime('last month'));
-		$tickets = $connection->query("
+		// get the last two weeks of tickets
+		$mysqlDateLastTwoWeeks = date('Y-m-d', strtotime('-2 weeks'));
+		$tickets = Connection::query("
 			SELECT *
 			FROM support_reports
-			WHERE inserted > '$mysqlDateLastMonth'
+			WHERE inserted > '$mysqlDateLastTwoWeeks'
 			ORDER BY inserted DESC");
 
 		// send variables to the view
 		$this->view->title = "Tickets ($unresponded)";
-		$this->view->tickets = $tickets;
+		$this->view->tickets = array_reverse($tickets);
 	}
 
 	/**
@@ -330,9 +319,8 @@ class SupportController extends Controller
 		$text = $this->request->get("text");
 
 		// store the note in the database
-		$connection = new Connection();
 		$text = $connection->escape($text, 499);
-		$connection->query("INSERT INTO _note (from_user, to_user, `text`) VALUES ('salvi@apretaste.com','$email','$text')");
+		Connection::query("INSERT INTO _note (from_user, to_user, `text`) VALUES ('salvi@apretaste.com','$email','$text')");
 
 		// send notification for the app
 		$utils = new Utils();

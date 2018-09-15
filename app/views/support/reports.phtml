@@ -10,12 +10,12 @@
 	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['Day','New','Responded','Closed'],
+			['Day','New',{role: 'annotation'},'Responded',{role: 'annotation'},'Closed',{role: 'annotation'}],
 			<?php foreach ($tickets as $ticket) { ?>
 				['<?=date("m/d", strtotime($ticket->inserted))?>',
-				<?=$ticket->new_count?>,
-				<?=$ticket->response_count?>,
-				<?=$ticket->closed_count?>],
+				<?=$ticket->new_count?>,<?=$ticket->new_count?>,
+				<?=$ticket->response_count?>,<?=$ticket->response_count?>,
+				<?=$ticket->closed_count?>,<?=$ticket->closed_count?>],
 			<?php } ?>
 		]);
 		var chart = new google.visualization.AreaChart(document.getElementById('ticketsChart'));

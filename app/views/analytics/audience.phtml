@@ -140,9 +140,9 @@
 	google.setOnLoadCallback(weeklyGrossTraffic);
 	function weeklyGrossTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Visitors'],
+			['Day of the week', 'Visitors', {role: 'annotation'}],
 			<?php foreach ($weeklyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['visitors']; ?>],
+				['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
@@ -154,9 +154,9 @@
 	google.setOnLoadCallback(monthlyGrossTraffic);
 	function monthlyGrossTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'Visitors'],
+			['Month and Year', 'Visitors', {role: 'annotation'}],
 			<?php foreach ($monthlyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['visitors']; ?>],
+				['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
@@ -168,9 +168,9 @@
 	google.setOnLoadCallback(monthlyUniqueTraffic);
 	function monthlyUniqueTraffic() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'Visitors'],
+			['Month and Year', 'Visitors', {role: 'annotation'}],
 			<?php foreach ($monthlyUniqueTraffic as $data) { ?>
-				['<?= $data['date'] ?>',<?= $data['visitors'] ?>],
+				['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
@@ -182,9 +182,9 @@
 	google.setOnLoadCallback(monthlyNewUsers);
 	function monthlyNewUsers() {
 		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'New Users'],
+			['Month and Year', 'New Users', {role: 'annotation'}],
 			<?php foreach ($monthlyNewUsers as $data) { ?>
-				['<?= $data['date'] ?>',<?= $data['visitors'] ?>],
+				['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};

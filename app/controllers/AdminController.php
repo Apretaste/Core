@@ -498,7 +498,14 @@ class AdminController extends Controller
 
 		// get coupons usage
 		$numberCouponsUsed = [];
-		$couponsUsage = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		$couponsUsage = Connection::query("
+			SELECT 
+				COUNT(B.id) AS `usage`, 
+				A.coupon 
+			FROM _cupones A 
+			LEFT JOIN _cupones_used B 
+			ON A.coupon = B.coupon
+			GROUP BY A.coupon");
 		foreach($couponsUsage as $c) $numberCouponsUsed[] = ["coupon"=>$c->coupon, "usage"=>$c->usage];
 
 		// send data to the view
