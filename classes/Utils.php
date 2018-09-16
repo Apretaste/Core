@@ -160,12 +160,12 @@ class Utils
 	{
 		// get the first part of the username
 		$shortmail = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
-		$shortmail = substr($shortmail, 0, 5); // get the first 5 chars
+		$shortmail = substr($shortmail, 0, 7); // get the first 7 chars
 
 		// contatenate a random unique number
 		do {
-			$username = $shortmail . rand(100, 999);
-			$exist = Connection::query("SELECT username FROM person WHERE username='$username'");
+			$username = $shortmail . rand(100000, 999999);
+			$exist = Connection::query("SELECT id FROM person WHERE username='$username'");
 		} while($exist);
 
 		return $username;
