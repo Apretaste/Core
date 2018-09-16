@@ -286,10 +286,13 @@ class ApiController extends Controller
 			return false;
 		}
 
+		// get the person's numeric ID
+		$personId = Utils::personExist($email);
+
 		// update appid and appname
 		Connection::query("
-			DELETE FROM authentication WHERE appname='$appname' AND email='$email';
-			INSERT INTO authentication (email,appid,appname) VALUES ('$email','$appid','$appname')");
+			DELETE FROM authentication WHERE appname='$appname' AND person_id='$personId';
+			INSERT INTO authentication (person_id,appid,appname) VALUES ('$personId','$appid','$appname')");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -321,16 +324,19 @@ class ApiController extends Controller
 		$utils = new Utils();
 		$token = $utils->generateRandomHash();
 
+		// get the person's numeric ID
+		$personId = Utils::personExist($email);
+
 		// check if the row already exists
-		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$personId' AND appname='apretaste' AND platform='web'");
 		
 		// if the row do not exist, create it
 		if(empty($row)) {
-			Connection::query("INSERT INTO authentication(token,email,appid,appname,platform) VALUES ('$token','$email','$appid','apretaste','web')");
+			Connection::query("INSERT INTO authentication(token,person_id,appid,appname,platform) VALUES ('$token','$personId','$appid','apretaste','web')");
 		}
 		// if the row exist and the appid is different, update it
 		elseif($row[0]->appid != $appid) {
-			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE email='$email' AND appname='apretaste' AND platform='web'");
+			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE person_id='$personId' AND appname='apretaste' AND platform='web'");
 		}
 	}
 

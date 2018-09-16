@@ -238,12 +238,12 @@ class Email
 		// if user has no pass, borrow a random account
 		if( ! $pass) {
 			$auth = Connection::query("
-				SELECT A.email, A.pass
+				SELECT B.email, A.pass
 				FROM authentication A JOIN person B
-				ON A.email = B.email
+				ON A.person_id = B.id
 				WHERE B.active = 1
 				AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
-				AND A.email LIKE '%nauta.cu'
+				AND B.email LIKE '%nauta.cu'
 				AND A.appname = 'apretaste'
 				AND A.pass IS NOT NULL AND A.pass <> ''
 				ORDER BY RAND() LIMIT 1")[0];
