@@ -248,6 +248,7 @@ class RunController extends Controller
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
 		if($blocked) return false;
 
+		// get the person's numeric ID
 		$this->fromEmailId = $utils->personExist($this->fromEmail);
 
 		// get the environment from the email
@@ -274,7 +275,6 @@ class RunController extends Controller
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// update last access time and make person active
-		$personExist = $utils->personExist($this->fromEmail);
 		if ($this->fromEmailId) { //if person exists
 			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->fromEmailId}");
 		}
@@ -384,14 +384,14 @@ class RunController extends Controller
 		// save Nauta password if passed
 		if($input->nautaPass) {
 			$encryptPass = $utils->encrypt($input->nautaPass);
-			$auth = Connection::query("SELECT id FROM authentication WHERE email='{$this->fromEmail}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (email, pass, appname, platform, version) VALUES ('{$this->fromEmail}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE email='{$this->fromEmail}' AND appname='apretaste'");
+			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->fromEmailId}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->fromEmailId}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->fromEmailId}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
 		if (isset($input->appversion))
-			Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE email='{$this->fromEmail}'");
+			Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->fromEmailId}'");
 
 
 		// run the request

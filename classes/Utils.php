@@ -119,11 +119,10 @@ class Utils
 	 * @param String $email
 	 * @return Boolean, true if Person exist
 	 */
-	public function personExist($email)
+	public static function personExist($email)
 	{
-
 		$res = Connection::query("SELECT id FROM person WHERE LOWER(email)=LOWER('$email')");
-		return (count($res) > 0?$res[0]->id:false);
+		return $res ? $res[0]->id : false;
 	}
 
 	/**
@@ -619,9 +618,11 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
+		// get the person's numeric ID
+		$id_person = Utils::personExist($email);
+
 		// check if we should send a web push
-		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
-		$id_person = Connection::query("SELECT id FROM person WHERE email='$email'")[0]->id;
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
 
 		// if the person has a valid appid, send a web push
@@ -738,8 +739,14 @@ class Utils
 	public function getNautaPassword($email)
 	{
 		// check if we have the nauta pass for the user
-
-		$pass = Connection::query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
+		$pass = Connection::query("
+			SELECT A.pass 
+			FROM authentication A JOIN person B 
+			ON A.person_id = B.id 
+			WHERE B.email='$email' 
+			AND A.appname='apretaste' 
+			AND A.pass <> '' 
+			AND A.pass IS NOT NULL");
 
 		// return false if the password do not exist
 		if(empty($pass)) return false;
