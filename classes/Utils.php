@@ -119,11 +119,10 @@ class Utils
 	 * @param String $email
 	 * @return Boolean, true if Person exist
 	 */
-	public function personExist($email)
+	public static function personExist($email)
 	{
-
-		$res = Connection::query("SELECT email FROM person WHERE LOWER(email)=LOWER('$email')");
-		return count($res) > 0;
+		$res = Connection::query("SELECT id FROM person WHERE LOWER(email)=LOWER('$email')");
+		return $res ? $res[0]->id : false;
 	}
 
 	/**
@@ -398,7 +397,7 @@ class Utils
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 */
-	public function deliveryStatus($email)
+	public function deliveryStatus($email, $id_person)
 	{
 		// check if we already have a status for the email
 
@@ -419,7 +418,7 @@ class Utils
 
 		// block emails sending 30+ of the same request in 5 mins
 		if(empty($status)) {
-			$received = Connection::query("SELECT COUNT(id) as total FROM delivery WHERE user='$email' AND request_date > date_sub(now(), interval 5 minute)");
+			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
 			if ($received[0]->total > 30) $status = 'loop';
 		}
 
@@ -619,8 +618,11 @@ class Utils
 	 */
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
+		// get the person's numeric ID
+		$id_person = Utils::personExist($email);
+
 		// check if we should send a web push
-		$row = Connection::query("SELECT appid FROM authentication WHERE email='$email' AND appname='apretaste' AND platform='web'");
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
 
 		// if the person has a valid appid, send a web push
@@ -649,10 +651,10 @@ class Utils
 		}
 
 		// increase number of notifications
-		Connection::query("UPDATE person SET notifications = notifications+1 WHERE email='$email'");
+		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id_person");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (email, origin, `text`, link, tag, ispush) VALUES ('$email','$origin','$text','$link','$tag','$ispush')");
+		return Connection::query("INSERT INTO notifications (email, id_person, origin, `text`, link, tag, ispush) VALUES ('$email',$id_person,'$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**
@@ -661,11 +663,11 @@ class Utils
 	 * @param string $email
 	 * @return integer
 	 */
-	public function getNumberOfNotifications($email)
+	public function getNumberOfNotifications($id_person)
 	{
 		// temporal mechanism?
 
-		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND email = '$email'");
+		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND id = $id_person");
 		if ( ! isset($r[0]))
 		{
 			$r[0] = new stdClass();
@@ -676,9 +678,9 @@ class Utils
 		if (trim($notifications) == '')
 		{
 			// calculate notifications and update the number
-			$r = Connection::query("SELECT count(id) as total FROM notifications WHERE email ='$email' AND viewed = 0;");
+			$r = Connection::query("SELECT count(id_person) as total FROM notifications WHERE id_person = $id_person AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
-			Connection::query("UPDATE person SET notifications = $notifications WHERE email ='$email'");
+			Connection::query("UPDATE person SET notifications = $notifications WHERE id = $id_person");
 		}
 
 		return $notifications * 1;
@@ -737,8 +739,14 @@ class Utils
 	public function getNautaPassword($email)
 	{
 		// check if we have the nauta pass for the user
-
-		$pass = Connection::query("SELECT pass FROM authentication WHERE email='$email' AND appname='apretaste'");
+		$pass = Connection::query("
+			SELECT A.pass 
+			FROM authentication A JOIN person B 
+			ON A.person_id = B.id 
+			WHERE B.email='$email' 
+			AND A.appname='apretaste' 
+			AND A.pass <> '' 
+			AND A.pass IS NOT NULL");
 
 		// return false if the password do not exist
 		if(empty($pass)) return false;
@@ -1030,7 +1038,17 @@ class Utils
 		if($severity != "NOTICE") {
 			try{
 				$safeStr = Connection::escape($text, 254);
-				$di->get('db')->execute("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
+
+				$config = $di->get('config')['database'];
+				$host = $config['host'];
+				$user = $config['user'];
+				$pass = $config['password'];
+				$name = $config['database'];
+				$db = new mysqli($host, $user, $pass, $name);
+
+				$db->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
+				$db->close();
+
 			} catch(Exception $e) {
 				$message .= " [CreateAlert:Database] ".$e->getMessage();
 			}
@@ -1096,12 +1114,13 @@ class Utils
 	 * @author salvipascual
 	 * @param String $email
 	 * @param String $timestamp
+	 * @param Service $serv
 	 * @return array (Object, Attachments)
 	 */
-	public function getExternalAppData($email, $timestamp)
+	public function getExternalAppData($email, $timestamp, $serv=null)
 	{
 		// get the last update date
-		$lastUpdateTime = empty($timestamp) ? 0 : $timestamp;
+		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
 		// get the person object
@@ -1155,17 +1174,24 @@ class Utils
 			if($person->picture_internal) $attachments[] = $person->picture_internal;
 		}
 
-		// get unread notifications
+		// get unread notifications, by service if app only for one service
+		if (isset($serv) && isset($serv->serviceName) && isset($serv->input->apptype)) {
+			$name=$serv->serviceName;
+			$extraClause=($serv->input->apptype=="original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+		}
+		else $extraClause="";
+
 		$res->notifications = Connection::query("
-			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
-			FROM notifications
-			WHERE email='$email' AND viewed = 0
-			ORDER BY inserted_date DESC");
+		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
+		FROM notifications
+		WHERE id_person=$person->id AND viewed = 0 $extraClause
+		ORDER BY inserted_date DESC");
 
 		// mark notifications as read
 		if($res->notifications) Connection::query("
-			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
-			WHERE email='$email' AND viewed = 0");
+		UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
+		WHERE id_person=$person->id AND viewed = 0 $extraClause");
+
 
 		// get list of active services
 		$res->active = array();

@@ -364,6 +364,19 @@ class Social
 			$profile->picture_public = "$wwwhttp/images/user.jpg";
 		}
 
+		// get the extra images of the person if exist
+		$profile->extra_pictures=json_decode($profile->extra_pictures,true);
+		$profile->extraPictures_internal=array();
+		$profile->extraPictures_public=array();
+		$profile->extraPicturesURL=array();
+		if(count($profile->extra_pictures)>0) {
+			foreach ($profile->extra_pictures as $key => $picture) {
+				$profile->extraPictures_internal[$key]= "$wwwroot/public/profile/{$picture}.jpg";
+				$profile->extraPictures_public[$key]= "$wwwhttp/profile/{$picture}.jpg";
+				$profile->extraPicturesURL[$key]= $picture;
+			}
+		}
+
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
 		for($i=0;$i<count($interests);$i++) $interests[$i]=trim(strtolower($interests[$i]));
@@ -379,7 +392,7 @@ class Social
 		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->pin,$profile->insertion_date,$profile->last_access,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
+		unset($profile->pin,$profile->insertion_date,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
 
 		return $profile;
 	}
@@ -451,15 +464,15 @@ class Social
 				ON A.to_user = B.email
 				WHERE A.from_user = '$email'
 				AND (A.active=10 OR A.active=11)
-				GROUP BY A.to_user
+				GROUP BY B.id
 				UNION
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
 				ON A.from_user = B.email
 				WHERE A.to_user = '$email'
 				AND (A.active=01 OR A.active=11)
-				GROUP BY A.from_user) A JOIN _note B
-				ON B.send_date=A.last
+				GROUP BY B.id) A JOIN _note B
+				ON (B.to_user=A.email OR B.from_user=A.email) AND B.send_date=A.last
 			ORDER BY last DESC");
 
 		// add profiles to the list of notes
@@ -519,14 +532,14 @@ public function chatOcult($from_user,$to_user){
 		// retrieve conversation between users
 		$notes = Connection::query("
 			SELECT * FROM (
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
+				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
 				AND NOT (A.active=00 OR A.active=01)
 				AND A.id > '$lastID'
 				UNION
-				SELECT A.id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
+				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
 				ON A.from_user = B.email
 				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
@@ -536,7 +549,7 @@ public function chatOcult($from_user,$to_user){
 
 		// mark the other person notes as unread
 		if($notes) {
-			$lastNoteID = end($notes)->id;
+			$lastNoteID = end($notes)->note_id;
 			Connection::query("
 				UPDATE _note
 				SET read_date = CURRENT_TIMESTAMP
@@ -549,6 +562,7 @@ public function chatOcult($from_user,$to_user){
 		$chats = [];
 		foreach($notes as $n) {
 			$n->readed = ($n->read!=null and $n->from_user==$yourEmail)?true:false;
+			$n->sender = ($n->from_user==$yourEmail)?"me":"you";
 			$chats[] = $this->prepareUserProfile($n);
 		}
 		return $chats;

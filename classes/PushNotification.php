@@ -12,8 +12,11 @@ class PushNotification
 	 */
 	public function getAppId($email, $appname)
 	{
-		$connection = new Connection();
-		$appid = $connection->query("SELECT appid FROM authentication WHERE email='$email' AND appname='$appname'");
+		// get the person's numeric ID
+		$personId = Utils::personExist($email);
+
+		// get appid
+		$appid = Connection::query("SELECT appid FROM authentication WHERE person_id='$personId' AND appname='$appname'");
 
 		if(empty($appid)) return false;
 		return $appid[0]->appid;
@@ -29,8 +32,11 @@ class PushNotification
 	 */
 	public function setAppId($email, $appid, $appname)
 	{
-		$connection = new Connection();
-		$connection->query("UPDATE authentication SET appid='$appid' WHERE email='$email' AND appname='$appname'");
+		// get the person's numeric ID
+		$personId = Utils::personExist($email);
+
+		// save the appid
+		Connection::query("UPDATE authentication SET appid='$appid' WHERE person_id='$personId' AND appname='$appname'");
 	}
 
 	/**
@@ -42,8 +48,11 @@ class PushNotification
 	 */
 	public function getPersonFromAppId($appid)
 	{
-		$connection = new Connection();
-		$email = $connection->query("SELECT email FROM authentication WHERe appid='$appid'");
+		$email = Connection::query("
+			SELECT A.email 
+			FROM person A JOIN authentication B 
+			ON A.id = B.person_id
+			WHERE B.appid='$appid'");
 		if(empty($email)) return false;
 
 		// return the person object

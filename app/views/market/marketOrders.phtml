@@ -11,6 +11,7 @@
 					<th>Product</th>
 					<th>User</th>
 					<th>Date</th>
+					<th>Phone</th>
 					<th>Set as received</th>
 					<th>Actions</th>
 				</tr>
@@ -22,14 +23,16 @@
 						<td><a href="#" onclick="showProduct('<?= $order->product ?>');"><?= $order->product_name ?></a></td>
 						<td><?= $order->email ?></td>
 						<td><?= $order->inserted_date ?></td>
-						<td class="text-right">
+						<td><?= $order->phone?></td>
+						<td class="text-left">
 							<a href="/market/marketOrderReceived/<?= $order->id ?>" class = "btn btn-success" onclick="return confirm('Are you sure?');"><span class="glyphicon glyphicon-ok"></span></a>
-
+						</td>
+						<td>
 							<a href="/market/marketDestination/<?= $order->id ?>" <?php if ($order->ready) { ?>class="btn btn-warning"<?php } else { ?>class="btn btn-primary"<?php } ?>>
 								<?php if ($order->ready) { ?>
 									Ready to send
 								<?php } else { ?>
-									<span class="glyphicon glyphicon-edit"></span> &nbsp;Destination
+									<span class="glyphicon glyphicon-edit"></span> &nbsp;Shipping
 								<?php } ?>
 							</a>
 						</td>

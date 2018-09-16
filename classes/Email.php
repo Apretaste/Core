@@ -5,8 +5,11 @@ use Nette\Mail\Message;
 class Email
 {
 	public $id;
+	public $userId;
 	public $from;
 	public $to;
+	public $requestDate;
+	public $queryId;
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
@@ -38,19 +41,20 @@ class Email
 
 		// update the database with the email sent
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
+		if(isset($this->queryId)) //if the email comes from admin or support, nothing to update
 		Connection::query("
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id='{$this->id}'");
+			WHERE id={$this->queryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200")
 		{
 			$utils = new Utils();
-			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | ID:{$this->id}");
+			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
 		}
 
 		// return {code, message} structure
@@ -234,12 +238,12 @@ class Email
 		// if user has no pass, borrow a random account
 		if( ! $pass) {
 			$auth = Connection::query("
-				SELECT A.email, A.pass
+				SELECT B.email, A.pass
 				FROM authentication A JOIN person B
-				ON A.email = B.email
+				ON A.person_id = B.id
 				WHERE B.active = 1
 				AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
-				AND A.email LIKE '%nauta.cu'
+				AND B.email LIKE '%nauta.cu'
 				AND A.appname = 'apretaste'
 				AND A.pass IS NOT NULL AND A.pass <> ''
 				ORDER BY RAND() LIMIT 1")[0];

@@ -93,13 +93,13 @@
 	google.setOnLoadCallback(couponsUsage);
 	function couponsUsage() {
 		var data = google.visualization.arrayToDataTable([
-			['Coupon', 'Number'],
+			['Coupon', 'Number', {role: 'annotation'}],
 			<?php foreach ($numberCouponsUsed as $data) { ?>
-				['<?=$data['coupon']; ?>',<?=$data['usage']; ?>],
+				['<?=$data['coupon']; ?>',<?=$data['usage']; ?>,<?=$data['usage']; ?>],
 			<?php } ?>
 		]);
 		var options = {legend: 'none'};
-		var chart = new google.visualization.ColumnChart(document.getElementById('couponsUsage'));
+		var chart = new google.visualization.BarChart(document.getElementById('couponsUsage'));
 		chart.draw(data, options);
 	}
 </script>

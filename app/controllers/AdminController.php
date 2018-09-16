@@ -48,14 +48,12 @@ class AdminController extends Controller
 
 		// get list of possible winners
 		$connection = new Connection();
-		$winners = $connection->query("
-			SELECT email, COUNT(email) AS cnt
-			FROM ticket
-			WHERE raffle_id IS NULL
-			AND email NOT IN (SELECT DISTINCT winner_1 FROM raffle)
-			GROUP BY email
-			ORDER BY cnt DESC
-			LIMIT 30");
+		$winners = $connection->query("SELECT email,COUNT(email) FROM ticket 
+		WHERE raffle_id IS NULL AND email NOT IN(
+			SELECT IFNULL(winner_1,'') as email FROM raffle UNION ALL 
+			SELECT IFNULL(winner_2,'') FROM raffle UNION ALL 
+			SELECT IFNULL(winner_3,'') FROM raffle) 
+			GROUP BY email ORDER BY COUNT(email) DESC LIMIT 30");
 
 		// get the three winners from their tickets
 		$winner1 = $winners[rand(0, 10)]->email;
@@ -469,11 +467,13 @@ class AdminController extends Controller
 	 */
 	public function deliveryAction()
 	{
-		$email = $this->request->get('email');
+		$connection = new Connection();
+        $email = $this->request->get('email');
+        $id = $connection->query("SELECT id FROM person WHERE email='$email'");
 
-		$delivery = array();
-		if($email) {
-			$connection = new Connection();
+        $delivery = array();
+        if(isset($id[0])) {
+            $id = $id[0]->id;
 			$delivery = $connection->query("
 				SELECT id, request_date, request_service, request_subservice, request_query, environment, delivery_code
 				FROM delivery
@@ -498,7 +498,14 @@ class AdminController extends Controller
 
 		// get coupons usage
 		$numberCouponsUsed = [];
-		$couponsUsage = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		$couponsUsage = Connection::query("
+			SELECT 
+				COUNT(B.id) AS `usage`, 
+				A.coupon 
+			FROM _cupones A 
+			LEFT JOIN _cupones_used B 
+			ON A.coupon = B.coupon
+			GROUP BY A.coupon");
 		foreach($couponsUsage as $c) $numberCouponsUsed[] = ["coupon"=>$c->coupon, "usage"=>$c->usage];
 
 		// send data to the view

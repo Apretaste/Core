@@ -15,9 +15,9 @@ class AnalyticsController extends Controller
 	 * By default, redirect to the Analytics page
 	 */
 	public function indexAction()
-	{
-		return $this->response->redirect('analytics/audience');
-	}
+    {
+        return $this->response->redirect('analytics/audience');
+    }
 
 	/**
 	 * Audience
@@ -31,9 +31,9 @@ class AnalyticsController extends Controller
 		//
 		// USERS AND PROFILES
 		//
-		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
-		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
-		$numberUserProfiles = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
+		$numberActiveUsers = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE active=1");
+		$numberTotalUsers = Connection::query("SELECT COUNT(id) as cnt FROM person");
+		$numberUserProfiles = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE last_update_date IS NOT NULL AND active=1");
 
 		//
 		// WEEKLY GROSS TRAFFIC
@@ -43,7 +43,7 @@ class AnalyticsController extends Controller
 		else {
 			// get info from the database
 			$visits = Connection::query("
-				SELECT COUNT(id) as visitors, DATE(request_date) as inserted
+				SELECT COUNT(id_person) as visitors, DATE(request_date) as inserted
 				FROM delivery
 				GROUP BY DATE(request_date)
 				ORDER BY inserted DESC
@@ -69,7 +69,7 @@ class AnalyticsController extends Controller
 		else {
 			// get info from the database
 			$visits = Connection::query("
-				SELECT COUNT(id) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
+				SELECT COUNT(id_person) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
 				FROM delivery
 				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
 				ORDER BY inserted DESC
@@ -162,7 +162,7 @@ class AnalyticsController extends Controller
 		else {
 			// get infom from the database
 			$versions = Connection::query("
-				SELECT COUNT(email) AS people, appversion
+				SELECT COUNT(id) AS people, appversion
 				FROM person
 				WHERE appversion <> ''
 				GROUP BY appversion");
@@ -202,7 +202,7 @@ class AnalyticsController extends Controller
 		$cache = $temp . "lastWeekEmailsSent" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $lastWeekEmailsSent = unserialize(file_get_contents($cache));
 		else {
-			$lastWeekEmailsSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			$lastWeekEmailsSent = Connection::query("SELECT COUNT(id_person) AS cnt FROM delivery WHERE delivery_code = 200 AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 			file_put_contents($cache, serialize($lastWeekEmailsSent));
 		}
 
@@ -212,7 +212,7 @@ class AnalyticsController extends Controller
 		$cache = $temp . "lastWeekEmailsNotSent" . date("Ymd") . ".cache";
 		if(file_exists($cache)) $lastWeekEmailsNotSent = unserialize(file_get_contents($cache));
 		else {
-			$lastWeekEmailsNotSent = Connection::query("SELECT COUNT(id) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+			$lastWeekEmailsNotSent = Connection::query("SELECT COUNT(id_person) AS cnt FROM delivery WHERE (delivery_code <> 200 OR delivery_code IS NULL) AND request_date > DATE_SUB(NOW(), INTERVAL 7 DAY)");
 			file_put_contents($cache, serialize($lastWeekEmailsNotSent));
 		}
 
@@ -243,7 +243,14 @@ class AnalyticsController extends Controller
 		// NUMBERS OF COUPONS USED
 		//
 		$numberCouponsUsed = [];
-		$visits = Connection::query("SELECT COUNT(id) AS `usage`, coupon FROM _cupones_used GROUP BY coupon");
+		$visits = Connection::query("
+			SELECT 
+				COUNT(B.id) AS `usage`, 
+				A.coupon 
+			FROM _cupones A 
+			LEFT JOIN _cupones_used B 
+			ON A.coupon = B.coupon
+			GROUP BY A.coupon");
 		foreach($visits as $visit) $numberCouponsUsed[] = ["coupon"=>$visit->coupon, "usage"=>$visit->usage];
 
 		// send variables to the view
@@ -270,10 +277,10 @@ class AnalyticsController extends Controller
 	public function profileAction()
 	{
 		// users with profiles
-		$usersWithProfile = Connection::query("SELECT COUNT(email) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
+		$usersWithProfile = Connection::query("SELECT COUNT(id) AS PersonWithProfiles FROM person WHERE updated_by_user=1 AND active=1");
 
 		// users without profiles
-		$usersWithOutProfile = Connection::query("SELECT COUNT(email) AS PersonWithOutProfiles FROM person WHERE updated_by_user=0 AND active=1");
+		$usersWithOutProfile = Connection::query("SELECT COUNT(id) AS PersonWithOutProfiles FROM person WHERE updated_by_user=0 AND active=1");
 
 		// Profile completion
 		$profileData = Connection::query("
@@ -380,25 +387,25 @@ class AnalyticsController extends Controller
 
 		// START updated profiles
 		$visits = Connection::query("
-			SELECT COUNT(email) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
+			SELECT COUNT(id) as num_profiles, DATE_FORMAT(last_update_date,'%Y-%m') as last_update
 			FROM person
 			WHERE last_update_date IS NOT NULL
 			GROUP BY last_update
 			ORDER BY last_update DESC
-			LIMIT 30");
+			LIMIT 6");
 		$updatedProfilesMonthly = array();
 		foreach($visits as $visit) {
 			$updatedProfilesMonthly[] = ["date"=>date("M Y", strtotime($visit->last_update)), "profiles"=>$visit->num_profiles];
 		}
 		$updatedProfilesMonthly = array_reverse($updatedProfilesMonthly);
 
-		$usersByGender=Connection::query("SELECT COUNT(email) AS total, IFNULL(gender,'UNKNOW') AS gender FROM person WHERE updated_by_user=1 AND active=1 GROUP BY gender ORDER BY gender");
-		$usersBySexualOrientation=Connection::query("SELECT COUNT(email) AS total, IFNULL(sexual_orientation,'UNKNOW') AS orientation FROM person WHERE updated_by_user=1 AND active=1 GROUP BY orientation");
-		$usersByRace=Connection::query("SELECT COUNT(email) AS total, IFNULL(skin,'UNKNOW') AS race FROM person WHERE updated_by_user=1 AND active=1 GROUP BY race");
-		$usersByCivilStatus=Connection::query("SELECT COUNT(email) AS total, IFNULL(marital_status,'UNKNOW') AS `status` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `status`");
-		$usersBySchoolLevel=Connection::query("SELECT COUNT(email) AS total, IFNULL(highest_school_level,'UNKNOW') AS `level` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `level`");
-		$usersByReligion=Connection::query("SELECT COUNT(email) AS total, IFNULL(religion,'UNKNOW') AS religion FROM person WHERE updated_by_user=1 AND active=1 GROUP BY religion ORDER BY religion");
-		
+		$usersByGender=Connection::query("SELECT COUNT(id) AS total, IFNULL(gender,'UNKNOW') AS gender FROM person WHERE updated_by_user=1 AND active=1 GROUP BY gender ORDER BY gender");
+		$usersBySexualOrientation=Connection::query("SELECT COUNT(id) AS total, IFNULL(sexual_orientation,'UNKNOW') AS orientation FROM person WHERE updated_by_user=1 AND active=1 GROUP BY orientation");
+		$usersByRace=Connection::query("SELECT COUNT(id) AS total, IFNULL(skin,'UNKNOW') AS race FROM person WHERE updated_by_user=1 AND active=1 GROUP BY race");
+		$usersByCivilStatus=Connection::query("SELECT COUNT(id) AS total, IFNULL(marital_status,'UNKNOW') AS `status` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `status`");
+		$usersBySchoolLevel=Connection::query("SELECT COUNT(id) AS total, IFNULL(highest_school_level,'UNKNOW') AS `level` FROM person WHERE updated_by_user=1 AND active=1 GROUP BY `level`");
+		$usersByReligion=Connection::query("SELECT COUNT(id) AS total, IFNULL(religion,'UNKNOW') AS religion FROM person WHERE updated_by_user=1 AND active=1 GROUP BY religion ORDER BY religion");
+
 		$occupations="'TRABAJADOR_ESTATAL','CUENTAPROPISTA','ESTUDIANTE','AMA_DE_CASA','DESEMPLEADO','INFORMATICO','MEDICO','CONTADOR'";
 		$usersByProfession=Connection::query("SELECT
 		CASE A.occupation
@@ -413,19 +420,19 @@ class AnalyticsController extends Controller
 			WHEN 'OTRO' THEN 'Otro'
 			WHEN 'UNKNOW' THEN 'Unknow'
 		END AS profession,A.total FROM(
-		SELECT COUNT(email) AS total, occupation FROM person WHERE occupation IN($occupations)  AND updated_by_user=1 AND active=1 GROUP BY occupation
-		UNION SELECT COUNT(email) AS total, 'OTRO' AS occupation FROM person WHERE occupation NOT IN($occupations) AND occupation IS NOT NULL AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, 'UNKNOW' AS occupation FROM person WHERE occupation IS NULL AND updated_by_user=1 AND active=1) A");
+		SELECT COUNT(id) AS total, occupation FROM person WHERE occupation IN($occupations)  AND updated_by_user=1 AND active=1 GROUP BY occupation
+		UNION SELECT COUNT(id) AS total, 'OTRO' AS occupation FROM person WHERE occupation NOT IN($occupations) AND occupation IS NOT NULL AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, 'UNKNOW' AS occupation FROM person WHERE occupation IS NULL AND updated_by_user=1 AND active=1) A");
 
-		$usersByAge=Connection::query("SELECT COUNT(email) AS total, '<17' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<17 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, '17-21' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>16 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<22 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, '22-35' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>21 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<36 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, '36-55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>35 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<56 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, '>55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>55 AND updated_by_user=1 AND active=1
-		UNION SELECT COUNT(email) AS total, 'UNKNOW' AS age FROM person WHERE date_of_birth IS NULL AND updated_by_user=1 AND active=1");
+		$usersByAge=Connection::query("SELECT COUNT(id) AS total, '<17' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<17 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, '17-21' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>16 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<22 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, '22-35' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>21 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<36 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, '36-55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>35 AND TIMESTAMPDIFF(YEAR,date_of_birth,NOW())<56 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, '>55' AS age FROM person WHERE TIMESTAMPDIFF(YEAR,date_of_birth,NOW())>55 AND updated_by_user=1 AND active=1
+		UNION SELECT COUNT(id) AS total, 'UNKNOW' AS age FROM person WHERE date_of_birth IS NULL AND updated_by_user=1 AND active=1");
 
-		$numberActiveUsers = Connection::query("SELECT COUNT(email) as cnt FROM person WHERE active=1");
-		$numberTotalUsers = Connection::query("SELECT COUNT(email) as cnt FROM person");
+		$numberActiveUsers = Connection::query("SELECT COUNT(id) as cnt FROM person WHERE active=1");
+		$numberTotalUsers = Connection::query("SELECT COUNT(id) as cnt FROM person");
 
 		// send variables to the view
 		$this->view->title = "Profile";
