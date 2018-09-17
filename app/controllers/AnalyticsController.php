@@ -240,6 +240,31 @@ class AnalyticsController extends Controller
 		}
 
 		//
+		// LAST 30 DAYS APP ORIGIN
+		//
+		$cache = $temp . "last30DaysAppOrigin" . date("Ymd") . ".cache";
+		if(file_exists($cache)) $last30DaysAppOrigin = unserialize(file_get_contents($cache));
+		else {
+			// get info from the database
+			$visits = Connection::query("
+				SELECT COUNT(id) AS `usage`, origin 
+				FROM person 
+				WHERE origin IS NOT NULL 
+				AND origin <> ''
+				AND last_access > DATE_SUB(NOW(), INTERVAL 1 MONTH)
+				GROUP BY origin");
+
+			// format as JSON
+			$last30DaysAppOrigin = [];
+			foreach($visits as $visit) {
+				$last30DaysAppOrigin[] = ["origin"=>$visit->origin, "usage"=>$visit->usage];
+			}
+
+			// save cache
+			file_put_contents($cache, serialize($last30DaysAppOrigin));
+		}
+
+		//
 		// NUMBERS OF COUPONS USED
 		//
 		$numberCouponsUsed = [];
@@ -268,6 +293,7 @@ class AnalyticsController extends Controller
 		$this->view->lastWeekEmailsSent = $lastWeekEmailsSent[0]->cnt;
 		$this->view->lastWeekEmailsNotSent = $lastWeekEmailsNotSent[0]->cnt;
 		$this->view->last30DaysActiveDomains = $last30DaysActiveDomains;
+		$this->view->last30DaysAppOrigin = $last30DaysAppOrigin;
 		$this->view->numberCouponsUsed = $numberCouponsUsed;
 	}
 
