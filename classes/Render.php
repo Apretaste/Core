@@ -52,8 +52,8 @@ class Render
 		$query = str_replace("|", " ", $query); // backward compatibility
 
 		// get the language of the user
-		$connection = new Connection();
-		$result = $connection->query("SELECT username, lang FROM person WHERE email = '$email'");
+		$result = Connection::query("SELECT id, username, lang FROM person WHERE email = '$email'");
+		$personId = isset($result[0]->id) ? $result[0]->id : "";
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
 		$username = isset($result[0]->username) ? $result[0]->username : "";
 
@@ -63,6 +63,7 @@ class Render
 
 		// create a new Request object
 		$request = new Request();
+		$request->personId = $personId;
 		$request->email = $email;
 		$request->username = $username;
 		$request->subject = $subject;
@@ -77,7 +78,7 @@ class Render
 		$request->environment = $environment;
 
 		// create a new Service Object with info from the database
-		$result = $connection->query("SELECT * FROM service WHERE name = '$serviceName'");
+		$result = Connection::query("SELECT * FROM service WHERE name = '$serviceName'");
 		$service = new $serviceName();
 		$service->serviceName = $serviceName;
 
@@ -245,8 +246,7 @@ class Render
 	private static function optimizeImages(&$response, &$html = "")
 	{
 		// get the image quality
-		$connection = new Connection();
-		$res = $connection->query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
 		if(empty($res)) $quality = "ORIGINAL";
 		else $quality = $res[0]->img_quality;
 

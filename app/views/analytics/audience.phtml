@@ -126,6 +126,16 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="col-xs-3">
+		<!-- LAST 30 APP ORIGIN -->
+		<div class="panel panel-default">
+			<div class="panel-heading">Last 30 days app origin</div>
+			<div class="panel-body">
+				<div id="last30DaysAppOrigin" style="width:100%;"></div>
+			</div>
+		</div>
+	</div>
 </div>
 
 
@@ -272,6 +282,20 @@
 		]);
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('numberCouponsUsed'));
+		chart.draw(data, options);
+	}
+
+	// Last 30 days app origin
+	google.setOnLoadCallback(last30DaysAppOrigin);
+	function last30DaysAppOrigin() {
+		var data = google.visualization.arrayToDataTable([
+			['Caption', 'Number'],
+			<?php foreach ($last30DaysAppOrigin as $data) { ?>
+				['<?=$data['origin']; ?>',<?=$data['usage']; ?>],
+			<?php } ?>
+		]);
+		var options = {};
+		var chart = new google.visualization.PieChart(document.getElementById('last30DaysAppOrigin'));
 		chart.draw(data, options);
 	}
 </script>
