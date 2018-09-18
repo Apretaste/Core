@@ -1,6 +1,7 @@
 <?php
 
 class Request {
+	public $personId;
 	public $email;
 	public $username;
 	public $subject;
