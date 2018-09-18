@@ -67,7 +67,7 @@
 </div>
 
 <div class="row">
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- LAST 30 SERVICE USAGE -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Last 30 days of service usage</div>
@@ -77,7 +77,7 @@
 		</div>
 	</div>
 
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- LAST 30 DAYS ENVIRONMENT -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Last 30 days of each environment</div>
@@ -87,7 +87,7 @@
 		</div>
 	</div>
 
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- APP VERSIONS -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Versions of the app</div>
@@ -97,7 +97,7 @@
 		</div>
 	</div>
 
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- LAST WEEK SENT VS NOT SENT -->
 		<div class="panel panel-default">
 			<div class="panel-heading"><a href="/admin/dropped">Last week of emails sent and not sent</a></div>
@@ -107,17 +107,7 @@
 		</div>
 	</div>
 
-	<div class="col-xs-3">
-		<!-- LAST 30 ACTIVE DOMAINS -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Last 30 days active domains</div>
-			<div class="panel-body">
-				<div id="last30DaysActiveDomains" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
-
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- NUMBER OF COUPONS USED -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Coupons usage</div>
@@ -127,7 +117,7 @@
 		</div>
 	</div>
 
-	<div class="col-xs-3">
+	<div class="col-xs-4">
 		<!-- LAST 30 APP ORIGIN -->
 		<div class="panel panel-default">
 			<div class="panel-heading">Last 30 days app origin</div>
@@ -254,20 +244,6 @@
 		]);
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
-		chart.draw(data, options);
-	}
-
-	// Last 30 days domains usage
-	google.setOnLoadCallback(last30DaysActiveDomains);
-	function last30DaysActiveDomains() {
-		var data = google.visualization.arrayToDataTable([
-			['Caption', 'Number'],
-			<?php foreach ($last30DaysActiveDomains as $data) { ?>
-				['<?=$data['domain']; ?>',<?=$data['usage']; ?>],
-			<?php } ?>
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('last30DaysActiveDomains'));
 		chart.draw(data, options);
 	}
 
