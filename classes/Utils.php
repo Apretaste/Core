@@ -156,7 +156,7 @@ class Utils
 	 * @param String $email
 	 * @return String, username
 	 */
-	public function usernameFromEmail($email)
+	public static function usernameFromEmail($email)
 	{
 		// get the first part of the username
 		$shortmail = strtolower(preg_replace('/[^A-Za-z]/', '', $email)); // remove special chars and caps
