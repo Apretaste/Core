@@ -217,29 +217,6 @@ class AnalyticsController extends Controller
 		}
 
 		//
-		// LAST 30 DAYS ACTIVE DOMAINS
-		//
-		$cache = $temp . "last30DaysActiveDomains" . date("Ymd") . ".cache";
-		if(file_exists($cache)) $last30DaysActiveDomains = unserialize(file_get_contents($cache));
-		else {
-			// get info from the database
-			$visits = Connection::query("
-				SELECT COUNT(id) AS `usage`, request_domain AS domain
-				FROM delivery
-				WHERE request_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)
-				GROUP BY request_domain");
-
-			// format as JSON
-			$last30DaysActiveDomains = [];
-			foreach($visits as $visit) {
-				$last30DaysActiveDomains[] = ["domain"=>$visit->domain, "usage"=>$visit->usage];
-			}
-
-			// save cache
-			file_put_contents($cache, serialize($last30DaysActiveDomains));
-		}
-
-		//
 		// LAST 30 DAYS APP ORIGIN
 		//
 		$cache = $temp . "last30DaysAppOrigin" . date("Ymd") . ".cache";
@@ -292,7 +269,6 @@ class AnalyticsController extends Controller
 		$this->view->last30DaysServiceUsage = $last30DaysServiceUsage;
 		$this->view->lastWeekEmailsSent = $lastWeekEmailsSent[0]->cnt;
 		$this->view->lastWeekEmailsNotSent = $lastWeekEmailsNotSent[0]->cnt;
-		$this->view->last30DaysActiveDomains = $last30DaysActiveDomains;
 		$this->view->last30DaysAppOrigin = $last30DaysAppOrigin;
 		$this->view->numberCouponsUsed = $numberCouponsUsed;
 	}
