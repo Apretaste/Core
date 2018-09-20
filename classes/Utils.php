@@ -134,8 +134,8 @@ class Utils
 	public function getPerson($email)
 	{
 		// get the person
-
-		$person = Connection::query("SELECT * FROM person WHERE email = '$email'");
+		$where = strpos($email,'@')?"email":"id";
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$email'");
 
 		// return false if person cannot be found
 		if (empty($person)) return false;
@@ -192,6 +192,49 @@ class Utils
 		// return the email or false if not found
 		if(empty($email)) return false;
 		else return $email[0]->email;
+	}
+
+	/**
+	 * Get the email from an id
+	 *
+	 * @author salvipascual
+	 * @param Int $id
+	 * @return String email or false
+	 */
+	public function getEmailFromId($id)
+	{
+		// do not try empty inputs
+		if(empty($id)) return false;
+
+		// get the email
+		$email = Connection::query("SELECT email FROM person WHERE id=$id");
+
+		// return the email or false if not found
+		if(empty($email)) return false;
+		else return $email[0]->email;
+	}
+
+	/**
+	 * Get the id from an username
+	 *
+	 * @author salvipascual
+	 * @param String $username
+	 * @return Int id or false
+	 */
+	public function getIdFromUsername($username)
+	{
+		// do not try empty inputs
+		if(empty($username)) return false;
+
+		// remove the @ symbol
+		$username = str_replace("@", "", $username);
+
+		// get the email
+		$id = Connection::query("SELECT id FROM person WHERE username='$username'");
+
+		// return the id or false if not found
+		if(empty($id)) return false;
+		else return $id[0]->id;
 	}
 
 	/**
@@ -619,7 +662,8 @@ class Utils
 	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// get the person's numeric ID
-		$id_person = Utils::personExist($email);
+		$id_person = strpos($email,'@')?Utils::personExist($email):$email;
+		$email = strpos($email,'@')?$email:Utils::getEmailFromId($id_person);
 
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
@@ -654,7 +698,7 @@ class Utils
 		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id_person");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (email, id_person, origin, `text`, link, tag, ispush) VALUES ('$email',$id_person,'$origin','$text','$link','$tag','$ispush')");
+		return Connection::query("INSERT INTO notifications (id_person, email, origin, `text`, link, tag, ispush) VALUES ($id_person,'$email','$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**
@@ -740,12 +784,12 @@ class Utils
 	{
 		// check if we have the nauta pass for the user
 		$pass = Connection::query("
-			SELECT A.pass 
-			FROM authentication A JOIN person B 
-			ON A.person_id = B.id 
-			WHERE B.email='$email' 
-			AND A.appname='apretaste' 
-			AND A.pass <> '' 
+			SELECT A.pass
+			FROM authentication A JOIN person B
+			ON A.person_id = B.id
+			WHERE B.email='$email'
+			AND A.appname='apretaste'
+			AND A.pass <> ''
 			AND A.pass IS NOT NULL");
 
 		// return false if the password do not exist
