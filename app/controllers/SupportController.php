@@ -192,8 +192,8 @@ class SupportController extends Controller
 		$manager = $security->getUser();
 
 		// save response in the database
-		$subClean = $connection->escape($subject, 250);
-		$conClean = $connection->escape($content, 1024);
+		$subClean = Connection::escape($subject, 250);
+		$conClean = Connection::escape($content, 1024);
 		Connection::query("
 			INSERT INTO support_tickets(`from`, subject, body, status, requester)
 			VALUES ('{$manager->email}', '$subClean', '$conClean', '$status', '$to')");
@@ -315,16 +315,15 @@ class SupportController extends Controller
 	 */
 	public function noteSubmitAction()
 	{
-		$email = $this->request->get("email");
+		$id = $this->request->get("id");
 		$text = $this->request->get("text");
 
 		// store the note in the database
-		$text = $connection->escape($text, 499);
-		Connection::query("INSERT INTO _note (from_user, to_user, `text`) VALUES ('salvi@apretaste.com','$email','$text')");
+		$text = Connection::escape($text, 499);
+		Connection::query("INSERT INTO _note (from_user, to_user, `text`) VALUES (1,$id,'$text')");
 
 		// send notification for the app
-		$utils = new Utils();
-		$utils->addNotification($email, "chat", "@apretaste le ha enviado una nota", "CHAT @apretaste");
+		Utils::addNotification($id, "chat", "@apretaste le ha enviado una nota", "CHAT @apretaste");
 
 		// go to the list of notes
 		$this->response->redirect("support/notes");
@@ -335,11 +334,11 @@ class SupportController extends Controller
 	 */
 	public function conversationAction()
 	{
-		$email = $this->request->get("email");
+		$id = $this->request->get("id");
 
 		// get conversation
 		$social = new Social();
-		$notes = $social->chatConversation("salvi@apretaste.com", $email);
+		$notes = $social->chatConversation(1, $id);
 
 		// get the list of macros
 		$cans = Connection::query("SELECT name, body FROM support_cans");
@@ -347,7 +346,7 @@ class SupportController extends Controller
 		$this->view->title = "Chat";
 		$this->view->buttons = [["caption"=>"Go back", "href"=>"notes"]];
 		$this->view->notes = $notes;
-		$this->view->email = $email;
+		$this->view->id = $id;
 		$this->view->cans = $cans;
 	}
 
@@ -357,12 +356,12 @@ class SupportController extends Controller
 	public static function getUnrespondedNotesToApretaste()
 	{
 		return Connection::query("
-			SELECT i.from_user AS email, IF(o.last_chat IS NULL, i.last_chat, o.last_chat) AS last_chat
-			FROM (SELECT from_user, MAX(send_date) AS last_chat FROM _note WHERE to_user='salvi@apretaste.com' GROUP BY from_user) i
-			LEFT JOIN (SELECT to_user, MAX(send_date) AS last_chat FROM _note WHERE from_user='salvi@apretaste.com' GROUP BY to_user) o
-			ON o.to_user = i.from_user
-			WHERE o.to_user IS NULL
-			OR o.last_chat < i.last_chat
-			ORDER BY last_chat DESC");
+		SELECT i.email, i.from_user AS id, IF(o.last_chat IS NULL, i.last_chat, o.last_chat) AS last_chat
+		FROM (SELECT a.from_user, MAX(a.send_date) AS last_chat, b.email FROM _note a JOIN person b ON a.from_user=b.id WHERE to_user=1 GROUP BY from_user) i
+		LEFT JOIN (SELECT to_user, MAX(send_date) AS last_chat FROM _note WHERE from_user=1 GROUP BY to_user) o
+		ON o.to_user = i.from_user
+		WHERE o.to_user IS NULL
+		OR o.last_chat < i.last_chat
+		ORDER BY last_chat DESC");
 	}
 }
