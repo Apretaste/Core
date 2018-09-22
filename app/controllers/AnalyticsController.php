@@ -65,11 +65,13 @@ class AnalyticsController extends Controller
 		// MONTHLY GROSS TRAFFIC
 		//
 		$visits = Connection::query("
-			SELECT dated, value 
-			FROM summary 
-			WHERE label = 'monthly_gross_traffic'
-			ORDER BY dated DESC
-			LIMIT 4");
+			SELECT COUNT(id_person) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted 
+			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
+			UNION 
+			SELECT value as visitors, dated as inserted 
+			FROM summary WHERE label='monthly_gross_traffic' 
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m') 
+			ORDER BY inserted DESC LIMIT 4");
 
 		// format as JSON
 		$monthlyGrossTraffic = [];
@@ -81,10 +83,13 @@ class AnalyticsController extends Controller
 		//
 		// get info from the database
 		$visits = Connection::query("
-			SELECT dated, value 
-			FROM summary 
-			WHERE label = 'monthly_unique_traffic'
-			ORDER BY dated DESC
+			SELECT COUNT(DISTINCT `id_person`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
+			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
+			UNION 
+			SELECT value as visitors, dated as inserted 
+			FROM summary WHERE label='monthly_unique_traffic' 
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
+			ORDER BY inserted DESC
 			LIMIT 4");
 
 		// format as JSON
