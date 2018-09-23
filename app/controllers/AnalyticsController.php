@@ -64,51 +64,38 @@ class AnalyticsController extends Controller
 		//
 		// MONTHLY GROSS TRAFFIC
 		//
-		$cache = $temp . "monthlyGrossTraffic" . date("Ymd") . ".cache";
-		if(file_exists($cache)) $monthlyGrossTraffic = unserialize(file_get_contents($cache));
-		else {
-			// get info from the database
-			$visits = Connection::query("
-				SELECT COUNT(id_person) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted
-				FROM delivery
-				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-				ORDER BY inserted DESC
-				LIMIT 4");
+		$visits = Connection::query("
+			SELECT COUNT(id_person) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted 
+			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
+			UNION 
+			SELECT value as visitors, dated as inserted 
+			FROM summary WHERE label='monthly_gross_traffic' 
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m') 
+			ORDER BY inserted DESC LIMIT 4");
 
-			// format as JSON
-			$monthlyGrossTraffic = [];
-			foreach($visits as $visit) {
-				if( ! $visit->visitors) $visit->visitors = 0;
-				$monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-			}
-
-			// save cache
-			$monthlyGrossTraffic = array_reverse($monthlyGrossTraffic);
-			file_put_contents($cache, serialize($monthlyGrossTraffic));
-		}
+		// format as JSON
+		$monthlyGrossTraffic = [];
+		foreach($visits as $visit) $monthlyGrossTraffic[] = ["date"=>date("M Y", strtotime($visit->dated)), "visitors"=>$visit->value];
+		$monthlyGrossTraffic = array_reverse($monthlyGrossTraffic);
 
 		//
 		// MONTHLY UNIQUE TRAFFIC
 		//
-		$cache = $temp . "monthlyUniqueTraffic" . date("Ymd") . ".cache";
-		if(file_exists($cache)) $monthlyUniqueTraffic = unserialize(file_get_contents($cache));
-		else {
-			// get info from the database
-			$visits = Connection::query("
-				SELECT COUNT(DISTINCT `user`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
-				FROM delivery
-				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
-				ORDER BY inserted DESC
-				LIMIT 4");
+		// get info from the database
+		$visits = Connection::query("
+			SELECT COUNT(DISTINCT `id_person`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
+			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
+			UNION 
+			SELECT value as visitors, dated as inserted 
+			FROM summary WHERE label='monthly_unique_traffic' 
+			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
+			ORDER BY inserted DESC
+			LIMIT 4");
 
-			// format as JSON
-			$monthlyUniqueTraffic = [];
-			foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->inserted)), "visitors"=>$visit->visitors];
-			$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
-
-			// save cache
-			file_put_contents($cache, serialize($monthlyUniqueTraffic));
-		}
+		// format as JSON
+		$monthlyUniqueTraffic = [];
+		foreach($visits as $visit) $monthlyUniqueTraffic[] = ["date"=>date("M Y", strtotime($visit->dated)), "visitors"=>$visit->value];
+		$monthlyUniqueTraffic = array_reverse($monthlyUniqueTraffic);
 
 		//
 		// MONTHLY NEW USERS

@@ -1,0 +1,56 @@
+<div class="row">
+	<div class="col-xs-12">
+		<form role="form" action="/advertisement/createSubmit" method="POST" enctype="multipart/form-data">
+			<div class="form-group">
+				<label for="owner">Owner's email</label>
+				<input id="owner" type="email" class="form-control" name="owner" placeholder="Owner's email" required />
+			</div>
+
+			<div class="form-group">
+				<div class="row">
+					<div class="col-xs-12">
+						<label for="title">Icon and Title</label>
+					</div>
+					<div class="col-xs-1">
+						<select class="form-control" name="icon">
+							<option value=""></option>
+							<option value="&darr;">&darr;</option>
+							<option value="&dollar;">&dollar;</option>
+							<option value="&phone;">&phone;</option>
+							<option value="&#9787;">&#9787;</option>
+							<option value="&sharp;">&sharp;</option>
+							<option value="&#9835;">&#9835;</option>
+							<option value="&hearts;">&hearts;</option>
+							<option value="&diams;">&diams;</option>
+							<option value="&starf;">&starf;</option>
+						</select>
+					</div>
+					<div class="col-xs-11">
+						<input id="title" type="text" class="form-control" name="title" maxlength="40" placeholder="A 40 characters summary of your ad" required />
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="description">Description</label>
+				<textarea id="description" rows="10" class="form-control" name="description" maxlength="500" placeholder="Up to 500 characters explaining your offer and how to contact you" required></textarea>
+			</div>
+
+			<div class="form-group">
+				<label for="picture">Image</label>
+				<p class="help-block">The picture must be a .png file, 728px by 90px with white background</p>
+				<input id="picture" type="file" name="picture" />
+			</div>
+
+			<div class="form-group">
+				<label for="expires">Expires</label>
+				<input id="expires" type="date" class="form-control" name="expires" placeholder="Date where the ad expres" />
+			</div>
+
+			<div class="form-group">
+				<br/>
+				<button type="submit" class="btn btn-primary">Create</button>
+			</div>
+		</form>
+	</div>
+</div>

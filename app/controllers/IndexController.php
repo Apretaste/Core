@@ -28,10 +28,10 @@ class IndexController extends Controller
 			$connection = new Connection();
 			$visits = $connection->query("
 				SELECT
-				count(id) as received,
-				DATE_FORMAT(request_date,'%Y-%m') as inserted
-				FROM delivery
-				GROUP BY DATE_FORMAT(request_date,'%Y-%m')
+				value as received,
+				dated as inserted
+				FROM summary
+				WHERE label='monthly_gross_traffic'
 				HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
 				ORDER BY inserted DESC
 				LIMIT 5");

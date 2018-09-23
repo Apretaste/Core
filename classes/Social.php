@@ -454,25 +454,25 @@ class Social
 	 * @param string $limit  , integer number of max rows
 	 * @return array
 	 */
-	public function chatsOpen($email)
+	public function chatsOpen($id)
 	{
 		// searching contacts of the current user
 		$notes = Connection::query("
 			SELECT A.*,B.text AS lastNote,B.read_date,B.from_user FROM (
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
-				ON A.to_user = B.email
-				WHERE A.from_user = '$email'
+				ON A.to_user = B.id
+				WHERE A.from_user = $id
 				AND (A.active=10 OR A.active=11)
 				GROUP BY B.id
 				UNION
 				SELECT B.*, MAX(A.send_date) AS last
 				FROM _note A JOIN person B
-				ON A.from_user = B.email
-				WHERE A.to_user = '$email'
+				ON A.from_user = B.id
+				WHERE A.to_user = $id
 				AND (A.active=01 OR A.active=11)
 				GROUP BY B.id) A JOIN _note B
-				ON (B.to_user=A.email OR B.from_user=A.email) AND B.send_date=A.last
+				ON (B.to_user=A.id OR B.from_user=A.id) AND B.send_date=A.last
 			ORDER BY last DESC");
 
 		// add profiles to the list of notes
@@ -487,10 +487,10 @@ class Social
 			$chat->email = $n->email;
 			$chat->last_sent = date('d/m/Y G:i',strtotime($n->last));
 			$chat->last_note_user = $n->from_user;
-			$chat->last_note_read = ($n->read_date!=null and $n->from_user==$email)?true:false;
+			$chat->last_note_read = ($n->read_date!=null and $n->from_user==$id)?true:false;
 			$chat->last_note_readDate=($chat->last_note_read)?date('d/m/Y G:i',strtotime($n->read_date)):"";
 			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
-			$chat->last_note = ($n->from_user!=$email and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
+			$chat->last_note = ($n->from_user!=$id and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
 			$chat->profile = $this->prepareUserProfile($n);
 			$chats[] = $chat;
 		}
@@ -507,10 +507,10 @@ class Social
 public function chatOcult($from_user,$to_user){
 	Connection::query("
 	 START TRANSACTION;
-	 UPDATE _note SET active=01 WHERE from_user='$from_user' AND to_user='$to_user' AND active=11;
-	 UPDATE _note SET active=10 WHERE from_user='$to_user' AND to_user='$from_user' AND active=11;
-	 UPDATE _note SET active=00 WHERE (from_user='$from_user' AND to_user='$to_user' AND active=10);
-	 UPDATE _note SET active=00 WHERE (from_user='$to_user' AND to_user='$from_user' AND active=01);
+	 UPDATE _note SET active=01 WHERE from_user=$from_user AND to_user=$to_user AND active=11;
+	 UPDATE _note SET active=10 WHERE from_user=$to_user AND to_user=$from_user AND active=11;
+	 UPDATE _note SET active=00 WHERE (from_user=$from_user AND to_user=$to_user AND active=10);
+	 UPDATE _note SET active=00 WHERE (from_user=$to_user AND to_user=$from_user AND active=01);
 	 COMMIT
 	 ");
 }
@@ -524,28 +524,28 @@ public function chatOcult($from_user,$to_user){
 	 * @param string $limit  , integer number of max rows
 	 * @return array
 	 */
-	public function chatConversation($yourEmail, $friendEmail, $lastID=0, $limit=20)
+	public function chatConversation($yourId, $friendId, $lastID=0, $limit=20)
 	{
 		// if a last ID is passed, do not cut the result based on the limit
-		$setLimit = ($lastID > 0) ? "" : "LIMIT $limit";
+		$lastID = ($lastID > 0) ? "" : "AND A.id > $lastID";
 
 		// retrieve conversation between users
 		$notes = Connection::query("
 			SELECT * FROM (
 				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
-				ON A.from_user = B.email
-				WHERE from_user = '$yourEmail' AND to_user = '$friendEmail'
+				ON A.from_user = B.id
+				WHERE from_user = $yourId AND to_user = $friendId
 				AND NOT (A.active=00 OR A.active=01)
-				AND A.id > '$lastID'
+				$lastID
 				UNION
 				SELECT A.id AS note_id, A.text, A.send_date as sent, A.read_date as `read`, A.from_user, B.*
 				FROM _note A LEFT JOIN person B
-				ON A.from_user = B.email
-				WHERE from_user = '$friendEmail' AND to_user = '$yourEmail'
+				ON A.from_user = B.id
+				WHERE from_user = $friendId AND to_user = $yourId
 				AND NOT (A.active=00 OR A.active=10)
-				AND A.id > '$lastID') C
-			ORDER BY sent DESC $setLimit");
+				$lastID) C
+			ORDER BY sent DESC LIMIT 20");
 
 		// mark the other person notes as unread
 		if($notes) {
@@ -554,15 +554,15 @@ public function chatOcult($from_user,$to_user){
 				UPDATE _note
 				SET read_date = CURRENT_TIMESTAMP
 				WHERE read_date is NULL
-				AND from_user = '$friendEmail'
-				AND id >= $lastNoteID");
+				AND from_user = $friendId
+				AND to_user >= $yourId");
 		}
 
 		// format profile
 		$chats = [];
 		foreach($notes as $n) {
-			$n->readed = ($n->read!=null and $n->from_user==$yourEmail)?true:false;
-			$n->sender = ($n->from_user==$yourEmail)?"me":"you";
+			$n->readed = ($n->read!=null and $n->from_user==$yourId)?true:false;
+			$n->sender = ($n->from_user==$yourId)?"me":"you";
 			$chats[] = $this->prepareUserProfile($n);
 		}
 		return $chats;

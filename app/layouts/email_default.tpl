@@ -81,21 +81,6 @@
 					</td>
 				</tr>
 
-				{* subscribe to email list *}
-				{if ! $APRETASTE_EMAIL_LIST}
-				<tr>
-					<td align="center" bgcolor="red">
-						<tr><td><table width="100%" cellpadding="0" cellspacing="0"><tr>
-							<td bgcolor="#F0AD4E" valign="middle" width="1"><font color="red"><big>&nbsp;&#9888;&nbsp;</big></font></td>
-							<td bgcolor="#F0AD4E"><small>Usted no esta suscrito a nuestra lista de correos, por lo cual no recibir&aacute; informaci&oacute;n sobre nuevos servicios, concursos y rifas.</small></td>
-							<td bgcolor="#F0AD4E" align="right" valign="middle">
-								{button href="SUSCRIPCION LISTA ENTRAR" caption="Suscribirse" size="small" color="green"}
-							</td>
-						</tr></table></td></tr>
-					</td>
-				</tr>
-				{/if}
-
 				{* footer *}
 				<tr>
 					<td align="center" bgcolor="#F2F2F2">

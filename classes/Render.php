@@ -53,7 +53,7 @@ class Render
 
 		// get the language of the user
 		$result = Connection::query("SELECT id, username, lang FROM person WHERE email = '$email'");
-		$personId = isset($result[0]->id) ? $result[0]->id : "";
+		$userId = isset($result[0]->id) ? $result[0]->id : "";
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
 		$username = isset($result[0]->username) ? $result[0]->username : "";
 
@@ -63,7 +63,7 @@ class Render
 
 		// create a new Request object
 		$request = new Request();
-		$request->personId = $personId;
+		$request->userId = $userId;
 		$request->email = $email;
 		$request->username = $username;
 		$request->subject = $subject;
@@ -97,6 +97,7 @@ class Render
 
 		$service->pathToService = $pathToService;
 		$service->utils = $utils;
+		$service->social = new Social();
 		$service->request = $request;
 
 		// run the service and get the Response
@@ -350,12 +351,26 @@ class Render
 		}
 		// else display an ad
 		else {
-			return false;
+			// get a random add
+			$ad = Connection::query("
+				SELECT id, icon, title
+				FROM ads 
+				WHERE active=1
+				AND paid=1
+				AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)
+				ORDER BY RAND()
+				LIMIT 1");
+
+			// do nothing if there are no ads
+			if(empty($ad)) return false;
+			else $ad = $ad[0];
+
+			// return the ad
 			return [
-				"icon" => "&#9786;",
-				"text" => "Triple-Recarga Cubacel en Apretaste",
-				"caption" => "Recargar",
-				"link" => "PUBLICIDAD 1030"
+				"icon" => $ad->icon,
+				"text" => $ad->title,
+				"caption" => "Ver",
+				"link" => "PUBLICIDAD VER " . $ad->id
 			];
 		}
 	}

@@ -13,7 +13,7 @@ class PushNotification
 	public function getAppId($email, $appname)
 	{
 		// get the person's numeric ID
-		$personId = Utils::personExist($email);
+		$personId = strpos($email,'@')?Utils::personExist($email):$email;
 
 		// get appid
 		$appid = Connection::query("SELECT appid FROM authentication WHERE person_id='$personId' AND appname='$appname'");
@@ -49,8 +49,8 @@ class PushNotification
 	public function getPersonFromAppId($appid)
 	{
 		$email = Connection::query("
-			SELECT A.email 
-			FROM person A JOIN authentication B 
+			SELECT A.email
+			FROM person A JOIN authentication B
 			ON A.id = B.person_id
 			WHERE B.appid='$appid'");
 		if(empty($email)) return false;
