@@ -65,10 +65,10 @@ class AnalyticsController extends Controller
 		// MONTHLY GROSS TRAFFIC
 		//
 		$visits = Connection::query("
-			SELECT COUNT(id_person) AS visitors, DATE_FORMAT(request_date,'%Y-%m') AS inserted 
+			SELECT COUNT(id_person) AS value, DATE_FORMAT(request_date,'%Y-%m') AS dated 
 			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
 			UNION 
-			SELECT value as visitors, dated as inserted 
+			SELECT value, dated  
 			FROM summary WHERE label='monthly_gross_traffic' 
 			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m') 
 			ORDER BY inserted DESC LIMIT 4");
@@ -83,10 +83,10 @@ class AnalyticsController extends Controller
 		//
 		// get info from the database
 		$visits = Connection::query("
-			SELECT COUNT(DISTINCT `id_person`) as visitors, DATE_FORMAT(request_date,'%Y-%m') as inserted
+			SELECT COUNT(DISTINCT `id_person`) as value, DATE_FORMAT(request_date,'%Y-%m') as dated
 			FROM delivery GROUP BY DATE_FORMAT(request_date,'%Y-%m') 
 			UNION 
-			SELECT value as visitors, dated as inserted 
+			SELECT value, dated 
 			FROM summary WHERE label='monthly_unique_traffic' 
 			HAVING inserted <> DATE_FORMAT(curdate(), '%Y-%m')
 			ORDER BY inserted DESC
