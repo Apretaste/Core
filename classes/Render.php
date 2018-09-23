@@ -51,7 +51,7 @@ class Render
 		$params = explode("|", $query);
 		$query = str_replace("|", " ", $query); // backward compatibility
 
-		// get the language of the user
+		// get user details
 		$result = Connection::query("SELECT id, username, lang FROM person WHERE email = '$email'");
 		$userId = $result[0]->id;
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
