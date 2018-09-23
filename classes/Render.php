@@ -53,7 +53,7 @@ class Render
 
 		// get the language of the user
 		$result = Connection::query("SELECT id, username, lang FROM person WHERE email = '$email'");
-		$userId = isset($result[0]->id) ? $result[0]->id : "";
+		$userId = $result[0]->id;
 		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
 		$username = isset($result[0]->username) ? $result[0]->username : "";
 
