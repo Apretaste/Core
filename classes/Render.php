@@ -351,12 +351,26 @@ class Render
 		}
 		// else display an ad
 		else {
-			return false;
+			// get a random add
+			$ad = Connection::query("
+				SELECT id, icon, title
+				FROM ads 
+				WHERE active=1
+				AND paid=1
+				AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)
+				ORDER BY RAND()
+				LIMIT 1");
+
+			// do nothing if there are no ads
+			if(empty($ad)) return false;
+			else $ad = $ad[0];
+
+			// return the ad
 			return [
-				"icon" => "&#9786;",
-				"text" => "Triple-Recarga Cubacel en Apretaste",
-				"caption" => "Recargar",
-				"link" => "PUBLICIDAD 1030"
+				"icon" => $ad->icon,
+				"text" => $ad->title,
+				"caption" => "Ver",
+				"link" => "PUBLICIDAD VER " . $ad->id
 			];
 		}
 	}
