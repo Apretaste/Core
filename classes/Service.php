@@ -11,5 +11,6 @@ class Service
 	public $appversion;
 	public $utils; // Utils
 	public $email; // Email
+	public $social; //Social
 	public $request; // Request
 }

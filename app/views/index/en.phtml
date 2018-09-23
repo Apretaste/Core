@@ -615,9 +615,9 @@
 	google.load("visualization", "1", {packages:["corechart"]});
 	google.setOnLoadCallback(function () {
 		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Email',{role: 'annotation'}],
+			['Day of the week', 'Email'],
 			<?php foreach ($visitors as $data) { ?>
-				['<?= $data['date'] ?>',<?= $data['emails'] ?>,<?= $data['emails'] ?>],
+				['<?= $data['date'] ?>',<?= $data['emails'] ?>],
 			<?php } ?>
 		]);
 		var options = {backgroundColor: '#C1C1C1', legend: 'none'};

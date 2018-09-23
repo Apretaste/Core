@@ -13,7 +13,7 @@ class Security
 	public function login($email, $pin)
 	{
 		// check if the user/pin is ok
-		$person = Connection::query("SELECT first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
+		$person = Connection::query("SELECT id, first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
 		if(empty($person)) return false; else $person = $person[0];
 
 		// get the path to root folder
@@ -26,6 +26,7 @@ class Security
 
 		// create the user object to save in the session
 		$user = new stdClass();
+		$user->id = $person->id;
 		$user->email = $email;
 		$user->name = $person->first_name;
 		$user->picture = $picture;
@@ -39,7 +40,7 @@ class Security
 
 		// save the last user's IP and access time
 		$ip = php::getClientIP();
-		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
 
 		// save the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
