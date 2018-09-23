@@ -235,7 +235,6 @@ class RunController extends Controller
 	 */
 	public function webhookAction()
 	{
-		$utils = new Utils();
 		// get the time when the service started executing and set the partition of the delivery table
 		$this->execStartTime = date("Y-m-d H:i:s");
 		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
@@ -249,6 +248,7 @@ class RunController extends Controller
 		if($blocked) return false;
 
 		// get the person's numeric ID
+		$utils = new Utils();
 		$this->fromEmailId = $utils->personExist($this->fromEmail);
 
 		// get the environment from the email
@@ -281,11 +281,12 @@ class RunController extends Controller
 		else {
 			// create a unique username and save the new person
 			$username = $utils->usernameFromEmail($this->fromEmail);
-			Connection::query("INSERT INTO person (email, username, last_access, source) VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+			$this->fromEmailId = Connection::query("
+				INSERT INTO person (email, username, last_access, source) 
+				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
 
 			// add the welcome notification
 			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
-			$this->fromEmailId = $utils->personExist($this->fromEmail);
 		}
 
 		// insert a new email in the delivery table and get the ID
@@ -640,5 +641,15 @@ class RunController extends Controller
 		$this->toEmail = $toEmail;
 		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 		$this->body = str_replace("'", "", $body);
+	}
+
+	/**
+	 * Read the email from the Apretaste webhook
+	 */
+	private function callAPWebhook()
+	{
+		// @TODO Ricardo usa esta funcion para 
+		// obtener datos del webhook de Lisandro
+		// despues la llamamos desde el metodo webhoook()
 	}
 }
