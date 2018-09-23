@@ -165,12 +165,13 @@ class AdminController extends Controller
         $delivery = array();
         if(isset($id[0])) {
             $id = $id[0]->id;
-			$delivery = Connection::query("
-				SELECT id, request_date, request_service, request_subservice, request_query, environment, delivery_code
-				FROM delivery
-				WHERE user='$email'
-				ORDER BY request_date DESC
-				LIMIT 100");
+
+        $delivery = Connection::query("
+            SELECT request_date, request_service, request_subservice, request_query, environment, delivery_code
+            FROM delivery  
+            WHERE id_person=$id
+            ORDER BY request_date DESC
+            LIMIT 100");
 		}
 
 		$this->view->title = 'Delivery';
@@ -295,9 +296,8 @@ class AdminController extends Controller
 
 		// get the user profile
 		$utils = new Utils();
-		if (stripos($email,'@') !== false)
-			$profile = $utils->getPerson($email);
-		else $profile = $utils->getPerson($utils->getEmailFromUsername($email));
+		if (stripos($email,'@')) $profile = $utils->getPerson($email);
+        else $profile = $utils->getPerson($utils->getEmailFromUsername($email));
 
 		$this->view->email = $email;
 		$this->view->profile = $profile;
