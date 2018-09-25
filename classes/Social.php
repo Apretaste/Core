@@ -492,6 +492,10 @@ class Social
 			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
 			$chat->last_note = ($n->from_user!=$id and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
 			$chat->profile = $this->prepareUserProfile($n);
+			$chat->cantidad=Connection::query("SELECT count(*) AS cantidad
+						FROM _note
+						WHERE from_user=$chat->last_note_user  AND to_user =$id AND read_date is NULL
+						AND (active=10 OR active=11)");
 			$chats[] = $chat;
 		}
 
