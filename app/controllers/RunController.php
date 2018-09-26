@@ -158,7 +158,6 @@ class RunController extends Controller
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
 		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
-		$this->partition=date('n')=="12"?"p0":'p'.date('n');
 
 		// get the user from the token
 		$security = new Security();
@@ -228,95 +227,15 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives an email petition and responds via email
+	 * Receives an email petition from Amazon Webhook and responds via email
 	 *
 	 * @author salvipascual
 	 * @param POST data from webhook
 	 */
-	public function webhookAction()
-	{
-		// get the time when the service started executing and set the partition of the delivery table
-		$this->execStartTime = date("Y-m-d H:i:s");
-		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
-		$this->partition=date('n')=="12"?"p0":'p'.date('n');
-
+	public function webhookAction(){
 		// get data from Amazon AWS webhook
 		$this->callAmazonWebhook();
-
-		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
-		if($blocked) return false;
-
-		// get the person's numeric ID
-		$utils = new Utils();
-		$this->fromEmailId = $utils->personExist($this->fromEmail);
-
-		// get the environment from the email
-		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$email'");
-		$environment = empty($res) ? "default" : $res[0]->environment;
-
-		// set the running environment
-		$this->di->set('environment', function() use($environment) {return $environment;});
-
-		// if the app is reporting a failure
-		if($environment == "failure") {
-			$this->runFailure();
-			return false;
-		}
-
-		// stop procesing if the sender is invalid
-		if($environment != "app") { // no need to test for the app
-			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId);
-			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
-		}
-
-		// update the number of emails received
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
-
-		// update last access time and make person active
-		if ($this->fromEmailId) { //if person exists
-			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->fromEmailId}");
-		}
-		else {
-			// create a unique username and save the new person
-			$username = $utils->usernameFromEmail($this->fromEmail);
-			$this->fromEmailId = Connection::query("
-				INSERT INTO person (email, username, last_access, source) 
-				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
-
-			// add the welcome notification
-			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
-		}
-
-		// insert a new email in the delivery table and get the ID
-		$attach = $this->attachment ? basename($this->attachment) : "";
-		$domain = explode("@", $this->fromEmail)[1];
-		$this->subject = substr($this->subject, 0, 1023);
-		$this->idEmail = Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
-
-		// execute the right environment type
-		if($environment == "app") $log = $this->runApp();
-		elseif($environment == "email") $log = $this->runEmail();
-		elseif($environment == "download") {
-			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
-			if( ! $startWithApp) $this->subject = "app";
-			$log = $this->runEmail();
-		}else $log = $this->runSupport();
-
-		// save execution time to the db
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($this->execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->queryId}");
-
-		// display the webhook log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
-		$logger->close();
+		$this->webhookProcessRequest();
 	}
 
 	/**
@@ -573,6 +492,91 @@ class RunController extends Controller
 	}
 
 	/**
+	 * Process the webhooks petitions and responds via email
+	 */
+
+	private function webhookProcessRequest(){
+		// get the time when the service started executing and set the partition of the delivery table
+		$this->execStartTime = date("Y-m-d H:i:s");
+		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
+
+		// do not respond to blocked accounts
+		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
+		if($blocked) return false;
+
+		// get the person's numeric ID
+		$utils = new Utils();
+		$this->fromEmailId = $utils->personExist($this->fromEmail);
+
+		// get the environment from the email
+		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
+		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$email'");
+		$environment = empty($res) ? "default" : $res[0]->environment;
+
+		// set the running environment
+		$this->di->set('environment', function() use($environment) {return $environment;});
+
+		// if the app is reporting a failure
+		if($environment == "failure") {
+			$this->runFailure();
+			return false;
+		}
+
+		// stop procesing if the sender is invalid
+		if($environment != "app") { // no need to test for the app
+			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId);
+			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
+		}
+
+		// update the number of emails received
+		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
+
+		// update last access time and make person active
+		if ($this->fromEmailId) { //if person exists
+			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->fromEmailId}");
+		}
+		else {
+			// create a unique username and save the new person
+			$username = $utils->usernameFromEmail($this->fromEmail);
+			$this->fromEmailId = Connection::query("
+				INSERT INTO person (email, username, last_access, source)
+				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+
+			// add the welcome notification
+			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
+		}
+
+		// insert a new email in the delivery table and get the ID
+		$attach = $this->attachment ? basename($this->attachment) : "";
+		$domain = explode("@", $this->fromEmail)[1];
+		$this->subject = substr($this->subject, 0, 1023);
+		$this->idEmail = Connection::query("
+			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
+			VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+
+		// execute the right environment type
+		if($environment == "app") $log = $this->runApp();
+		elseif($environment == "email") $log = $this->runEmail();
+		elseif($environment == "download") {
+			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
+			if( ! $startWithApp) $this->subject = "app";
+			$log = $this->runEmail();
+		}else $log = $this->runSupport();
+
+		// save execution time to the db
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($this->execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->queryId}");
+
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->close();
+	}
+
+	/**
 	 * Read the email from Amazon AWS
 	 */
 	private function callAmazonWebhook()
@@ -644,12 +648,65 @@ class RunController extends Controller
 	}
 
 	/**
+	 * Receives an email petition from Apretaste Webhook and responds via email
+	 *
+	 * @author ricardo@apretaste.org
+	 * @param POST data from Apretaste webhook
+	 */
+	public function ApWebhookAction()
+	{
+		// get data from our webhook
+		$this->callAPWebhook();
+		$this->webhookProcessRequest();
+	}
+
+	/**
 	 * Read the email from the Apretaste webhook
 	 */
 	private function callAPWebhook()
 	{
-		// @TODO Ricardo usa esta funcion para 
-		// obtener datos del webhook de Lisandro
-		// despues la llamamos desde el metodo webhoook()
+		// get the message object
+		$message = json_decode(file_get_contents('php://input'), true);
+
+		// get the temp folder
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+
+		// parse the file
+		$messageId = str_replace(array("<",">","'"), "", $message['header']['message_id']);
+		$fromEmail = $message['header']['from'][0]['personal'];
+		$subject = $message['header']['subject'];
+		$body = $message['mailformatted'];
+
+		// get the TO address
+		$toEmail = $message['header']['toadress'];
+
+		// display the Ap webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/ApWebhook.log");
+		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
+		$logger->close();
+
+		// save the attachment to the temp folder
+		if(isset($message['attachments'])) {
+			$attachs = $message['attachments'];
+			foreach ($attachs as $attach) {
+				if ($attach['is_attachment']) {
+					$name = $attach['filename'];
+					$ext = substr($name,strrpos($name,"."));
+					$fileLocation = $temp.'attachments/'.$utils->generateRandomHash().$ext;
+					$file = fopen($fileLocation,'w+');
+					fwrite($file,base64_decode($attach['attachment']));
+					fclose($file);;
+					$this->attachment = $fileLocation;
+				}
+			}
+		}
+
+		// save variables in the class
+		$this->fromEmail = $fromEmail;
+		$this->toEmail = $toEmail;
+		$this->subject = $subject;
+		$this->body = str_replace("'", "", $body);
 	}
 }
