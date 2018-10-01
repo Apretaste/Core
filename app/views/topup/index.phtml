@@ -1,0 +1,174 @@
+<div class="container">
+	<div class="row">
+		<div class="col-lg-9 col-md-8 col-sm-7 col-xs-12">
+			<p class="lead">COMPRE CR&Eacute;DITOS PARA LA APP</p>
+
+			<form action="/topup/thanks" method="POST" role="form">
+				<div class="form-group">
+					<label class="control-label" for="email"><b>Paso #1:</b> Email a recargar</label>
+					<p class="label-support">Escriba el email que usa en la app</p>
+					<input required id="email" class="form-control" type="email" name="email" placeholder="yo@nauta.cu"/>
+					<p id="error-email" class="label-support error">El email que escribi&oacute; no es una cuenta de Apretaste.</p>
+				</div>
+
+				<div class="form-group">
+					<label class="control-label" for="credits"><b>Paso #2:</b> Cr&eacute;ditos a comprar</label>
+					<p class="label-support">Cada cr&eacute;dito cuesta $1 USD + 7% sales tax</p>
+					<select required id="credits" class="form-control" name="credits" onchange="updatePayBtn()">
+						<option value="5">5 cr&eacute;ditos</option>
+						<option value="10" selected="selected">10 cr&eacute;ditos</option>
+						<option value="15">15 cr&eacute;ditos</option>
+						<option value="20">20 cr&eacute;ditos</option>
+						<option value="30">30 cr&eacute;ditos</option>
+						<option value="50">50 cr&eacute;ditos</option>
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label class="control-label" for="captcha"><b>Paso #3:</b> Resuelva el Captcha</label>
+					<p class="label-support">Escriba el texto que ve en la imagen</p>
+					<div class="input-group">
+						<input required id="captcha" class="form-control" type="text" name="captcha" style="height: 42px;">
+						<span class="input-group-addon" style="padding: 0px;">
+							<img class="rounded" style="margin: 0px;" id="captchaimg" style="margin: 5px;" src="/topup/captcha">
+						</span>
+						<span class="input-group-btn">
+							<button style="height: 42px;" class="btn btn-default" type="button" onclick="newCaptcha();">
+								<span class="glyphicon glyphicon-refresh"></span>
+							</button>
+						</span>
+					</div>
+					<p id="error-captcha" class="label-support error">El texto que escribi&oacute; no es el mismo de la imagen.</p>
+				</div>
+
+				<input id="token" type="hidden" name="token"/>
+
+				<div class="text-center">
+					<br/>
+					<button id="btnPay" class="btn btn-success btn-lg" type="button" onclick="return pay();">
+						<span id="btnCaption">Pagar</span> 
+						<span id="payBalance"></span>
+					</button>
+				</div>
+			</form>
+		</div>
+
+		<div class="col-lg-3 col-md-4 col-sm-5 hidden-xs">
+			<img src="/images/AppInPhone.png" alt="Nuestra App" class="fullscreen">
+		</div>
+	</div>
+</div>
+
+<script src="/js/jquery.js"></script>
+<script src="https://checkout.stripe.com/checkout.js"></script>
+
+<script type="text/javascript">
+	// display the right price when starting
+	$(document).ready(function(){
+		updatePayBtn();
+	});
+
+	// validate form and start payment process
+	function pay() {
+		// get values to check
+		var email = $('#email').val();
+		var credits = $('#credits').val();
+		var captcha = $('#captcha').val();
+
+		// get loading caption
+		$('.error').css('display','none');
+		blockSubmitButton(false);
+
+		// check if the email is valid
+		var isEmail = false;
+		if(validateEmail(email)) {
+			$.ajax({
+				url: "/topup/checkEmail?text="+email,
+				async: false
+			}).done(function(data) {
+				console.log($.trim(data));
+				isEmail = $.trim(data) == "true";
+				console.log(isEmail);
+			});
+		}
+
+		// display error if invalid email
+		if( ! isEmail) {
+			$('#error-email').show();
+			blockSubmitButton(true);
+			return false;
+		}
+
+		// check if the captcha is right
+		var isCaptcha = false;
+		$.ajax({
+			url: "/topup/checkCaptcha?text="+captcha,
+			async: false
+		}).done(function(data) {
+			isCaptcha = $.trim(data) == "true";
+			if( ! isCaptcha) {
+				$('#error-captcha').show();
+				blockSubmitButton(true);
+			}
+		});
+		if( ! isCaptcha) return false;
+
+		// create Stripe handler
+		var handler = StripeCheckout.configure({
+			key: 'pk_test_TYooMQauvdEDq54NiTphI7jx',
+			image: '/logo_192_by_192.png',
+			locale: 'es',
+			email: email,
+			name: 'Apretaste',
+			description: credits + ' creditos de Apretaste',
+			zipCode: true,
+			amount: credits * 1.07 * 100,
+			token: function(token) { 
+				$('#token').val(token.id);
+				$('form').submit();
+			},
+			closed: function() {
+				blockSubmitButton(true);
+			}
+		});
+
+		// open the pay windows
+		handler.open();
+	}
+
+	// create a new captcha
+	function newCaptcha() {
+		var randNumber = Math.floor(Math.random()*(9000-1+1))+1;
+		$('#captchaimg').attr('src','topup/captcha?rand='+randNumber);
+		$('#captcha').val('');
+	}
+
+	// update the Pay button
+	function updatePayBtn() {
+		var credits = $('#credits').val();
+		var toPay = isNaN(credits) ? '' : '$'+(credits * 1.07).toFixed(2);
+		$('#payBalance').html(toPay);
+	}
+
+	// toggle the status of the pay button
+	function blockSubmitButton(status) {
+		// enable the button
+		if(status) {
+			$('#btnPay').removeAttr('disabled');
+			$('#btnCaption').html('Pagar');
+			updatePayBtn();
+		} 
+		// disable the button
+		else {
+			$('#btnPay').attr('disabled', 'disabled');
+			$('#btnCaption').html('Cargando ...');
+			$('#payBalance').html('');
+		}
+	}
+
+	// check if an email is valid
+	function validateEmail(email) {
+		var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		return re.test(email);
+	}
+</script>

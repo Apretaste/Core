@@ -16,6 +16,7 @@
 		"facebook/graph-sdk": "^5.6",
 		"cmfcmf/openweathermap-php-api": "^2.3",
 		"google/apiclient": "^2.0",
-		"phpmailer/phpmailer": "^6.0"
+		"phpmailer/phpmailer": "^6.0",
+		"stripe/stripe-php": "6.19.1"
 	}
 }
