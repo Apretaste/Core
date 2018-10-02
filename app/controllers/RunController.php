@@ -673,11 +673,13 @@ class RunController extends Controller
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
 
+		if(!(isset($message['header']['from']) && isset($message['header']['message_id']))) exit;
+
 		// parse the file
 		$messageId = str_replace(array("<",">","'"), "", $message['header']['message_id']);
 		$fromEmail = $message['header']['from'][0]['personal'];
-		$subject = $message['header']['subject'];
-		$body = $message['mailformatted'];
+		$subject = isset($message['header']['subject'])?$message['header']['subject']:"";
+		$body = isset($message['mailformatted'])?$message['mailformatted']:"";
 
 		// get the TO address
 		$toEmail = $message['header']['toadress'];
