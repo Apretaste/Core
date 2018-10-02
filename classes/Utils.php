@@ -137,15 +137,11 @@ class Utils
 		$where = strpos($email,'@')?"email":"id";
 		$person = Connection::query("SELECT * FROM person WHERE $where = '$email'");
 
-		// return false if person cannot be found
+		// false if the person cant be found
 		if (empty($person)) return false;
-		else $person = $person[0];
 
-		$social = new Social();
-		$person = $social->prepareUserProfile($person);
-
-		// return person
-		return $person;
+		// else, get the profile
+		return Social::prepareUserProfile($person[0]);
 	}
 
 	/**
@@ -1161,7 +1157,7 @@ class Utils
 	 * @param Service $serv
 	 * @return array (Object, Attachments)
 	 */
-	public function getExternalAppData($email, $timestamp, $serv=null)
+	public static function getExternalAppData($email, $timestamp, $serv=null)
 	{
 		// get the last update date
 		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
@@ -1192,8 +1188,7 @@ class Utils
 		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
-			$social = new Social();
-			$person = $social->prepareUserProfile($person);
+			$person = Social::prepareUserProfile($person);
 
 			// add user profile to the response
 			$res->profile->full_name = $person->full_name;
@@ -1219,11 +1214,11 @@ class Utils
 		}
 
 		// get unread notifications, by service if app only for one service
+		$extraClause = "";
 		if (isset($serv) && isset($serv->serviceName) && isset($serv->input->apptype)) {
-			$name=$serv->serviceName;
-			$extraClause=($serv->input->apptype=="original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+			$name = $serv->serviceName;
+			$extraClause = ($serv->input->apptype == "original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
 		}
-		else $extraClause="";
 
 		$res->notifications = Connection::query("
 		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
@@ -1292,6 +1287,9 @@ class Utils
 		// get a random input domain
 		$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
 		$res->domain = $domain[0]->email;
+
+		// calculate profile completion
+		$res->profile_completion = Social::getProfileCompletion($person);
 
 		// convert to JSON and return array
 		return ["attachments" => $attachments, "json" => json_encode($res)];
