@@ -16,13 +16,13 @@ class Social
 	 * @param String $lang
 	 * @return String
 	 */
-	 public function profileToText($profile, $lang="es")
+	public static function profileToText($profile, $lang="es")
 	 {
 		switch ($lang)
 		{
-			case 'es': return $this->profileToTextSpanish($profile);
-			case 'en': return $this->profileToTextEnglish($profile);
-			default: return $this->profileToTextSpanish($profile);
+			case 'es': return Social::profileToTextSpanish($profile);
+			case 'en': return Social::profileToTextEnglish($profile);
+			default: return Social::profileToTextSpanish($profile);
 		}
 	 }
 
@@ -33,7 +33,7 @@ class Social
 	 * @param Object $profile
 	 * @return String
 	 */
-	private function profileToTextSpanish($profile)
+	private static function profileToTextSpanish($profile)
 	{
 		// get the age
 		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
@@ -83,12 +83,12 @@ class Social
 		if ($profile->hair == "BLANCO") $hair = "canoso";
 
 		// get the place where the person lives
-		$province = ($profile->province) ? $this->getProvinceNameFromCode($profile->province) : false;
+		$province = ($profile->province) ? Social::getProvinceNameFromCode($profile->province) : false;
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : $this->getCountryNameFromCode($countryCode);
-		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
+		$country = empty(trim($profile->country)) ? false : Social::getCountryNameFromCode($countryCode);
+		$usstate = empty(trim($profile->usstate)) ? false : Social::getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
@@ -166,7 +166,7 @@ class Social
 	 * @param Object $profile
 	 * @return String
 	 */
-	private function profileToTextEnglish($profile)
+	private static function profileToTextEnglish($profile)
 	{
 		// get the age
 		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
@@ -212,12 +212,12 @@ class Social
 		if ($profile->hair == "BLANCO") $hair = "white";
 
 		// get the place where the person lives
-		$province = ($profile->province) ? $this->getProvinceNameFromCode($profile->province) : false;
+		$province = ($profile->province) ? Social::getProvinceNameFromCode($profile->province) : false;
 
 		// get the country, state and city
 		$countryCode = strtoupper($profile->country);
-		$country = empty(trim($profile->country)) ? false : $this->getCountryNameFromCode($countryCode, 'en');
-		$usstate = empty(trim($profile->usstate)) ? false : $this->getStateNameFromCode($profile->usstate);
+		$country = empty(trim($profile->country)) ? false : Social::getCountryNameFromCode($countryCode, 'en');
+		$usstate = empty(trim($profile->usstate)) ? false : Social::getStateNameFromCode($profile->usstate);
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
@@ -295,16 +295,15 @@ class Social
 	 * @param Object $profile
 	 * @return Number, percentage of completion
 	 * */
-	public function getProfileCompletion($profile)
+	public static function getProfileCompletion($profile)
 	{
 		// get an array of the valid profile fields
-		$keys = array("first_name","last_name","date_of_birth","gender","eyes","skin","body_type","hair","city","highest_school_level","occupation","marital_status","interests","picture","sexual_orientation","religion","country");
+		$keys = ["first_name","last_name","date_of_birth","gender","eyes","skin","body_type","hair","city","highest_school_level","occupation","marital_status","interests","picture","sexual_orientation","religion","country"];
 
 		// count how much filled is the profile
 		$counter = 0;
 		if( ! empty($profile->usstate) ||  ! empty($profile->province)) $counter++;
-		foreach ($keys as $key)
-		{
+		foreach ($keys as $key) {
 			if( ! empty($profile->$key)) $counter++;
 		}
 
@@ -323,7 +322,7 @@ class Social
 	 *
 	 * @return object
 	 * */
-	public function prepareUserProfile($profile, $lang=false)
+	public static function prepareUserProfile($profile, $lang=false)
 	{
 		// ensure only use known languages and Spanish is default
 		if( ! $lang && $profile->lang) $lang = $profile->lang;
@@ -339,9 +338,9 @@ class Social
 		// get the most accurate location possible
 		$location = "";
 		if($profile->city) $location = ucwords(strtolower($profile->city));
-		elseif($profile->country=="US" && $profile->usstate) $location = $this->getStateNameFromCode($profile->usstate);
-		elseif($profile->country=="CU" && $profile->province) $location = $this->getProvinceNameFromCode($profile->province);
-		else $location = $this->getCountryNameFromCode($profile->country, $lang);
+		elseif($profile->country=="US" && $profile->usstate) $location = Social::getStateNameFromCode($profile->usstate);
+		elseif($profile->country=="CU" && $profile->province) $location = Social::getProvinceNameFromCode($profile->province);
+		else $location = Social::getCountryNameFromCode($profile->country, $lang);
 		$profile->location = substr($location, 0, 23);
 
 		// get the person's full name
@@ -386,10 +385,10 @@ class Social
 		foreach ($profile as $key=>$value) if( ! is_array($value)) $profile->$key = trim($value);
 
 		// get the completion percentage of your profile
-		$profile->completion = $this->getProfileCompletion($profile);
+		$profile->completion = Social::getProfileCompletion($profile);
 
 		// get the about me section
-		if (empty($profile->about_me)) $profile->about_me = $this->profileToText($profile, $lang);
+		if (empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
 		unset($profile->pin,$profile->insertion_date,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
@@ -404,7 +403,7 @@ class Social
 	 * @param String $stateCode
 	 * @return String
 	 */
-	public function getStateNameFromCode($stateCode)
+	public static function getStateNameFromCode($stateCode)
 	{
 		$states = array("AL" => "Alabama","AK" => "Alaska","AS" => "American Samoa","AZ" => "Arizona","AR" => "Arkansas","CA" => "California","CO" => "Colorado","CT" => "Connecticut","DE" => "Delaware","DC" => "Dist. of Columbia","FL" => "Florida","GA" => "Georgia","GU" => "Guam","HI" => "Hawaii","ID" => "Idaho","IL" => "Illinois","IN" => "Indiana","IA" => "Iowa","KS" => "Kansas","KY" => "Kentucky","LA" => "Louisiana","ME" => "Maine","MD" => "Maryland","MH" => "Marshall Islands","MA" => "Massachusetts","MI" => "Michigan","FM" => "Micronesia","MN" => "Minnesota","MS" => "Mississippi","MO" => "Missouri","MT" => "Montana","NE" => "Nebraska","NV" => "Nevada","NH" => "New Hampshire","NJ" => "New Jersey","NM" => "New Mexico","NY" => "New York","NC" => "North Carolina","ND" => "North Dakota","MP" => "Northern Marianas","OH" => "Ohio","OK" => "Oklahoma","OR" => "Oregon","PW" => "Palau","PA" => "Pennsylvania","PR" => "Puerto Rico","RI" => "Rhode Island","SC" => "South Carolina","SD" => "South Dakota","TN" => "Tennessee","TX" => "Texas","UT" => "Utah","VT" => "Vermont","VA" => "Virginia","VI" => "Virgin Islands","WA" => "Washington","WV" => "West Virginia","WI" => "Wisconsin","WY" => "Wyoming");
 		return $states[strtoupper($stateCode)];
@@ -417,7 +416,7 @@ class Social
 	 * @param String $provinceCode
 	 * @return String
 	 */
-	public function getProvinceNameFromCode($provinceCode)
+	public static function getProvinceNameFromCode($provinceCode)
 	{
 		$province = str_replace("_", " ", $provinceCode);
 		$province = ucwords(strtolower($province));
@@ -431,10 +430,10 @@ class Social
 	 * @param String $provinceCode
 	 * @return String
 	 */
-	public function getCountryNameFromCode($countryCode, $lang="es")
+	public static function getCountryNameFromCode($countryCode, $lang="es")
 	{
 		$countryCode = strtoupper($countryCode);
-		$countries = $this->getCountries();
+		$countries = Social::getCountries();
 		if(isset($countries[$countryCode][$lang])) return $countries[$countryCode][$lang];
 		elseif(isset($countries[$countryCode]['es'])) return $countries[$countryCode]['es'];
 		else return $countryCode;
@@ -454,7 +453,7 @@ class Social
 	 * @param string $limit  , integer number of max rows
 	 * @return array
 	 */
-	public function chatsOpen($id)
+	public static function chatsOpen($id)
 	{
 		// searching contacts of the current user
 		$notes = Connection::query("
@@ -491,8 +490,8 @@ class Social
 			$chat->last_note_readDate=($chat->last_note_read)?date('d/m/Y G:i',strtotime($n->read_date)):"";
 			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
 			$chat->last_note = ($n->from_user!=$id and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
-			$chat->profile = $this->prepareUserProfile($n);
-			$chat->cantidad=Connection::query("SELECT count(*) AS cantidad
+			$chat->profile = Social::prepareUserProfile($n);
+			$chat->cantidad = Connection::query("SELECT count(*) AS cantidad
 						FROM _note
 						WHERE from_user=$chat->last_note_user  AND to_user =$id AND read_date is NULL
 						AND (active=10 OR active=11)");
@@ -508,7 +507,7 @@ class Social
 	 *@param String $from_user
 	 *@param String $to_user
 	 */
-public function chatOcult($from_user,$to_user){
+public static function chatOcult($from_user,$to_user){
 	Connection::query("
 	 START TRANSACTION;
 	 UPDATE _note SET active=01 WHERE from_user=$from_user AND to_user=$to_user AND active=11;
@@ -528,7 +527,7 @@ public function chatOcult($from_user,$to_user){
 	 * @param string $limit  , integer number of max rows
 	 * @return array
 	 */
-	public function chatConversation($yourId, $friendId, $lastID=0, $limit=20)
+	public static function chatConversation($yourId, $friendId, $lastID=0, $limit=20)
 	{
 		// if a last ID is passed, do not cut the result based on the limit
 		$lastID = ($lastID > 0) ? "" : "AND A.id > $lastID";
@@ -567,7 +566,7 @@ public function chatOcult($from_user,$to_user){
 		foreach($notes as $n) {
 			$n->readed = ($n->read!=null and $n->from_user==$yourId)?true:false;
 			$n->sender = ($n->from_user==$yourId)?"me":"you";
-			$chats[] = $this->prepareUserProfile($n);
+			$chats[] = Social::prepareUserProfile($n);
 		}
 		return $chats;
 	}
@@ -575,7 +574,7 @@ public function chatOcult($from_user,$to_user){
 	/**
 	 * Get the arrays of countries
 	 */
-	private function getCountries() {
+	private static function getCountries() {
 		return [
 			"AD" => ["es"=>"Andorra", "en"=>"Andorra"],
 			"AE" => ["es"=>"Emiratos Arabes Unidos", "en"=>"United Arab Emirates"],

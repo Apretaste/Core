@@ -426,7 +426,7 @@ class RunController extends Controller
 			$isPerfilStatus = substr($input->command, 0, strlen("perfil status")) === "perfil status";
 			if($isPerfilStatus) $extra = "{}";
 			else {
-				$res = $utils->getExternalAppData($this->fromEmail, $input->timestamp, $service);
+				$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
 				$response->attachments = array_merge($response->attachments, $res["attachments"]);
 				$extra = $res["json"];
 			}

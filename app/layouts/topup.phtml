@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<title>Compre cr&eacute;ditos de Apretaste</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Tiene amigos y familia en Cuba? Nosotros les conectamos a la internet! Invitelo a usar nuestra app.">
+		<meta name="author" content="Salvi Pascual">
+		<link rel="icon" href="/images/apretaste.icon.png">
+
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<link href="/css/basics.css" rel="stylesheet">
+		<style>
+			body {
+				margin: 40px 0px;
+			}
+			.control-label {
+				font-weight: normal;
+				text-transform: uppercase;
+				font-size: large;
+				margin-top: 20px;
+				font-size: 14px;
+			}
+			.label-support {
+				color: gray;
+				font-size: small;
+			}
+			.error {
+				display: none; 
+				color: #A94455;
+				margin: 0px;
+			}
+		</style>
+	</head>
+	<body>
+		<?= $this->getContent() ?>
+
+		<?php require_once "../lib/googleAnalyticsTracking.php" ?>
+	</body>
+</html>

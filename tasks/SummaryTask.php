@@ -26,7 +26,7 @@ class SummaryTask extends \Phalcon\Cli\Task
 			ON DUPLICATE KEY UPDATE value = $monthlyGrossTraffic, inserted = CURRENT_TIMESTAMP");
 
 		//
-		// MONTHLY NEW USERS
+		// MONTHLY UNIQUE TRAFFIC
 		//
 
 		// get the number for current month
