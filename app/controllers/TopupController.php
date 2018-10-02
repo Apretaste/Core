@@ -14,7 +14,11 @@ class TopupController extends Controller
 	 */
 	public function indexAction()
 	{
-		$this->wwwhttp = $this->di->get('path')['http'];
+		// get Stripe publishable key
+		$stripePublicKey = $this->di->get('config')['stripe']['public'];
+
+		// send information to the view
+		$this->view->stripePublicKey = $stripePublicKey;
 	}
 
 	/**
@@ -45,16 +49,19 @@ class TopupController extends Controller
 		// calculate amount to charge
 		$amount = $credits * 1.07 * 100;
 		$amountUSD = number_format(($amount/100), 2);
-/*
+
+		// get Stripe secret key
+		$stripeSecretKey = $this->di->get('config')['stripe']['secret'];
+
 		// confirm the payment
-		Stripe::setApiKey("sk_test_4eC39HqLyjWDarjtT1zdp7dc");
+		Stripe::setApiKey($stripeSecretKey);
 		$charge = Charge::create([
 			'amount' => $amount,
 			'currency' => 'usd',
 			'description' => "$credits creditos de Apretaste",
 			'source' => $token,
 		]);
-*/
+
 		// send confirmation email
 		$sender = new Email();
 		$sender->to = $email;

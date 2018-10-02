@@ -115,7 +115,7 @@
 
 		// create Stripe handler
 		var handler = StripeCheckout.configure({
-			key: 'pk_test_TYooMQauvdEDq54NiTphI7jx',
+			key: '<?= $stripePublicKey ?>',
 			image: '/logo_192_by_192.png',
 			locale: 'es',
 			email: email,
