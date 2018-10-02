@@ -655,6 +655,7 @@ class RunController extends Controller
 	 */
 	public function ApWebhookAction()
 	{
+		ignore_user_abort(true);
 		// get data from our webhook
 		$this->callAPWebhook();
 		$this->webhookProcessRequest();
