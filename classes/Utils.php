@@ -12,7 +12,7 @@ class Utils
 	 * @param String $seed, text to create the email
 	 * @return String, email address
 	 */
-	public function getValidEmailAddress($seed="")
+	public static function getValidEmailAddress($seed="")
 	{
 		// get the current environment
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -40,7 +40,7 @@ class Utils
 	 * @author salvipascual
 	 * @return String, email address
 	 */
-	public function getSupportEmailAddress()
+	public static function getSupportEmailAddress()
 	{
 		// get a random support email
 		$support = Connection::query("
@@ -64,7 +64,7 @@ class Utils
 	 * @param String $email, user's email
 	 * @return String, email address
 	 */
-	public function getUserPersonalAddress($email)
+	public static function getUserPersonalAddress($email)
 	{
 		$person = $this->getPerson($email);
 
@@ -82,7 +82,7 @@ class Utils
 	 * @param mixed $body body of the email, if necessary
 	 * @return String link to add to the href section
 	 */
-	public function getLinkToService($service, $subservice = false, $parameter = false, $body = false)
+	public static function getLinkToService($service, $subservice = false, $parameter = false, $body = false)
 	{
 		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
 		if ($subservice) $link .= " $subservice";
@@ -98,7 +98,7 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public function serviceExist($name)
+	public static function serviceExist($name)
 	{
 		// if serviceName is an alias get the service name
 		$db = new Connection();
@@ -131,7 +131,7 @@ class Utils
 	 * @author salvipascual
 	 * @return object|boolean
 	 */
-	public function getPerson($email)
+	public static function getPerson($email)
 	{
 		// get the person
 		$where = strpos($email,'@')?"email":"id";
@@ -174,7 +174,7 @@ class Utils
 	 * @param String $username
 	 * @return String email or false
 	 */
-	public function getEmailFromUsername($username)
+	public static function getEmailFromUsername($username)
 	{
 		// do not try empty inputs
 		if(empty($username)) return false;
@@ -197,7 +197,7 @@ class Utils
 	 * @param Int $id
 	 * @return String email or false
 	 */
-	public function getEmailFromId($id)
+	public static function getEmailFromId($id)
 	{
 		// do not try empty inputs
 		if(empty($id)) return false;
@@ -217,7 +217,7 @@ class Utils
 	 * @param String $username
 	 * @return Int id or false
 	 */
-	public function getIdFromUsername($username)
+	public static function getIdFromUsername($username)
 	{
 		// do not try empty inputs
 		if(empty($username)) return false;
@@ -240,7 +240,7 @@ class Utils
 	 * @param String $email
 	 * @return String username or false
 	 */
-	public function getUsernameFromEmail($email)
+	public static function getUsernameFromEmail($email)
 	{
 		// get the username
 
@@ -258,7 +258,7 @@ class Utils
 	 * @param String $serviceName, name of the service to access
 	 * @return String, path to the service, or false if the service do not exist
 	 */
-	public function getPathToService($serviceName)
+	public static function getPathToService($serviceName)
 	{
 		// get the path to service
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -277,7 +277,7 @@ class Utils
 	 *
 	 * @return array|boolean
 	 */
-	public function getCurrentRaffle()
+	public static function getCurrentRaffle()
 	{
 		// get the raffle
 		$raffle = Connection::query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
@@ -308,7 +308,7 @@ class Utils
 	 * @author salvipascual
 	 * @return String
 	 */
-	public function generateRandomHash()
+	public static function generateRandomHash()
 	{
 		$rand = rand(0, 1000000);
 		$today = date('full');
@@ -326,7 +326,7 @@ class Utils
 	 * @param mixed $quality Decrease/increase quality
 	 * @return boolean
 	 */
-	public function optimizeImage($fromPath, &$toPath=false, $quality=50)
+	public static function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
 		if( ! file_exists($fromPath)) return false;
@@ -372,7 +372,7 @@ class Utils
 	 * @param String $name, full name
 	 * @return array [$firstName, $middleName, $lastName, $motherName]
 	 */
-	public function fullNameToNamePieces($name)
+	public static function fullNameToNamePieces($name)
 	{
 		$namePieces = explode(" ", $name);
 		$newNamePieces = array();
@@ -436,7 +436,7 @@ class Utils
 	 * @param Enum $direction, in or out, if we check an email received or sent
 	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
 	 */
-	public function deliveryStatus($email, $id_person)
+	public static function deliveryStatus($email, $id_person)
 	{
 		// check if we already have a status for the email
 
@@ -509,7 +509,7 @@ class Utils
 	 * @param Enum $path root|http
 	 * @return string
 	 */
-	public function getPublicTempDir($path='root')
+	public static function getPublicTempDir($path='root')
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')[$path];
@@ -526,7 +526,7 @@ class Utils
 	 * @param String token
 	 * @return String email OR false
 	 */
-	public function detokenize($token)
+	public static function detokenize($token)
 	{
 		$auth = Connection::query("SELECT email FROM person WHERE token='$token'");
 		if(empty($auth)) return false;
@@ -539,7 +539,7 @@ class Utils
 	 * @param String $name
 	 * @return String
 	 */
-	public function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
+	public static function clearStr($name, $extra_chars = '', $chars = "abcdefghijklmnopqrstuvwxyz")
 	{
 		$l = strlen($name);
 		$newname = '';
@@ -559,7 +559,7 @@ class Utils
 	 * @param string $text
 	 * @return mixed
 	 */
-	public function getEmailFromText($text)
+	public static function getEmailFromText($text)
 	{
 		$pattern = "/(?:[a-z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/";
 		preg_match($pattern, $text, $matches);
@@ -576,7 +576,7 @@ class Utils
 	 * @param string $text
 	 * @return mixed
 	 */
-	public function getCellFromText($text)
+	public static function getCellFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
 		$pattern = "/5(2|3)\d{6}/"; // every 8 digits numbers starting by 52 or 53
@@ -594,7 +594,7 @@ class Utils
 	 * @param string $text
 	 * @return mixed
 	 */
-	public function getPhoneFromText($text)
+	public static function getPhoneFromText($text)
 	{
 		$cleanText = preg_replace('/[^A-Za-z0-9\-]/', '', $text); // remove symbols and spaces
 		$pattern = "/(48|33|47|32|7|31|47|24|45|23|42|22|43|21|41|46)\d{6,7}/";
@@ -612,7 +612,7 @@ class Utils
 	 * @param integer $size
 	 * @return string
 	 */
-	public function getFriendlySize($size)
+	public static function getFriendlySize($size)
 	{
 		$unit = ['b','kb','mb','gb','tb','pb'];
 		return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
@@ -624,7 +624,7 @@ class Utils
 	 * @param string $phone
 	 * @return string
 	 */
-	public function getProvinceFromPhone($phone)
+	public static function getProvinceFromPhone($phone)
 	{
 		if (strpos($phone, "7") == 0) return 'LA_HABANA';
 		if (strpos($phone, "21") == 0) return 'GUANTANAMO';
@@ -655,7 +655,7 @@ class Utils
 	 * @param string $tag
 	 * @return array
 	 */
-	public function addNotification($email, $origin, $text, $link='', $tag='INFO')
+	public static function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// get the person's numeric ID
 		$id_person = strpos($email,'@')?Utils::personExist($email):$email;
@@ -703,7 +703,7 @@ class Utils
 	 * @param string $email
 	 * @return integer
 	 */
-	public function getNumberOfNotifications($id_person)
+	public static function getNumberOfNotifications($id_person)
 	{
 		// temporal mechanism?
 
@@ -733,7 +733,7 @@ class Utils
 	 * @param String $text
 	 * @return String
 	 */
-	public function encrypt($text)
+	public static function encrypt($text)
 	{
 		// get the seed from the config file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -755,7 +755,7 @@ class Utils
 	 * @param String $text
 	 * @return String
 	 */
-	public function decrypt($text)
+	public static function decrypt($text)
 	{
 		// get the seed from the config file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -767,32 +767,6 @@ class Utils
 
 		// decript message
 		return $crypto->decode($text);
-	}
-
-	/**
-	 * Get a person's Nauta password
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return String | false
-	 */
-	public function getNautaPassword($email)
-	{
-		// check if we have the nauta pass for the user
-		$pass = Connection::query("
-			SELECT A.pass
-			FROM authentication A JOIN person B
-			ON A.person_id = B.id
-			WHERE B.email='$email'
-			AND A.appname='apretaste'
-			AND A.pass <> ''
-			AND A.pass IS NOT NULL");
-
-		// return false if the password do not exist
-		if(empty($pass)) return false;
-
-		// else decript and return the password
-		return $this->decrypt($pass[0]->pass);
 	}
 
 	/**
@@ -829,7 +803,7 @@ class Utils
 	 * @param String $email, in the form salvi_t{handle}@nauta.cu
 	 * @return String, tracking handle
 	 */
-	public function getCampaignTracking($email)
+	public static function getCampaignTracking($email)
 	{
 		// if it is not a campaign, return false
 		if (strpos($email, '_t') == false) return false;
@@ -850,7 +824,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String email
 	 */
-	public function subscribeToEmailList($email)
+	public static function subscribeToEmailList($email)
 	{
 
 		Connection::query("UPDATE person SET mail_list=1 WHERE email='$email'");
@@ -862,7 +836,7 @@ class Utils
 	 * @author salvipascual
 	 * @param String email
 	 */
-	public function unsubscribeFromEmailList($email)
+	public static function unsubscribeFromEmailList($email)
 	{
 
 		Connection::query("UPDATE person SET mail_list=0 WHERE email='$email'");
@@ -875,7 +849,7 @@ class Utils
 	 * @param string $prefix
 	 * @return array
 	 */
-	public function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
+	public static function getInlineImagesFromHTML(&$html, $prefix = 'cid:', $suffix = '.jpg')
 	{
 		$imageList = [];
 		$tidy = new tidy();
@@ -926,7 +900,7 @@ class Utils
 	 *
 	 * @return string
 	 */
-	public function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
+	public static function putInlineImagesToHTML($html, $imageList, $prefix = 'cid:')
 	{
 		$tidy = new tidy();
 		$body = $tidy->repairString($html, array('output-xhtml' => true, 'preserve-entities' => 1), 'utf8');
@@ -965,7 +939,7 @@ class Utils
 	 *
 	 * @param string $path
 	 */
-	public function rmdir($path){
+	public static function rmdir($path){
 		if (is_dir($path)) {
 			$dir = scandir($path);
 			foreach ( $dir as $d )
@@ -994,7 +968,7 @@ class Utils
 	 *
 	 * @return Number, percentage of completion
 	 */
-	public function getProfileCompletion($email)
+	public static function getProfileCompletion($email)
 	{
 		$profile = $this->getPerson($email);
 		return $profile->completion;
@@ -1045,7 +1019,7 @@ class Utils
 	 * @param string $html
 	 * @return mixed
 	 */
-	public function clearHtml($html)
+	public static function clearHtml($html)
 	{
 		$html = str_replace('&nbsp;',' ',$html);
 
@@ -1065,7 +1039,7 @@ class Utils
 	 * @param string $severity NOTICE,WARNING,ERROR
 	 * @return mixed
 	 */
-	public function createAlert($text, $severity = "WARNING")
+	public static function createAlert($text, $severity = "WARNING")
 	{
 		// create basic message
 		$message = "$severity: $text";
@@ -1118,7 +1092,7 @@ class Utils
 	 * @param String $text
 	 * @return String
 	 */
-	public function removeTildes($text)
+	public static function removeTildes($text)
 	{
 		$text = str_replace(array("á", "Á", "&aacute;", "&Aacute;"), "a", $text);
 		$text = str_replace(array("é", "É", "&eacute;", "&Eacute;"), "e", $text);
@@ -1139,7 +1113,7 @@ class Utils
 	 * @param String $text
 	 * @return String
 	 */
-	public function sanitize($text)
+	public static function sanitize($text)
 	{
 		$text = str_ireplace('select ', '', $text);
 		$text = str_ireplace('insert ', '', $text);
