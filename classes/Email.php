@@ -25,19 +25,15 @@ class Email
 	 */
 	public function send()
 	{
-		// check if the email is from Nauta or Cuba
+		// respond to people in Cuba
 		$isCuba = substr($this->to, -3) === ".cu";
-		$isNauta = substr($this->to, -9) === "@nauta.cu";
-
-		// respond via Amazon to people outside Cuba
-		if( ! $isCuba) $res = $this->sendEmailViaAmazon();
-		// if is Nauta and we have the user's password
-		elseif($isNauta) {
+		if($isCuba) {
 			$res = $this->sendEmailViaWebmail();
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
+		// respond to people outside Cuba
+		} else {
+			$res = $this->sendEmailViaAmazon();
 		}
-		// for all other Cuban emails
-		else $res = $this->sendEmailViaAlias();
 
 		// update the database with the email sent
 		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
@@ -51,11 +47,7 @@ class Email
 			WHERE id={$this->queryId}");
 
 		// create an alert if the email failed
-		if($res->code != "200")
-		{
-			$utils = new Utils();
-			$utils->createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
-		}
+		if($res->code != "200") Utils::createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
 
 		// return {code, message} structure
 		return $res;
@@ -65,7 +57,6 @@ class Email
 	 * Overload of the function send() for backward compatibility
 	 *
 	 * @author salvipascual
-	 *
 	 * @param string $to, email address of the receiver
 	 * @param string $subject, subject of the email
 	 * @param string $body, body of the email in HTML
@@ -166,34 +157,6 @@ class Email
 	}
 
 	/**
-	 * Sends an email using a Gmail alias via Amazon SES
-	 *
-	 * @author salvipascual
-	 * @return {"code", "message"}
-	 */
-	public function sendEmailViaAlias()
-	{
-		// list of aliases
-		$aliases = array('apre.taste+nenito','apretaste+ahora','apretaste+alfa','apretaste+aljuarismi','apretaste+angulo','apretaste+arquimedes','apretaste+beta','apretaste+bolzano','apretaste+bool','apretaste+brahmagupta','apretaste+brutal','apretaste+cantor','apretaste+cauchy','apretaste+chi','apretaste+colonia','apretaste+david','apretaste+delta','apretaste+descartes','apretaste+elias','apretaste+epsilon','apretaste+euclides','apretaste+euler','apretaste+fermat','apretaste+fibonacci','apretaste+fourier','apretaste+francisco','apretaste+gamma','apretaste+gauss','apretaste+gonzalo','apretaste+hilbert','apretaste+hipatia','apretaste+homero','apretaste+imperator','apretaste+isaac','apretaste+james','apretaste+jey','apretaste+kappa','apretaste+kepler','apretaste+key','apretaste+lambda','apretaste+leibniz','apretaste+lota','apretaste+luis','apretaste+manuel','apretaste+mu','apretaste+newton','apretaste+nombre','apretaste+nu','apretaste+ohm','apretaste+omega','apretaste+omicron','apretaste+oscar','apretaste+pablo','apretaste+peta','apretaste+phi','apretaste+pi','apretaste+poincare','apretaste+psi','apretaste+quote','apretaste+ramon','apretaste+rho','apretaste+riemann','apretaste+salomon','apretaste+sigma','apretaste+tales','apretaste+theta','apretaste+travis','apretaste+turing','apretaste+upsilon','apretaste+uva','apretaste+vacio','apretaste+viete','apretaste+weierstrass','apretaste+working','apretaste+xenon','apretaste+xi','apretaste+yeah','apretaste+zeta');
-
-		// select an alias based on your personal email
-		$percent = 0; $alias = NULL;
-		$user = str_replace(array(".","+"), "", explode("@", $this->to)[0]);
-		foreach ($aliases as $a) {
-			similar_text ($a, $user, $p);
-			if($p > $percent) {
-				$percent = $p;
-				$alias = $a;
-			}
-		}
-
-		// send the email using Amazon
-		$this->method = "alias";
-		$this->from = "$alias@gmail.com";
-		return $this->sendEmailViaAmazon();
-	}
-
-	/**
 	 * Sends an email using Gmail
 	 *
 	 * @author salvipascual
@@ -212,11 +175,7 @@ class Email
 		$output = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
 
 		// create notice if Gmail fails
-		if($output->code != "200") {
-			$utils = new Utils();
-			$utils->createAlert("[{$this->method}] {$output->message}");
-		}
-
+		if($output->code != "200") Utils::createAlert("[{$this->method}] {$output->message}");
 		return $output;
 	}
 
@@ -230,27 +189,21 @@ class Email
 	{
 		$this->method = "hillary";
 
-		// get the user's Nauta password
-		$utils = new Utils();
-		$user = explode("@", $this->to)[0];
-		$pass = $utils->getNautaPassword($this->to);
+		// borrow a random Nauta account
+		$auth = Connection::query("
+			SELECT B.email, A.pass
+			FROM authentication A JOIN person B
+			ON A.person_id = B.id
+			WHERE B.active = 1
+			AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+			AND B.email LIKE '%nauta.cu'
+			AND A.appname = 'apretaste'
+			AND A.pass IS NOT NULL AND A.pass <> ''
+			ORDER BY RAND() LIMIT 1")[0];
 
-		// if user has no pass, borrow a random account
-		if( ! $pass) {
-			$auth = Connection::query("
-				SELECT B.email, A.pass
-				FROM authentication A JOIN person B
-				ON A.person_id = B.id
-				WHERE B.active = 1
-				AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
-				AND B.email LIKE '%nauta.cu'
-				AND A.appname = 'apretaste'
-				AND A.pass IS NOT NULL AND A.pass <> ''
-				ORDER BY RAND() LIMIT 1")[0];
-
-			$user = explode("@", $auth->email)[0];
-			$pass = $utils->decrypt($auth->pass);
-		}
+		// get user and pass decrypted
+		$user = explode("@", $auth->email)[0];
+		$pass = Utils::decrypt($auth->pass);
 
 		// connect to the client
 		$client = new NautaClient($user, $pass);
@@ -274,7 +227,7 @@ class Email
 			} else {
 				$output->code = "520";
 				$output->message = "Error sending to {$this->to}";
-				$utils->createAlert("[{$this->method}] {$output->message}");
+				Utils::createAlert("[{$this->method}] {$output->message}");
 			}
 		}
 		else
@@ -286,7 +239,7 @@ class Email
 			$output = new stdClass();
 			$output->code = "510";
 			$output->message = "Error connecting to Webmail";
-			$utils->createAlert("[{$this->method}] {$output->message}", "NOTICE");
+			Utils::createAlert("[{$this->method}] {$output->message}", "NOTICE");
 		}
 
 		// create notice that the service failed
@@ -302,8 +255,7 @@ class Email
 	public function setContentAsZipAttachment()
 	{
 		// get a random name for the file and folder
-		$utils = new Utils();
-		$zipFile = $utils->getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
 		$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
 
 		// create the zip file
@@ -383,8 +335,7 @@ class Email
 			$output->message = $e->getMessage();
 
 			// create notice that the service failed
-			$utils = new Utils();
-			$utils->createAlert("[{$this->method}] {$output->message}");
+			Utils::createAlert("[{$this->method}] {$output->message}");
 		}
 
 		return $output;
