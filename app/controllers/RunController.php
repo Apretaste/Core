@@ -657,8 +657,7 @@ class RunController extends Controller
 	{
 		ignore_user_abort(true);
 		// get data from our webhook
-		$this->callAPWebhook();
-		$this->webhookProcessRequest();
+		if($this->callAPWebhook()) $this->webhookProcessRequest();
 	}
 
 	/**
@@ -673,11 +672,13 @@ class RunController extends Controller
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
 
+		if(!(isset($message['header']['from']) && isset($message['header']['message_id']))) return false;
+
 		// parse the file
 		$messageId = str_replace(array("<",">","'"), "", $message['header']['message_id']);
 		$fromEmail = $message['header']['from'][0]['personal'];
-		$subject = $message['header']['subject'];
-		$body = $message['mailformatted'];
+		$subject = isset($message['header']['subject'])?$message['header']['subject']:"";
+		$body = isset($message['mailformatted'])?$message['mailformatted']:"";
 
 		// get the TO address
 		$toEmail = $message['header']['toadress'];
@@ -709,5 +710,6 @@ class RunController extends Controller
 		$this->toEmail = $toEmail;
 		$this->subject = $subject;
 		$this->body = str_replace("'", "", $body);
+		return true;
 	}
 }
