@@ -30,7 +30,7 @@ class Utils
 		// add alias to the email
 		$name = $node[0]->email;
 		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
-		if(empty($seed)) $seed = $this->randomSentence(1);
+		if(empty($seed)) $seed = Utils::randomSentence(1);
 		return "$name+$seed@gmail.com";
 	}
 
@@ -49,11 +49,11 @@ class Utils
 			ORDER BY RAND() LIMIT 1");
 
 		// alert if no support mailbox
-		if(empty($support)) $this->createAlert("No support email in table delivery_input", "ERROR");
+		if(empty($support)) Utils::createAlert("No support email in table delivery_input", "ERROR");
 		else $support = $support[0]->email;
 
 		// add alias to the email
-		$seed = $this->randomSentence(1);
+		$seed = Utils::randomSentence(1);
 		return "$support+$seed@gmail.com";
 	}
 
@@ -66,9 +66,9 @@ class Utils
 	 */
 	public static function getUserPersonalAddress($email)
 	{
-		$person = $this->getPerson($email);
+		$person = Utils::getPerson($email);
 
-		if(empty($person)) return $this->getValidEmailAddress();
+		if(empty($person)) return Utils::getValidEmailAddress();
 		else return "apretaste+{$person->username}@gmail.com";
 	}
 
@@ -84,7 +84,7 @@ class Utils
 	 */
 	public static function getLinkToService($service, $subservice = false, $parameter = false, $body = false)
 	{
-		$link = "mailto:".$this->getValidEmailAddress()."?subject=".strtoupper($service);
+		$link = "mailto:".Utils::getValidEmailAddress()."?subject=".strtoupper($service);
 		if ($subservice) $link .= " $subservice";
 		if ($parameter) $link .= " $parameter";
 		if ($body) $link .= "&body=$body";
@@ -358,7 +358,7 @@ class Utils
 			$img->load($fromPath);
 			$img->save($toPath, $quality, $toExt);
 		} catch (Exception $e) {
-			$this->createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
+			Utils::createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
 			return false;
 		}
 
@@ -469,7 +469,7 @@ class Utils
 			else {
 				$key = $di->get('config')['emailvalidator']['key'];
 				$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
-				if( ! $r) $this->createAlert("Error connecting to emailvalidator for $email", "ERROR");
+				if( ! $r) Utils::createAlert("Error connecting to emailvalidator for $email", "ERROR");
 				$code = $r->status;
 			}
 
@@ -673,7 +673,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
-			$token = $this->detokenize($email);
+			$token = Utils::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link{$tokenStr}";
 
@@ -872,7 +872,7 @@ class Utils
 					$type = str_replace("data:", "", substr($src, 0, $p));
 					$src = substr($src, $p + 8);
 					$ext = str_replace('image/', '', $type);
-					$this->clearStr($ext);
+					Utils::clearStr($ext);
 					$filename =  $id.".".$ext;
 
 					if ($image->hasAttribute("data-filename"))
@@ -970,7 +970,7 @@ class Utils
 	 */
 	public static function getProfileCompletion($email)
 	{
-		$profile = $this->getPerson($email);
+		$profile = Utils::getPerson($email);
 		return $profile->completion;
 	}
 
