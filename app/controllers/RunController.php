@@ -609,8 +609,46 @@ class RunController extends Controller
 		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
 
 		// parse the file
+		$this->parseEmail($temp."mails/".$keyname, "amazon.log");
+	}
+
+	/**
+	 * Receives an email petition from Apretaste Webhook and responds via email
+	 *
+	 * @author ricardo@apretaste.org
+	 * @param POST data from Apretaste webhook
+	 */
+	public function ApWebhookAction()
+	{
+		ignore_user_abort(true);
+		// get data from our webhook
+		$this->callAPWebhook();
+		$this->webhookProcessRequest();
+	}
+
+	/**
+	 * Read the email from the Apretaste webhook
+	 */
+	private function callAPWebhook(){
+		// get the message object
+		$message = json_decode(file_get_contents('php://input'), true);
+
+		// get the temp folder
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+		$file = $temp.'mails/'.$utils->generateRandomHash();
+		file_put_contents($file, $message["data"]);
+		
+		$this->parseEmail($file, "ApWebhook.log");
+	}
+
+	private function parseEmail($emailPath, $log){
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+		
+		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
-		$parser->setPath($temp."mails/".$keyname);
+		$parser->setPath($emailPath);
 		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
 		$from = $parser->getAddresses('from');
 		$fromEmail = $from[0]['address'];
@@ -626,7 +664,7 @@ class RunController extends Controller
 
 		// display the Amazon SNS log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/$log");
 		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
@@ -645,71 +683,5 @@ class RunController extends Controller
 		$this->toEmail = $toEmail;
 		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 		$this->body = str_replace("'", "", $body);
-	}
-
-	/**
-	 * Receives an email petition from Apretaste Webhook and responds via email
-	 *
-	 * @author ricardo@apretaste.org
-	 * @param POST data from Apretaste webhook
-	 */
-	public function ApWebhookAction()
-	{
-		ignore_user_abort(true);
-		// get data from our webhook
-		if($this->callAPWebhook()) $this->webhookProcessRequest();
-	}
-
-	/**
-	 * Read the email from the Apretaste webhook
-	 */
-	private function callAPWebhook()
-	{
-		// get the message object
-		$message = json_decode(file_get_contents('php://input'), true);
-
-		// get the temp folder
-		$utils = new Utils();
-		$temp = $utils->getTempDir();
-
-		if(!(isset($message['header']['from']) && isset($message['header']['message_id']))) return false;
-
-		// parse the file
-		$messageId = str_replace(array("<",">","'"), "", $message['header']['message_id']);
-		$fromEmail = $message['header']['from'][0]['personal'];
-		$subject = isset($message['header']['subject'])?$message['header']['subject']:"";
-		$body = isset($message['mailformatted'])?$message['mailformatted']:"";
-
-		// get the TO address
-		$toEmail = $message['header']['toadress'];
-
-		// display the Ap webhook log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/ApWebhook.log");
-		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
-		$logger->close();
-
-		// save the attachment to the temp folder
-		if(isset($message['attachments'])) {
-			$attachs = $message['attachments'];
-			foreach ($attachs as $attach) {
-				if ($attach['is_attachment']) {
-					$name = $attach['filename'];
-					$ext = substr($name,strrpos($name,"."));
-					$fileLocation = $temp.'attachments/'.$utils->generateRandomHash().$ext;
-					$file = fopen($fileLocation,'w+');
-					fwrite($file,base64_decode($attach['attachment']));
-					fclose($file);;
-					$this->attachment = $fileLocation;
-				}
-			}
-		}
-
-		// save variables in the class
-		$this->fromEmail = $fromEmail;
-		$this->toEmail = $toEmail;
-		$this->subject = $subject;
-		$this->body = str_replace("'", "", $body);
-		return true;
 	}
 }
