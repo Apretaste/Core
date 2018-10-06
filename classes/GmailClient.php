@@ -65,7 +65,6 @@ class GmailClient
             // return error
             $output = new stdClass();
             $output->code = "500";
-            $output->from = $from->email;
             $output->message = "[GmailClient] Error sending from {$from->email}: " . $e->getMessage();
             return $output;
         }
