@@ -609,42 +609,7 @@ class RunController extends Controller
 		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
 
 		// parse the file
-		$parser = new PhpMimeMailParser\Parser();
-		$parser->setPath($temp."mails/".$keyname);
-		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
-		$from = $parser->getAddresses('from');
-		$fromEmail = $from[0]['address'];
-		$fromName = $from[0]['display'];
-		$subject = $parser->getHeader('subject');
-		$body = trim($parser->getMessageBody('text'));
-		$attachs = $parser->getAttachments();
-
-		// get the TO address
-		$to = $parser->getAddresses('to');
-		if(empty($to)) $to = $parser->getAddresses('Delivered-To');
-		$toEmail = $to[0]['address'];
-
-		// display the Amazon SNS log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/amazon.log");
-		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
-		$logger->close();
-
-		// save the attachment to the temp folder
-		if($attachs) {
-			$att = $parser->saveAttachments($temp."attachments/");
-			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
-			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.'.$ext;
-			rename($att[0], $newFile);
-			$this->attachment = $newFile;
-		}
-
-		// save variables in the class
-		$this->fromName = $fromName;
-		$this->fromEmail = $fromEmail;
-		$this->toEmail = $toEmail;
-		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
-		$this->body = str_replace("'", "", $body);
+		$this->parseEmail($temp."mails/".$keyname, "amazon.log");
 	}
 
 	/**
@@ -664,50 +629,59 @@ class RunController extends Controller
 	/**
 	 * Read the email from the Apretaste webhook
 	 */
-	private function callAPWebhook()
-	{
+	private function callAPWebhook(){
 		// get the message object
 		$message = json_decode(file_get_contents('php://input'), true);
 
 		// get the temp folder
 		$utils = new Utils();
 		$temp = $utils->getTempDir();
+		$file = $temp.'mails/'.$utils->generateRandomHash();
+		file_put_contents($file, $message["data"]);
+		
+		$this->parseEmail($file, "ApWebhook.log");
+	}
 
+	private function parseEmail($emailPath, $log){
+		$utils = new Utils();
+		$temp = $utils->getTempDir();
+		
 		// parse the file
-		$messageId = str_replace(array("<",">","'"), "", $message['header']['message_id']);
-		$fromEmail = $message['header']['from'][0]['personal'];
-		$subject = $message['header']['subject'];
-		$body = $message['mailformatted'];
+		$parser = new PhpMimeMailParser\Parser();
+		$parser->setPath($emailPath);
+		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
+		$from = $parser->getAddresses('from');
+		$fromEmail = $from[0]['address'];
+		$fromName = $from[0]['display'];
+		$subject = $parser->getHeader('subject');
+		$body = trim($parser->getMessageBody('text'));
+		$attachs = $parser->getAttachments();
 
 		// get the TO address
-		$toEmail = $message['header']['toadress'];
+		$to = $parser->getAddresses('to');
+		if(empty($to)) $to = $parser->getAddresses('Delivered-To');
+		$toEmail = $to[0]['address'];
 
-		// display the Ap webhook log
+		// display the Amazon SNS log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/ApWebhook.log");
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/$log");
 		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
 		$logger->close();
 
 		// save the attachment to the temp folder
-		if(isset($message['attachments'])) {
-			$attachs = $message['attachments'];
-			foreach ($attachs as $attach) {
-				if ($attach['is_attachment']) {
-					$name = $attach['filename'];
-					$ext = substr($name,strrpos($name,"."));
-					$fileLocation = $temp.'attachments/'.$utils->generateRandomHash().$ext;
-					$file = fopen($fileLocation,'w+');
-					fwrite($file,base64_decode($attach['attachment']));
-					fclose($file);;
-					$this->attachment = $fileLocation;
-				}
-			}
+		if($attachs) {
+			$att = $parser->saveAttachments($temp."attachments/");
+			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
+			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.'.$ext;
+			rename($att[0], $newFile);
+			$this->attachment = $newFile;
 		}
 
 		// save variables in the class
+		$this->fromName = $fromName;
 		$this->fromEmail = $fromEmail;
 		$this->toEmail = $toEmail;
-		$this->subject = $subject;
+		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
 		$this->body = str_replace("'", "", $body);
 	}
 }
