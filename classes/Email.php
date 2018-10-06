@@ -170,6 +170,9 @@ class Email
 		$attachment = false;
 		if( ! empty($this->attachments[0])) $attachment = $this->attachments[0];
 
+		// get a random body, else Gmail will give an error
+		$this->body = Utils::randomSentence();
+
 		// send via Gmail
 		$gmailClient = new GmailClient();
 		$output = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
