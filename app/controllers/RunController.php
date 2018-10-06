@@ -394,10 +394,7 @@ class RunController extends Controller
 	private function runFailure()
 	{
 		// update code for failure emails
-		if($this->fromEmailId) Connection::query("
-			UPDATE delivery SET
-			delivery_code='555', delivery_message='app failure reported'
-			WHERE `id_person`={$this->fromEmailId} AND email_subject='{$this->subject}'");
+		if($this->fromEmailId) Connection::query("UPDATE delivery SET delivery_code='555' WHERE id_person={$this->fromEmailId} AND email_subject='{$this->subject}'");
 
 		// update counter for failures
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
