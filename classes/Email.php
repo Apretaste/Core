@@ -35,10 +35,11 @@ class Email
 			$res = $this->sendEmailViaAmazon();
 		}
 
-		// update the database with the email sent
-		$res->message = str_replace("'", "", substr($res->message,0,254)); // single quotes break the SQL
-		if(isset($this->queryId)) //if the email comes from admin or support, nothing to update
-		Connection::query("
+		// update the database with the email sent. Single quotes break the SQL
+		$res->message = str_replace("'", "", substr($res->message,0,254));
+
+		// if the email comes from admin or support, nothing to update
+		if(isset($this->queryId)) Connection::query("
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
@@ -142,6 +143,8 @@ class Email
 	 */
 	public function sendEmailViaAmazon()
 	{
+		$this->method = "amazon";
+
 		// get the Amazon params
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$host = "email-smtp.us-east-1.amazonaws.com";
@@ -151,8 +154,7 @@ class Email
 		$security = 'ssl';
 
 		// send the email using smtp
-		if(empty($this->method)) $this->method = "amazon";
-		if(empty($this->from)) $this->from = 'noreply@apretaste.com';
+		$this->from = 'noreply@apretaste.com';
 		return $this->smtp($host, $user, $pass, $port, $security);
 	}
 
@@ -176,6 +178,9 @@ class Email
 		// send via Gmail
 		$gmailClient = new GmailClient();
 		$output = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
+
+		// record the email used
+		Connection::query("UPDATE delivery SET delivery_message='{$output->from}' WHERE id={$this->queryId}");
 
 		// create notice if Gmail fails
 		if($output->code != "200") Utils::createAlert("[{$this->method}] {$output->message}");
