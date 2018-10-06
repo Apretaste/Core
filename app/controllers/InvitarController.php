@@ -58,20 +58,20 @@ class InvitarController extends Controller
 		if($utils->personExist($guest))
 		{
 			$this->view->already = true;
-			return $this->dispatcher->forward(array("controller"=>"invitar","action"=>"index"));
+			return $this->dispatcher->forward(["controller"=>"invitar","action"=>"index"]);
 		}
 
 		// send email to the host
 		$email = new Email();
 		$email->to = $host;
 		$email->subject = "Gracias por darle internet a un Cubano";
-		$email->sendFromTemplate("invitationThankYou.tpl", array('num_notifications'=>0), "email_empty.tpl");
+		$email->sendFromTemplate("invitationThankYou.tpl", ['num_notifications'=>0], "email_empty.tpl");
 
 		// send email to the guest
 		$email = new Email();
 		$email->to = $guest;
 		$email->subject = "$name quiere que descargue nuestra app";
-		$email->sendFromTemplate("invitationAbroad.tpl", array("host"=>$name));
+		$email->sendFromTemplate("invitationAbroad.tpl", ["host"=>$name]);
 
 		// save all the invitations into the database at the same time
 		$connection = new Connection();
