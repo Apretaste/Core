@@ -100,9 +100,8 @@ class GmailClient
             AND access_token <> ''
             ORDER BY RAND() LIMIT 1");
 
-        $output = new stdClass();
-
         // error if no account can be used
+        $output = new stdClass();
         if(empty($gmail)) 
         {
 			$output->code = "515";

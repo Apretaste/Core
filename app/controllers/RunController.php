@@ -394,8 +394,7 @@ class RunController extends Controller
 	private function runFailure()
 	{
 		// update code for failure emails
-		if($this->fromEmailId)
-		Connection::query("
+		if($this->fromEmailId) Connection::query("
 			UPDATE delivery SET
 			delivery_code='555', delivery_message='app failure reported'
 			WHERE `id_person`={$this->fromEmailId} AND email_subject='{$this->subject}'");
@@ -494,8 +493,8 @@ class RunController extends Controller
 	/**
 	 * Process the webhooks petitions and responds via email
 	 */
-
-	private function webhookProcessRequest(){
+	private function webhookProcessRequest()
+	{
 		// get the time when the service started executing and set the partition of the delivery table
 		$this->execStartTime = date("Y-m-d H:i:s");
 		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
