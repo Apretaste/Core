@@ -40,7 +40,36 @@ class AdvertisementController extends Controller
 	public function createAction()
 	{
 		$this->view->title = "Create ad";
+		$this->view->id = "";
+		$this->view->owner = "";
+		$this->view->icon = "";
+		$this->view->title = "";
+		$this->view->description = "";
+		$this->view->expires = "";
+		$this->view->icons = ['↓','$','☎','☻','♯','♫','♥','♦','★'];
 		$this->view->buttons = [["caption"=>"Back", "href"=>"/advertisement/index"]];
+	}
+
+	/**
+	 * Update an ad
+	 */
+	public function updateAction()
+	{
+		// get the current ad
+		$id = $this->request->get("id");
+		$ad = Connection::query("SELECT owner, icon, title, description, expires FROM ads WHERE id='$id'");
+
+		// send values to the view
+		$this->view->title = "Update ad";
+		$this->view->id = $id;
+		$this->view->owner = $ad[0]->owner;
+		$this->view->icon = htmlentities($ad[0]->icon);
+		$this->view->title = $ad[0]->title;
+		$this->view->description = $ad[0]->description;
+		$this->view->expires = date('Y-m-d', strtotime($ad[0]->expires));
+		$this->view->icons = ['↓','$','☎','☻','♯','♫','♥','♦','★'];
+		$this->view->buttons = [["caption"=>"Back", "href"=>"/advertisement/index"]];
+		$this->view->pick('advertisement/create');
 	}
 
 	/**
@@ -48,9 +77,10 @@ class AdvertisementController extends Controller
 	 *
 	 * @author salvipascual
 	 */
-	public function createSubmitAction()
+	public function submitAction()
 	{
 		// getting data
+		$id = $this->request->get("id");
 		$owner = $this->request->get("owner");
 		$icon = $this->request->get("icon");
 		$title = $this->request->get("title");
@@ -74,10 +104,19 @@ class AdvertisementController extends Controller
 			move_uploaded_file($_FILES["picture"]["tmp_name"], $picPath);			
 		}
 
+		// update the ad at the database
+		if($id) {
+			$image = $fileName ? "image='$fileName'," : "";
+			Connection::query("
+				UPDATE ads 
+				SET owner='$owner', icon='$icon', title='$title', description='$description', $image expires=$expires 
+				WHERE id='$id'");
 		// insert the ad in the database
-		Connection::query("
-			INSERT INTO ads (owner,icon,title,description,image,expires)
-			VALUES ('$owner','$icon','$title','$description','$fileName',$expires)");
+		} else {
+			Connection::query("
+				INSERT INTO ads (owner,icon,title,description,image,expires)
+				VALUES ('$owner','$icon','$title','$description','$fileName',$expires)");
+		}
 
 		// redirect to the list of ads
 		$this->response->redirect("/advertisement/index");
