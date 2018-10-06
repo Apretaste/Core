@@ -179,9 +179,6 @@ class Email
 		$gmailClient = new GmailClient();
 		$output = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
 
-		// record the email used
-		Connection::query("UPDATE delivery SET delivery_message='{$output->from}' WHERE id={$this->queryId}");
-
 		// create notice if Gmail fails
 		if($output->code != "200") Utils::createAlert("[{$this->method}] {$output->message}");
 		return $output;
