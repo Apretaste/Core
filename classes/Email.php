@@ -233,17 +233,7 @@ class Email
 				Utils::createAlert("[{$this->method}] {$output->message}");
 			}
 		}
-		else
-		{
-			// try sending the email again
-			if($tries-- <= 0) goto TryAgain;
-
-			// if the client cannot login show error
-			$output = new stdClass();
-			$output->code = "510";
-			$output->message = "Error connecting to Webmail";
-			Utils::createAlert("[{$this->method}] {$output->message}", "NOTICE");
-		}
+		elseif($tries-- <= 0) goto TryAgain;
 
 		// create notice that the service failed
 		return $output;
