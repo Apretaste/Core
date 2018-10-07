@@ -394,30 +394,39 @@ class RunController extends Controller
 	private function runFailure()
 	{
 		// update code for failure emails
-		if($this->fromEmailId) Connection::query("UPDATE delivery SET delivery_code='555' WHERE id_person={$this->fromEmailId} AND email_subject='{$this->subject}'");
+		Connection::query("
+			UPDATE delivery 
+			SET delivery_code='555' 
+			WHERE id_person={$this->fromEmailId} 
+			AND email_subject='{$this->subject}'");
 
 		// update counter for failures
 		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// if failed email is a Gmail account, make it inactive
-		$mailbox = Connection::query("SELECT mailbox FROM delivery WHERE `id_person`='{$this->fromEmailId}' AND email_subject='{$this->subject}'");
-		if( ! empty($mailbox[0]->mailbox)) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$mailbox[0]->mailbox}'");
+		$gmailMailbox = Connection::query("
+			SELECT delivery_message 
+			FROM delivery 
+			WHERE id_person='{$this->fromEmailId}'
+			AND delivery_method='gmail'
+			AND email_subject='{$this->subject}'");
+		$gmailMailbox = empty($gmailMailbox[0]->mailbox) ? "" : $gmailMailbox[0]->mailbox;
+		if($gmailMailbox) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='$gmailMailbox'");
 
 		// create entry in the error log
-		$utils = new Utils();
-		$text = "[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}";
-		$utils->createAlert($text, "NOTICE");
+		$gmailMessage = "Send using Gmail inbox $gmailMailbox";
+		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}. $gmailMessage", "NOTICE");
 
 		// calculate failure percentage
 		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery  WHERE TIMESTAMPDIFF(WEEK,request_date,NOW()) = 0 LIMIT 100");
+		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE TIMESTAMPDIFF(WEEK,request_date,NOW())=0 LIMIT 100");
 		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
 
 		// alert developers if failures are over 20%
 		if($failuresCount > 20) {
 			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses";
-			$utils->createAlert($text, "ERROR");
+			Utils::createAlert($text, "ERROR");
 		}
 	}
 
