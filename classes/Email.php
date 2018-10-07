@@ -35,17 +35,15 @@ class Email
 			$res = $this->sendEmailViaAmazon();
 		}
 
-		// update the database with the email sent. Single quotes break the SQL
-		$res->message = str_replace("'", "", substr($res->message,0,254));
-
-		// if the email comes from admin or support, nothing to update
-		if(isset($this->queryId)) Connection::query("
+		// update the record on the delivery table
+		$res->message = Connection::escape($res->message, 254);
+		Connection::query("
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id={$this->queryId}");
+			WHERE id='{$this->queryId}'");
 
 		// create an alert if the email failed
 		if($res->code != "200") Utils::createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
