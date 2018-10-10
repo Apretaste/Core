@@ -4,12 +4,10 @@ use Nette\Mail\Message;
 
 class Email
 {
-	public $id;
-	public $userId;
 	public $from;
 	public $to;
 	public $requestDate;
-	public $queryId;
+	public $deliveryId;
 	public $subject;
 	public $body;
 	public $replyId; // id to reply
@@ -26,12 +24,17 @@ class Email
 	public function send()
 	{
 		// respond to people in Cuba
-		$isCuba = substr($this->to, -3) === ".cu";
-		if($isCuba) {
+		if(substr($this->to, -3) === ".cu") 
+		{
+			// try sending via Webmail
 			$res = $this->sendEmailViaWebmail();
+
+			// failover to Gmail
 			if($res->code != "200") $res = $this->sendEmailViaGmail();
+		} 
 		// respond to people outside Cuba
-		} else {
+		else 
+		{
 			$res = $this->sendEmailViaAmazon();
 		}
 
@@ -43,7 +46,7 @@ class Email
 			delivery_message='{$res->message}',
 			delivery_method='{$this->method}',
 			delivery_date = CURRENT_TIMESTAMP
-			WHERE id='{$this->queryId}'");
+			WHERE id={$this->deliveryId}");
 
 		// create an alert if the email failed
 		if($res->code != "200") Utils::createAlert("Sending failed  METHOD:{$this->method} | MESSAGE:{$res->message} | FROM:{$this->from} | TO:{$this->to} | DATE:{$this->requestDate}");
@@ -230,7 +233,7 @@ class Email
 			} else {
 				$output->code = "520";
 				$output->message = "Error sending to {$this->to}";
-				Utils::createAlert("[{$this->method}] {$output->message}");
+				Utils::createAlert("[{$this->method}] {$output->code} {$output->message}");
 			}
 		}
 		else
@@ -241,7 +244,8 @@ class Email
 			// if the client cannot login show error
 			$output = new stdClass();
 			$output->code = "510";
-			$output->message = "Error connecting to Webmail";
+			$output->message = "Error connecting to Webmail for {$this->to}";
+			Utils::createAlert("[{$this->method}] {$output->code} {$output->message}");
 		}
 
 		// create notice that the service failed

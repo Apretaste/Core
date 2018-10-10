@@ -429,67 +429,6 @@ class Utils
 	}
 
 	/**
-	 * Checks if an email can be delivered to a certain mailbox
-	 *
-	 * @author salvipascual
-	 * @param String $to, email address of the receiver
-	 * @param Enum $direction, in or out, if we check an email received or sent
-	 * @return String, ok,hard-bounce,soft-bounce,spam,no-reply,loop,failure,temporal,unknown
-	 */
-	public static function deliveryStatus($email, $id_person)
-	{
-		// check if we already have a status for the email
-
-		$res = Connection::query("SELECT status FROM delivery_checked WHERE email='$email'");
-		if(empty($res)) {$status = ""; $code = "";} else return $res[0]->status;
-
-		// block no reply emails
-		if(empty($status) && (
-			stripos($email,"not-reply")!==false ||
-			stripos($email,"notreply")!==false ||
-			stripos($email,"No_Reply")!==false ||
-			stripos($email,"Do_Not_Reply")!==false ||
-			stripos($email,"no-reply")!==false ||
-			stripos($email,"noreply")!==false ||
-			stripos($email,"no-responder")!==false ||
-			stripos($email,"noresponder")!==false)
-		) $status = 'no-reply';
-
-		// block emails sending 30+ of the same request in 5 mins
-		if(empty($status)) {
-			$received = Connection::query("SELECT COUNT(id_person) as total FROM delivery WHERE id_person=$id_person AND request_date > date_sub(now(), interval 5 minute)");
-			if ($received[0]->total > 30) $status = 'loop';
-		}
-
-		// validate using external tools
-		if(empty($status)) {
-			// connect to email-validator.net
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			if($di->get('tier') == "sandbox") $code = "200";
-			else {
-				$key = $di->get('config')['emailvalidator']['key'];
-				$r = json_decode(@file_get_contents("https://api.email-validator.net/api/verify?EmailAddress=$email&APIKey=$key"));
-				if( ! $r) Utils::createAlert("Error connecting to emailvalidator for $email", "ERROR");
-				$code = $r->status;
-			}
-
-			// return the status based on the code
-			$status = 'unknown'; // for non-recognized codes
-			if(in_array($code, array("121","200","207","305","308","215","114"))) $status = 'ok';
-			if(in_array($code, array("118","119","313","314"))) $status = 'temporal';
-			if(in_array($code, array("413","406"))) $status = 'soft-bounce';
-			if(in_array($code, array("302","314","317","401","404","410","414","420"))) $status = 'hard-bounce';
-			if($code == "303") $status = 'spam';
-			if($code == "409") $status = 'no-reply';
-		}
-
-		// save all emails tested so we dot duplicated the check
-		$code = intval($code);
-		Connection::query("INSERT INTO delivery_checked (email,status,code) VALUES ('$email','$status','$code')");
-		return $status;
-	}
-
-	/**
 	 * Return path to the temporal folder
 	 *
 	 * @author salvipascual
@@ -498,8 +437,7 @@ class Utils
 	public static function getTempDir()
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		return "$wwwroot/temp/";
+		return $di->get('path')['root'] . "/temp/";
 	}
 
 	/**
