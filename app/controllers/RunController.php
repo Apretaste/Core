@@ -8,10 +8,10 @@ class RunController extends Controller
 {
 	private $fromName;
 	private $fromEmail;
-	private $fromEmailId;
+	private $personId;
 	private $toEmail;
 	private $execStartTime;
-	private $queryId;
+	private $deliveryId; // id of the table delivery
 	private $messageId;
 	private $subject;
 	private $body;
@@ -74,8 +74,7 @@ class RunController extends Controller
 		$attachment = $this->request->get("attachment");
 
 		// if is not encrypted, get the email from the token
-		$utils = new Utils();
-		$email = $utils->detokenize($token);
+		$email = Utils::detokenize($token);
 		if(empty($token) || empty($email)) {
 			echo '{"code":"error","message":"bad authentication"}';
 			return false;
@@ -108,7 +107,7 @@ class RunController extends Controller
 		{
 			// get the path for the image
 			$wwwroot = $this->di->get('path')['root'];
-			$temp = "$wwwroot/temp/".$utils->generateRandomHash().".jpg";
+			$temp = "$wwwroot/temp/".Utils::generateRandomHash().".jpg";
 
 			// clean base64 string
 			$data = explode(',', $attachment);
@@ -157,7 +156,6 @@ class RunController extends Controller
 
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
-		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
 
 		// get the user from the token
 		$security = new Security();
@@ -184,15 +182,17 @@ class RunController extends Controller
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
 
 		// create attachments array
-		$utils = new Utils();
-		$file = $utils->getTempDir().$_FILES['attachments']['name'];
+		$file = Utils::getTempDir().$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
-		$this->fromEmailId = $utils->personExist($this->fromEmail);
+		$this->personId = Utils::personExist($this->fromEmail);
 
 		// create a new entry on the delivery table
-		Connection::query("INSERT INTO delivery (id, id_person, request_date, environment) VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', 'appnet')");
+		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
+		Connection::query("
+			INSERT INTO delivery (id, id_person, request_date, environment) 
+			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'appnet')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "appnet";});
@@ -208,34 +208,22 @@ class RunController extends Controller
 
 		// save final data to the db
 		Connection::query("
-			UPDATE delivery
-			SET process_time='$executionTime',
+			UPDATE delivery SET 
+			process_time='$executionTime',
 			delivery_code='200',
 			delivery_method='internet',
 			delivery_date=CURRENT_TIMESTAMP
-			WHERE id={$this->queryId}");
+			WHERE id={$this->deliveryId}");
 
 		// move the file to the public temp folder
 		$path = "";
 		if($this->resPath) {
-			copy($this->resPath, $utils->getPublicTempDir().basename($this->resPath));
-			$path = $utils->getPublicTempDir('http').basename($this->resPath);
+			copy($this->resPath, Utils::getPublicTempDir().basename($this->resPath));
+			$path = Utils::getPublicTempDir('http').basename($this->resPath);
 		}
 
 		// display ok response
 		echo '{"code":"200", "message":"", "file":"'.$path.'"}';
-	}
-
-	/**
-	 * Receives an email petition from Amazon Webhook and responds via email
-	 *
-	 * @author salvipascual
-	 * @param POST data from webhook
-	 */
-	public function webhookAction(){
-		// get data from Amazon AWS webhook
-		$this->callAmazonWebhook();
-		$this->webhookProcessRequest();
 	}
 
 	/**
@@ -244,8 +232,7 @@ class RunController extends Controller
 	private function runApp()
 	{
 		// error if no attachment is received
-		if($this->attachment && file_exists($this->attachment)) $attachEmail = $this->attachment;
-		else {
+		if( ! file_exists($this->attachment)) {
 			$output = new stdClass();
 			$output->code = "515";
 			$output->message = "Error on attached file";
@@ -254,14 +241,13 @@ class RunController extends Controller
 		}
 
 		// get path to the folder to save
-		$utils = new Utils();
-		$temp = $utils->getTempDir();
+		$temp = Utils::getTempDir();
 		$textFile = ""; $attachs = [];
-		$folderName = str_replace(".zip", "", basename($attachEmail));
+		$folderName = str_replace(".zip", "", basename($this->attachment));
 
 		// get the text file and attached files
 		$zip = new ZipArchive;
-		$result = $zip->open($attachEmail);
+		$result = $zip->open($this->attachment);
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
@@ -273,7 +259,7 @@ class RunController extends Controller
 			$zip->extractTo("$temp/$folderName");
 			$zip->close();
 		} else {
-			return $utils->createAlert("[RunController::runApp] Error when open ZIP file $attachEmail (error code: $result)");
+			return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 		}
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
@@ -296,23 +282,21 @@ class RunController extends Controller
 
 			$file = file("$temp/$folderName/$textFile");
 			if (isset($file[0])) $input->command = trim($file[0]);
-			else return $utils->createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
+			else return Utils::createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
 			$input->appversion = isset($file[1]) && is_numeric(trim($file[1])) ? trim($file[1]) : "";
 			$input->nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
 
 		// save Nauta password if passed
 		if($input->nautaPass) {
-			$encryptPass = $utils->encrypt($input->nautaPass);
-			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->fromEmailId}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->fromEmailId}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->fromEmailId}' AND appname='apretaste'");
+			$encryptPass = Utils::encrypt($input->nautaPass);
+			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->personId}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->personId}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->personId}' AND appname='apretaste'");
 		}
 
 		// update the version of the app used
-		if (isset($input->appversion))
-			Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->fromEmailId}'");
-
+		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");
 
 		// run the request
 		$ret = Render::runRequest($this->fromEmail, $input->command, '', $attachs, $input);
@@ -357,11 +341,9 @@ class RunController extends Controller
 
 			// prepare and send the email
 			$email = new Email();
-			$email->id = $this->idEmail;
-			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
-			$email->queryId = $this->queryId;
+			$email->deliveryId = $this->deliveryId;
 			$email->subject = $this->subject;
 			$email->body = $this->body;
 			$email->replyId = $this->messageId;
@@ -372,19 +354,18 @@ class RunController extends Controller
 		}
 
 		// update values in the delivery table
-		$safeQuery = Connection::escape($service->request->query);
+		$safeQuery = Connection::escape($service->request->query, 1024);
 		Connection::query("
 			UPDATE delivery SET
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
 			request_method='{$input->method}'
-			WHERE id={$this->queryId}");
+			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		$hasNautaPass = $input->nautaPass ? 1 : 0;
 		if( ! isset($input->appversion)) $input->appversion = "Unknown";
-		$log = "Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}, NautaPass:$hasNautaPass";
+		$log = "DeliveryId:{$this->deliveryId}, Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}";
 		return $log;
 	}
 
@@ -397,18 +378,14 @@ class RunController extends Controller
 		Connection::query("
 			UPDATE delivery 
 			SET delivery_code='555' 
-			WHERE id_person={$this->fromEmailId} 
+			WHERE id_person={$this->personId} 
 			AND email_subject='{$this->subject}'");
-
-		// update counter for failures
-		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
 
 		// if failed email is a Gmail account, make it inactive
 		$gmailMailbox = Connection::query("
 			SELECT delivery_message 
 			FROM delivery 
-			WHERE id_person='{$this->fromEmailId}'
+			WHERE id_person='{$this->personId}'
 			AND delivery_method='gmail'
 			AND email_subject='{$this->subject}'");
 		$gmailMailbox = empty($gmailMailbox[0]->mailbox) ? "" : $gmailMailbox[0]->mailbox;
@@ -450,11 +427,9 @@ class RunController extends Controller
 
 			// prepare and send the email
 			$email = new Email();
-			$email->id = $this->idEmail;
-			$email->userId = $this->fromEmailId;
 			$email->to = $this->fromEmail;
 			$email->requestDate = $this->execStartTime;
-			$email->queryId = $this->queryId;
+			$email->deliveryId = $this->deliveryId;
 			$email->subject = $response->subject;
 			$email->body = $body;
 			$email->images = $response->images;
@@ -470,7 +445,7 @@ class RunController extends Controller
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery'
-			WHERE id={$this->idEmail}");
+			WHERE id={$this->deliveryId}");
 
 		// return message for the log
 		return "Email received and sent";
@@ -497,25 +472,37 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Process the webhooks petitions and responds via email
+	 * Receives an email petition from Apretaste Webhook and responds via email
+	 *
+	 * @author ricardo@apretaste.org
+	 * @param POST data from Apretaste webhook
 	 */
-	private function webhookProcessRequest()
+	public function ApWebhookAction()
 	{
-		// get the time when the service started executing and set the partition of the delivery table
+		// do not hold the HTTP petition
+		ignore_user_abort(true);
+
+		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
-		$this->queryId = strval(random_int(100,999)).substr(strval(time()),4);
+
+		// save the email as a MIME object
+		$message = json_decode(file_get_contents('php://input'), true);
+		$file = Utils::getTempDir() . 'mails/' . Utils::generateRandomHash();
+		file_put_contents($file, $message["data"]);
+
+		// parse the incoming email
+		$this->parseEmail($file);
 
 		// do not respond to blocked accounts
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
 		if($blocked) return false;
 
 		// get the person's numeric ID
-		$utils = new Utils();
-		$this->fromEmailId = $utils->personExist($this->fromEmail);
+		$this->personId = Utils::personExist($this->fromEmail);
 
-		// get the environment from the email
-		$email = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$email'");
+		// get the environment from the mailbox
+		$mailbox = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
+		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
 
 		// set the running environment
@@ -527,37 +514,27 @@ class RunController extends Controller
 			return false;
 		}
 
-		// stop procesing if the sender is invalid
-		if($environment != "app") { // no need to test for the app
-			$status = $utils->deliveryStatus($this->fromEmail, $this->fromEmailId);
-			if($status != 'ok') return $utils->createAlert("ALERT: {$this->fromEmail} failed with status $status");
-		}
-
-		// update the number of emails received
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$email'");
-
 		// update last access time and make person active
-		if ($this->fromEmailId) { //if person exists
-			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->fromEmailId}");
-		}
-		else {
+		if ($this->personId) { //if person exists
+			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->personId}");
+		} else {
 			// create a unique username and save the new person
-			$username = $utils->usernameFromEmail($this->fromEmail);
-			$this->fromEmailId = Connection::query("
+			$username = Utils::usernameFromEmail($this->fromEmail);
+			$this->personId = Connection::query("
 				INSERT INTO person (email, username, last_access, source)
 				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
 
 			// add the welcome notification
-			$utils->addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
+			Utils::addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
 		}
 
-		// insert a new email in the delivery table and get the ID
+		// insert a new email in the delivery table
+		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
-		$this->subject = substr($this->subject, 0, 1023);
-		$this->idEmail = Connection::query("
+		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ({$this->queryId}, {$this->fromEmailId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
@@ -566,13 +543,13 @@ class RunController extends Controller
 			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
 			if( ! $startWithApp) $this->subject = "app";
 			$log = $this->runEmail();
-		}else $log = $this->runSupport();
+		} else $log = $this->runSupport();
 
 		// save execution time to the db
 		$currentTime = new DateTime();
 		$startedTime = new DateTime($this->execStartTime);
 		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->queryId}");
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->deliveryId}");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
@@ -582,75 +559,12 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Read the email from Amazon AWS
-	 */
-	private function callAmazonWebhook()
-	{
-		// get the message object
-		$message = Message::fromRawPostData();
-		$validator = new MessageValidator();
-		if( ! $validator->isValid($message)) return false;
-		// error_log(print_r($message,true)); // subscription
-
-		// get the bucket and key from message
-		$message = json_decode($message['Message']);
-		$bucket = $message->Records[0]->s3->bucket->name;
-		$keyname = $message->Records[0]->s3->object->key;
-
-		// get the temp folder
-		$utils = new Utils();
-		$temp = $utils->getTempDir();
-
-		// instantiate the client
-		$s3Client = new Aws\S3\S3Client([
-			'version'=>'2006-03-01',
-			'region'=>'us-east-1',
-			'credentials'=>[
-				'key'=>$this->di->get('config')['sns']['key'],
-				'secret'=>$this->di->get('config')['sns']['secret']
-			]]);
-
-		// save file from SNS to the temp folder
-		$s3Client->getObject(array('Bucket'=>$bucket, 'Key'=>$keyname, 'SaveAs'=>$temp."mails/".$keyname));
-
-		// parse the file
-		$this->parseEmail($temp."mails/".$keyname, "amazon.log");
-	}
-
-	/**
-	 * Receives an email petition from Apretaste Webhook and responds via email
+	 * Parse a MIME email type and save info to the class
 	 *
-	 * @author ricardo@apretaste.org
-	 * @param POST data from Apretaste webhook
+	 * @author ricardo
 	 */
-	public function ApWebhookAction()
+	private function parseEmail($emailPath)
 	{
-		ignore_user_abort(true);
-		// get data from our webhook
-		$this->callAPWebhook();
-		$this->webhookProcessRequest();
-	}
-
-	/**
-	 * Read the email from the Apretaste webhook
-	 */
-	private function callAPWebhook(){
-		// get the message object
-		$message = json_decode(file_get_contents('php://input'), true);
-
-		// get the temp folder
-		$utils = new Utils();
-		$temp = $utils->getTempDir();
-		$file = $temp.'mails/'.$utils->generateRandomHash();
-		file_put_contents($file, $message["data"]);
-		
-		$this->parseEmail($file, "ApWebhook.log");
-	}
-
-	private function parseEmail($emailPath, $log){
-		$utils = new Utils();
-		$temp = $utils->getTempDir();
-		
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
 		$parser->setPath($emailPath);
@@ -667,17 +581,12 @@ class RunController extends Controller
 		if(empty($to)) $to = $parser->getAddresses('Delivered-To');
 		$toEmail = $to[0]['address'];
 
-		// display the Amazon SNS log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/$log");
-		$logger->log("\nID:$messageId\nFROM:$fromEmail\nTO:$toEmail\nSUBJECT:$subject\n------------\n$body\n\n");
-		$logger->close();
-
 		// save the attachment to the temp folder
 		if($attachs) {
-			$att = $parser->saveAttachments($temp."attachments/");
+			$temp = Utils::getTempDir();
+			$att = $parser->saveAttachments($temp . "attachments/");
 			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
-			$newFile = $temp.'attachments/'.$utils->generateRandomHash().'.'.$ext;
+			$newFile = $temp.'attachments/'.Utils::generateRandomHash().'.'.$ext;
 			rename($att[0], $newFile);
 			$this->attachment = $newFile;
 		}
@@ -686,7 +595,7 @@ class RunController extends Controller
 		$this->fromName = $fromName;
 		$this->fromEmail = $fromEmail;
 		$this->toEmail = $toEmail;
-		$this->subject = trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject)));
+		$this->subject = Connection::escape(trim(preg_replace('/\s{2,}/', " ", preg_replace('/\'|`/', "", $subject))), 1023);
 		$this->body = str_replace("'", "", $body);
 	}
 }
