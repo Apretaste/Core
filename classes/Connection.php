@@ -22,7 +22,7 @@ class Connection
 		}
 
 		// ignore if connected
-		if(is_null(self::$db) || !self::$db->ping()) {
+		if(is_null(self::$db)) {
 			// set default stream as reader
 			$currentStream = empty($stream) ? 'reader_host' : $stream.'_host';
 
@@ -34,7 +34,7 @@ class Connection
 			$name = $config['database']['database'];
 
 			// connect to the database
-			self::$db = new mysqli($host, $user, $pass, $name);			
+			self::$db = new mysqli($host, $user, $pass, $name);
 		}
 
 		return self::$db;
@@ -133,8 +133,9 @@ class Connection
 	 */
 	public static function close()
 	{
-		if( ! is_null(self::$db) && self::$db->ping()) {
+		if( ! is_null(self::$db)) {
 			self::$db->close();
+			self::$db = null;
 		}
 	}
 }
