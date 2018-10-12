@@ -25,7 +25,7 @@ class Connection
 		if(is_null(self::$db) || !self::$db->ping()) {
 			// get the config
 			$config = Di::getDefault()->get('config');
-			$host = $config['database']["$stream-host"];
+			$host = $config['database']["$stream_host"];
 			$user = $config['database']['user'];
 			$pass = $config['database']['password'];
 			$name = $config['database']['database'];
