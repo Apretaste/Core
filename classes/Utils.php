@@ -988,26 +988,29 @@ class Utils
 
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
-			try{
+			try {
+				// cut text and remove SQL code
 				$safeStr = Connection::escape($text, 254);
 
+				// get the config
 				$config = $di->get('config')['database'];
-				$host = $config['host'];
+				$host = $config['writer_host'];
 				$user = $config['user'];
 				$pass = $config['password'];
 				$name = $config['database'];
-				$db = new mysqli($host, $user, $pass, $name);
 
+				// connect to the database and insert alert
+				$db = new mysqli($host, $user, $pass, $name);
 				$db->query("INSERT INTO alerts (`type`,`text`) VALUES ('$severity','$safeStr')");
 				$db->close();
-
-			} catch(Exception $e) {
+			}
+			catch(Exception $e) {
 				$message .= " [CreateAlert:Database] ".$e->getMessage();
 			}
 		}
 
 		// send the alert by email
-		if($severity == "ERROR" && $tier == "production") {
+		if($severity == "ERROR") {
 			try{
 				$email = new Email();
 				$email->subject = $message;

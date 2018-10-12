@@ -85,7 +85,10 @@ class Email
 	 */
 	public function sendAlert()
 	{
+		// check if email alerts are enabled
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$emailAlerts = $di->get('config')['global']['enable_email_alerts'];
+		if(empty($emailAlerts)) return false;
 
 		// create message
 		$mail = new Message;
