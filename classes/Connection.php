@@ -23,9 +23,12 @@ class Connection
 
 		// connect to the database if not connected
 		if(is_null(self::$db) || !self::$db->ping()) {
+			// by default use the reading stream
+			if( ! $stream) $stream = 'reader_host';
+
 			// get the config
 			$config = Di::getDefault()->get('config');
-			$host = $config['database']["{$stream}_host"];
+			$host = $config['database'][$stream . '_host'];
 			$user = $config['database']['user'];
 			$pass = $config['database']['password'];
 			$name = $config['database']['database'];
