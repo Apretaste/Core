@@ -21,18 +21,19 @@ class Connection
 			self::$stream = $stream;
 		}
 
-		// connect to the database if not connected
+		// ignore if connected
 		if(is_null(self::$db) || !self::$db->ping()) {
-			// by default use the reading stream
-			if( ! $stream) $stream = 'reader_host';
+			// set default stream as reader
+			$currentStream = empty($stream) ? 'reader_host' : $stream.'_host';
 
 			// get the config
 			$config = Di::getDefault()->get('config');
-			$host = $config['database'][$stream . '_host'];
+			$host = $config['database'][$currentStream];
 			$user = $config['database']['user'];
 			$pass = $config['database']['password'];
 			$name = $config['database']['database'];
 
+			// connect to the database
 			self::$db = new mysqli($host, $user, $pass, $name);			
 		}
 
