@@ -603,7 +603,16 @@ class NautaClient
 		// get path to root and the key from the configs
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
+		$enable = $di->get('config')['anticaptcha']['enable'];
 		$key = $di->get('config')['anticaptcha']['key'];
+
+		// if anti-captcha is disabled, do not spend money
+		if(empty($enable)) {
+			$ret = new stdClass();
+			$ret->code = "510";
+			$ret->message = "Captcha breaker disabled. Make enable=1 at config.ini";
+			return $ret;
+		}
 
 		// include captcha libs
 		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
