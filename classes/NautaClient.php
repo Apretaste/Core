@@ -21,7 +21,7 @@ class NautaClient
 	private $composeToken = "";
 	private $captchaText = "";
 	private $mobileToken = "";
-	private $proxy_host = null;
+	private $proxyHost = null;
 
 	public function show() {
 		echo "USER: {$this->user}<br/>";
@@ -73,7 +73,7 @@ class NautaClient
 	 * @param string $user
 	 * @param string $pass
 	 */
-	public function __construct($user = null, $pass = null)
+	public function __construct($user=null, $pass=null, $proxy=false)
 	{
 		// save global user/pass
 		$this->user = $user;
@@ -82,17 +82,17 @@ class NautaClient
 		// init curl
 		$this->client = curl_init();
 
-		$this->setProxy();
+		// set proxy if passed
+		if($proxy) {
+			curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
+			curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+		}
 
 		// save cookie file
-		$utils = new Utils();
-		$proxy_host = '';
-
-		if (!is_null($this->proxy_host))
-			$proxy_host = ".{$this->proxy_host}";
-
-		$this->sessionFile = $utils->getTempDir() . "nautaclient/{$this->user}$proxy_host.session";
-		$this->cookieFile = $utils->getTempDir() . "nautaclient/{$this->user}$proxy_host.cookie";
+		$proxyHost = '';
+		if ( ! is_null($this->proxyHost)) $proxyHost = ".{$this->proxyHost}";
+		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.session";
+		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.cookie";
 
 		$this->loadSession();
 
@@ -229,47 +229,6 @@ class NautaClient
 	}
 
 	/**
-	 * Set proxy
-	 *
-	 * @param string $host
-	 * @param int $type
-	 */
-	public function setProxy($host = null, $type = CURLPROXY_SOCKS5)
-	{
-		if (is_null($host)) {
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$www_root = $di->get('path')['root'];
-			$configFile = "$www_root/configs/socks.json";
-			if (file_exists($configFile)) {
-				$proxies = file_get_contents("$www_root/configs/socks.json");
-				$proxies = json_decode($proxies);
-
-				//shuffle($proxies);
-				foreach ($proxies as $proxy) {
-					if (is_object($proxy)) $proxy = get_object_vars($proxy);
-
-					$kk = new Krawler("http://example.com");
-					$result = $kk->getRemoteContent("http://example.com", $info, [
-						"host" => "{$proxy['host']}:{$proxy['port']}",
-						"type" => CURLPROXY_SOCKS5
-					]);
-
-					if ($result !== false) {
-						$host = "{$proxy['host']}:{$proxy['port']}";
-						$this->proxy_host = $proxy['host'];
-						break;
-					}
-				}
-			}
-		}
-
-		if (!is_null($host)) {
-			curl_setopt($this->client, CURLOPT_PROXY, $host);
-			curl_setopt($this->client, CURLOPT_PROXYTYPE, $type);
-		}
-	}
-
-	/**
 	 * Login webmail
 	 *
 	 * @param bool $cliOfflineTest
@@ -281,8 +240,7 @@ class NautaClient
 		if ($this->checkLogin()) return true;
 
 		// save the captcha image in the temp folder
-		$utils = new Utils();
-		$captchaImage = $utils->getTempDir() . "capcha/" . $utils->generateRandomHash() . ".jpg";
+		$captchaImage = Utils::getTempDir() . "capcha/" . Utils::generateRandomHash() . ".jpg";
 		$captchaUrl = $this->getCaptchaUrl();
 
 		$img = false; // maybe, uri game have captcha url and webmail not
@@ -310,9 +268,9 @@ class NautaClient
 				$captcha = $this->breakCaptcha($captchaImage);
 				if ($captcha->code == "200") {
 					$captchaText = $captcha->message;
-					rename($captchaImage, $utils->getTempDir() . "capcha/$captchaText.jpg");
+					rename($captchaImage, Utils::getTempDir() . "capcha/$captchaText.jpg");
 				} else {
-					return $utils->createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
+					return Utils::createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
 				}
 			}
 		}
@@ -446,13 +404,14 @@ class NautaClient
 	 */
 	public function loadSession()
 	{
-		if (!file_exists($this->sessionFile)) $this->saveSession();
+		if ( ! file_exists($this->sessionFile)) $this->saveSession();
 
 		$sessionData = unserialize(file_get_contents($this->sessionFile));
-//var_dump($sessionData);
+
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
 		if (isset($sessionData['mobileToken'])) $this->mobileToken = $sessionData['mobileToken'];
+
 		return $sessionData;
 	}
 
@@ -530,11 +489,10 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_POSTFIELDS, http_build_query($params));
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
 		$output = curl_exec($this->client);
-		//echo gzdecode($output);
+
 		// alert if there are errors
 		if (curl_errno($this->client)) {
-			$utils = new Utils();
-			return $utils->createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)");
+			return Utils::createAlert("[NautaClient] Error sending email: " . curl_error($this->client) . " (to: $to, subject: $subject)");
 		}
 
 		return true;
@@ -577,6 +535,7 @@ class NautaClient
 			"Content-Type" => "application/x-www-form-urlencoded",
 			"Connection" => "keep-alive",
 			"Keep-Alive" => 86400, //secs,
+//			"Host" => Utils::randomSentence(1) . ".com",
 			"Referer" => "http://webmail.nauta.cu/imp/minimal.php?mailbox=SU5CT1g&page=mailbox"
 		];
 
