@@ -30,7 +30,7 @@ class Email
 			$res = $this->sendEmailViaWebmail();
 
 			// failover to Gmail
-			if($res->code != "200") $res = $this->sendEmailViaGmail();
+//			if($res->code != "200") $res = $this->sendEmailViaGmail();
 		} 
 		// respond to people outside Cuba
 		else 
@@ -88,7 +88,7 @@ class Email
 		// check if email alerts are enabled
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$emailAlerts = $di->get('config')['global']['enable_email_alerts'];
-		if(empty($emailAlerts)) return false;
+		if(empty(trim($emailAlerts))) return false;
 
 		// create message
 		$mail = new Message;
