@@ -215,7 +215,7 @@ class Email
 		$pass = Utils::decrypt($auth->pass);
 
 		// connect to the client
-		$client = new NautaClient($user, $pass);
+		$client = new NautaClient($user, $pass, true);
 		$tries = 3; // number of times to try if the email fails
 		$output = new stdClass();
 

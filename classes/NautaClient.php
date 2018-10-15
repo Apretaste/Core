@@ -72,6 +72,7 @@ class NautaClient
 	 *
 	 * @param string $user
 	 * @param string $pass
+	 * @param bool $proxy, true to use a proxy
 	 */
 	public function __construct($user=null, $pass=null, $proxy=false)
 	{
