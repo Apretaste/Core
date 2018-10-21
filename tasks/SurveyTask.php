@@ -11,8 +11,7 @@ class SurveyTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 
 		// get people with unfinished surveys
-		$connection = new Connection();
-		$unfinishedSurveys = $connection->query("
+		$unfinishedSurveys = Connection::query("
 			SELECT A.*, B.title, B.deadline, B.value FROM
 			(
 				SELECT email, survey,
@@ -32,15 +31,14 @@ class SurveyTask extends \Phalcon\Cli\Task
 			AND DATEDIFF(B.deadline, B.date_created) > 0");
 
 		// send notifications to users
-		$utils = new Utils();
 		foreach ($unfinishedSurveys as $us) {
 			$text = "Has dejado una encuesta sin terminar. Completala y gana §{$us->value}";
 			$link = "ENCUESTA {$us->survey}";
-			$utils->addNotification($us->email, "Encuesta", $text, $link);
+			Utils::addNotification($us->email, "Encuesta", $text, $link);
 		}
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='survey'");
+		Connection::query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='survey'");
 	}
 }

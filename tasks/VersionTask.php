@@ -12,14 +12,12 @@ class VersionTask extends \Phalcon\Cli\Task
 	{
 		// inicialize supporting classes
 		$timeStart = time();
-		$utils = new Utils();
 
 		// get the latest version of the app
 		$lastestVersion = $this->di->get('config')['global']['appversion'];
 
 		// get people using an old version
-		$connection = new Connection();
-		$people = $connection->query("
+		$people = Connection::query("
 			SELECT email FROM person
 			WHERE appversion < $lastestVersion
 			AND appversion <> ''");
@@ -38,11 +36,11 @@ class VersionTask extends \Phalcon\Cli\Task
 
 			// create the notification
 			$text = "Actualiza a la version $lastestVersion escribiendo a navegacuba@gmail.com";
-			$utils->addNotification($person->email, "App", $text);
+			Utils::addNotification($person->email, "App", $text);
 		}
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='version'");
+		Connection::query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='version'");
 	}
 }
