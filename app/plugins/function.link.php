@@ -21,19 +21,19 @@ function smarty_function_link($params, $template)
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
+		$callback = empty($params["callback"]) ? "false" : $params["callback"];
 		if($popup == "false") $desc = "";
-		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.'); return false;';
+		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.', '.$callback.'); return false;';
 		$href = "#!";
 	}
 	// create link for the email system
 	else
 	{
-		$utils = new Utils();
-		$apEmail = $utils->getValidEmailAddress();
 
 		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
 		$onclick = "";
+		$apEmail = Utils::getValidEmailAddress();
 		$href = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 

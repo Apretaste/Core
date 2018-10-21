@@ -108,10 +108,12 @@
 	var apretaste = {
 		url: "",
 		wait: false,
+		callback: false,
 
-		doaction: function (href, popup, desc, wait) {
+		doaction: function (href, popup, desc, wait, callback) {
 			apretaste.url = "/run/display?subject=" + href;
 			apretaste.wait = Boolean(wait);
+			apretaste.callback = callback;
 
 			if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
@@ -168,7 +170,9 @@
 
 		sendMoreData: function() {
 			var params = "";
-			var redirect = true;
+			var paramsArr = [];
+			var toSend = true;
+
 			$('#modalRequestMoreDataBody .input').each(function(){
 				$(this).css("border", "1px solid #A9A9A9");
 
@@ -182,7 +186,7 @@
 
 				if(invalid || (required && value == "")) {
 					$(this).css("border", "1px solid red");
-					redirect = false;
+					toSend = false;
 					return false;
 				}
 
@@ -190,16 +194,17 @@
 					var id = $(this).attr('id');
 					value = apretaste.uploadFile(id);
 				}
+
 				if(type=='checkbox') value="";
+
 				params += encodeURIComponent(value) + "|";
+				paramsArr.push(value);
 			});
 
-			params = params.replace(/\|$/, "");
-
-			if(redirect) {
-				apretaste.url += " " + params;
+			if(toSend) {
+				apretaste.url += " " + params.replace(/\|$/, "");
 				modalClose('modalRequestMoreData');
-				apretaste.send();
+				apretaste.send(paramsArr);
 			}
 		},
 
@@ -225,21 +230,24 @@
 			return ret;
 		},
 
-		send: function() {
+		send: function(values=[]) {
+			modalOpen('modalRequestSent');
+
 			if(apretaste.wait) {
 				window.location = apretaste.url;
 			}else{
 				$.get(apretaste.url, function(data) {
-					modalOpen('modalRequestSent');
-					location.reload();
+					if(apretaste.callback) apretaste.callback(values);
 				});
 			}
+
+			modalClose('modalRequestSent');
 		},
 
 		onSelect: function(href) {
 			apretaste.wait = false;
 			apretaste.url = "/run/display?subject=" + href;
-			apretaste.send();
+			apretaste.send([href]);
 		},
 
 		onControlPlusEnter: function(e) {

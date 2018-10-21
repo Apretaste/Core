@@ -77,29 +77,28 @@ function smarty_function_button($params, $template)
 		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
+		$callback = empty($params["callback"]) ? "false" : $params["callback"];
 		if($type != "input") $popup = "'$type'"; // set the type of popup
 		if($popup == "false") $desc = "";
 
-		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\"";
+		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait, $callback); return false;\"";
 		$linkto = "#!";
 	}
 	// create link for the email system
 	else
 	{
-		$utils = new Utils();
-		$apEmail = $utils->getValidEmailAddress();
-
+		$apEmail = Utils::getValidEmailAddress();
 		$desc = str_replace("|", " y seguido ", $desc);
 		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
 		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
-	$truestyle=($class=="" && $id=="")?"style='background-color:$fill;border:1px solid $stroke;
+	$truestyle = ($class=="" && $id=="") ? "style='background-color:$fill;border:1px solid $stroke;
 	border-radius:3px;color:$text;display:inline-block;
 	font-family:sans-serif;font-size:{$fontsize}px;
 	line-height:{$height}px;text-align:center;text-decoration:none;
 	width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'"
-	:"style='display:inline-block;font-family:sans-serif;text-align:center;text-decoration:none;
+	: "style='display:inline-block;font-family:sans-serif;text-align:center;text-decoration:none;
 	-webkit-text-size-adjust:none;mso-hide:all;{$style}'";
 	
 	// create and return button
