@@ -16,8 +16,11 @@ class Connection
 	 */
 	public static function connect($write=false)
 	{
-		// switch streams if needed
-		if ($write && !self::$write) self::close();
+		// switch streams if reading, else keep connex
+		if ($write && !self::$write) {
+			self::close();
+			self::$write = true;
+		}
 
 		// ignore if connected
 		if(is_null(self::$db)) {
