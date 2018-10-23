@@ -21,9 +21,9 @@ function smarty_function_link($params, $template)
 	{
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
-		$callback = empty($params["callback"]) ? "false" : $params["callback"];
+//		$callback = empty($params["callback"]) ? "false" : $params["callback"];
 		if($popup == "false") $desc = "";
-		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.', '.$callback.'); return false;';
+		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.'); return false;'; // , '.$callback.'
 		$href = "#!";
 	}
 	// create link for the email system

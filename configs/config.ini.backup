@@ -1,14 +1,17 @@
 [database]
-host=127.0.0.1
+host_count=2
+host_1=127.0.0.1
+host_2=127.0.0.1
 user=root
 password=root
 database=apretaste
 
 [global]
 tier=development
+enable_email_alerts=0
 alerts=your@email.com
 seed=4f124338b54534ff8790a342553435f63453af0865
-appversion=3.0
+appversion=3.1
 
 [google]
 apikey=
@@ -37,6 +40,7 @@ serverkey=
 apikey=
 
 [anticaptcha]
+enable=0
 key=
 
 [trello]

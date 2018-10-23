@@ -5,30 +5,31 @@ use \Phalcon\DI;
 class Connection
 {
 	private static $db = null;
-	private static $stream = false;
+	private static $write = false;
 
 	/**
 	 * Creates a new connection
 	 * 
 	 * @author salvipascual
-	 * @return mysqli object 
+	 * @param Boolean $write
+	 * @return mysqli object
 	 */
-	public static function connect($stream=false)
+	public static function connect($write=false)
 	{
 		// switch streams if needed
-		if ($stream && self::$stream != $stream) {
-			self::close();
-			self::$stream = $stream;
-		}
+		if ($write && !self::$write) self::close();
 
 		// ignore if connected
 		if(is_null(self::$db)) {
-			// set default stream as reader
-			$currentStream = empty($stream) ? 'reader_host' : $stream.'_host';
-
-			// get the config
+			// get the host count
 			$config = Di::getDefault()->get('config');
-			$host = $config['database'][$currentStream];
+			$count = $config['database']['host_count'];
+
+			// select host to use
+			$stream = $write ? 1 : rand(1, $count);
+
+			// get the config for the host
+			$host = $config['database']["host_$stream"];
 			$user = $config['database']['user'];
 			$pass = $config['database']['password'];
 			$name = $config['database']['database'];
@@ -53,8 +54,8 @@ class Connection
 		try {
 			// only fetch for selects
 			if(stripos(trim($sql), "select") === 0) {
-				// connect to reader stream
-				$db = self::connect("reader");
+				// connect to a reader stream
+				$db = self::connect();
 
 				// query the database
 				$result = $db->query($sql);
@@ -66,12 +67,12 @@ class Connection
 			}
 			// run query and return last insertd id
 			else {
-				// connect to writer stream
-				$db = self::connect("writer");
+				// connect to the writer stream
+				$db = self::connect(true);
 
 				// query the database
 				$db->multi_query($sql);
-				while ($db->next_result());
+				while ($db->next_result()); // @TODO do we need this line? 
 				return $db->insert_id;
 			}
 		}

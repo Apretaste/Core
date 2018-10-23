@@ -479,9 +479,6 @@ class RunController extends Controller
 	 */
 	public function ApWebhookAction()
 	{
-		// do not hold the HTTP petition
-		ignore_user_abort(true);
-
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
 
