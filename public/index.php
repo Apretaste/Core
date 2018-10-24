@@ -76,9 +76,10 @@ try
 	});
 
 	// Set the environment (app | api | email | web | default)
-	$di->set('environment', function () {
-		return "default";
-	});
+	$di->set('environment', function () { return "default"; });
+
+	// Set the app version, 0 if no app
+	$di->set('appversion', function () { return ""; });
 
 	// Set the routes
 	$di->set('router', function () {

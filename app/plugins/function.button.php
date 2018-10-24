@@ -77,11 +77,15 @@ function smarty_function_button($params, $template)
 		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
 		$wait = empty($params["wait"]) ? "true" : $params["wait"];
-//		$callback = empty($params["callback"]) ? "false" : $params["callback"];
 		if($type != "input") $popup = "'$type'"; // set the type of popup
 		if($popup == "false") $desc = "";
 
-		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait); return false;\""; // , $callback
+		// set the callback for new versions of the app
+		$callback = "";
+		$appversion = $this->di->get('appversion');
+		if($appversion > 3.1) $callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
+
+		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait $callback); return false;\"";
 		$linkto = "#!";
 	}
 	// create link for the email system
