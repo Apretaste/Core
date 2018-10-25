@@ -295,6 +295,9 @@ class RunController extends Controller
 			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->personId}' AND appname='apretaste'");
 		}
 
+		// make the appversion global
+		$this->di->set('appversion', function() use($input->appversion) {return $input->appversion;});
+
 		// update the version of the app used
 		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");
 
