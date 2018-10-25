@@ -103,6 +103,7 @@ function smarty_function_button($params, $template)
 		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
+	// add css style to make the link looks as a button
 	$truestyle = ($class=="" && $id=="") ? "style='background-color:$fill;border:1px solid $stroke;
 	border-radius:3px;color:$text;display:inline-block;
 	font-family:sans-serif;font-size:{$fontsize}px;
@@ -112,11 +113,5 @@ function smarty_function_button($params, $template)
 	-webkit-text-size-adjust:none;mso-hide:all;{$style}'";
 
 	// create and return button
-	return "<!--[if mso]>
-		<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' href='$linkto' style='height:{$height}px;v-text-anchor:middle;width:{$width}px;{$style}' arcsize='5%' strokecolor='$stroke' fillcolor='$fill'>
-		<w:anchorlock/>
-		<center style='color:$text;font-family:Helvetica, Arial,sans-serif;font-size:{$fontsize}px;'>{$icon}$caption</center>
-		</v:roundrect>
-	<![endif]-->
-	<a href='$linkto' $onclick $id $class $truestyle>{$icon}$caption</a>";
+	return "<a href='$linkto' $onclick $id $class $truestyle>{$icon}$caption</a>";
 }
