@@ -296,7 +296,7 @@ class RunController extends Controller
 		}
 
 		// make the appversion global
-		$this->di->set('appversion', function() use($input->appversion) {return $input->appversion;});
+		$this->di->set('appversion', function() use($input) { return $input->appversion; });
 
 		// update the version of the app used
 		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");

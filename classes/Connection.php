@@ -5,7 +5,6 @@ use \Phalcon\DI;
 class Connection
 {
 	private static $db = null;
-	private static $write = false;
 
 	/**
 	 * Creates a new connection
@@ -16,31 +15,21 @@ class Connection
 	 */
 	public static function connect($write=false)
 	{
-		// switch streams if reading, else keep connex
-		if ($write && !self::$write) {
-			self::close();
-			self::$write = true;
-		}
+		// get the host count
+		$config = Di::getDefault()->get('config');
+		$count = $config['database']['host_count'];
 
-		// ignore if connected
-		if(is_null(self::$db)) {
-			// get the host count
-			$config = Di::getDefault()->get('config');
-			$count = $config['database']['host_count'];
+		// select host to use
+		$stream = $write ? 1 : rand(1, $count);
 
-			// select host to use
-			$stream = $write ? 1 : rand(1, $count);
+		// get the config for the host
+		$host = $config['database']["host_$stream"];
+		$user = $config['database']['user'];
+		$pass = $config['database']['password'];
+		$name = $config['database']['database'];
 
-			// get the config for the host
-			$host = $config['database']["host_$stream"];
-			$user = $config['database']['user'];
-			$pass = $config['database']['password'];
-			$name = $config['database']['database'];
-
-			// connect to the database
-			self::$db = new mysqli($host, $user, $pass, $name);
-		}
-
+		// connect to the database
+		self::$db = new mysqli($host, $user, $pass, $name);
 		return self::$db;
 	}
 
