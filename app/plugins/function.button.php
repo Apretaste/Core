@@ -72,7 +72,11 @@ function smarty_function_button($params, $template)
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), array("app", "appnet", "web")))
+	$environment = $di->get('environment');
+	$appversion = $di->get('appversion');
+
+	// create buttons for the app and the web
+	if(in_array($environment, ["app", "appnet", "web"]))
 	{
 		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];
@@ -80,11 +84,13 @@ function smarty_function_button($params, $template)
 		if($type != "input") $popup = "'$type'"; // set the type of popup
 		if($popup == "false") $desc = "";
 
-		// set the callback for new versions of the app
+		// set the callback for new versions and the web
 		$callback = "";
-		$appversion = $di->get('appversion');
-		if($appversion > 3.1) $callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
+		if($environment=="web" || $appversion > 3.1) {
+			$callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
+		}
 
+		// create onclick function and clear linkto
 		$onclick = "onclick=\"apretaste.doaction('$href',$popup,'$desc',$wait$callback); return false;\"";
 		$linkto = "#!";
 	}
@@ -104,7 +110,7 @@ function smarty_function_button($params, $template)
 	width:{$width}px;-webkit-text-size-adjust:none;mso-hide:all;{$style}'"
 	: "style='display:inline-block;font-family:sans-serif;text-align:center;text-decoration:none;
 	-webkit-text-size-adjust:none;mso-hide:all;{$style}'";
-	
+
 	// create and return button
 	return "<!--[if mso]>
 		<v:roundrect xmlns:v='urn:schemas-microsoft-com:vml' xmlns:w='urn:schemas-microsoft-com:office:word' href='$linkto' style='height:{$height}px;v-text-anchor:middle;width:{$width}px;{$style}' arcsize='5%' strokecolor='$stroke' fillcolor='$fill'>
