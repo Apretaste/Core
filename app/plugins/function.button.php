@@ -85,7 +85,7 @@ function smarty_function_button($params, $template)
 		$appversion = $this->di->get('appversion');
 		if($appversion > 3.1) $callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
 
-		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait $callback); return false;\"";
+		$onclick = "onclick=\"apretaste.doaction('$href',$popup,'$desc',$wait$callback); return false;\"";
 		$linkto = "#!";
 	}
 	// create link for the email system
