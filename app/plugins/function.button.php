@@ -82,7 +82,7 @@ function smarty_function_button($params, $template)
 
 		// set the callback for new versions of the app
 		$callback = "";
-		$appversion = $this->di->get('appversion');
+		$appversion = $di->get('appversion');
 		if($appversion > 3.1) $callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
 
 		$onclick = "onclick=\"apretaste.doaction('$href',$popup,'$desc',$wait$callback); return false;\"";
