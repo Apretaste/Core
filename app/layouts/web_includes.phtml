@@ -237,7 +237,7 @@
 				window.location = apretaste.url;
 			}else{
 				$.get(apretaste.url, function(data) {
-					if(apretaste.callback) apretaste.callback(values);
+					if(apretaste.callback) window[apretaste.callback](values);
 				});
 			}
 

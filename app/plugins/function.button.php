@@ -87,7 +87,7 @@ function smarty_function_button($params, $template)
 		// set the callback for new versions and the web
 		$callback = "";
 		if($environment=="web" || $appversion > 3.1) {
-			$callback = empty($params["callback"]) ? ",false" : ",".$params["callback"];
+			$callback = empty($params["callback"]) ? ",''" : ",'".$params["callback"]."'";
 		}
 
 		// create onclick function and clear linkto
