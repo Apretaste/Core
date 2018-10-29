@@ -40,6 +40,8 @@ class Email
 
 		// update the record on the delivery table
 		$res->message = Connection::escape($res->message, 254);
+		
+		if (isset($this->deliveryId))
 		Connection::query("
 			UPDATE delivery SET
 			delivery_code='{$res->code}',
