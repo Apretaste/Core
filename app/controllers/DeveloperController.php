@@ -97,7 +97,7 @@ class DeveloperController extends Controller
 	{
 		// get the error logs file
 		$wwwroot = $this->di->get('path')['root'];
-		$logfile = "$wwwroot/logs/error.log";
+		$logfile = "/var/log/apache2/error.log";
 
 		// tail the log file
 		$numlines = "50";
