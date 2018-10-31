@@ -103,7 +103,7 @@ function smarty_function_button($params, $template)
 		$linkto = "mailto:$apEmail?subject=$href&amp;body=$desc";
 	}
 
-	// add css style to make the link looks as a button
+	// add css style to make the link looks as a button (or use the class)
 	$truestyle = ($class=="" && $id=="") ? "style='background-color:$fill;border:1px solid $stroke;
 	border-radius:3px;color:$text;display:inline-block;
 	font-family:sans-serif;font-size:{$fontsize}px;

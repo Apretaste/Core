@@ -209,6 +209,7 @@
 		},
 
 		uploadFile: function(id) {
+			apretaste.wait = false;
 			var file = $('#'+id).prop("files")[0];
 			var form = new FormData();
 			form.append("file", file);
@@ -237,7 +238,12 @@
 				window.location = apretaste.url;
 			}else{
 				$.get(apretaste.url, function(data) {
-					if(apretaste.callback) window[apretaste.callback](values);
+					if(apretaste.callback) {
+						var arr = apretaste.callback.split(':');
+						var funct = arr[0];
+						arr.shift();
+						window[funct](values.concat(arr));
+					}
 				});
 			}
 
