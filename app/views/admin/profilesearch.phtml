@@ -22,6 +22,7 @@
 		<?php } ?>
 
 		<p><b>Email:</b> <?= $profile->email ?></p>
+		<p><b>Id:</b> <?= $profile->id ?></p>
 		<p><b>Username:</b> <?= $profile->username ?></p>
 		<p><b>Credit:</b> <?= $profile->credit ?></p>
 		<p><b>Full name:</b> <?= $profile->full_name ?></p>
@@ -47,9 +48,12 @@
 		<p><b>US State:</b> <?= $profile->usstate ?></p>
 		<p><b>Appversion:</b> <?= $profile->appversion ?></p>
 		<p><b>Location:</b> <?= $profile->location ?></p>
+		<p><b>Active:</b> <?= $profile->active ?></p>
+		<p><b>Blocked:</b> <?= $profile->blocked ?></p>
 
 		<br/>
-		<a onclick="return confirm('Are you sure to exclude this user?');" href="/admin/submitExclude?email=<?= $profile->email ?>" class="btn btn-danger">Excluir Usuario</a>
+		<a onclick="return confirm('Are you sure to exclude this user of the email list?');" href="/admin/submitExclude?email=<?= $profile->email ?>" class="btn btn-danger">Excluir Usuario</a>
+		<a onclick="return confirm('Are you sure to block or unblock this user?');" href="/admin/submitBlock?email=<?= $profile->email ?>" class="btn btn-danger">Bloquear Usuario</a>
 	</div>
 	<?php } ?>
 </div>
