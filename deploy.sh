@@ -1,9 +1,11 @@
 mkdir temp
 mkdir temp/templates_c
 mkdir temp/cache
+mkdir temp/extra
 mkdir temp/thumbnails
 mkdir temp/mails
 mkdir temp/attachments
+mkdir temp/attach_images
 mkdir temp/nautaclient
 mkdir temp/capcha
 mkdir services
