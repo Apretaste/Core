@@ -1,6 +1,8 @@
+#!/bin/bash
+STR="delete"$RANDOM
 cd /var/www/Core
 cd /var/www/Apretaste
-mv temp delete$RANDOM
+mv temp $STR
 ./deploy.sh
-tar -cf delete.tar --remove-files delete
-rm -rf delete.tar
+tar -cf $STR.tar --remove-files $STR
+rm -rf $STR.tar

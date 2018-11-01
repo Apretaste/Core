@@ -1,3 +1,4 @@
+#!/bin/bash
 mkdir temp
 mkdir temp/templates_c
 mkdir temp/cache
