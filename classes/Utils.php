@@ -133,8 +133,8 @@ class Utils
 	 */
 	public static function getPerson($email)
 	{
-		// get the person
-		$where = strpos($email,'@')?"email":"id";
+		// get the person via email OR id
+		$where = strpos($email,'@') ? "email" : "id";
 		$person = Connection::query("SELECT * FROM person WHERE $where = '$email'");
 
 		// false if the person cant be found
@@ -596,8 +596,8 @@ class Utils
 	public static function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// get the person's numeric ID
-		$id_person = strpos($email,'@')?Utils::personExist($email):$email;
-		$email = strpos($email,'@')?$email:Utils::getEmailFromId($id_person);
+		$id_person = strpos($email,'@') ? Utils::personExist($email) : $email;
+		$email = strpos($email,'@') ? $email : Utils::getEmailFromId($id_person);
 
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
@@ -644,17 +644,14 @@ class Utils
 	public static function getNumberOfNotifications($id_person)
 	{
 		// temporal mechanism?
-
 		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND id = $id_person");
-		if ( ! isset($r[0]))
-		{
+		if ( ! isset($r[0])) {
 			$r[0] = new stdClass();
 			$r[0]->notifications = '';
 		}
 
 		$notifications = $r[0]->notifications;
-		if (trim($notifications) == '')
-		{
+		if (trim($notifications) == '') {
 			// calculate notifications and update the number
 			$r = Connection::query("SELECT count(id_person) as total FROM notifications WHERE id_person = $id_person AND viewed = 0;");
 			$notifications = $r[0]->total * 1;
@@ -662,6 +659,43 @@ class Utils
 		}
 
 		return $notifications * 1;
+	}
+
+	/**
+	 * Return a list of notifications and mark as seen
+	 *
+	 * @author salvipascual
+	 * @param Integer $personId
+	 * @param Integer $limit
+	 * @param String[] $origin, list of services IE [pizarra,nota,chat]
+	 * @return array
+	 */
+	public static function getNotifications($personId, $limit=20, $origin=[])
+	{
+		// get origins SQL if passed
+		$services = "";
+		if( ! empty($origin)) {
+			$temp = [];
+			foreach ($origin as $o) $temp[] = "origin LIKE '$o%'";
+			$services = implode(" OR ", $temp);
+			$services = "AND ($services)";
+		}
+
+		// create SQL to get notifications
+		$notifications = Connection::query("
+			SELECT id_person, origin, inserted_date, text, viewed, viewed_date, link, tag, ispush
+			FROM notifications
+			WHERE id_person = $personId
+			$services
+			ORDER BY inserted_date DESC
+			LIMIT $limit");
+
+		// mark all notifications as seen
+		if($notifications) {
+			Connection::query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE id_person=$personId");
+		}
+
+		return $notifications;
 	}
 
 	/**
