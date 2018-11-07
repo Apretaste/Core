@@ -160,7 +160,7 @@ class Utils
 
 		// contatenate a random unique number
 		do {
-			$username = $shortmail . rand(100000, 999999);
+			$username = $shortmail . rand(1, 999);
 			$exist = Connection::query("SELECT id FROM person WHERE username='$username'");
 		} while($exist);
 
