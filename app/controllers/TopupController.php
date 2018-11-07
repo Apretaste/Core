@@ -18,6 +18,7 @@ class TopupController extends Controller
 		$stripePublicKey = $this->di->get('config')['stripe']['public'];
 
 		// send information to the view
+		$this->view->email = $this->request->get('email');
 		$this->view->stripePublicKey = $stripePublicKey;
 	}
 

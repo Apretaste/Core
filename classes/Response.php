@@ -35,10 +35,8 @@ class Response
 		$file = isset($trace[0]['file']) ? $trace[0]['file'] : "";
 		if(php::endsWith($file, "/service.php")) $this->service = php::substring($file, "services/", "/service.php");
 
-		// load the layout from the session, or pick default
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$layout = $di->getShared("session")->get("layout");
-		$this->layout = empty($layout) ? "email_default.tpl" : $layout;
+		// select the default layout
+		$this->layout = "email_default.tpl";
 	}
 
 	/**
@@ -85,26 +83,20 @@ class Response
 	 * @author salvipascual
 	 * @param String $layout, empty to set default layout
 	 */
-	public function setEmailLayout($layout=false)
+	public function setEmailLayout($layout)
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
 		// check if a public layout is passed
 		$file = "$wwwroot/app/layouts/$layout";
-		if(file_exists($file)) {$this->layout = $file; return true;}
+		if(file_exists($file)) $this->layout = $file;
 
 		// else, check if is a service layout
-		$utils = new Utils();
-		$file = $utils->getPathToService($this->service) . "/layouts/$layout";
-		if(file_exists($file)) {
-			$this->layout = $file;
-			$di->getShared("session")->set("layout", $file);
-			return true;
+		else {
+			$file = Utils::getPathToService($this->service) . "/layouts/$layout";
+			if(file_exists($file)) $this->layout = $file;
 		}
-
-		// else select the default layout
-		$this->layout = "$wwwroot/app/layouts/email_default.tpl";
 	}
 
 	/**

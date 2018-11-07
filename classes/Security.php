@@ -101,8 +101,6 @@ class Security
 		// get the group from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$di->getShared("session")->remove("user");
-		$di->getShared("session")->remove("layout");
-
 		header("Location: /login"); exit;
 	}
 
