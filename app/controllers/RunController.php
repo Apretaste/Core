@@ -397,14 +397,22 @@ class RunController extends Controller
 		$gmailMessage = "Send using Gmail inbox $gmailMailbox";
 		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}. $gmailMessage", "NOTICE");
 
+		
 		// calculate failure percentage
+		$lastCodes = Connection::query("SELECT COUNT(*) AS total,delivery_code FROM delivery WHERE NOT delivery_code IS NULL AND TIMESTAMPDIFF(MINUTE,request_date,NOW())<15 GROUP BY delivery_code;");
+		
+		$sendCount = 0;
 		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE TIMESTAMPDIFF(WEEK,request_date,NOW())=0 LIMIT 100");
-		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
+		foreach ($lastCodes as $code) {
+			if ($code->delivery_code=='200') $sendCount = $code->total;
+			else $failuresCount+= $code->total;
+		}
+
+		$total = $sendCount+$failuresCount;
 
 		// alert developers if failures are over 20%
-		if($failuresCount > 20) {
-			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses";
+		if(($failuresCount/$total)>=0.2) {
+			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses in the last 15 minutes";
 			Utils::createAlert($text, "ERROR");
 		}
 	}

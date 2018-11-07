@@ -1078,6 +1078,11 @@ class Utils
 		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
+		$original = isset($serv) &&
+					isset($serv->serviceName) &&
+					isset($serv->input->apptype) &&
+					$serv->input->apptype=="original";
+
 		// get the person object
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
 		$person = $person[0];
@@ -1098,42 +1103,47 @@ class Utils
 		$res->mailbox = "$inbox+{$person->username}@gmail.com";
 
 		// check if there is any change in the profile
-		$res->profile = new stdClass();
 		$attachments = [];
 		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
-			$person = Social::prepareUserProfile($person);
+			$social = new Social();
+			$person = $social->prepareUserProfile($person);
 
-			// add user profile to the response
-			$res->profile->full_name = $person->full_name;
-			$res->profile->date_of_birth = $person->date_of_birth;
-			$res->profile->gender = $person->gender;
-			$res->profile->phone = empty($person->cellphone) ? $person->phone : $person->cellphone;
-			$res->profile->eyes = $person->eyes;
-			$res->profile->skin = $person->skin;
-			$res->profile->body_type = $person->body_type;
-			$res->profile->hair = $person->hair;
-			$res->profile->province = $person->province;
-			$res->profile->city = $person->city;
-			$res->profile->highest_school_level = $person->highest_school_level;
-			$res->profile->occupation = $person->occupation;
-			$res->profile->marital_status = $person->marital_status;
-			$res->profile->interests = $person->interests;
-			$res->profile->sexual_orientation = $person->sexual_orientation;
-			$res->profile->religion = $person->religion;
-			$res->profile->picture = basename($person->picture_internal);
+			if($original){
+				$res->profile = new stdClass();
+
+				// add user profile to the response
+				$res->profile->full_name = $person->full_name;
+				$res->profile->date_of_birth = $person->date_of_birth;
+				$res->profile->gender = $person->gender;
+				$res->profile->phone = empty($person->cellphone) ? $person->phone : $person->cellphone;
+				$res->profile->eyes = $person->eyes;
+				$res->profile->skin = $person->skin;
+				$res->profile->body_type = $person->body_type;
+				$res->profile->hair = $person->hair;
+				$res->profile->province = $person->province;
+				$res->profile->city = $person->city;
+				$res->profile->highest_school_level = $person->highest_school_level;
+				$res->profile->occupation = $person->occupation;
+				$res->profile->marital_status = $person->marital_status;
+				$res->profile->interests = $person->interests;
+				$res->profile->sexual_orientation = $person->sexual_orientation;
+				$res->profile->religion = $person->religion;
+				$res->profile->picture = basename($person->picture_internal);
+			}
+			else $res->picturre = basename($person->picture_internal);
 
 			// attach user picture if exist
 			if($person->picture_internal) $attachments[] = $person->picture_internal;
 		}
 
 		// get unread notifications, by service if app only for one service
-		$extraClause = "";
-		if (isset($serv) && isset($serv->serviceName) && isset($serv->input->apptype)) {
+		if (!$original && isset($serv)) {
 			$name = $serv->serviceName;
-			$extraClause = ($serv->input->apptype == "original")?"":"AND (`origin`='$name' OR `origin`='chat') ";
+			$extraClause="AND (`origin`='$name' OR `origin`='chat') ";
 		}
+		else $extraClause="";
 
 		$res->notifications = Connection::query("
 		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
@@ -1146,48 +1156,49 @@ class Utils
 		UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
 		WHERE id_person=$person->id AND viewed = 0 $extraClause");
 
+		if ($original) {
+			// get list of active services
+			$res->active = array();
+			$active = Connection::query("SELECT name FROM service WHERE listed=1");
+			foreach ($active as $a) $res->active[] = $a->name;
 
-		// get list of active services
-		$res->active = array();
-		$active = Connection::query("SELECT name FROM service WHERE listed=1");
-		foreach ($active as $a) $res->active[] = $a->name;
+			// get access to the configuration
+			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$wwwroot = $di->get('path')['root'];
 
-		// get access to the configuration
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
+			// get VIP services if you referred 10+ users
+			// if listed=2 means is a VIP service, if listed=1 is a service
+			$referred = Connection::query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
+			$listed = ($referred[0]->nbr >= 10) ? "listed>=1" : "listed=1";
 
-		// get VIP services if you referred 10+ users
-		// if listed=2 means is a VIP service, if listed=1 is a service
-		$referred = Connection::query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
-		$listed = ($referred[0]->nbr >= 10) ? "listed>=1" : "listed=1";
+			// get all services since last update
+			$services = Connection::query("
+				SELECT name, description, category, creator_email, insertion_date
+				FROM service
+				WHERE $listed AND insertion_date > '$lastUpdateDate'");
 
-		// get all services since last update
-		$services = Connection::query("
-			SELECT name, description, category, creator_email, insertion_date
-			FROM service
-			WHERE $listed AND insertion_date > '$lastUpdateDate'");
+			// add services to the response
+			$res->services = array();
+			foreach ($services as $s) {
+				// attach user picture if exist
+				$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
+				if(file_exists($icon)) $attachments[] = $icon;
+				else $icon = "";
 
-		// add services to the response
-		$res->services = array();
-		foreach ($services as $s) {
-			// attach user picture if exist
-			$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
-			if(file_exists($icon)) $attachments[] = $icon;
-			else $icon = "";
+				$service = new stdClass();
+				$service->name = $s->name;
+				$service->description = $s->description;
+				$service->category = $s->category;
+				$service->creator = $s->creator_email;
+				$service->updated = $s->insertion_date;
+				$service->icon = basename($icon);
+				$res->services[] = $service;
+			}
 
-			$service = new stdClass();
-			$service->name = $s->name;
-			$service->description = $s->description;
-			$service->category = $s->category;
-			$service->creator = $s->creator_email;
-			$service->updated = $s->insertion_date;
-			$service->icon = basename($icon);
-			$res->services[] = $service;
+			// get the latest versin from the config
+			$appversion = $di->get('config')['global']['appversion'];
+			$res->latest = "$appversion";
 		}
-
-		// get the latest versin from the config
-		$appversion = $di->get('config')['global']['appversion'];
-		$res->latest = "$appversion";
 
 		// get image quality
 		$res->img_quality = $person->img_quality;
