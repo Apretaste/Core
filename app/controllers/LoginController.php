@@ -80,6 +80,8 @@ class LoginController extends Controller
 			return false;
 		}
 
+		$logger->log("Login| Checking if user {$email} exists....");
+
 		// create the user if he/she does not exist
 		$utils = new Utils();
 		$connection = new Connection();
