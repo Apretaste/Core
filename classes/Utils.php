@@ -49,7 +49,7 @@ class Utils
 			ORDER BY RAND() LIMIT 1");
 
 		// alert if no support mailbox
-		if(empty($support)) Utils::createAlert("No support email in table delivery_input", "ERROR");
+		if(empty($support)) self::createAlert("No support email in table delivery_input", "ERROR");
 		else $support = $support[0]->email;
 
 		// add alias to the email
@@ -66,9 +66,9 @@ class Utils
 	 */
 	public static function getUserPersonalAddress($email)
 	{
-		$person = Utils::getPerson($email);
+		$person = self::getPerson($email);
 
-		if(empty($person)) return Utils::getValidEmailAddress();
+		if(empty($person)) return self::getValidEmailAddress();
 		else return "apretaste+{$person->username}@gmail.com";
 	}
 
@@ -84,7 +84,7 @@ class Utils
 	 */
 	public static function getLinkToService($service, $subservice = false, $parameter = false, $body = false)
 	{
-		$link = "mailto:".Utils::getValidEmailAddress()."?subject=".strtoupper($service);
+		$link = "mailto:".self::getValidEmailAddress()."?subject=".strtoupper($service);
 		if ($subservice) $link .= " $subservice";
 		if ($parameter) $link .= " $parameter";
 		if ($body) $link .= "&body=$body";
@@ -358,7 +358,7 @@ class Utils
 			$img->load($fromPath);
 			$img->save($toPath, $quality, $toExt);
 		} catch (Exception $e) {
-			Utils::createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
+			self::createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
 			return false;
 		}
 
@@ -596,8 +596,8 @@ class Utils
 	public static function addNotification($email, $origin, $text, $link='', $tag='INFO')
 	{
 		// get the person's numeric ID
-		$id_person = strpos($email,'@')?Utils::personExist($email):$email;
-		$email = strpos($email,'@')?$email:Utils::getEmailFromId($id_person);
+		$id_person = strpos($email,'@')?self::personExist($email):$email;
+		$email = strpos($email,'@')?$email:self::getEmailFromId($id_person);
 
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
@@ -611,7 +611,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
-			$token = Utils::detokenize($email);
+			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link{$tokenStr}";
 
@@ -810,7 +810,7 @@ class Utils
 					$type = str_replace("data:", "", substr($src, 0, $p));
 					$src = substr($src, $p + 8);
 					$ext = str_replace('image/', '', $type);
-					Utils::clearStr($ext);
+					self::clearStr($ext);
 					$filename =  $id.".".$ext;
 
 					if ($image->hasAttribute("data-filename"))
@@ -908,7 +908,7 @@ class Utils
 	 */
 	public static function getProfileCompletion($email)
 	{
-		$profile = Utils::getPerson($email);
+		$profile = self::getPerson($email);
 		return $profile->completion;
 	}
 
@@ -984,7 +984,6 @@ class Utils
 
 		// get the tier from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$tier = $di->get('config')['global']['tier'];
 
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
@@ -993,8 +992,8 @@ class Utils
 				$safeStr = Connection::escape($text, 254);
 
 				// get the config
-				$config = $di->get('config')['database'];
-				$host = $config['writer_host'];
+				$config = $di->get('config')['database_dev'];
+				$host = $config['host'];
 				$user = $config['user'];
 				$pass = $config['password'];
 				$name = $config['database'];
