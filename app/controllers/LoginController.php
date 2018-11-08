@@ -66,6 +66,9 @@ class LoginController extends Controller
 		}
 
 		// try to login by IP to avoid sending code
+
+		$logger->log("Login| Checking login by IP for {$email} ...");
+
 		$security = new Security();
 		$user = $security->loginByIP($email);
 		if($user) {
