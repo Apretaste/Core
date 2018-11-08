@@ -106,8 +106,7 @@ class RunController extends Controller
 		if ($attachment)
 		{
 			// get the path for the image
-			$wwwroot = $this->di->get('path')['root'];
-			$temp = "$wwwroot/temp/".Utils::generateRandomHash().".jpg";
+			$temp = Utils::getTempDir().'attach_images/'.Utils::generateRandomHash().".jpg";
 
 			// clean base64 string
 			$data = explode(',', $attachment);
@@ -182,7 +181,7 @@ class RunController extends Controller
 		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
 
 		// create attachments array
-		$file = Utils::getTempDir().$_FILES['attachments']['name'];
+		$file = Utils::getTempDir().'attachments/'.$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
@@ -241,29 +240,29 @@ class RunController extends Controller
 		}
 
 		// get path to the folder to save
-		$temp = Utils::getTempDir();
 		$textFile = ""; $attachs = [];
 		$folderName = str_replace(".zip", "", basename($this->attachment));
 
 		// get the text file and attached files
+		$temp = Utils::getTempDir();
 		$zip = new ZipArchive;
 		$result = $zip->open($this->attachment);
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if(substr($filename, -4) == ".txt") $textFile = $filename;
-				else $attachs[] = "$temp/$folderName/$filename";
+				else $attachs[] = "$temp/attachments/$folderName/$filename";
 			}
 
 			// extract file contents
-			$zip->extractTo("$temp/$folderName");
+			$zip->extractTo("$temp/attachments/$folderName");
 			$zip->close();
 		} else {
 			return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 		}
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
-		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
+		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$textFile"));
 		if($input) {
 			if( ! isset($input->ostype)) $input->ostype = "android";
 			if( ! isset($input->method)) $input->method = "email";
@@ -280,9 +279,9 @@ class RunController extends Controller
 			$input->apptype = "original";
 			$input->timestamp = time(); // get only notifications
 
-			$file = file("$temp/$folderName/$textFile");
+			$file = file("$temp/attachments/$folderName/$textFile");
 			if (isset($file[0])) $input->command = trim($file[0]);
-			else return Utils::createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
+			else return Utils::createAlert("[RunController::runApp] Empty file $temp/attachments/$folderName/$textFile");
 			$input->appversion = isset($file[1]) && is_numeric(trim($file[1])) ? trim($file[1]) : "";
 			$input->nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
@@ -314,7 +313,7 @@ class RunController extends Controller
 
 			// is there is a cache time, add it
 			if($response->cache) {
-				$cache = "$temp{$response->cache}.cache";
+				$cache = "$temp/cache/{$response->cache}.cache";
 				file_put_contents($cache, "");
 				$response->attachments[] = $cache;
 			}
@@ -338,7 +337,7 @@ class RunController extends Controller
 			}
 
 			// create an attachment file for the extra structure
-			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";
+			$ntfFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".ext";
 			file_put_contents($ntfFile, $extra);
 			$response->attachments[] = $ntfFile;
 
@@ -398,14 +397,22 @@ class RunController extends Controller
 		$gmailMessage = "Send using Gmail inbox $gmailMailbox";
 		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}. $gmailMessage", "NOTICE");
 
+		
 		// calculate failure percentage
+		$lastCodes = Connection::query("SELECT COUNT(*) AS total,delivery_code FROM delivery WHERE NOT delivery_code IS NULL AND TIMESTAMPDIFF(MINUTE,request_date,NOW())<15 GROUP BY delivery_code;");
+		
+		$sendCount = 0;
 		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE TIMESTAMPDIFF(WEEK,request_date,NOW())=0 LIMIT 100");
-		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
+		foreach ($lastCodes as $code) {
+			if ($code->delivery_code=='200') $sendCount = $code->total;
+			else $failuresCount+= $code->total;
+		}
+
+		$total = $sendCount+$failuresCount;
 
 		// alert developers if failures are over 20%
-		if($failuresCount > 20) {
-			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses";
+		if(($failuresCount/$total)>=0.2) {
+			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses in the last 15 minutes";
 			Utils::createAlert($text, "ERROR");
 		}
 	}
@@ -583,10 +590,9 @@ class RunController extends Controller
 
 		// save the attachment to the temp folder
 		if($attachs) {
-			$temp = Utils::getTempDir();
-			$att = $parser->saveAttachments($temp . "attachments/");
+			$att = $parser->saveAttachments(Utils::getTempDir()."attachments/");
 			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
-			$newFile = $temp.'attachments/'.Utils::generateRandomHash().'.'.$ext;
+			$newFile = Utils::getTempDir().'attachments/'.Utils::generateRandomHash().'.'.$ext;
 			rename($att[0], $newFile);
 			$this->attachment = $newFile;
 		}
