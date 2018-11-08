@@ -1,6 +1,8 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use \Phalcon\DI;
+
 require_once '../lib/Linfo/standalone_autoload.php';
 
 class ManageController extends Controller
@@ -32,7 +34,14 @@ class ManageController extends Controller
 		$openedContestsCount = Connection::query("SELECT COUNT(id) AS cnt FROM _concurso WHERE end_date > CURRENT_TIMESTAMP");
 		$unsentStoreItems = Connection::query("SELECT COUNT(id) AS cnt FROM _tienda_orders WHERE received=0");
 		$isMonthlyRaffleOpen = Connection::query("SELECT raffle_id AS cnt FROM raffle WHERE end_date > CURRENT_TIMESTAMP");
-		$openedAlerts = Connection::query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed=0");
+
+		// alerts
+		// TODO: refactor to model
+		$config = Di::getDefault()->get('config')['database_dev'];
+		$db = new mysqli($config['host'], $config['user'], $config['password'], $config['database']);
+		$openedAlerts = $db->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed=0");
+		$openedAlerts = $openedAlerts->fetch_object()->cnt;
+
 		$tasksWidget = Connection::query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 		$hddFreeSpace = $this->getFreeSpaceHDD();
 		$unrespondedNotes = SupportController::getUnrespondedNotesToApretaste();
