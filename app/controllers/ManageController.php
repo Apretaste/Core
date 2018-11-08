@@ -40,7 +40,7 @@ class ManageController extends Controller
 		$config = Di::getDefault()->get('config')['database_dev'];
 		$db = new mysqli($config['host'], $config['user'], $config['password'], $config['database']);
 		$openedAlerts = $db->query("SELECT COUNT(id) as cnt FROM alerts WHERE fixed=0");
-		$openedAlerts = $openedAlerts->fetch_object()->cnt;
+		$openedAlerts = $openedAlerts->fetch_object();
 
 		$tasksWidget = Connection::query("SELECT task, DATEDIFF(CURRENT_DATE, executed) as days, delay, frequency FROM task_status");
 		$hddFreeSpace = $this->getFreeSpaceHDD();
