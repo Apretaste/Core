@@ -43,18 +43,23 @@ class LoginController extends Controller
 
 	/**
 	 * Email the code to the user
-	 *
-	 * @param GET email
-	 * @return JSON
 	 */
 	public function emailSubmitAction()
 	{
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/web.log");
+
 		// params from GET and default options
 		$email = $this->request->get('email');
 		$redirect = $this->request->get('redirect');
 
+		$logger->log("Login| User {$email} start the login");
+
 		// check if the email is valid
 		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+			$logger->log("Login| {$email} is not valid email address, redirecting...");
+
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return false;
@@ -64,6 +69,9 @@ class LoginController extends Controller
 		$security = new Security();
 		$user = $security->loginByIP($email);
 		if($user) {
+
+			$logger->log("Login| User {$email} start session with IP login");
+
 			// get redirect link and redirect
 			$redirect = empty($redirect) ? "servicios" : $redirect;
 			if($user->isManager) $this->response->redirect($user->startPage);
@@ -77,6 +85,9 @@ class LoginController extends Controller
 		$connection = new Connection();
 		$action = "login";
 		if( ! $utils->personExist($email)) {
+
+			$logger->log("Login| User {$email} is new user!");
+
 			$username = $utils->usernameFromEmail($email);
 			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
 			$action = "register";
@@ -95,7 +106,7 @@ class LoginController extends Controller
 
 		// render the template as html
 		$body = Render::renderHTML(new Service(), $response);
-
+		$logger->log("Login| Sending PIN code to {$email} ....");
 		// email the code to the user
 		$sender = new Email();
 		$sender->to = $email;
@@ -103,10 +114,15 @@ class LoginController extends Controller
 		$sender->body = $body;
 		$res = $sender->send();
 
+		$logger->log("Login| PIN code $pin sent successful to {$email} ....");
+
+		$logger->close();
+
 		// redirect to ask for code
 		$email = urlencode($email);
 		$this->response->redirect("login/code?email=$email&redirect=$redirect&action=$action");
 		$this->view->disable();
+
 	}
 
 	/**
@@ -114,11 +130,16 @@ class LoginController extends Controller
 	 */
 	public function codeSubmitAction()
 	{
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/web.log");
+
 		// get data from post
 		$email = $this->request->get('email');
 		$pin = $this->request->get('pin');
 		$action = $this->request->get('action');
 		$redirect = $this->request->get('redirect');
+
+		$logger->log("Login | Receive PIN code $pin from {$email} ....");
 
 		// check if the email is valid
 		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -133,6 +154,8 @@ class LoginController extends Controller
 
 		// error if the user cannot be logged
 		if(empty($user)) {
+			$logger->log("Login | User {$email} cannot be logged, redirecting...");
+
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return false;
@@ -142,6 +165,10 @@ class LoginController extends Controller
 		$redirect = empty($redirect) ? "servicios" : $redirect;
 		if($user->isManager) $redirectLink = $user->startPage;
 		else $redirectLink = "run/display?subject=$redirect&action=$action";
+
+		$logger->log("Login | Login successful, redirect to $redirectLink");
+
+		$logger->close();
 
 		// redirect to page
 		$this->response->redirect($redirectLink);
