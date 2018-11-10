@@ -638,7 +638,7 @@ class Utils
 	/**
 	 * Return the number of notifications for a user
 	 *
-	 * @param string $email
+	 * @param string $id_person
 	 * @return integer
 	 */
 	public static function getNumberOfNotifications($id_person)
@@ -702,8 +702,11 @@ class Utils
 	 * Encript a message using the user's public key.
 	 *
 	 * @author salvipascual
+	 *
 	 * @param String $text
+	 *
 	 * @return String
+	 * @throws Exception
 	 */
 	public static function encrypt($text)
 	{
@@ -724,8 +727,11 @@ class Utils
 	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
 	 *
 	 * @author salvipascual
+	 *
 	 * @param String $text
+	 *
 	 * @return String
+	 * @throws Exception
 	 */
 	public static function decrypt($text)
 	{

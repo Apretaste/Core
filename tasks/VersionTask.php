@@ -10,16 +10,16 @@ class VersionTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
 	{
-		// inicialize supporting classes
+		// initialize supporting classes
 		$timeStart = time();
 
 		// get the latest version of the app
-		$lastestVersion = $this->di->get('config')['global']['appversion'];
+		$latestVersion = $this->di->get('config')['global']['appversion'];
 
 		// get people using an old version
 		$people = Connection::query("
 			SELECT email FROM person
-			WHERE appversion < $lastestVersion
+			WHERE appversion < $latestVersion
 			AND appversion <> ''");
 
 		// show initial message
@@ -35,7 +35,7 @@ class VersionTask extends \Phalcon\Cli\Task
 			$counter++;
 
 			// create the notification
-			$text = "Actualiza a la version $lastestVersion escribiendo a navegacuba@gmail.com";
+			$text = "Actualiza a la version $latestVersion escribiendo a navegacuba@gmail.com";
 			Utils::addNotification($person->email, "App", $text);
 		}
 
