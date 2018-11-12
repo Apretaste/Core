@@ -318,12 +318,11 @@ class RunController extends Controller
 				$response->attachments[] = $cache;
 			}
 
+			$service->input = $input;
+
 			// render the HTML, unless it is a status call
 			if($input->command == "status") $this->body = "{}";
-			else {
-				$service->input = $input;
-				$this->body = Render::renderHTML($service, $response);
-			}
+			else $this->body = Render::renderHTML($service, $response);
 
 			// get extra data for the app
 			// if the old version is calling status, do not get extra data
