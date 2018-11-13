@@ -143,7 +143,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives an email petition and responds via email
+	 * Receives a petition via http from the app
 	 *
 	 * @author salvipascual
 	 * @param GET data from app
@@ -176,10 +176,6 @@ class RunController extends Controller
 			return false;
 		}
 
-		// mark the domain as used
-		$inputDomain = $_SERVER['HTTP_HOST'];
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
-
 		// create attachments array
 		$file = Utils::getTempDir().'attachments/'.$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
@@ -191,10 +187,10 @@ class RunController extends Controller
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'api')");
+			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'app')");
 
 		// set up environment
-		$this->di->set('environment', function() {return "api";});
+		$this->di->set('environment', function() {return "app";});
 
 		// execute the service as app
 		$this->sendEmails = false;
