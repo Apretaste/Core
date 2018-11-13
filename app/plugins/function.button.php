@@ -76,7 +76,7 @@ function smarty_function_button($params, $template)
 	$appversion = $di->get('appversion');
 
 	// create buttons for the app and the web
-	if(in_array($environment, ["app", "appnet", "web"]))
+	if(in_array($environment, ["app", "web"]))
 	{
 		$type = isset($params["type"]) ? $params["type"] : "input";
 		$popup = empty($params["popup"]) ? "false" : $params["popup"];

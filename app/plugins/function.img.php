@@ -27,14 +27,8 @@ function smarty_function_img($params, $template)
 		@copy($href, "$wwwroot/public/temp/$file");
 		$destination = "$wwwhttp/temp/$file";
 	}
-	elseif(in_array($di->get('environment'), ["app", "appnet"]))
-	{
-		$destination = $file;
-	}
-	else
-	{
-		$destination = "cid:$file";
-	}
+	elseif($di->get('environment') == "app") $destination = $file;
+	else $destination = "cid:$file";
 
 	// create and return image
 	return "<img src='$destination' alt='$alt' $width $height $style $class $id/>";
