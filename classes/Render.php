@@ -73,8 +73,10 @@ class Render
 		$request->query = $query;
 		$request->params = $params;
 		$request->lang = $lang;
+		$request->environment = $environment; // web|app|api
 		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
-		$request->environment = $environment;
+		$request->apptype = empty($input->apptype) ? "original" : $input->apptype; // original|single
+		$request->appmethod = empty($input->method) ? "email" : $input->method; // email|http
 
 		// create a new Service Object with info from the database
 		$result = Connection::query("SELECT * FROM service WHERE name = '$serviceName'");
@@ -136,6 +138,7 @@ class Render
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
 		$wwwroot = $di->get('path')['root'];
 
 		// select the right file to load
@@ -162,15 +165,11 @@ class Render
 		// get a valid email address
 		$validEmailAddress = Utils::getValidEmailAddress($username);
 
-		// get app environment
-		$environment = $di->get('environment');
-		if($environment == 'appnet') $environment = 'app';
-
 		// list the system variables
 		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
-			"APRETASTE_ENVIRONMENT" => $environment,
+			"APRETASTE_ENVIRONMENT" => $environment, // app|web|api
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
@@ -181,7 +180,8 @@ class Render
 			// app only variables
 			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
-			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype,
+			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
+			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
 			// user variables
 			"num_notifications" => Utils::getNumberOfNotifications($person->id),
 			"USER_USERNAME" => $username,

@@ -18,7 +18,7 @@ function smarty_function_link($params, $template)
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), ["app", "appnet", "web"]))
+	if(in_array($di->get('environment'), ["app", "web"]))
 	{
 		$onclick = 'apretaste.doaction("'.$href.'", false, "", true); return false;';
 		$href = "#!";

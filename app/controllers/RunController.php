@@ -143,7 +143,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives an email petition and responds via email
+	 * Receives a petition via http from the app
 	 *
 	 * @author salvipascual
 	 * @param GET data from app
@@ -176,10 +176,6 @@ class RunController extends Controller
 			return false;
 		}
 
-		// mark the domain as used
-		$inputDomain = $_SERVER['HTTP_HOST'];
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
-
 		// create attachments array
 		$file = Utils::getTempDir().'attachments/'.$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
@@ -191,10 +187,10 @@ class RunController extends Controller
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'appnet')");
+			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'app')");
 
 		// set up environment
-		$this->di->set('environment', function() {return "appnet";});
+		$this->di->set('environment', function() {return "app";});
 
 		// execute the service as app
 		$this->sendEmails = false;
@@ -210,7 +206,7 @@ class RunController extends Controller
 			UPDATE delivery SET 
 			process_time='$executionTime',
 			delivery_code='200',
-			delivery_method='internet',
+			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
 			WHERE id={$this->deliveryId}");
 
@@ -264,9 +260,9 @@ class RunController extends Controller
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
 		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$textFile"));
 		if($input) {
-			if( ! isset($input->ostype)) $input->ostype = "android";
-			if( ! isset($input->method)) $input->method = "email";
-			if( ! isset($input->apptype)) $input->apptype = "original";
+			if( ! isset($input->ostype)) $input->ostype = "android"; // adroid|ios
+			if( ! isset($input->method)) $input->method = "email"; // email|http
+			if( ! isset($input->apptype)) $input->apptype = "original"; // original|single
 			if( ! isset($input->timestamp)) $input->timestamp = time();
 			$input->osversion = (isset($input->osversion))?filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION):"";
 			$input->nautaPass = base64_decode($input->token);
