@@ -176,7 +176,7 @@ class DeveloperController extends Controller
 
 		// alerts
 		// TODO: refactor to model
-		$config = Di::getDefault()->get('config')['database_dev'];
+		$config = $this->di->get('config')['database_dev'];
 		$db = new mysqli($config['host'], $config['user'], $config['password'], $config['database']);
 		$result = $db->query($sql);
 		$alerts = [];
