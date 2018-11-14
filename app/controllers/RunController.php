@@ -324,7 +324,7 @@ class RunController extends Controller
 			// if the old version is calling status, do not get extra data
 			// @TODO remove when we get rid of the old version
 			$isPerfilStatus = substr($input->command, 0, strlen("perfil status")) === "perfil status";
-			if($isPerfilStatus) $extra = "{}";
+			if($isPerfilStatus && $input->ostype == 'android') $extra = "{}";
 			else {
 				$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
 				$response->attachments = array_merge($response->attachments, $res["attachments"]);
