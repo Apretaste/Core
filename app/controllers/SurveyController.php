@@ -666,7 +666,7 @@ class SurveyController extends Controller
 			//$html .= "<h2>". $question->title . "</h2>";
 			$answers = $connection->query("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
 
-			$values = '';
+			$values = array();
 			foreach($answers as $ans) {
 				$values[wordwrap($ans->title,50)." ({$ans->choosen})"] = $ans->choosen;
 			}
