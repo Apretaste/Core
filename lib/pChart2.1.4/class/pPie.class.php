@@ -100,7 +100,7 @@
      if ( $SerieSum == 0 ) { return(PIE_SUMISNULL); }
 
      /* Dump the real number of data to draw */
-     $Values = "";
+     $Values = [];
      foreach ($Data["Series"][$DataSerie]["Data"] as $Key => $Value)
       { if ($Value != 0) { $Values[] = $Value; } }
 
@@ -140,7 +140,7 @@
           { $Settings["BorderR"] = $BorderR; $Settings["BorderG"] = $BorderG; $Settings["BorderB"] = $BorderB; }
         }
 
-       $Plots = "";
+       $Plots = [];
        $EndAngle = $Offset+($Value*$ScaleFactor); if ( $EndAngle > 360 ) { $EndAngle = 360; }
 
        $Angle = ($EndAngle - $Offset)/2 + $Offset;
@@ -296,7 +296,7 @@
     }
 
    /* Draw a 3D pie chart */
-   function draw3DPie($X,$Y,$Format="")
+   function draw3DPie($X,$Y,$Format=[])
     {
      /* Rendering layout */
      $Radius		= isset($Format["Radius"]) ? $Format["Radius"] : 80;
@@ -415,7 +415,7 @@
       {
        foreach($Slices as $SliceID => $Plots)
         {
-         $ShadowPie = "";
+         $ShadowPie = [];
          for($i=0;$i<count($Plots);$i=$i+2)
           { $ShadowPie[] = $Plots[$i]+$this->pChartObject->ShadowX; $ShadowPie[] = $Plots[$i+1]+$this->pChartObject->ShadowY; }
 
@@ -976,7 +976,7 @@
           $BorderColor = $Settings;
         }
 
-       $Plots = ""; $Boundaries = ""; $AAPixels = "";
+       $Plots = []; $Boundaries = []; $AAPixels = [];
        $EndAngle = $Offset+($Value*$ScaleFactor); if ( $EndAngle > 360 ) { $EndAngle = 360; }
        for($i=$Offset;$i<=$EndAngle;$i=$i+$Step)
         {
@@ -1475,7 +1475,7 @@
   /* Remove unused series & values */
   function clean0Values($Data,$Palette,$DataSerie,$AbscissaSerie)
    {
-    $NewPalette = ""; $NewData = ""; $NewAbscissa = "";
+    $NewPalette = []; $NewData = []; $NewAbscissa = [];
 
     /* Remove unused series */
     foreach($Data["Series"] as $SerieName => $SerieSettings)
