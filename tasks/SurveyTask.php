@@ -28,7 +28,7 @@ class SurveyTask extends \Phalcon\Cli\Task
 			WHERE A.total > A.choosen
 			AND A.days_since >= 7
 			AND B.active = 1
-			AND DATEDIFF(B.deadline, B.date_created) > 0");
+			AND B.deadline > NOw()");
 
 		// send notifications to users
 		foreach ($unfinishedSurveys as $us) {
