@@ -440,12 +440,13 @@ class SurveyController extends Controller
 			$csv[] = $row;
 
 			foreach($result['results'] as $question){
-				$csv[][0] = $question['t'];
+				$csv[][0] = htmlspecialchars(html_entity_decode($question['t'], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 				foreach($question['a'] as $ans) {
 
 					if (!isset($ans['total'])) $ans['total'] = 0;
 					if (!isset($question['total'])) $question['total'] = 0;
 
+					$ans['t'] = htmlspecialchars(html_entity_decode($ans['t'], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 					$row = array($ans['t'], $ans['total'], ($question['total'] ===0?0:number_format($ans['total'] / $question['total'] * 100, 1)));
 					foreach ($result['pivots'] as $pivot => $label) {
 						if (!isset($ans['p'][$pivot])) {
