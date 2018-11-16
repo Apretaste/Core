@@ -22,6 +22,7 @@ function smarty_function_link($params, $template)
 	if(in_array($environment, ["app", "web"]))
 	{
 		// set emprty callback for new versions and the web
+		$appversion = $di->get('appversion');
 		$callback = ($environment=="web" || $appversion > 3.1) ? ',""' : '';
 
 		// create onclick and href params
