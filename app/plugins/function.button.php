@@ -91,7 +91,7 @@ function smarty_function_button($params, $template)
 		}
 
 		// create onclick function and clear linkto
-		$onclick = "onclick=\"apretaste.doaction('$href',$popup,'$desc',$wait$callback); return false;\"";
+		$onclick = "onclick=\"apretaste.doaction('$href', $popup, '$desc', $wait $callback); return false;\"";
 		$linkto = "#!";
 	}
 	// create link for the email system

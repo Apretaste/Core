@@ -18,9 +18,14 @@ function smarty_function_link($params, $template)
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), ["app", "web"]))
+	$environment = $di->get('environment');
+	if(in_array($environment, ["app", "web"]))
 	{
-		$onclick = 'apretaste.doaction("'.$href.'", false, "", true); return false;';
+		// set emprty callback for new versions and the web
+		$callback = ($environment=="web" || $appversion > 3.1) ? ',""' : '';
+
+		// create onclick and href params
+		$onclick = 'apretaste.doaction("'.$href.'", false, "", true '.$callback.'); return false;';
 		$href = "#!";
 	}
 	// create link for the email system
