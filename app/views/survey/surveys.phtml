@@ -24,7 +24,7 @@
 
 					<td class="text-right">
 						<a class="btn btn-default" href="/survey/surveyQuestions?survey=<?= $survey->id ?>">Questions</a>
-						<a class="btn btn-default" href="/survey/surveyReport/<?= $survey->id ?>">Report</a>
+						<a class="btn btn-default" href="/survey/surveyReport?id=<?= $survey->id ?>">Report</a>
 
 						<?php if ($survey->active) { ?>
 							<a class="btn btn-default" href="/survey/surveys?option=disable&id=<?= $survey->id ?>"><span class="glyphicon glyphicon-pause"></a>

@@ -174,9 +174,7 @@ class SurveyController extends Controller
 	 */
 	public function surveyReportAction(){
 		// getting ad's id
-		$url = $_GET['_url'];
-		$id =  explode("/",$url);
-		$id = intval($id[count($id)-1]);
+		$id =  intval($_GET['id']);
 
 		// get the report
 		$report = $this->getSurveyResults($id);
@@ -503,7 +501,7 @@ class SurveyController extends Controller
 			$questions = Connection::query("SELECT title FROM _survey_question WHERE survey=$id");
 
 			$data=Connection::query("SELECT SUBSTR(A.email,1,INSTR(A.email,'@')-1) AS email, A.gender AS gender, A.province AS province,
-			TIMESTAMPDIFF(YEAR,A.date_of_birth,NOW()) AS age, A.highest_school_level AS school_level,
+			TIMESTAMPDIFF(YEAR,A.date_of_birth,NOW()) AS age, A.highest_school_level AS school_level, A.skin AS skin,
 			C.title AS question, D.title AS answer
 			FROM person A JOIN _survey_answer_choosen B
 			JOIN _survey_question C
@@ -519,6 +517,7 @@ class SurveyController extends Controller
 											  'province' => $answer->province,
 											  'age' => $answer->age,
 											  'school_level' => $answer->school_level,
+											  'skin' => $answer->skin,
 											  'answers' => array()];
 				}
 				if (!array_key_exists($answer->question,$answers[$answer->email]['answers'])) {
@@ -534,6 +533,7 @@ class SurveyController extends Controller
 													   'province' => $answer->province,
 													   'age' => $answer->age,
 													   'school_level' => $answer->school_level,
+													   'skin' => $answer->skin,
 													   'answers' => array()];
 					}
 
@@ -556,7 +556,7 @@ class SurveyController extends Controller
 			}
 
 			$headerRow=array();
-			$headerRow=['Usuario','Genero','Localizacion','Edad','Nivel Escolar'];
+			$headerRow=['Usuario','Genero','Localizacion','Edad','Nivel Escolar','Piel'];
 			foreach ($questions as $question) {
 				$headerRow[]=$question->title;
 			}
@@ -569,6 +569,7 @@ class SurveyController extends Controller
 				$row[]=str_replace('_',' ',$person['province']);
 				$row[]=$person['age'];
 				$row[]=$person['school_level'];
+				$row[]=$person['skin'];
 				foreach ($person['answers'] as $key => $answer) {
 					$row[]=$answer;
 				}
