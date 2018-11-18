@@ -26,13 +26,13 @@ class SurveyTask extends \Phalcon\Cli\Task
 			JOIN _survey B
 			ON A.survey = B.id
 			WHERE A.total > A.choosen
-			AND A.days_since >= 7
+			AND A.days_since >= 3
 			AND B.active = 1
 			AND B.deadline > NOw()");
 
 		// send notifications to users
 		foreach ($unfinishedSurveys as $us) {
-			$text = "Has dejado una encuesta sin terminar. Completala y gana §{$us->value}";
+			$text = "Has dejado una encuesta sin terminar, tu opinión es importante. Completala y gana §{$us->value}";
 			$link = "ENCUESTA {$us->survey}";
 			Utils::addNotification($us->email, "Encuesta", $text, $link);
 		}
