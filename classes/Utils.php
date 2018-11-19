@@ -1171,7 +1171,7 @@ class Utils
 				$res->profile->religion = $person->religion;
 				$res->profile->picture = basename($person->picture_internal);
 			}
-			else $res->picturre = basename($person->picture_internal);
+			else $res->picture = basename($person->picture_internal);
 
 			// attach user picture if exist
 			if($person->picture_internal) $attachments[] = $person->picture_internal;

@@ -31,7 +31,7 @@ class SummaryTask extends \Phalcon\Cli\Task
 
 		// get the number for current month
 		$monthlyUniqueTraffic = Connection::query("
-			SELECT COUNT(DISTINCT user) AS total
+			SELECT COUNT(DISTINCT id_person) AS total
 			FROM delivery
 			WHERE request_date >= '$currentMonthDay'")[0]->total;
 
