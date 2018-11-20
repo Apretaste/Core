@@ -26,7 +26,6 @@ class SurveyController extends Controller
 	 */
 	public function surveysAction()
 	{
-		$connection = new Connection();
 		$this->view->message = false;
 		$option = $this->request->get('option');
 		$sql = false;
@@ -73,10 +72,10 @@ class SurveyController extends Controller
 		}
 
 		// commit SQL if exist
-		if ($sql) $connection->query($sql);
+		if ($sql) Connection::query($sql);
 
 		// get all surveys
-		$surveys = $connection->query("SELECT * FROM _survey ORDER BY ID");
+		$surveys = Connection::query("SELECT * FROM _survey ORDER BY ID");
 
 		// send variables to the view
 		$this->view->title = "List of surveys (".count($surveys).")";
@@ -90,7 +89,6 @@ class SurveyController extends Controller
 	 */
 	public function surveyQuestionsAction()
 	{
-		$connection = new Connection();
 		$this->view->message = false;
 		$this->view->message_type = 'success';
 		$this->view->buttons = [["caption"=>"Back", "href"=>"/survey/surveys"]];
@@ -145,19 +143,19 @@ class SurveyController extends Controller
 			break;
 		}
 
-		if ($sql!=false) $connection->query($sql);
+		if ($sql!=false) Connection::query($sql);
 
 		$survey = $this->request->get('survey');
 
-		$r = $connection->query("SELECT * FROM _survey WHERE id = '{$survey};'");
+		$r = Connection::query("SELECT * FROM _survey WHERE id = '{$survey};'");
 		if ($r !== false) {
 			$sql = "SELECT * FROM _survey_question WHERE survey = '$survey' order by id;";
 			$survey = $r[0];
-			$questions = $connection->query($sql);
+			$questions = Connection::query($sql);
 			if ($questions !== false) {
 
 				foreach ($questions as $k=>$q){
-					$answers = $connection->query("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
+					$answers = Connection::query("SELECT * FROM _survey_answer WHERE question = '{$q->id}';");
 					if ($answers==false) $answers = array();
 					$questions[$k]->answers=$answers;
 				}
@@ -180,8 +178,7 @@ class SurveyController extends Controller
 		$report = $this->getSurveyResults($id);
 
 		// get the survey
-		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id")[0];
+		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id")[0];
 
 		// get codes for each province
 		$trans = array(
@@ -205,9 +202,9 @@ class SurveyController extends Controller
 
 		// add buttons to the header
 		$this->view->buttons = [
-			["caption"=>"PDF", "href"=>"/survey/surveyReportPDF/{$survey->id}", "icon"=>"cloud-download"],
-			["caption"=>"CSV", "href"=>"/survey/surveyResultsCSV/{$survey->id}", "icon"=>"cloud-download"],
-			["caption"=>"CSV By User", "href"=>"/survey/surveyResultsCSVByUser/{$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"PDF", "href"=>"/survey/surveyReportPDF?id={$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"CSV", "href"=>"/survey/surveyResultsCSV?id={$survey->id}", "icon"=>"cloud-download"],
+			["caption"=>"CSV By User", "href"=>"/survey/surveyResultsCSVByUser?id={$survey->id}", "icon"=>"cloud-download"],
 			["caption"=>"Back", "href"=>"/survey/surveys"]
 		];
 
@@ -224,8 +221,9 @@ class SurveyController extends Controller
 	 * @param integer $id
 	 */
 	private function getSurveyResults($id){
-		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id;");
+		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;");
+
+		$exclude = $this->excludedUSers($id);
 
 		$by_age = array(
 				'0-16' => 0,
@@ -262,7 +260,7 @@ class SurveyController extends Controller
 				FROM
 				_survey Inner Join (_survey_question inner join ( _survey_answer inner join (_survey_answer_choosen inner join (select *, YEAR(CURDATE()) - YEAR(person.date_of_birth) as age from person) as person ON _survey_answer_choosen.email = person.email) on _survey_answer_choosen.answer = _survey_answer.id) ON _survey_question.id = _survey_answer.question)
 				ON _survey_question.survey = _survey.id
-				WHERE _survey.id = $id
+				WHERE _survey.id = $id AND NOT _survey_answer_choosen.email IN($exclude) 
 				GROUP BY
 				_survey.id,
 				_survey.title,
@@ -273,7 +271,7 @@ class SurveyController extends Controller
 				$field
 				ORDER BY _survey.id, _survey_question.id, _survey_answer.id, pivote";
 
-				$r = $connection->query($sql);
+				$r = Connection::query($sql);
 
 				$pivots = array();
 				$totals = array();
@@ -355,7 +353,7 @@ class SurveyController extends Controller
 				WHERE _survey.id = $id
 				ORDER BY _survey.id, _survey_question.id, _survey_answer.id";
 
-				$survey_details = $connection->query($sql);
+				$survey_details = Connection::query($sql);
 
 				foreach($survey_details as $item){
 					$q = intval($item->question_id);
@@ -415,11 +413,8 @@ class SurveyController extends Controller
 	{
 		// getting ad's id
 		// @TODO: improve this!
-		$url = $_GET['_url'];
-		$id =  explode("/",$url);
-		$id = intval($id[count($id)-1]);
-		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id;");
+		$id =  intval($_GET['id']);
+		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;");
 		$survey = $survey[0];
 		$results = $this->getSurveyResults($id);
 		$csv = array();
@@ -493,9 +488,11 @@ class SurveyController extends Controller
 
 		public function surveyResultsCSVByUserAction()
 		{
-			$url = $_GET['_url'];
-			$id =  explode("/",$url);
-			$id = intval($id[count($id)-1]);
+			$id =  intval($_GET['id']);
+			
+			//get the excluded users
+			$exclude = $this->excludedUSers($id);
+
 			$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;");
 			$survey = $survey[0];
 			$questions = Connection::query("SELECT title FROM _survey_question WHERE survey=$id");
@@ -506,7 +503,8 @@ class SurveyController extends Controller
 			FROM person A JOIN _survey_answer_choosen B
 			JOIN _survey_question C
 			JOIN _survey_answer D
-			ON A.email=B.email AND C.id=D.question AND B.answer=D.id WHERE B.survey=$id");
+			ON A.email=B.email AND C.id=D.question AND B.answer=D.id 
+			WHERE B.survey=$id AND NOT B.email IN($exclude)");
 
 			$answers=array();
 
@@ -642,12 +640,12 @@ class SurveyController extends Controller
 	public function surveyReportPDFAction()
 	{
 		// getting ad's id
-		$url = $_GET['_url'];
-		$id =  explode("/",$url);
-		$id = intval($id[count($id)-1]);
+		$id =  intval($_GET['id']);
 
-		$connection = new Connection();
-		$survey = $connection->query("SELECT * FROM _survey WHERE id = $id");
+		//get the excluded users
+		$exclude = $this->excludedUSers($id);
+
+		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id");
 		$survey = $survey[0];
 
  		$csv = array();
@@ -659,14 +657,19 @@ class SurveyController extends Controller
  				body{font-family:Verdana;}</style><body>';
  		$html .= "<br/><h1>$title</h1>";
 
-		$questions = $connection->query("SELECT * FROM _survey_question WHERE survey = $id;");
+		$questions = Connection::query("SELECT * FROM _survey_question WHERE survey = $id;");
 
 		$i = 0;
 		$total = count($questions);
 		foreach($questions as $question)
 		{
 			//$html .= "<h2>". $question->title . "</h2>";
-			$answers = $connection->query("SELECT *, (SELECT count(_survey_answer_choosen.email) FROM _survey_answer_choosen WHERE _survey_answer_choosen.answer = _survey_answer.id) as choosen FROM _survey_answer WHERE question = {$question->id};");
+			$answers = Connection::query(
+				"SELECT *, (SELECT count(_survey_answer_choosen.email) 
+				FROM _survey_answer_choosen 
+				WHERE _survey_answer_choosen.answer = _survey_answer.id 
+				AND NOT _survey_answer_choosen.email IN($exclude)) AS choosen 
+				FROM _survey_answer WHERE question = {$question->id};");
 
 			$values = array();
 			foreach($answers as $ans) {
@@ -777,5 +780,29 @@ class SurveyController extends Controller
 		ob_end_clean();
 
 		return base64_encode($img);
+	}
+
+	/**
+	 * Exclude the users that not finished the survey
+	 * @author ricardo@apretaste.org
+	 * @param Int $id
+	 * @return String $exclude
+	 */
+	private function excludedUSers($id){
+		$unfinished = Connection::query(
+			"SELECT email, choosen FROM (
+			SELECT email, COUNT(question) as choosen 
+			FROM _survey_answer_choosen 
+			WHERE survey = $id GROUP BY email) A 
+			WHERE choosen < (SELECT COUNT(id) 
+			FROM _survey_question 
+			WHERE survey = $id)");
+
+		$exclude = [];
+
+		foreach ($unfinished as $u) $exclude[] = "'{$u->email}'";
+		$exclude = implode(',',$exclude);
+
+		return $exclude;
 	}
 }

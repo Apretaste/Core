@@ -585,7 +585,7 @@ class NautaClient
 	 */
 	private function breakCaptcha2($image, $apikey){
 		$rtimeout = 3;
-		$mtimeout = 20;
+		$mtimeout = 24;
 
 		if (!file_exists($image)) return "ERROR_IMG_NOT_FOUND";
 
