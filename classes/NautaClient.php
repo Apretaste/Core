@@ -639,7 +639,7 @@ class NautaClient
 					if (trim($ex[0])=='OK') return trim($ex[1]);
 				}
 			}
-			return false;
+			return "ERROR: WAIT FOR RESPONSE TIMEOUT";
 		}
 	}
 
