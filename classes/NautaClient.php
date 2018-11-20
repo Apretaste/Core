@@ -267,13 +267,37 @@ class NautaClient
 				$cli = fopen("php://stdin", "r");
 				$captchaText = fgets($cli);
 			} else {
+				// get path to root and the key from the configs
+				$di = \Phalcon\DI\FactoryDefault::getDefault();
+				$wwwroot = $di->get('path')['root'];
+				$method = $di->get('config')['anticaptcha']['method'];
+				$enable = $di->get('config')['anticaptcha']['enable'];
+				$apikey = $di->get('config')['anticaptcha']['key_'.$method];
+
+				// if anti-captcha is disabled, do not spend money, else 
+				if (empty($enable)) return Utils::createAlert("[NautaClient] Captcha error 510 with message Captcha breaker disabled. Make enable=1 at config.ini");
+
 				// break the captcha
-				$captcha = $this->breakCaptcha($captchaImage);
-				if ($captcha->code == "200") {
-					$captchaText = $captcha->message;
-					rename($captchaImage, Utils::getTempDir() . "capcha/$captchaText.jpg");
-				} else {
-					return Utils::createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
+				switch ($method) {
+					case '1':
+						$captcha = $this->breakCaptcha1($captchaImage, $apikey, $wwwroot);
+						if ($captcha->code == "200") {
+							$captchaText = $captcha->message;
+							rename($captchaImage, Utils::getTempDir() . "capcha/$captchaText.jpg");
+						} else {
+							return Utils::createAlert("[NautaClient] Captcha error {$captcha->code} with message {$captcha->message}");
+						}
+						break;
+					
+					case '2':
+						$captcha = $this->breakCaptcha2($captchaImage, $apikey);
+						if (strpos($captcha, "ERROR")===false) {
+							$captchaText = $captcha;
+							rename($captchaImage, Utils::getTempDir() . "capcha/$captchaText.jpg");
+						} else {
+							return Utils::createAlert("[NautaClient] Captcha error with message {$captcha}");
+						}
+						break;
 				}
 			}
 		}
@@ -554,28 +578,80 @@ class NautaClient
 	}
 
 	/**
+	 * Breaks an image captcha using human labor from 2captcha.com
+	 * @author ricardo@apretaste.org
+	 * @param String
+	 * @return String
+	 */
+	private function breakCaptcha2($image, $apikey){
+		$rtimeout = 3;
+		$mtimeout = 20;
+
+		if (!file_exists($image)) return "ERROR_IMG_NOT_FOUND";
+
+		if (function_exists('curl_file_create')) $cFile = curl_file_create($image, mime_content_type($image), 'file');
+		else $cFile = '@' . realpath($image);
+
+		$postdata = array(
+			'method'    => 'post', 
+			'key'       => $apikey, 
+			'file'      => $cFile,
+			'phrase'	=> 0,
+			'regsense'	=> 0,
+			'numeric'	=> 0,
+			'min_len'	=> 0,
+			'max_len'	=> 0,
+			'language'	=> 0
+		);
+
+		// set the file & create the task
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "http://2captcha.com/in.php");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+		$result = curl_exec($ch);
+
+		if (curl_errno($ch)) return false;
+		curl_close($ch);
+
+		if (strpos($result, "ERROR")!==false) return $result;
+		else
+		{
+			$ex = explode("|", $result);
+			$captcha_id = $ex[1];
+			$waittime = 0;
+			sleep($rtimeout);
+			// wait for results
+			while(true)
+			{
+				$result = file_get_contents("http://2captcha.com/res.php?key=".$apikey.'&action=get&id='.$captcha_id);
+				if (strpos($result, 'ERROR')!==false) return $result;
+				else if ($result=="CAPCHA_NOT_READY"){
+					//wait until the API responses
+					$waittime += $rtimeout;
+					if ($waittime>$mtimeout) break;
+					sleep($rtimeout);
+				}
+				else{
+					//if the API responses, return the text of the captcha
+					$ex = explode('|', $result);
+					if (trim($ex[0])=='OK') return trim($ex[1]);
+				}
+			}
+			return false;
+		}
+	}
+
+	/**
 	 * Breaks an image captcha using human labor. Takes ~15sec to return
 	 *
 	 * @author salvipascual
 	 * @param String $image
 	 * @return String
 	 */
-	private function breakCaptcha($image)
+	private function breakCaptcha1($image, $key, $wwwroot)
 	{
-		// get path to root and the key from the configs
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$enable = $di->get('config')['anticaptcha']['enable'];
-		$key = $di->get('config')['anticaptcha']['key'];
-
-		// if anti-captcha is disabled, do not spend money
-		if(empty($enable)) {
-			$ret = new stdClass();
-			$ret->code = "510";
-			$ret->message = "Captcha breaker disabled. Make enable=1 at config.ini";
-			return $ret;
-		}
-
 		// include captcha libs
 		require_once("$wwwroot/lib/anticaptcha-php/anticaptcha.php");
 		require_once("$wwwroot/lib/anticaptcha-php/imagetotext.php");
