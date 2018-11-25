@@ -36,7 +36,7 @@ class Social
 	private static function profileToTextSpanish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
@@ -169,7 +169,7 @@ class Social
 	private static function profileToTextEnglish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
