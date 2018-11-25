@@ -23,9 +23,9 @@ class Response
 	public function __construct()
 	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>"Empty response");
-		$this->images = array();
-		$this->attachments = array();
+		$this->content = ["text"=>"Empty response"];
+		$this->images = [];
+		$this->attachments = [];
 		$this->json = null;
 		$this->internal = true;
 		$this->render = false;
@@ -33,7 +33,7 @@ class Response
 		// get the service that is calling me, if the object was created from inside a service
 		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		$file = isset($trace[0]['file']) ? $trace[0]['file'] : "";
-		if(php::endsWith($file, "/service.php")) $this->service = php::substring($file, "services/", "/service.php");
+		if(php::endsWith($file, "service.php")) $this->service = basename(dirname($file));
 
 		// select the default layout
 		$this->layout = "email_default.tpl";
@@ -110,7 +110,7 @@ class Response
 	public function createFromText($text, $code="OK", $message="")
 	{
 		$this->template = "message.tpl";
-		$this->content = array("code"=>$code, "message"=>$message, "text"=>$text);
+		$this->content = ["code"=>$code, "message"=>$message, "text"=>$text];
 		$this->internal = true;
 		$this->render = true;
 		return $this;
@@ -139,7 +139,7 @@ class Response
 	 * @param String[] $images, paths to the images to embeb
 	 * @param String[] $attachments, paths to the files to attach
 	 */
-	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
+	public function createFromTemplate($template, $content, $images=[], $attachments=[])
 	{
 		if(empty($content['code'])) $content['code'] = "ok"; // for the API
 
