@@ -21,12 +21,12 @@ class AdvertisementController extends Controller
 	{
 		// get list of ads
 		$ads = Connection::query("
-			SELECT id, owner, icon, title, clicks, impressions, inserted, expires, paid 
+			SELECT id, owner, icon, title, clicks, impressions, inserted, expires, paid, active 
 			FROM ads 
-			WHERE active=1
-			AND paid=1
-			AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)
-			ORDER BY inserted DESC");
+			-- WHERE active=1
+			-- AND paid=1
+			-- AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)
+			ORDER BY active DESC, paid, inserted DESC");
 
 		// send values to the view
 		$this->view->title = "List of ads";
