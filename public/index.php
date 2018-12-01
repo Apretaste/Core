@@ -75,11 +75,10 @@ try
 		else return "production";
 	});
 
-	// Set the environment (app | api | email | web | default)
-	$di->set('environment', function () { return "default"; });
-
-	// Set the app version, 0 if no app
-	$di->set('appversion', function () { return ""; });
+	// Set the environment parms
+	$di->set('environment', function () { return ""; }); // web|app|api|mail
+	$di->set('ostype', function () { return ""; }); // android|ios
+	$di->set('appversion', function () { return ""; }); // 0 if no app
 
 	// Set the routes
 	$di->set('router', function () {
