@@ -368,10 +368,10 @@ class RunController extends Controller
 			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		$output = "";
 		$input->nautaPass = $input->nautaPass ? "Yes" : "No";
-		foreach ($input as $key => $value) $output .= "| $key:$value ";
-		return "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject} $output";
+		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
+		foreach ($input as $key => $value) $log .= " | $key:$value";
+		return  $log;
 	}
 
 	/**
