@@ -27,7 +27,11 @@
 						<a class="btn btn-default" target="_blank" href="/run/display?subject=PUBLICIDAD VER <?= $ad->id ?>">View</a>
 						<!-- <a class="btn btn-default" href="/advertisement/report?id=<?= $ad->id ?>">Report</a> -->
 						<a class="btn btn-default" href="/advertisement/update?id=<?= $ad->id ?>">Edit</a>
-						<a class="btn btn-danger" href="/advertisement/delete?id=<?= $ad->id ?>">Stop</a>
+                        <?php if ($ad->active == '1'): ?>
+                            <a class="btn btn-danger" href="/advertisement/delete?id=<?= $ad->id ?>">Stop</a>
+                        <?php else: ?>
+                            <a class="btn btn-default" href="/advertisement/play?id=<?= $ad->id ?>">Play</a>
+                        <?php endif; ?>
 					</td>
 				</tr>
 			<?php } ?>

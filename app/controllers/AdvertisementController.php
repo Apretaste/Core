@@ -85,11 +85,11 @@ class AdvertisementController extends Controller
 		$icon = $this->request->get("icon");
 		$title = $this->request->get("title");
 		$description = $this->request->get("description");
-		$clicks = $this->request->get("clicks");
-		$impressions = $this->request->get("impressions");
+		// $clicks = $this->request->get("clicks");
+		// $impressions = $this->request->get("impressions");
 		$expires = $this->request->get("expires");
-		$inserted = $this->request->get("inserted");
-		$active = $this->request->get("active");
+		// $inserted = $this->request->get("inserted");
+		// $active = $this->request->get("active");
 
 		// prepare values to be saved
 		$title = Connection::escape($title, 40);
@@ -134,6 +134,23 @@ class AdvertisementController extends Controller
 
 		// inactivate ad
 		Connection::query("UPDATE ads SET active=0 WHERE id=$id");
+
+		// redirect to the list of ads
+		$this->response->redirect("/advertisement/index");
+	}
+
+	/**
+	 * Make an ad active
+	 *
+	 * @author kumahacker
+	 */
+	public function playAction()
+	{
+		// get id from the url
+		$id = $this->request->get("id");
+
+		// inactivate ad
+		Connection::query("UPDATE ads SET active=1 WHERE id=$id");
 
 		// redirect to the list of ads
 		$this->response->redirect("/advertisement/index");
