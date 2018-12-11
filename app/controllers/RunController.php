@@ -194,7 +194,7 @@ class RunController extends Controller
 
 		// execute the service as app
 		$this->sendEmails = false;
-		$this->runApp();
+		$log = $this->runApp();
 
 		// get the current execution time
 		$currentTime = new DateTime();
@@ -216,6 +216,12 @@ class RunController extends Controller
 			copy($this->resPath, Utils::getPublicTempDir().basename($this->resPath));
 			$path = Utils::getPublicTempDir('http').basename($this->resPath);
 		}
+
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("Environmet:app | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->close();
 
 		// display ok response
 		echo '{"code":"200", "message":"", "file":"'.$path.'"}';
@@ -290,8 +296,9 @@ class RunController extends Controller
 			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->personId}' AND appname='apretaste'");
 		}
 
-		// make the appversion global
+		// make the app params global
 		$this->di->set('appversion', function() use($input) { return $input->appversion; });
+		$this->di->set('ostype', function() use($input) { return $input->ostype; });
 
 		// update the version of the app used
 		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");
@@ -361,9 +368,11 @@ class RunController extends Controller
 			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		if( ! isset($input->appversion)) $input->appversion = "Unknown";
-		$log = "DeliveryId:{$this->deliveryId}, Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}";
-		return $log;
+		$input->token = "";
+		$input->nautaPass = $input->nautaPass ? "Yes" : "No";
+		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
+		foreach ($input as $key => $value) $log .= " | $key:$value";
+		return  $log;
 	}
 
 	/**
@@ -378,19 +387,14 @@ class RunController extends Controller
 			WHERE id_person={$this->personId} 
 			AND email_subject='{$this->subject}'");
 
-		// if failed email is a Gmail account, make it inactive
-		$gmailMailbox = Connection::query("
-			SELECT delivery_message 
-			FROM delivery 
-			WHERE id_person='{$this->personId}'
-			AND delivery_method='gmail'
-			AND email_subject='{$this->subject}'");
-		$gmailMailbox = empty($gmailMailbox[0]->mailbox) ? "" : $gmailMailbox[0]->mailbox;
-		if($gmailMailbox) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='$gmailMailbox'");
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("Environmet:FAILURE | From:{$this->fromEmail} To:{$this->toEmail} | Subject:{$this->subject}");
+		$logger->close();
 
 		// create entry in the error log
-		$gmailMessage = "Send using Gmail inbox $gmailMailbox";
-		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}. $gmailMessage", "NOTICE");
+		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
 	}
 
 	/**
@@ -522,11 +526,7 @@ class RunController extends Controller
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
 		elseif($environment == "email") $log = $this->runEmail();
-		elseif($environment == "download") {
-			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
-			if( ! $startWithApp) $this->subject = "app";
-			$log = $this->runEmail();
-		} else $log = $this->runSupport();
+		else $log = $this->runSupport();
 
 		// save execution time to the db
 		$currentTime = new DateTime();
@@ -537,7 +537,7 @@ class RunController extends Controller
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->log("Environmet:$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
 		$logger->close();
 	}
 

@@ -93,8 +93,6 @@ class ApiController extends Controller
 
 		$email = trim($this->request->get('email'));
 
-		$utils = new Utils();
-
 		// check if the email is valid
 		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
 			echo '{"code":"error","message":"invalid email"}';
@@ -102,13 +100,13 @@ class ApiController extends Controller
 		}
 
 		// check if the email exist
-		if($utils->personExist($email)) {
+		if(Utils::personExist($email)) {
 			echo '{"code":"error","message":"existing user"}';
 			return false;
 		}
 
 		// create the new profile
-		$username = $utils->usernameFromEmail($email);
+		$username = Utils::usernameFromEmail($email);
 		Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// save the API log
@@ -178,11 +176,10 @@ class ApiController extends Controller
 
 		// if user does not exist, create it
 		$newUser = "false";
-		$utils = new Utils();
-		if( ! $utils->personExist($email))
+		if( ! Utils::personExist($email))
 		{
 			$newUser = "true";
-			$username = $utils->usernameFromEmail($email);
+			$username = Utils::usernameFromEmail($email);
 			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 		}
 
@@ -234,21 +231,19 @@ class ApiController extends Controller
 	 */
 	public function uploadAction()
 	{
-		$utils = new Utils();
-
 		// if there is an error upload the file
 		if ($_FILES['file']['error'] > 0)
 		{
 			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
-			$utils->createAlert($msg);
-			echo '{"code":"error", "message":"'.$msg.'"}';
+			Utils::createAlert($msg);
+			echo json_encode(["code"=>"error", "message"=>$msg]);
 		}
 		// else upload the file and return the path
 		else
 		{
-			$file = $utils->getTempDir() . $_FILES['file']['name'];
+			$file = Utils::getTempDir() . "attach_images/" . $_FILES['file']['name'];
 			move_uploaded_file($_FILES['file']['tmp_name'], $file);
-			echo '{"code":"ok", "message":"'.$file.'"}';
+			echo json_encode(["code"=>"ok", "message"=>$file]);
 		}
 	}
 
@@ -279,8 +274,7 @@ class ApiController extends Controller
 		}
 
 		// check if token exists
-		$utils = new Utils();
-		$email = $utils->detokenize($token);
+		$email = Utils::detokenize($token);
 		if(empty($email)) {
 			echo '{"code":"error","message":"invalid token"}';
 			return false;
@@ -321,8 +315,7 @@ class ApiController extends Controller
 		$appid = Connection::escape($appid);
 
 		// create login token
-		$utils = new Utils();
-		$token = $utils->generateRandomHash();
+		$token = Utils::generateRandomHash();
 
 		// get the person's numeric ID
 		$personId = Utils::personExist($email);

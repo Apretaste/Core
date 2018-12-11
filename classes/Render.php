@@ -75,6 +75,7 @@ class Render
 		$request->lang = $lang;
 		$request->environment = $environment; // web|app|api
 		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
+		$request->ostype = empty($input->ostype) ? "" : $input->ostype; // android|ios
 		$request->apptype = empty($input->apptype) ? "original" : $input->apptype; // original|single
 		$request->appmethod = empty($input->method) ? "email" : $input->method; // email|http
 
@@ -180,6 +181,7 @@ class Render
 			// app only variables
 			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
+			"APP_OS" => empty($service->input->ostype) ? "" : $service->input->ostype, // android|ios
 			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
 			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
 			// user variables
@@ -216,7 +218,7 @@ class Render
 		}
 
 		// optimize images for the app
- 		self::optimizeImages($response, $rendered);
+		self::optimizeImages($response, $rendered, $service);
 
 		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $rendered);
@@ -241,11 +243,13 @@ class Render
 	 * Optimize images of response and associated html
 	 * @param $response
 	 * @param $html
+	 * @param $service
 	 */
-	private static function optimizeImages(&$response, &$html = "")
+	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		$userId = $service->request->userId;
+		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
 		if(empty($res)) $quality = "ORIGINAL";
 		else $quality = $res[0]->img_quality;
 
@@ -256,10 +260,13 @@ class Render
 		if($quality == "SIN_IMAGEN") $response->images = [];
 		else
 		{
+			// get link to the http
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwhttp = $di->get('path')['http'];
-			$format = $di->get('environment') == 'app' ? 'webp' : 'jpg';
-			$quality = $di->get('environment') == 'app' ? 10 : 50;
+
+			// setup params for the app 
+			$format = $service->request->environment=='app' && $service->request->ostype=='android' ? 'webp' : 'jpg';
+			$quality = $service->request->environment=='app' ? 10 : 50;
 
 			// create thumbnails for images
 			$images = [];
@@ -285,9 +292,7 @@ class Render
 					$original = basename($file);
 					$better = basename($better);
 
-					if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
-						stripos($html, "\"$wwwhttp/temp/$original\"") !== false)
-					{
+					if (stripos($html, "'$wwwhttp/temp/$original'") !== false || stripos($html, "\"$wwwhttp/temp/$original\"") !== false) {
 						$wwwroot = $di->get('path')['root'];
 						@copy($thumbnail,"$wwwroot/public/temp/$better");
 					}

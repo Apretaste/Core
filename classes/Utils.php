@@ -375,7 +375,7 @@ class Utils
 	public static function fullNameToNamePieces($name)
 	{
 		$namePieces = explode(" ", $name);
-		$newNamePieces = array();
+		$newNamePieces = [];
 		$tmp = "";
 
 		foreach ($namePieces as $piece)
@@ -763,7 +763,7 @@ class Utils
 		$words = array("abajo","abandonar","abrir","abrir","absoluto","abuelo","acabar","acabar","acaso","accion","aceptar","aceptar","acercar","acompanar","acordar","actitud","actividad","acto","actual","actuar","acudir","acurdo","adelante","ademas","adquirir","advertir","afectar","afirmar","agua","ahora","aire","alcanzar","lcanzar","alejar","aleman","algo","alguien","alguno","algun","alla","alli","alma","alto","altura","amr","ambos","americano","amigo","amor","amplio","anadir","analisis","andar","animal","ante","anterior","antes","antiguo","anunciar","aparecer","aparecer","apenas","aplicar","apoyar","aprender","aprovechar","aquel","aquello","aqui","arbol","arma","arriba","arte","asegurar","asi","aspecto","asunto","atencio","atras","atreverse","aumentar","aunque","autentico","autor","autoridad","avanzar","ayer","ayuda","audar","ayudar","azul","bajar","bajo","barcelona","barrio","base","bastante","bastar","beber","bien","lanco","boca","brazo","buen","buscar","buscar","caballo","caber","cabeza","cabo","cada","cadena","cae","caer","calle","cama","cambiar","cambiar","cambio","caminar","camino","campana","campo","cantar","cntidad","capacidad","capaz","capital","cara","caracter","carne","carrera","carta","casa","casar","cas","caso","catalan","causa","celebrar","celula","central","centro","cerebro","cerrar","ciones","comenzr","como","comprender","conocer","conseguir","considerar","contar","convertir","correr","crear","cree","cumplir","deber","decir","dejar","descubrir","dirigir","empezar","encontrar","entender","entrar","scribir","escuchar","esperar","estar","estudiar","existir","explicar","formar","ganar","gustar","habe","hablar","hacer","intentar","jugar","leer","levantar","llamar","llegar","llevar","lograr","mana","mntener","mirar","nacer","necesitar","ocurrir","ofrecer","paces","pagar","parecer","partir","prtir","pasar","pedir","pensar","perder","permitir","plia","poder","poner","preguntar","presentar","prducir","quedar","querer","racteres","realizar","recibir","reconocer","recordar","resultar","saber","scar","salir","seguir","sentir","servir","suponer","tener","terminar","tocar","tomar","trabajar","trae","tratar","traves","utilizar","venir","vivir","volver");
 
 		// get the sentence
-		$sentence = array();
+		$sentence = [];
 		for ($i=0; $i<$count; $i++)
 		{
 			$pos = rand(1, count($words));
@@ -1120,7 +1120,7 @@ class Utils
 		$original = isset($serv) &&
 					isset($serv->serviceName) &&
 					isset($serv->input->apptype) &&
-					$serv->input->apptype=="original";
+					$serv->input->apptype == "original";
 
 		// get the person object
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
@@ -1181,23 +1181,22 @@ class Utils
 		if (!$original && isset($serv)) {
 			$name = $serv->serviceName;
 			$extraClause="AND (`origin`='$name' OR `origin`='chat') ";
-		}
-		else $extraClause="";
+		} else $extraClause = "";
 
 		$res->notifications = Connection::query("
-		SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
-		FROM notifications
-		WHERE id_person=$person->id AND viewed = 0 $extraClause
-		ORDER BY inserted_date DESC");
+			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
+			FROM notifications
+			WHERE id_person=$person->id AND viewed = 0 $extraClause
+			ORDER BY inserted_date DESC");
 
 		// mark notifications as read
-		if($res->notifications) Connection::query("
-		UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
-		WHERE id_person=$person->id AND viewed = 0 $extraClause");
+		if($res->notifications && $original) Connection::query("
+			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
+			WHERE id_person=$person->id AND viewed = 0 $extraClause");
 
 		if ($original) {
 			// get list of active services
-			$res->active = array();
+			$res->active = [];
 			$active = Connection::query("SELECT name FROM service WHERE listed=1");
 			foreach ($active as $a) $res->active[] = $a->name;
 
@@ -1217,7 +1216,7 @@ class Utils
 				WHERE $listed AND insertion_date > '$lastUpdateDate'");
 
 			// add services to the response
-			$res->services = array();
+			$res->services = [];
 			foreach ($services as $s) {
 				// attach user picture if exist
 				$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";

@@ -192,7 +192,9 @@
 
 				if(type=='file') {
 					var id = $(this).attr('id');
-					value = apretaste.uploadFile(id);
+					apretaste.uploadFile(id);
+					modalClose('modalRequestMoreData');
+					toSend = false;
 				}
 
 				if(type=='checkbox') value="";
@@ -209,26 +211,30 @@
 		},
 
 		uploadFile: function(id) {
+			modalOpen('modalRequestSent');
+
 			apretaste.wait = false;
 			var file = $('#'+id).prop("files")[0];
 			var form = new FormData();
 			form.append("file", file);
 
-			var ret = "";
 			$.ajax({
 				url:'/api/upload',
 				dataType:'json',
 				cache:false,
 				contentType:false,
 				processData:false,
-				async:false,
 				data: form,
 				type: 'post',
 				success: function(data) {
-					if(data.code=='ok') ret = data.message;
+					if(data.code != 'ok') return false;
+					apretaste.url += " " + data.message;
+					apretaste.send([data.message]);
+				},
+				error: function(jqXHR, str) {
+					console.log(str);
 				}
 			});
-			return ret;
 		},
 
 		send: function(values=[]) {

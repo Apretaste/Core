@@ -36,7 +36,7 @@ class Social
 	private static function profileToTextSpanish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
@@ -169,7 +169,7 @@ class Social
 	private static function profileToTextEnglish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
@@ -329,7 +329,7 @@ class Social
 		if( ! in_array($lang, ["en","es"])) $lang = "es";
 
 		// get the person's age
-		$profile->age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$profile->age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// try to guest the location based on the domain
 		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
