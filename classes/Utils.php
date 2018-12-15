@@ -29,9 +29,7 @@ class Utils
 
 		// add alias to the email
 		$name = $node[0]->email;
-		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
-		if(empty($seed)) $seed = Utils::randomSentence(1);
-		return "$name+$seed@gmail.com";
+		return "$name@gmail.com";
 	}
 
 	/**
@@ -52,9 +50,7 @@ class Utils
 		if(empty($support)) self::createAlert("No support email in table delivery_input", "ERROR");
 		else $support = $support[0]->email;
 
-		// add alias to the email
-		$seed = Utils::randomSentence(1);
-		return "$support+$seed@gmail.com";
+		return "$support@gmail.com";
 	}
 
 	/**
@@ -69,7 +65,7 @@ class Utils
 		$person = self::getPerson($email);
 
 		if(empty($person)) return self::getValidEmailAddress();
-		else return "apretaste+{$person->username}@gmail.com";
+		else return "apretaste@gmail.com";
 	}
 
 	/**
@@ -1139,7 +1135,7 @@ class Utils
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$res->mailbox = "$inbox+{$person->username}@gmail.com";
+		$res->mailbox = "$inbox@gmail.com";
 
 		// check if there is any change in the profile
 		$attachments = [];
