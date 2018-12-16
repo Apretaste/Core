@@ -1113,10 +1113,14 @@ class Utils
 		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
+		$input = isset($serv) && isset($serv->input)?$serv->input:false;
+
 		$original = isset($serv) &&
 					isset($serv->serviceName) &&
 					isset($serv->input->apptype) &&
 					$serv->input->apptype == "original";
+
+		$version4 = $input && isset($input->appversion) && $input->appversion>=4;
 
 		// get the person object
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
@@ -1145,7 +1149,7 @@ class Utils
 			$social = new Social();
 			$person = $social->prepareUserProfile($person);
 
-			if($original){
+			if($original && !$version4){
 				$res->profile = new stdClass();
 
 				// add user profile to the response
@@ -1174,21 +1178,27 @@ class Utils
 		}
 
 		// get unread notifications, by service if app only for one service
+		$notificationsClause = "id_person=$person->id";
+		$notificationsClause .= $version4?" AND `send` = 0":" AND viewed = 0";
+
 		if (!$original && isset($serv)) {
 			$name = $serv->serviceName;
-			$extraClause="AND (`origin`='$name' OR `origin`='chat') ";
-		} else $extraClause = "";
+			$notificationsClause .= " AND (`origin`='$name' OR `origin`='chat') ";
+		}
+
+		$orderBy = $version4?"":"ORDER BY inserted_date DESC";
 
 		$res->notifications = Connection::query("
 			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
 			FROM notifications
-			WHERE id_person=$person->id AND viewed = 0 $extraClause
+			WHERE $notificationsClause
 			ORDER BY inserted_date DESC");
 
 		// mark notifications as read
+		$updateClause = $version4?"send=1":"viewed=1, viewed_date=CURRENT_TIMESTAMP";
 		if($res->notifications && $original) Connection::query("
-			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
-			WHERE id_person=$person->id AND viewed = 0 $extraClause");
+			UPDATE notifications SET $updateClause
+			WHERE $notificationsClause");
 
 		if ($original) {
 			// get list of active services
@@ -1245,8 +1255,10 @@ class Utils
 		}
 
 		// get a random input domain
-		$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
-		$res->domain = $domain[0]->email;
+		if(!$version4){
+			$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
+			$res->domain = $domain[0]->email;
+		}
 
 		// calculate profile completion
 		$res->profile_completion = Social::getProfileCompletion($person);
