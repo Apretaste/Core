@@ -9,10 +9,9 @@ class Utils
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
-	 * @param String $seed, text to create the email
 	 * @return String, email address
 	 */
-	public static function getValidEmailAddress($seed="")
+	public static function getValidEmailAddress()
 	{
 		// get the current environment
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
