@@ -9,10 +9,9 @@ class Utils
 	 * Returns a valid Apretaste email to send an email
 	 *
 	 * @author salvipascual
-	 * @param String $seed, text to create the email
 	 * @return String, email address
 	 */
-	public static function getValidEmailAddress($seed="")
+	public static function getValidEmailAddress()
 	{
 		// get the current environment
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -29,9 +28,7 @@ class Utils
 
 		// add alias to the email
 		$name = $node[0]->email;
-		$seed = preg_replace("/[^a-zA-Z0-9]+/", '', $seed);
-		if(empty($seed)) $seed = Utils::randomSentence(1);
-		return "$name+$seed@gmail.com";
+		return "$name@gmail.com";
 	}
 
 	/**
@@ -52,9 +49,7 @@ class Utils
 		if(empty($support)) self::createAlert("No support email in table delivery_input", "ERROR");
 		else $support = $support[0]->email;
 
-		// add alias to the email
-		$seed = Utils::randomSentence(1);
-		return "$support+$seed@gmail.com";
+		return "$support@gmail.com";
 	}
 
 	/**
@@ -69,7 +64,7 @@ class Utils
 		$person = self::getPerson($email);
 
 		if(empty($person)) return self::getValidEmailAddress();
-		else return "apretaste+{$person->username}@gmail.com";
+		else return "apretaste@gmail.com";
 	}
 
 	/**
@@ -1117,10 +1112,14 @@ class Utils
 		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
 		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
 
+		$input = isset($serv) && isset($serv->input)?$serv->input:false;
+
 		$original = isset($serv) &&
 					isset($serv->serviceName) &&
 					isset($serv->input->apptype) &&
 					$serv->input->apptype == "original";
+
+		$version4 = $input && isset($input->appversion) && $input->appversion>=4;
 
 		// get the person object
 		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
@@ -1139,7 +1138,7 @@ class Utils
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$res->mailbox = "$inbox+{$person->username}@gmail.com";
+		$res->mailbox = "$inbox@gmail.com";
 
 		// check if there is any change in the profile
 		$attachments = [];
@@ -1149,7 +1148,7 @@ class Utils
 			$social = new Social();
 			$person = $social->prepareUserProfile($person);
 
-			if($original){
+			if($original && !$version4){
 				$res->profile = new stdClass();
 
 				// add user profile to the response
@@ -1178,21 +1177,27 @@ class Utils
 		}
 
 		// get unread notifications, by service if app only for one service
+		$notificationsClause = "id_person=$person->id";
+		$notificationsClause .= $version4?" AND `send` = 0":" AND viewed = 0";
+
 		if (!$original && isset($serv)) {
 			$name = $serv->serviceName;
-			$extraClause="AND (`origin`='$name' OR `origin`='chat') ";
-		} else $extraClause = "";
+			$notificationsClause .= " AND (`origin`='$name' OR `origin`='chat') ";
+		}
+
+		$orderBy = $version4?"":"ORDER BY inserted_date DESC";
 
 		$res->notifications = Connection::query("
 			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
 			FROM notifications
-			WHERE id_person=$person->id AND viewed = 0 $extraClause
+			WHERE $notificationsClause
 			ORDER BY inserted_date DESC");
 
 		// mark notifications as read
+		$updateClause = $version4?"send=1":"viewed=1, viewed_date=CURRENT_TIMESTAMP";
 		if($res->notifications && $original) Connection::query("
-			UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP
-			WHERE id_person=$person->id AND viewed = 0 $extraClause");
+			UPDATE notifications SET $updateClause
+			WHERE $notificationsClause");
 
 		if ($original) {
 			// get list of active services
@@ -1249,8 +1254,10 @@ class Utils
 		}
 
 		// get a random input domain
-		$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
-		$res->domain = $domain[0]->email;
+		if(!$version4){
+			$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
+			$res->domain = $domain[0]->email;
+		}
 
 		// calculate profile completion
 		$res->profile_completion = Social::getProfileCompletion($person);

@@ -164,7 +164,7 @@ class Render
 		$username = isset($person->username) ? "@{$person->username}" : "";
 
 		// get a valid email address
-		$validEmailAddress = Utils::getValidEmailAddress($username);
+		$validEmailAddress = Utils::getValidEmailAddress();
 
 		// list the system variables
 		$systemVariables = [
@@ -248,6 +248,8 @@ class Render
 	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
+		if($service->request->appmethod=="http") return false; //original img for http connections
+
 		$userId = $service->request->userId;
 		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
 		if(empty($res)) $quality = "ORIGINAL";
@@ -264,7 +266,7 @@ class Render
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwhttp = $di->get('path')['http'];
 
-			// setup params for the app 
+			// setup params for the app
 			$format = $service->request->environment=='app' && $service->request->ostype=='android' ? 'webp' : 'jpg';
 			$quality = $service->request->environment=='app' ? 10 : 50;
 
@@ -356,7 +358,7 @@ class Render
 			// get a random add
 			$ad = Connection::query("
 				SELECT id, icon, title
-				FROM ads 
+				FROM ads
 				WHERE active=1
 				AND paid=1
 				AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)
