@@ -1145,9 +1145,8 @@ class Utils
 		if($lastUpdateTime < strtotime($person->last_update_date))
 		{
 			// get the full profile
-			$social = new Social();
-			$person = $social->prepareUserProfile($person);
-
+			$person = Social::prepareUserProfile($person);
+			
 			if($original && !$version4){
 				$res->profile = new stdClass();
 
@@ -1174,6 +1173,11 @@ class Utils
 
 			// attach user picture if exist
 			if($person->picture_internal) $attachments[] = $person->picture_internal;
+		}
+
+		if($version4 && !isset($res->picture)) {
+			$person = Social::prepareUserProfile($person);
+			$res->picture = basename($person->picture_internal);
 		}
 
 		// get unread notifications, by service if app only for one service
