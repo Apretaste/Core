@@ -805,4 +805,23 @@ class SurveyController extends Controller
 
 		return $exclude;
 	}
+
+	public function surveyAudienceAction()
+	{
+		// getting ad's id
+		// @TODO: improve this!
+		$id = intval($_GET['id']);
+
+		$result = Connection::query("SELECT COUNT(id) AS total FROM _survey_answer_choosen WHERE survey =  $id;");
+		$this->view->total_answer = $result[0]->total;
+
+		$this->view->participants = Connection::query("SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` 
+			WHERE survey = $id GROUP BY email HAVING total = {$this->view->total_answer}");
+
+		$this->view->gender = Connection::query("SELECT gender, COUNT(gender) AS total
+		FROM person 
+		WHERE email IN ('".implode(',', $this->view->participants)."')
+		GROUP BY gender");
+
+	}
 }
