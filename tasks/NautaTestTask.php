@@ -7,6 +7,14 @@ class NautaTestTask extends \Phalcon\Cli\Task
 
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 
+		$di->set('path', function () {
+			return array(
+				"root" => "/var/www/Core/",
+				"http" => "https://apretaste.com"
+			);
+		});
+
+
 		echo "NautaClient CLI test\n";
 
 		$user = $this->input('User');
