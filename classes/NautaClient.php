@@ -104,7 +104,7 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($this->client, CURLOPT_TIMEOUT, 30);
 		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile);
-		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile);
+		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile.$this->currentIp);
 
 		// add default headers
 		$this->setHttpHeaders();
