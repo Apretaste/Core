@@ -356,7 +356,7 @@ class NautaClient
 	{
 		$this->loadSession();
 		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
-		$url = "http://webmail.nauta.cu/";
+		$url = "http://webmail.nauta.cu/imp/basic.php?page=compose";
 		/*
 		$params = [
 			'view' => 'SU5CT1g',
@@ -375,6 +375,7 @@ class NautaClient
 		//curl_setopt($this->client, CURLOPT_POST, true);
 		//curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 
 		for($i =0; $i<3; $i++)
 		{
@@ -392,7 +393,7 @@ class NautaClient
 		//$output = json_decode($output);
 		//return stripos($output->response,'"tasks":') !== false;
 
-		return stripos($result, '<form id="imp-compose-form"') !== false;
+		return stripos($result, '<form name="horde_login"') === false;
 
 		/*curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
 			'token' => $this->mobileToken
