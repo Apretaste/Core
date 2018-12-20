@@ -94,7 +94,7 @@ class NautaClient
 		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
 		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}.cookie";
 
-		$this->loadSession();
+		//$this->loadSession();
 
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
@@ -108,13 +108,6 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
-
-		// get IP
-		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
-		$ip = ".".trim(curl_exec($this->client));
-		if ($ip == '.') $ip = '.unknown';
-		rename($this->cookieFile.$this->currentIp, $this->cookieFile.$ip);
-		$this->currentIp = $ip;
 
 		//$this->detectUriGame();
 	}
@@ -262,6 +255,13 @@ class NautaClient
 				if ($img !== false) break;
 			}
 		}
+
+		// get IP
+		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
+		$ip = ".".trim(curl_exec($this->client));
+		if ($ip == '.') $ip = '.unknown';
+		rename($this->cookieFile.'.unknown', $this->cookieFile.$ip);
+		$this->currentIp = $ip;
 
 		$captchaText = '';
 
