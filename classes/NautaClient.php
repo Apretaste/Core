@@ -21,7 +21,6 @@ class NautaClient
 	private $composeToken = "";
 	private $captchaText = "";
 	private $mobileToken = "";
-	private $proxyHost = null;
 
 	public function show() {
 		echo "USER: {$this->user}<br/>";
@@ -67,6 +66,8 @@ class NautaClient
 
 	private $currentUriGame = 0;
 
+	private $currentIp = '.unknown';
+
 	/**
 	 * NautaClient constructor.
 	 *
@@ -90,10 +91,8 @@ class NautaClient
 		}
 
 		// save cookie file
-		$proxyHost = '';
-		if ( ! is_null($this->proxyHost)) $proxyHost = ".{$this->proxyHost}";
-		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.session";
-		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.cookie";
+		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
+		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}.cookie";
 
 		$this->loadSession();
 
@@ -255,6 +254,11 @@ class NautaClient
 				if ($img !== false) break;
 			}
 		}
+
+		// get IP
+		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
+		$this->currentIp = ".".trim(curl_exec($this->client));
+		if ($this->currentIp == '.') $this->currentIp = '.unknown';
 
 		$captchaText = '';
 
@@ -422,7 +426,7 @@ class NautaClient
 			'mobileToken' => $this->mobileToken
 		];
 
-		file_put_contents($this->sessionFile, serialize($sessionData));
+		file_put_contents($this->sessionFile.$this->currentIp, serialize($sessionData));
 	}
 
 	/**
@@ -432,9 +436,9 @@ class NautaClient
 	 */
 	public function loadSession()
 	{
-		if ( ! file_exists($this->sessionFile)) $this->saveSession();
+		if ( ! file_exists($this->sessionFile.$this->currentIp)) $this->saveSession();
 
-		$sessionData = unserialize(file_get_contents($this->sessionFile));
+		$sessionData = unserialize(file_get_contents($this->sessionFile.$this->currentIp));
 
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
