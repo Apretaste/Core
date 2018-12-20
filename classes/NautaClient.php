@@ -108,6 +108,14 @@ class NautaClient
 
 		// add default headers
 		$this->setHttpHeaders();
+
+		// get IP
+		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
+		$ip = ".".trim(curl_exec($this->client));
+		if ($ip == '.') $ip = '.unknown';
+		rename($this->cookieFile.$this->currentIp, $this->cookieFile.$ip);
+		$this->currentIp = $ip;
+
 		//$this->detectUriGame();
 	}
 
@@ -254,11 +262,6 @@ class NautaClient
 				if ($img !== false) break;
 			}
 		}
-
-		// get IP
-		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
-		$this->currentIp = ".".trim(curl_exec($this->client));
-		if ($this->currentIp == '.') $this->currentIp = '.unknown';
 
 		$captchaText = '';
 
