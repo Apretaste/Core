@@ -103,8 +103,6 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_SSL_VERIFYHOST, 0);
 		curl_setopt($this->client, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($this->client, CURLOPT_TIMEOUT, 30);
-		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile.$this->currentIp);
-		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile.$this->currentIp);
 
 		// add default headers
 		$this->setHttpHeaders();
@@ -256,12 +254,6 @@ class NautaClient
 			}
 		}
 
-		// get IP
-		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
-		$ip = ".".trim(curl_exec($this->client));
-		if ($ip == '.') $ip = '.unknown';
-		$this->currentIp = $ip;
-
 		$captchaText = '';
 
 		if ($img !== false) {
@@ -361,6 +353,7 @@ class NautaClient
 	public function checkLogin()
 	{
 		$this->loadSession();
+
 		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
 		$url = "http://webmail.nauta.cu/imp/basic.php?page=compose";
 		/*
@@ -429,9 +422,6 @@ class NautaClient
 		];
 
 		file_put_contents($this->sessionFile.$this->currentIp, serialize($sessionData));
-
-		if (file_exists($this->cookieFile.'.unknown'))
-			rename($this->cookieFile.'.unknown', $this->cookieFile.$this->currentIp);
 	}
 
 	/**
@@ -441,6 +431,12 @@ class NautaClient
 	 */
 	public function loadSession()
 	{
+		// get current IP
+		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
+		$ip = ".".trim(curl_exec($this->client));
+		if ($ip == '.') $ip = '.unknown';
+		$this->currentIp = $ip;
+
 		if ( ! file_exists($this->sessionFile.$this->currentIp)) $this->saveSession();
 
 		$sessionData = unserialize(file_get_contents($this->sessionFile.$this->currentIp));
@@ -448,6 +444,9 @@ class NautaClient
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
 		if (isset($sessionData['mobileToken'])) $this->mobileToken = $sessionData['mobileToken'];
+
+		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile.$this->currentIp);
+		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile.$this->currentIp);
 
 		return $sessionData;
 	}
