@@ -260,7 +260,6 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
 		$ip = ".".trim(curl_exec($this->client));
 		if ($ip == '.') $ip = '.unknown';
-		rename($this->cookieFile.'.unknown', $this->cookieFile.$ip);
 		$this->currentIp = $ip;
 
 		$captchaText = '';
@@ -430,6 +429,9 @@ class NautaClient
 		];
 
 		file_put_contents($this->sessionFile.$this->currentIp, serialize($sessionData));
+
+		if (file_exists($this->cookieFile.'.unknown'))
+			rename($this->cookieFile.'.unknown', $this->cookieFile.$this->currentIp);
 	}
 
 	/**
