@@ -67,6 +67,7 @@ class NautaClient
 	private $currentUriGame = 0;
 
 	private $currentIp = '.unknown';
+	private $logger = null;
 
 	/**
 	 * NautaClient constructor.
@@ -77,6 +78,10 @@ class NautaClient
 	 */
 	public function __construct($user=null, $pass=null, $proxy=false)
 	{
+    $di = \Phalcon\DI\FactoryDefault::getDefault();
+    $wwwroot = $di->get('path')['root'];
+	  $this->logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/nautaclient.log");
+
 		// save global user/pass
 		$this->user = $user;
 		$this->pass = $pass;
@@ -323,26 +328,37 @@ class NautaClient
 		$response = false;
 		for($i =0; $i<3; $i++)
 		{
+      //$this->logger->log("Login for {$this->user}...attempt $i");
 			$response = curl_exec($this->client);
 			if ($response !== false) break;
 		}
 
-		if ($response === false) return false;
+		if ($response === false)
+		{
+      $this->logger->log("Curl fail while login {$this->user} ...");
+		  return false;
+    }
 
 		if (stripos($response, 'digo de verificaci') !== false &&
 			stripos($response, 'n incorrecto') !== false)
-			return false;
+    {
+      $this->logger->log("Invalid captcha code for {$this->user} ...");
+      return false;
+    }
 
 		if (stripos($response, 'Login failed') !== false &&
 			stripos($response, '<ul class="notices">') !== false)
-			return false;
+    {
+      $this->logger->log("Login failed for {$this->user} ...");
+      return false;
+    }
 
 		// get tokens
 		$this->mobileToken  = php::substring($response, '"token":"', '"}');
 		$this->logoutToken  = php::substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = php::substring($response, 'u=', '">New');
 		$this->captchaText = $captchaText;
-
+    //$this->logger->log("Login success for {$this->user}");
 		$this->saveSession();
 		return true;
 	}
@@ -355,6 +371,7 @@ class NautaClient
 	 */
 	public function checkLogin()
 	{
+	  $this->logger->log("Checking login for {$this->user}...");
 		$this->loadSession();
 
 		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
@@ -465,6 +482,8 @@ class NautaClient
 	 */
 	public function send($to, $subject, $body, $attachment=false)
 	{
+    $this->logger->log("Sending from {$this->user} to {$to} subject = $subject ...");
+
 		// attaching file if exist
 		$composeCache = "";
 		$composeHmac = "";
@@ -705,4 +724,8 @@ class NautaClient
 		$ret->message = $api->getTaskSolution();
 		return $ret;
 	}
+
+	public function __destruct() {
+    $this->logger->close();
+  }
 }
