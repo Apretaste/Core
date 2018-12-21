@@ -66,7 +66,7 @@ class NautaClient
 
 	private $currentUriGame = 0;
 
-	private $currentIp = '.unknown';
+	private $currentIp = ''; //'.unknown';
 	private $logger = null;
 
 	/**
