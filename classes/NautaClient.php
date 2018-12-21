@@ -21,7 +21,6 @@ class NautaClient
 	private $composeToken = "";
 	private $captchaText = "";
 	private $mobileToken = "";
-	private $proxyHost = null;
 
 	public function show() {
 		echo "USER: {$this->user}<br/>";
@@ -67,6 +66,9 @@ class NautaClient
 
 	private $currentUriGame = 0;
 
+	private $currentIp = ''; //'.unknown';
+	private $logger = null;
+
 	/**
 	 * NautaClient constructor.
 	 *
@@ -76,6 +78,10 @@ class NautaClient
 	 */
 	public function __construct($user=null, $pass=null, $proxy=false)
 	{
+    $di = \Phalcon\DI\FactoryDefault::getDefault();
+    $wwwroot = $di->get('path')['root'];
+	  $this->logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/nautaclient.log");
+
 		// save global user/pass
 		$this->user = $user;
 		$this->pass = $pass;
@@ -85,17 +91,18 @@ class NautaClient
 
 		// set proxy if passed
 		if($proxy) {
-			curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
-			curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+			/*curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
+			curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);*/
+
+      curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
+      curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
 		}
 
 		// save cookie file
-		$proxyHost = '';
-		if ( ! is_null($this->proxyHost)) $proxyHost = ".{$this->proxyHost}";
-		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.session";
-		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}$proxyHost.cookie";
+		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
+		$this->cookieFile = Utils::getTempDir() . "nautaclient/{$this->user}.cookie";
 
-		$this->loadSession();
+		//$this->loadSession();
 
 		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
@@ -104,11 +111,10 @@ class NautaClient
 		curl_setopt($this->client, CURLOPT_SSL_VERIFYHOST, 0);
 		curl_setopt($this->client, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($this->client, CURLOPT_TIMEOUT, 30);
-		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile);
-		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile);
 
 		// add default headers
 		$this->setHttpHeaders();
+
 		//$this->detectUriGame();
 	}
 
@@ -322,26 +328,37 @@ class NautaClient
 		$response = false;
 		for($i =0; $i<3; $i++)
 		{
+      //$this->logger->log("Login for {$this->user}...attempt $i");
 			$response = curl_exec($this->client);
 			if ($response !== false) break;
 		}
 
-		if ($response === false) return false;
+		if ($response === false)
+		{
+      $this->logger->log("Curl fail while login {$this->user} ...");
+		  return false;
+    }
 
 		if (stripos($response, 'digo de verificaci') !== false &&
 			stripos($response, 'n incorrecto') !== false)
-			return false;
+    {
+      $this->logger->log("Invalid captcha code for {$this->user} ...");
+      return false;
+    }
 
 		if (stripos($response, 'Login failed') !== false &&
 			stripos($response, '<ul class="notices">') !== false)
-			return false;
+    {
+      $this->logger->log("Login failed for {$this->user} ...");
+      return false;
+    }
 
 		// get tokens
 		$this->mobileToken  = php::substring($response, '"token":"', '"}');
 		$this->logoutToken  = php::substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = php::substring($response, 'u=', '">New');
 		$this->captchaText = $captchaText;
-
+    //$this->logger->log("Login success for {$this->user}");
 		$this->saveSession();
 		return true;
 	}
@@ -354,9 +371,11 @@ class NautaClient
 	 */
 	public function checkLogin()
 	{
+	  $this->logger->log("Checking login for {$this->user}...");
 		$this->loadSession();
+
 		//$url = "http://webmail.nauta.cu/services/ajax.php/imp/viewport";
-		$url = "http://webmail.nauta.cu/";
+		$url = "http://webmail.nauta.cu/imp/basic.php?page=compose";
 		/*
 		$params = [
 			'view' => 'SU5CT1g',
@@ -375,6 +394,7 @@ class NautaClient
 		//curl_setopt($this->client, CURLOPT_POST, true);
 		//curl_setopt($this->client, CURLOPT_POSTFIELDS, $params);
 		curl_setopt($this->client, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($this->client, CURLOPT_FOLLOWLOCATION, 1);
 
 		for($i =0; $i<3; $i++)
 		{
@@ -392,7 +412,7 @@ class NautaClient
 		//$output = json_decode($output);
 		//return stripos($output->response,'"tasks":') !== false;
 
-		return stripos($result, '<form id="imp-compose-form"') !== false;
+		return stripos($result, '<form name="horde_login"') === false;
 
 		/*curl_setopt($this->client, CURLOPT_URL, $this->getComposeUrl([
 			'token' => $this->mobileToken
@@ -421,7 +441,7 @@ class NautaClient
 			'mobileToken' => $this->mobileToken
 		];
 
-		file_put_contents($this->sessionFile, serialize($sessionData));
+		file_put_contents($this->sessionFile.$this->currentIp, serialize($sessionData));
 	}
 
 	/**
@@ -431,13 +451,22 @@ class NautaClient
 	 */
 	public function loadSession()
 	{
-		if ( ! file_exists($this->sessionFile)) $this->saveSession();
+		// get current IP
+		/*curl_setopt($this->client, CURLOPT_URL, 'https://ipecho.net/plain');
+		$ip = ".".trim(curl_exec($this->client));
+		if ($ip == '.') $ip = '.unknown';
+		$this->currentIp = $ip;*/
 
-		$sessionData = unserialize(file_get_contents($this->sessionFile));
+		if ( ! file_exists($this->sessionFile.$this->currentIp)) $this->saveSession();
+
+		$sessionData = unserialize(file_get_contents($this->sessionFile.$this->currentIp));
 
 		$this->logoutToken = $sessionData['logoutToken'];
 		$this->composeToken = $sessionData['composeToken'];
 		if (isset($sessionData['mobileToken'])) $this->mobileToken = $sessionData['mobileToken'];
+
+		curl_setopt($this->client, CURLOPT_COOKIEJAR, $this->cookieFile.$this->currentIp);
+		curl_setopt($this->client, CURLOPT_COOKIEFILE, $this->cookieFile.$this->currentIp);
 
 		return $sessionData;
 	}
@@ -453,6 +482,8 @@ class NautaClient
 	 */
 	public function send($to, $subject, $body, $attachment=false)
 	{
+    $this->logger->log("Sending from {$this->user} to {$to} subject = $subject ...");
+
 		// attaching file if exist
 		$composeCache = "";
 		$composeHmac = "";
@@ -693,4 +724,8 @@ class NautaClient
 		$ret->message = $api->getTaskSolution();
 		return $ret;
 	}
+
+	public function __destruct() {
+    $this->logger->close();
+  }
 }

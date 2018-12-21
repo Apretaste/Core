@@ -201,7 +201,7 @@ class Email
 		$this->method = "hillary";
 
 		// borrow a random Nauta account
-		$auth = Connection::query("
+	/*	$auth = Connection::query("
 			SELECT B.email, A.pass
 			FROM authentication A JOIN person B
 			ON A.person_id = B.id
@@ -210,7 +210,16 @@ class Email
 			AND B.email LIKE '%nauta.cu'
 			AND A.appname = 'apretaste'
 			AND A.pass IS NOT NULL AND A.pass <> ''
-			ORDER BY RAND() LIMIT 1")[0];
+			ORDER BY RAND() LIMIT 1")[0];*/
+
+    $auth = Connection::query("
+			SELECT B.email, A.pass
+			FROM authentication A JOIN person B
+			ON A.person_id = B.id
+			WHERE B.email = '{$this->to}'
+			AND A.appname = 'apretaste'
+			AND A.pass IS NOT NULL AND A.pass <> ''
+			LIMIT 1")[0];
 
 		// get user and pass decrypted
 		$user = explode("@", $auth->email)[0];
