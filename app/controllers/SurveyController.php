@@ -1,8 +1,6 @@
 <?php
 
 use Phalcon\Mvc\Controller;
-/*use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;*/
 
 class SurveyController extends Controller
 {
@@ -26,7 +24,7 @@ class SurveyController extends Controller
 	 */
 	public function surveysAction()
 	{
-		$this->view->message = false;
+		$this->view->setVar('message', false);
 		$option = $this->request->get('option');
 		$sql = false;
 
@@ -38,7 +36,7 @@ class SurveyController extends Controller
 				$title = $this->request->getPost("surveyTitle");
 				$deadline = $this->request->getPost("surveyDeadline");
 				$sql = "INSERT INTO _survey (customer, title, deadline, details) VALUES ('$customer', '$title', '$deadline', ''); ";
-				$this->view->message = 'The survey was inserted successfull';
+				$this->view->setVar('message', 'The survey was inserted successfull');
 				break;
 
 			case 'setSurvey':
@@ -47,7 +45,7 @@ class SurveyController extends Controller
 				$deadline = $this->request->getPost("surveyDeadline");
 				$id = $this->request->get('id');
 				$sql = "UPDATE _survey SET customer = '$customer', title = '$title', deadline = '$deadline' WHERE id = '$id'; ";
-				$this->view->message = 'The survey was updated successfull';
+				$this->view->setVar('message', 'The survey was updated successfull');
 				break;
 
 			case "delSurvey":
@@ -57,7 +55,7 @@ class SurveyController extends Controller
 						DELETE FROM _survey_question WHERE survey = '$id';
 						DELETE FROM _survey WHERE id = '$id';
 						COMMIT;";
-				$this->view->message = 'The survey was deleted successfully';
+				$this->view->setVar('message', 'The survey was deleted successfully');
 				break;
 
 			case "disable":
@@ -78,8 +76,8 @@ class SurveyController extends Controller
 		$surveys = Connection::query("SELECT * FROM _survey ORDER BY ID");
 
 		// send variables to the view
-		$this->view->title = "List of surveys (".count($surveys).")";
-		$this->view->surveys = $surveys;
+		$this->view->setVar('title', "List of surveys (".count($surveys).")");
+		$this->view->setVar('surveys', $surveys);
 	}
 
 	/**
@@ -89,9 +87,9 @@ class SurveyController extends Controller
 	 */
 	public function surveyQuestionsAction()
 	{
-		$this->view->message = false;
-		$this->view->message_type = 'success';
-		$this->view->buttons = [["caption"=>"Back", "href"=>"/survey/surveys"]];
+		$this->view->setVar('message', false);
+		$this->view->setVar('message_type', 'success');
+		$this->view->setVar('buttons', [["caption"=>"Back", "href"=>"/survey/surveys"]]);
 
 		$option = $this->request->get('option');
 		$sql = false;
@@ -102,7 +100,7 @@ class SurveyController extends Controller
 					$survey = $this->request->getPost('survey');
 					$title = $this->request->getPost('surveyQuestionTitle');
 					$sql ="INSERT INTO _survey_question (survey, title) VALUES ('$survey','$title');";
-					$this->view->message = "Question <b>$title</b> was inserted successfull";
+					$this->view->setVar('message', "Question <b>$title</b> was inserted successfull");
 				break;
 				case "setQuestion":
 					$question_id = $this->request->get('id');
@@ -412,12 +410,10 @@ class SurveyController extends Controller
 	public function surveyResultsCSVAction()
 	{
 		// getting ad's id
-		// @TODO: improve this!
 		$id =  intval($_GET['id']);
-		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;");
-		$survey = $survey[0];
+		$survey = Connection::query("SELECT * FROM _survey WHERE id = $id;")[0];
 		$results = $this->getSurveyResults($id);
-		$csv = array();
+		$csv = [];
 
 		$csv[0][0] = $survey->title;
 		$csv[1][0] = "";
@@ -806,22 +802,55 @@ class SurveyController extends Controller
 		return $exclude;
 	}
 
-	public function surveyAudienceAction()
+	public function audienceAction()
 	{
-		// getting ad's id
-		// @TODO: improve this!
+    $q = function($query) {return Connection::query($query);};
+
 		$id = intval($_GET['id']);
+    $participants_table = uniqid('_survey_participants_');
 
-		$result = Connection::query("SELECT COUNT(id) AS total FROM _survey_answer_choosen WHERE survey =  $id;");
-		$this->view->total_answer = $result[0]->total;
+		$total_answer = $q("SELECT COUNT(id) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total;
 
-		$this->view->participants = Connection::query("SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` 
-			WHERE survey = $id GROUP BY email HAVING total = {$this->view->total_answer}");
+    $q("CREATE TABLE $participants_table (email varchar(255), total bigint(11));");
+    $q("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_answer};");
 
-		$this->view->gender = Connection::query("SELECT gender, COUNT(gender) AS total
-		FROM person 
-		WHERE email IN ('".implode(',', $this->view->participants)."')
-		GROUP BY gender");
+		$results = function($fields) {
+      global $q, $participants_table;
 
+		  if (!is_array($fields)) $fields = [$fields => 'true'];
+
+		  $sql = [];
+		  foreach($fields as $field => $where)
+      {
+        $sql[] =
+         "SELECT $field, COUNT(id) AS total
+          FROM ( 
+            SELECT *, TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) as age 
+            FROM person
+            WHERE updated_by_user = 1 
+              AND active = 1
+              AND email IN (SELECT email FROM $participants_table)
+            ) subq 
+          WHERE $where
+          GROUP BY ".array_pop(explode(' ', trim($field)));
+      }
+
+      return $q(implode (" UNION ", $sql));
+    };
+
+    $this->view->setVar('total_answer', $total_answer);
+		$this->view->gender = $results('gender');
+		$this->view->location = $results('province');
+    $this->view->education_level = $results('highest_school_level');
+    $this->view->skin = $results('skin');
+    $this->view->age = $results([
+      "'Menos de 17' AS age" => " age < 17 ",
+      "'17-21' AS age" => " age BETWEEN 17 AND 21 ",
+      "'22-35' AS age" => " age BETWEEN 22 AND 35 ",
+      "'36-55' AS age" => " age BETWEEN 36 AND 55 ",
+      "'Mas de 55' AS age" => " age > 55 ",
+    ]);
+
+    $q("DROP TABLE $participants_table;");
 	}
 }
