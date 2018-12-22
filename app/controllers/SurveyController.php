@@ -809,8 +809,8 @@ class SurveyController extends Controller
 		$id = intval($_GET['id']);
     $participants_table = uniqid('_survey_participants_');
 
-		$total_answer = $q("SELECT COUNT(id) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total;
-
+		$total_answer = $q("SELECT COUNT(*) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total * 1;
+    
     $q("CREATE TABLE $participants_table (email varchar(255), total bigint(11));");
     $q("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_answer};");
 
