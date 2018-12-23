@@ -3,7 +3,7 @@
   "province"             => "Location",
   "highest_school_level" => "Education level",
   "skin"                 => "Skin",
-  "age"                  => "Age",
+  "age_range"            => "Age",
 ]; ?>
 <div class="row">
 
@@ -36,7 +36,7 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
-  google.load("visualization", "1", {packages:["corechart"]});
+  google.load("visualization", "1", {packages: ["corechart"]});
   <?php foreach($pies as $var => $title) :?>
   google.setOnLoadCallback(by_<?= $var; ?>);
 
@@ -51,11 +51,11 @@
     var options = {};
     var chart = new google.visualization.PieChart(document.getElementById('chart_pie_<?= $var; ?>'));
     chart.draw(data, options);
-    $("svg").css('opacity', '1');
+    showSVG();
   }
   <?php endforeach; ?>
 
-    $(function(){
-      $("svg").css('opacity', '1');
-    })
+  $(function () {
+    showSVG();
+  })
 </script>
