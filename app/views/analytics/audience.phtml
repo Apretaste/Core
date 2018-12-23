@@ -148,6 +148,7 @@
 		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('weeklyGrossTraffic'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// MONTHLY GROSS TRAFFIC
@@ -162,6 +163,7 @@
 		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyGrossTraffic'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// MONTHLY UNIQUE TRAFFIC
@@ -176,6 +178,7 @@
 		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyUniqueTraffic'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// MONTHLY NEW USERS
@@ -190,6 +193,7 @@
 		var options = {legend: 'none'};
 		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// Last 30 days Environment
@@ -204,6 +208,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('last30EnvironmentUsage'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// App versions
@@ -218,6 +223,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('appVersions'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// Last 30 days service usage
@@ -232,6 +238,7 @@
 		var options = {pieHole: 0.2};
 		var chart = new google.visualization.PieChart(document.getElementById('last30DaysServiceUsage'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// Last week emails sent vs not sent
@@ -245,6 +252,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// Number of each coupons used
@@ -259,6 +267,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('numberCouponsUsed'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	// Last 30 days app origin
@@ -273,5 +282,10 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('last30DaysAppOrigin'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
+
+    $(function(){
+      $("svg").css('opacity', '1');
+    })
 </script>

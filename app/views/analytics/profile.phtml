@@ -187,6 +187,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_profiles'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY GENDER
@@ -201,6 +202,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_gender'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY SEXUAL ORIENTATION
@@ -215,6 +217,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_orientation'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 	
 	//PROFILES BY RACE
@@ -229,6 +232,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_race'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY CIVIL STATUS
@@ -243,6 +247,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_civil'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY SCHOOL LEVEL
@@ -257,6 +262,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_school'));
 		chart.draw(data, options);
+      $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY PROFESSION
@@ -271,6 +277,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_profession'));
 		chart.draw(data, options);
+        $("svg").css('opacity', '1');
 	}
 	//PROFILES BY AGE
 	google.setOnLoadCallback(byAge);
@@ -284,6 +291,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_age'));
 		chart.draw(data, options);
+       $("svg").css('opacity', '1');
 	}
 
 	//PROFILES BY RELIGION
@@ -298,6 +306,7 @@
 		var options = {};
 		var chart = new google.visualization.PieChart(document.getElementById('chart_pie_religion'));
 		chart.draw(data, options);
+        $("svg").css('opacity', '1');
 	}
 
 	// PROFILE COMPLETION
@@ -317,6 +326,7 @@
 		};
 		var chart = new google.visualization.GeoChart(document.getElementById('chart_map_profiles'));
 		chart.draw(data, options);
+        $("svg").css('opacity', '1');
 	}
 
 	// Updated Profiles
@@ -331,5 +341,10 @@
 		var options = {legend: 'none', orientation: 'horizontal'};
 		var chart = new google.visualization.BarChart(document.getElementById('updatedProfiles'));
 		chart.draw(data, options);
+       $("svg").css('opacity', '1');
 	}
+
+    $(function(){
+      $("svg").css('opacity', '1');
+    })
 </script>
