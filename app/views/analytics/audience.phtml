@@ -1,131 +1,138 @@
 <div class="row">
-	<!-- ACTIVE USERS BLOCK -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<div class="panel-body">
-				<i class="fa fa-user pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><b><?= number_format($numberActiveUsers) ?></b></big><small>/<?= number_format($numberTotalUsers) ?></small><br/>
-				<small>Active/Total users</small>
-			</div>
-		</div>
-	</div>
+    <!-- ACTIVE USERS BLOCK -->
+    <div class="col-xs-2">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <i class="fa fa-user pull-left"
+                   style="font-size:37px; margin-right:10px;"></i>
+                <big><b><?= number_format($numberActiveUsers) ?></b></big>
+                <small>/<?= number_format($numberTotalUsers) ?></small>
+                <br/>
+                <small>Active/Total users</small>
+            </div>
+        </div>
+    </div>
 
-	<!-- USER PROFILES BLOCK -->
-	<div class="col-xs-2">
-		<div class="panel panel-default">
-			<div class="panel-body">
-				<i class="fa fa-user-secret pull-left" style="font-size:37px; margin-right:10px;"></i>
-				<big><b><?= number_format($numberUserProfiles) ?></b></big><small>/<?= number_format($numberActiveUsers) ?></small><br/>
-				<small>Users with profile</small>
-			</div>
-		</div>
-	</div>
+    <!-- USER PROFILES BLOCK -->
+    <div class="col-xs-2">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <i class="fa fa-user-secret pull-left"
+                   style="font-size:37px; margin-right:10px;"></i>
+                <big><b><?= number_format($numberUserProfiles) ?></b></big>
+                <small>/<?= number_format($numberActiveUsers) ?></small>
+                <br/>
+                <small>Users with profile</small>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
-	<div class="col-xs-6">
-		<!-- WEEKLY GROSS TRAFFIC -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Weekly gross traffic</div>
-			<div class="panel-body">
-				<div id="weeklyGrossTraffic" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-6">
+        <!-- WEEKLY GROSS TRAFFIC -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Weekly gross traffic</div>
+            <div class="panel-body">
+                <div id="weeklyGrossTraffic" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-6">
-		<!-- MONTHLY GROSS TRAFFIC -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Monthly gross traffic</div>
-			<div class="panel-body">
-				<div id="monthlyGrossTraffic" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-6">
+        <!-- MONTHLY GROSS TRAFFIC -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Monthly gross traffic</div>
+            <div class="panel-body">
+                <div id="monthlyGrossTraffic" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
-	<div class="col-xs-6">
-		<!-- MONTHLY UNIQUE TRAFFIC -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Unique traffic</div>
-			<div class="panel-body">
-				<div id="monthlyUniqueTraffic" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-6">
+        <!-- MONTHLY UNIQUE TRAFFIC -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Unique traffic</div>
+            <div class="panel-body">
+                <div id="monthlyUniqueTraffic" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-6">
-		<!-- MONTHLY NEW USERS -->
-		<div class="panel panel-default">
-			<div class="panel-heading">New users</div>
-			<div class="panel-body">
-				<div id="monthlyNewUsers" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-6">
+        <!-- MONTHLY NEW USERS -->
+        <div class="panel panel-default">
+            <div class="panel-heading">New users</div>
+            <div class="panel-body">
+                <div id="monthlyNewUsers" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
-	<div class="col-xs-4">
-		<!-- LAST 30 SERVICE USAGE -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Last 30 days of service usage</div>
-			<div class="panel-body">
-				<div id="last30DaysServiceUsage" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- LAST 30 SERVICE USAGE -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Last 30 days of service usage</div>
+            <div class="panel-body">
+                <div id="last30DaysServiceUsage" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-4">
-		<!-- LAST 30 DAYS ENVIRONMENT -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Last 30 days of each environment</div>
-			<div class="panel-body">
-				<div id="last30EnvironmentUsage" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- LAST 30 DAYS ENVIRONMENT -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Last 30 days of each environment</div>
+            <div class="panel-body">
+                <div id="last30EnvironmentUsage" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-4">
-		<!-- APP VERSIONS -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Versions of the app</div>
-			<div class="panel-body">
-				<div id="appVersions" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- APP VERSIONS -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Versions of the app</div>
+            <div class="panel-body">
+                <div id="appVersions" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-4">
-		<!-- LAST WEEK SENT VS NOT SENT -->
-		<div class="panel panel-default">
-			<div class="panel-heading"><a href="/admin/dropped">Last week of emails sent and not sent</a></div>
-			<div class="panel-body">
-				<div id="lastWeekSentVsNotSent" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- LAST WEEK SENT VS NOT SENT -->
+        <div class="panel panel-default">
+            <div class="panel-heading"><a href="/admin/dropped">Last week of
+                    emails sent and not sent</a></div>
+            <div class="panel-body">
+                <div id="lastWeekSentVsNotSent" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-4">
-		<!-- NUMBER OF COUPONS USED -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Coupons usage</div>
-			<div class="panel-body">
-				<div id="numberCouponsUsed" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- NUMBER OF COUPONS USED -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Coupons usage</div>
+            <div class="panel-body">
+                <div id="numberCouponsUsed" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
-	<div class="col-xs-4">
-		<!-- LAST 30 APP ORIGIN -->
-		<div class="panel panel-default">
-			<div class="panel-heading">Last 30 days app origin</div>
-			<div class="panel-body">
-				<div id="last30DaysAppOrigin" style="width:100%;"></div>
-			</div>
-		</div>
-	</div>
+    <div class="col-xs-4">
+        <!-- LAST 30 APP ORIGIN -->
+        <div class="panel panel-default">
+            <div class="panel-heading">Last 30 days app origin</div>
+            <div class="panel-body">
+                <div id="last30DaysAppOrigin" style="width:100%;"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -134,158 +141,168 @@
 
 <script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript'>
-	google.load("visualization", "1", {packages:["corechart"]});
+  google.load("visualization", "1", {packages: ["corechart"]});
 
-	// WEEKLY GROSS TRAFFIC
-	google.setOnLoadCallback(weeklyGrossTraffic);
-	function weeklyGrossTraffic() {
-		var data = google.visualization.arrayToDataTable([
-			['Day of the week', 'Visitors', {role: 'annotation'}],
-			<?php foreach ($weeklyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
-			<?php } ?>
-		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('weeklyGrossTraffic'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  // WEEKLY GROSS TRAFFIC
+  google.setOnLoadCallback(weeklyGrossTraffic);
 
-	// MONTHLY GROSS TRAFFIC
-	google.setOnLoadCallback(monthlyGrossTraffic);
-	function monthlyGrossTraffic() {
-		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'Visitors', {role: 'annotation'}],
-			<?php foreach ($monthlyGrossTraffic as $data) { ?>
-				['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
-			<?php } ?>
-		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('monthlyGrossTraffic'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  function weeklyGrossTraffic() {
+    var data = google.visualization.arrayToDataTable([
+      ['Day of the week', 'Visitors', {role: 'annotation'}],
+      <?php foreach ($weeklyGrossTraffic as $data) { ?>
+      ['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
+      <?php } ?>
+    ]);
+    var options = {legend: 'none'};
+    var chart = new google.visualization.AreaChart(document.getElementById('weeklyGrossTraffic'));
+    chart.draw(data, options);
+    showSVG();
+  }
 
-	// MONTHLY UNIQUE TRAFFIC
-	google.setOnLoadCallback(monthlyUniqueTraffic);
-	function monthlyUniqueTraffic() {
-		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'Visitors', {role: 'annotation'}],
-			<?php foreach ($monthlyUniqueTraffic as $data) { ?>
-				['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
-			<?php } ?>
-		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('monthlyUniqueTraffic'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  // MONTHLY GROSS TRAFFIC
+  google.setOnLoadCallback(monthlyGrossTraffic);
 
-	// MONTHLY NEW USERS
-	google.setOnLoadCallback(monthlyNewUsers);
-	function monthlyNewUsers() {
-		var data = google.visualization.arrayToDataTable([
-			['Month and Year', 'New Users', {role: 'annotation'}],
-			<?php foreach ($monthlyNewUsers as $data) { ?>
-				['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
-			<?php } ?>
-		]);
-		var options = {legend: 'none'};
-		var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  function monthlyGrossTraffic() {
+    var data = google.visualization.arrayToDataTable([
+      ['Month and Year', 'Visitors', {role: 'annotation'}],
+      <?php foreach ($monthlyGrossTraffic as $data) { ?>
+      ['<?=$data['date']; ?>',<?=$data['visitors']; ?>,<?=$data['visitors']; ?>],
+      <?php } ?>
+    ]);
+    var options = {legend: 'none'};
+    var chart = new google.visualization.AreaChart(document.getElementById('monthlyGrossTraffic'));
+    chart.draw(data, options);
+    showSVG();
+  }
 
-	// Last 30 days Environment
-	google.setOnLoadCallback(last30EnvironmentUsage);
-	function last30EnvironmentUsage() {
-		var data = google.visualization.arrayToDataTable([
-			['Environment', 'Usage'],
-			<?php foreach ($last30EnvironmentUsage as $data) { ?>
-				['<?= $data['environment'] ?>', <?= $data['number'] ?>],
-			<?php } ?>
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('last30EnvironmentUsage'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  // MONTHLY UNIQUE TRAFFIC
+  google.setOnLoadCallback(monthlyUniqueTraffic);
 
-	// App versions
-	google.setOnLoadCallback(appVersions);
-	function appVersions() {
-		var data = google.visualization.arrayToDataTable([
-			['Version', 'People'],
-			<?php foreach ($appVersions as $data) { ?>
-				['<?= $data['version'] ?>',<?=$data['people'] ?>],
-			<?php } ?>
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('appVersions'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  function monthlyUniqueTraffic() {
+    var data = google.visualization.arrayToDataTable([
+      ['Month and Year', 'Visitors', {role: 'annotation'}],
+      <?php foreach ($monthlyUniqueTraffic as $data) { ?>
+      ['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
+      <?php } ?>
+    ]);
+    var options = {legend: 'none'};
+    var chart = new google.visualization.AreaChart(document.getElementById('monthlyUniqueTraffic'));
+    chart.draw(data, options);
+    showSVG();
+  }
 
-	// Last 30 days service usage
-	google.setOnLoadCallback(last30DaysServiceUsage);
-	function last30DaysServiceUsage() {
-		var data = google.visualization.arrayToDataTable([
-			['Service', 'Usage'],
-			<?php foreach ($last30DaysServiceUsage as $data) { ?>
-				['<?= $data['service'] ?>', <?= $data['usage'] ?>],
-			<?php } ?>
-		]);
-		var options = {pieHole: 0.2};
-		var chart = new google.visualization.PieChart(document.getElementById('last30DaysServiceUsage'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  // MONTHLY NEW USERS
+  google.setOnLoadCallback(monthlyNewUsers);
 
-	// Last week emails sent vs not sent
-	google.setOnLoadCallback(lastWeekSentVsNotSent);
-	function lastWeekSentVsNotSent() {
-		var data = google.visualization.arrayToDataTable([
-			['Label', 'Amount'],
-			['Sent', <?= $lastWeekEmailsSent ?>],
-			['Not sent', <?= $lastWeekEmailsNotSent ?>]
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  function monthlyNewUsers() {
+    var data = google.visualization.arrayToDataTable([
+      ['Month and Year', 'New Users', {role: 'annotation'}],
+      <?php foreach ($monthlyNewUsers as $data) { ?>
+      ['<?= $data['date'] ?>',<?= $data['visitors'] ?>,<?= $data['visitors'] ?>],
+      <?php } ?>
+    ]);
+    var options = {legend: 'none'};
+    var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
+    chart.draw(data, options);
+    showSVG();
+  }
 
-	// Number of each coupons used
-	google.setOnLoadCallback(numberCouponsUsed);
-	function numberCouponsUsed() {
-		var data = google.visualization.arrayToDataTable([
-			['Coupon', 'Number'],
-			<?php foreach ($numberCouponsUsed as $data) { ?>
-				['<?=$data['coupon']; ?>',<?=$data['usage']; ?>],
-			<?php } ?>
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('numberCouponsUsed'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  // Last 30 days Environment
+  google.setOnLoadCallback(last30EnvironmentUsage);
 
-	// Last 30 days app origin
-	google.setOnLoadCallback(last30DaysAppOrigin);
-	function last30DaysAppOrigin() {
-		var data = google.visualization.arrayToDataTable([
-			['Caption', 'Number'],
-			<?php foreach ($last30DaysAppOrigin as $data) { ?>
-				['<?=$data['origin']; ?>',<?=$data['usage']; ?>],
-			<?php } ?>
-		]);
-		var options = {};
-		var chart = new google.visualization.PieChart(document.getElementById('last30DaysAppOrigin'));
-		chart.draw(data, options);
-      $("svg").css('opacity', '1');
-	}
+  function last30EnvironmentUsage() {
+    var data = google.visualization.arrayToDataTable([
+      ['Environment', 'Usage'],
+      <?php foreach ($last30EnvironmentUsage as $data) { ?>
+      ['<?= $data['environment'] ?>', <?= $data['number'] ?>],
+      <?php } ?>
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('last30EnvironmentUsage'));
+    chart.draw(data, options);
+    showSVG();
+  }
 
-    $(function(){
-      $("svg").css('opacity', '1');
-    })
+  // App versions
+  google.setOnLoadCallback(appVersions);
+
+  function appVersions() {
+    var data = google.visualization.arrayToDataTable([
+      ['Version', 'People'],
+      <?php foreach ($appVersions as $data) { ?>
+      ['<?= $data['version'] ?>',<?=$data['people'] ?>],
+      <?php } ?>
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('appVersions'));
+    chart.draw(data, options);
+    showSVG();
+  }
+
+  // Last 30 days service usage
+  google.setOnLoadCallback(last30DaysServiceUsage);
+
+  function last30DaysServiceUsage() {
+    var data = google.visualization.arrayToDataTable([
+      ['Service', 'Usage'],
+      <?php foreach ($last30DaysServiceUsage as $data) { ?>
+      ['<?= $data['service'] ?>', <?= $data['usage'] ?>],
+      <?php } ?>
+    ]);
+    var options = {pieHole: 0.2};
+    var chart = new google.visualization.PieChart(document.getElementById('last30DaysServiceUsage'));
+    chart.draw(data, options);
+    showSVG();
+  }
+
+  // Last week emails sent vs not sent
+  google.setOnLoadCallback(lastWeekSentVsNotSent);
+
+  function lastWeekSentVsNotSent() {
+    var data = google.visualization.arrayToDataTable([
+      ['Label', 'Amount'],
+      ['Sent', <?= $lastWeekEmailsSent ?>],
+      ['Not sent', <?= $lastWeekEmailsNotSent ?>]
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('lastWeekSentVsNotSent'));
+    chart.draw(data, options);
+    showSVG();
+  }
+
+  // Number of each coupons used
+  google.setOnLoadCallback(numberCouponsUsed);
+
+  function numberCouponsUsed() {
+    var data = google.visualization.arrayToDataTable([
+      ['Coupon', 'Number'],
+      <?php foreach ($numberCouponsUsed as $data) { ?>
+      ['<?=$data['coupon']; ?>',<?=$data['usage']; ?>],
+      <?php } ?>
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('numberCouponsUsed'));
+    chart.draw(data, options);
+    showSVG();
+  }
+
+  // Last 30 days app origin
+  google.setOnLoadCallback(last30DaysAppOrigin);
+
+  function last30DaysAppOrigin() {
+    var data = google.visualization.arrayToDataTable([
+      ['Caption', 'Number'],
+      <?php foreach ($last30DaysAppOrigin as $data) { ?>
+      ['<?=$data['origin']; ?>',<?=$data['usage']; ?>],
+      <?php } ?>
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('last30DaysAppOrigin'));
+    chart.draw(data, options);
+    showSVG();
+  }
+
+  $(function () {
+    showSVG();
+  })
 </script>

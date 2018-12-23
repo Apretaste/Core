@@ -862,9 +862,9 @@ class SurveyController extends Controller {
       foreach ($fields as $field => $where) {
         $field_parts = explode(' ', trim($field));
         $real_field = array_pop($field_parts);
-        $sql[] = "SELECT $real_field, SUM(total) as total
+        $sql[] = "SELECT subq2.$real_field, SUM(total) as total
                   FROM (
-                    SELECT $real_field, COUNT(id) AS total
+                    SELECT $field, COUNT(id) AS total
                     FROM ( 
                       SELECT *, TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) as age 
                       FROM person
@@ -874,7 +874,7 @@ class SurveyController extends Controller {
                       ) subq 
                     WHERE $where
                     GROUP BY $real_field) subq2
-                  GROUP BY $real_field";
+                  GROUP BY subq2.$real_field";
       }
 
       return Connection::query(implode(" UNION ", $sql));
@@ -888,11 +888,11 @@ class SurveyController extends Controller {
       'totals_by_highest_school_level' => $results('highest_school_level', $participants_table),
       'totals_by_skin'                 => $results('skin', $participants_table),
       'totals_by_age'                  => $results([
-        "'Menos de 17' AS age" => " age < 17 ",
-        "'17-21' AS age"       => " age BETWEEN 17 AND 21 ",
-        "'22-35' AS age"       => " age BETWEEN 22 AND 35 ",
-        "'36-55' AS age"       => " age BETWEEN 36 AND 55 ",
-        "'Mas de 55' AS age"   => " age > 55 "
+        "'Menos de 17' AS age_range" => " age < 17 ",
+        "'17-21' AS age_range"       => " age BETWEEN 17 AND 21 ",
+        "'22-35' AS age_range"       => " age BETWEEN 22 AND 35 ",
+        "'36-55' AS age_range"       => " age BETWEEN 36 AND 55 ",
+        "'Mas de 55' AS age_range"   => " age > 55 "
       ], $participants_table),
     ]);
 
