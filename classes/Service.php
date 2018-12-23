@@ -9,6 +9,7 @@ class Service
 	public $insertionDate;
 	public $pathToService;
 	public $appversion;
+	public $tpl_version;
 	public $utils; // Utils
 	public $email; // Email
 	public $social; //Social

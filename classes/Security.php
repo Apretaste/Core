@@ -13,8 +13,10 @@ class Security
 	public function login($email, $pin)
 	{
 		// check if the user/pin is ok
-		$person = Connection::query("SELECT id, first_name, picture FROM person WHERE email='$email' AND pin='$pin'");
-		if(empty($person)) return false; else $person = $person[0];
+		$person = Connection::query("SELECT id, first_name, picture, blocked FROM person WHERE email='$email' AND pin='$pin'");
+		
+		// do not respond to blocked accounts
+		if(empty($person) || $person[0]->blocked) return false; else $person = $person[0];
 
 		// get the path to root folder
 		$di = \Phalcon\DI\FactoryDefault::getDefault();

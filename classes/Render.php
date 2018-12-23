@@ -90,11 +90,13 @@ class Render
 			$service->creatorEmail = $result[0]->creator_email;
 			$service->serviceCategory = $result[0]->category;
 			$service->insertionDate = $result[0]->insertion_date;
+			$service->tpl_version = $result[0]->tpl_version;
 		} else {
 			$service->serviceDescription = '';
 			$service->creatorEmail = 'soporte@apretaste.com';
 			$service->serviceCategory = 'service';
 			$service->insertionDate = date('Y-m-d');
+			$service->tpl_version = 0;
 		}
 
 		$service->pathToService = $pathToService;

@@ -151,4 +151,53 @@ class Response
 		$this->render = true;
 		return $this;
 	}
+
+	/**
+	 * Attach the service EJS templates
+	 * 
+	 * @author ricardo@apretaste.org
+	 * @param Service $service
+	 */
+
+	public function attachTemplates($service){
+		$serv_temp_dir = Utils::getTempDir()."templates/".$service->serviceName;
+		if(!file_exists($serv_temp_dir)) mkdir($serv_temp_dir);
+		$tpl_zip = $serv_temp_dir.'/'.$service->tpl_version.'.zip';
+		if(!file_exists($tpl_zip)){
+			$tpl_dir = $service->pathToService."/templates";
+			$layout_dir = $service->pathToService."/layout";
+
+			// create the zip file
+			$zip = new ZipArchive;
+			$zip->open($tpl_zip, ZipArchive::CREATE);
+
+			$templates = array_diff(scandir($tpl_dir), array('..', '.'));
+			foreach($templates as $tpl){
+				$file = $tpl_dir."/$tpl";
+				$zip->addFile($file,basename($file));
+			}
+
+			if(file_exists($layout_dir)){
+				$layouts = array_diff(scandir($layout_dir), array('..', '.'));
+				foreach($templates as $tpl){
+					$file = $layout_dir."/$tpl";
+					$zip->addFile($file,basename($file));
+				}
+			}
+			$zip->close();
+		}
+		$this->attachments[] = $tpl_zip;
+	}
+
+	/**
+	 * Attach the content of the response as a JSON
+	 * @author ricardo@apretaste.org
+	 */
+
+	 public function attachContent(){
+		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".dat";
+		$content = json_encode($this->content);
+		file_put_contents($file,$content);
+		$this->attachments[] = $file;
+	 }
 }

@@ -9,6 +9,8 @@ mkdir temp/attachments
 mkdir temp/attach_images
 mkdir temp/nautaclient
 mkdir temp/capcha
+mkdir temp/templates
+mkdir temp/data
 mkdir services
 mkdir logs
 mkdir public/ads

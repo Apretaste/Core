@@ -1130,6 +1130,7 @@ class Utils
 		$res->timestamp = time();
 		$res->username = $person->username;
 		$res->credit = number_format($person->credit, 2, '.', '');
+		$res->tpl_version = $input?$serv->tpl_version:0;
 
 		// get the list of mailboxes
 		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");

@@ -166,10 +166,6 @@ class RunController extends Controller
 			return false;
 		}
 
-		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
-		if($blocked) return false;
-
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
 			echo '{"code":"301", "message":"No content file was received"}';
@@ -181,7 +177,7 @@ class RunController extends Controller
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
-		$this->personId = Utils::personExist($this->fromEmail);
+		$this->personId = $user->id;
 
 		// create a new entry on the delivery table
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
@@ -270,6 +266,7 @@ class RunController extends Controller
 			if( ! isset($input->method)) $input->method = "email"; // email|http
 			if( ! isset($input->apptype)) $input->apptype = "original"; // original|single
 			if( ! isset($input->timestamp)) $input->timestamp = time();
+			if (! isset ($input->tpl_version)) $input->tpl_version = 0;
 			$input->osversion = (isset($input->osversion))?filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION):"";
 			$input->nautaPass = base64_decode($input->token);
 		// get the input if the data is plain text (version <= 2.5)
@@ -308,12 +305,15 @@ class RunController extends Controller
 		$service = $ret->service;
 		$response = $ret->response;
 
+		// send the service's EJS templates if the stored version doesn't match
+		if($service->tpl_version != $input->tpl_version) $response->attachTemplates($service);
+		
+		// send the data for the template as a JSON
+		$response->attachContent();	
+
 		// if the request needs an email back
 		if($response->render)
 		{
-			// set the layout for the app
-			$response->setEmailLayout('email_app.tpl');
-
 			// is there is a cache time, add it
 			if($response->cache) {
 				$cache = "$temp/cache/{$response->cache}.cache";
@@ -323,20 +323,10 @@ class RunController extends Controller
 
 			$service->input = $input;
 
-			// render the HTML, unless it is a status call
-			if($input->command == "status") $this->body = "{}";
-			else $this->body = Render::renderHTML($service, $response);
-
 			// get extra data for the app
-			// if the old version is calling status, do not get extra data
-			// @TODO remove when we get rid of the old version
-			$isPerfilStatus = substr($input->command, 0, strlen("perfil status")) === "perfil status";
-			if($isPerfilStatus && $input->ostype == 'android') $extra = "{}";
-			else {
-				$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
-				$response->attachments = array_merge($response->attachments, $res["attachments"]);
-				$extra = $res["json"];
-			}
+			$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
+			$response->attachments = array_merge($response->attachments, $res["attachments"]);
+			$extra = $res["json"];
 
 			// create an attachment file for the extra structure
 			$ntfFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".ext";
