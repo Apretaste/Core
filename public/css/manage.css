@@ -8230,3 +8230,7 @@ body.md-skin {
 .nobr{
 	white-space:nowrap;
 }
+
+svg {
+  opacity: 1;
+}

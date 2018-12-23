@@ -51,6 +51,11 @@
     var options = {};
     var chart = new google.visualization.PieChart(document.getElementById('chart_pie_<?= $var; ?>'));
     chart.draw(data, options);
+    $("svg").css('opacity', '1');
   }
   <?php endforeach; ?>
+
+    $(function(){
+      $("svg").css('opacity', '1');
+    })
 </script>

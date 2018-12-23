@@ -861,17 +861,20 @@ class SurveyController extends Controller {
       $sql = [];
       foreach ($fields as $field => $where) {
         $field_parts = explode(' ', trim($field));
-        $sql[] =
-          "SELECT $field, COUNT(id) AS total
-          FROM ( 
-            SELECT *, TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) as age 
-            FROM person
-            WHERE updated_by_user = 1 
-              AND active = 1
-              AND email IN (SELECT email FROM $participants_table)
-            ) subq 
-          WHERE $where
-          GROUP BY " . array_pop($field_parts);
+        $real_field = array_pop($field_parts);
+        $sql[] = "SELECT $real_field, SUM(total) as total
+                  FROM (
+                    SELECT $real_field, COUNT(id) AS total
+                    FROM ( 
+                      SELECT *, TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) as age 
+                      FROM person
+                      WHERE updated_by_user = 1 
+                        AND active = 1
+                        AND email IN (SELECT email FROM $participants_table)
+                      ) subq 
+                    WHERE $where
+                    GROUP BY $real_field) subq2
+                  GROUP BY $real_field";
       }
 
       return Connection::query(implode(" UNION ", $sql));
@@ -889,7 +892,7 @@ class SurveyController extends Controller {
         "'17-21' AS age"       => " age BETWEEN 17 AND 21 ",
         "'22-35' AS age"       => " age BETWEEN 22 AND 35 ",
         "'36-55' AS age"       => " age BETWEEN 36 AND 55 ",
-        "'Mas de 55' AS age"   => " age > 55 ",
+        "'Mas de 55' AS age"   => " age > 55 "
       ], $participants_table),
     ]);
 
