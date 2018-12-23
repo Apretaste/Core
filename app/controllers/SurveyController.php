@@ -859,6 +859,7 @@ class SurveyController extends Controller {
 
       $sql = [];
       foreach ($fields as $field => $where) {
+        $field_parts = explode(' ', trim($field));
         $sql[] =
           "SELECT $field, COUNT(id) AS total
           FROM ( 
@@ -869,7 +870,7 @@ class SurveyController extends Controller {
               AND email IN (SELECT email FROM $participants_table)
             ) subq 
           WHERE $where
-          GROUP BY " . array_pop(explode(' ', trim($field)));
+          GROUP BY " . array_pop($field_parts);
       }
 
       return Connection::query(implode(" UNION ", $sql));
