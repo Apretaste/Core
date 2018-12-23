@@ -39,7 +39,7 @@
   <?php foreach($pies as $var => $title) :?>
   google.setOnLoadCallback(by_<?= $var; ?>);
 
-  function by_ <?= $var; ?>() {
+  function <?= "by_$var"; ?>() {
     var data = google.visualization.arrayToDataTable([
       ['<?= $title; ?>', 'Total'],
       <?php $collection = 'totals_by_' . $var; ?>
