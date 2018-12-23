@@ -848,9 +848,10 @@ class SurveyController extends Controller {
     $survey             = self::getSurvey($id);
     $participants_table = uniqid('_survey_participants_');
     $total_answer       = Connection::query("SELECT COUNT(*) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total * 1;
+    $total_questions = Connection::query("SELECT COUNT(*) as total  FROM _survey_question WHERE survey =  $id;")[0]->total * 1;
 
     Connection::query("CREATE TABLE $participants_table (email varchar(255), total bigint(11));");
-    Connection::query("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_answer};");
+    Connection::query("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_questions};");
 
     $results = function ($fields, $participants_table) {
       if (!is_array($fields)) {
