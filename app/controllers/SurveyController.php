@@ -848,7 +848,7 @@ class SurveyController extends Controller {
     $survey             = self::getSurvey($id);
     $participants_table = uniqid('_survey_participants_');
     $total_answer       = Connection::query("SELECT COUNT(*) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total * 1;
-    $total_questions = Connection::query("SELECT COUNT(*) as total  FROM _survey_question WHERE survey =  $id;")[0]->total * 1;
+    $total_questions    = Connection::query("SELECT COUNT(*) as total  FROM _survey_question WHERE survey =  $id;")[0]->total * 1;
 
     Connection::query("CREATE TABLE $participants_table (email varchar(255), total bigint(11));");
     Connection::query("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_questions};");
@@ -861,8 +861,8 @@ class SurveyController extends Controller {
       $sql = [];
       foreach ($fields as $field => $where) {
         $field_parts = explode(' ', trim($field));
-        $real_field = array_pop($field_parts);
-        $sql[] = "SELECT subq2.$real_field, SUM(total) as total
+        $real_field  = array_pop($field_parts);
+        $sql[]       = "SELECT subq2.$real_field, SUM(total) as total
                   FROM (
                     SELECT $field, COUNT(id) AS total
                     FROM ( 
@@ -887,12 +887,12 @@ class SurveyController extends Controller {
       'totals_by_province'             => $results('province', $participants_table),
       'totals_by_highest_school_level' => $results('highest_school_level', $participants_table),
       'totals_by_skin'                 => $results('skin', $participants_table),
-      'totals_by_age'                  => $results([
+      'totals_by_age_range'            => $results([
         "'Menos de 17' AS age_range" => " age < 17 ",
         "'17-21' AS age_range"       => " age BETWEEN 17 AND 21 ",
         "'22-35' AS age_range"       => " age BETWEEN 22 AND 35 ",
         "'36-55' AS age_range"       => " age BETWEEN 36 AND 55 ",
-        "'Mas de 55' AS age_range"   => " age > 55 "
+        "'Mas de 55' AS age_range"   => " age > 55 ",
       ], $participants_table),
     ]);
 
