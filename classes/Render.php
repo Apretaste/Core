@@ -248,8 +248,6 @@ class Render
 	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		if($service->request->appmethod=="http") return false; //original img for http connections
-
 		$userId = $service->request->userId;
 		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
 		if(empty($res)) $quality = "ORIGINAL";
