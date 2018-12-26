@@ -53,21 +53,6 @@ class Utils
 	}
 
 	/**
-	 * Returns the personal mailbox for a user
-	 *
-	 * @author salvipascual
-	 * @param String $email, user's email
-	 * @return String, email address
-	 */
-	public static function getUserPersonalAddress($email)
-	{
-		$person = self::getPerson($email);
-
-		if(empty($person)) return self::getValidEmailAddress();
-		else return "apretaste@gmail.com";
-	}
-
-	/**
 	 * Format a link to be an Apretaste mailto
 	 *
 	 * @author salvipascual
@@ -1269,5 +1254,25 @@ class Utils
 
 		// convert to JSON and return array
 		return ["attachments" => $attachments, "json" => json_encode($res)];
+	}
+
+	/**
+	 * Change the src of an image depending of the environment
+	 * @author ricardo@apretaste.org
+	 * @param String $imgSrc
+	 */
+
+	public static function parseImgDir(&$imgSrc){
+		$file = basename($imgSrc);
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		if($di->get('environment') == "web")
+		{
+			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
+			if(!file_exists("$wwwroot/public/temp/$file")) @copy($imgSrc, "$wwwroot/public/temp/$file");
+			$imgSrc = "$wwwhttp/temp/$file";
+		}
+		elseif($di->get('environment') == "app") $imgSrc = $file;
+		else $destination = "cid:$file";
 	}
 }

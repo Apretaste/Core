@@ -148,75 +148,60 @@ class Render
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
 		else $userTemplateFile = "{$service->pathToService}/templates/{$response->template}";
 
-		// creating and configuring a new Smarty object
-		$smarty = new Smarty;
-		$smarty->addPluginsDir("$wwwroot/app/plugins/");
-		$smarty->setTemplateDir("$wwwroot/app/layouts/");
-		$smarty->setCompileDir("$wwwroot/temp/templates_c/");
-		$smarty->setCacheDir("$wwwroot/temp/cache/");
-		$smarty->setConfigDir("$wwwroot/configs/");
-
-		// disabling cache and debugging
-		$smarty->force_compile = true;
-		$smarty->debugging = false;
-		$smarty->caching = false;
-
 		// get the person
 		$person = Utils::getPerson($response->email);
 		$username = isset($person->username) ? "@{$person->username}" : "";
-
-		// get a valid email address
-		$validEmailAddress = Utils::getValidEmailAddress();
 
 		// list the system variables
 		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
-			"APRETASTE_ENVIRONMENT" => $environment, // app|web|api
+			"_ENVIRONMENT" => $environment, // app|web|api
 			// template variables
-			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
-			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
-			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
-			"APRETASTE_EMAIL" => $validEmailAddress,
-			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
-			"APRETASTE_SUPPORT_EMAIL" => Utils::getSupportEmailAddress(),
+			"RAW_TEMPLATE" => file_get_contents($userTemplateFile),
+			"SERVICE_NAME" => strtolower($service->serviceName),
+			"SERVICE_CREATOR" => $service->creatorEmail,
+			"DELIVERY_EMAIL" => Utils::getValidEmailAddress(),
+			"EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
+			"SUPPORT_EMAIL" => Utils::getSupportEmailAddress(),
+			"JSON_DATA" => $response->content,
+			"PLACE_TEMPLATE" => "<div id=\"tpl-output\"></div>",
 			// app only variables
 			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
 			"APP_OS" => empty($service->input->ostype) ? "" : $service->input->ostype, // android|ios
 			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
 			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
+			"APP_IMG_DIR" => $environment=="app"?"APP_IMG_DIR":"",
 			// user variables
-			"num_notifications" => Utils::getNumberOfNotifications($person->id),
+			"NUM_NOTIFICATIONS" => Utils::getNumberOfNotifications($person->id),
 			"USER_USERNAME" => $username,
 			"USER_NAME" => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			"USER_FULL_NAME" => isset($person->full_name) ? $person->full_name : "",
 			"USER_EMAIL" => isset($person->email) ? $person->email : "",
-			"USER_MAILBOX" => Utils::getUserPersonalAddress($response->email),
 			// advertisement
 			"TOP_AD" => self::getAd($service)
 		];
 
-		// merge all variable sets and assign them to Smarty
-		$templateVariables = array_merge($systemVariables, $response->content);
-		$smarty->assign($templateVariables);
-
 		// render the template
-		$rendered = $smarty->fetch($response->layout);
+		$layout = file_get_contents($response->layout);
+		$systemVariables['RAW_TEMPLATE'] = str_replace('{$PLACE_TEMPLATE}', $systemVariables['RAW_TEMPLATE'], $layout);
+
 
 		// add link popups for the web
 		if($environment == "web") {
 			// get page content
-			$linkPopup = file_get_contents("$wwwroot/app/layouts/web_includes.phtml");
+			$mainHTML = "<div id ='tpl-output' class='container'></div>";
+			$mainHTML .= file_get_contents("$wwwroot/app/layouts/web_includes.phtml");
 
 			// replace system variables
 			foreach ($systemVariables as $key=>$value) {
 				if(is_array($value)) continue;
-				$linkPopup = str_replace('{$'.$key.'}', $value, $linkPopup);
+				$mainHTML = str_replace('{$'.$key.'}', $value, $mainHTML);
 			}
 
 			// add at the end of the <body> of the page
-			$rendered = str_replace("</body>", "$linkPopup</body>", $rendered);
+			$rendered = $mainHTML;
 		}
 
 		// optimize images for the app
@@ -250,8 +235,6 @@ class Render
 	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		if($service->request->appmethod=="http") return false; //original img for http connections
-
 		$userId = $service->request->userId;
 		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
 		if(empty($res)) $quality = "ORIGINAL";
@@ -270,7 +253,7 @@ class Render
 
 			// setup params for the app
 			$format = $service->request->environment=='app' && $service->request->ostype=='android' ? 'webp' : 'jpg';
-			$quality = $service->request->environment=='app' ? 10 : 50;
+			$quality = $service->request->environment=='app' ? 15 : 50;
 
 			// create thumbnails for images
 			$images = [];

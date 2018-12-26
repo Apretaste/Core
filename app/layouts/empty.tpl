@@ -1,1 +1,1 @@
-<?php echo $this->getContent(); ?>
+{include file="$APRETASTE_USER_TEMPLATE"}

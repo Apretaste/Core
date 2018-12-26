@@ -121,7 +121,7 @@ class Email
 	 *
 	 * @return mixed
 	 */
-	public function sendFromTemplate($template, $params = [], $layout = "email_empty.tpl")
+	public function sendFromTemplate($template, $params = [], $layout = "empty.tpl")
 	{
 		// create the response object
 		$response = new Response();

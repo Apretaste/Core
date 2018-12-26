@@ -296,6 +296,7 @@ class RunController extends Controller
 		// make the app params global
 		$this->di->set('appversion', function() use($input) { return $input->appversion; });
 		$this->di->set('ostype', function() use($input) { return $input->ostype; });
+		$this->di->set('method', function() use($input) { return $input->method; });
 
 		// update the version of the app used
 		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");

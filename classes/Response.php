@@ -23,7 +23,7 @@ class Response
 	public function __construct()
 	{
 		$this->template = "message.tpl";
-		$this->content = ["text"=>"Empty response"];
+		$this->content = json_encode(["text"=>"Empty response"]);
 		$this->images = [];
 		$this->attachments = [];
 		$this->json = null;
@@ -36,7 +36,7 @@ class Response
 		if(php::endsWith($file, "service.php")) $this->service = basename(dirname($file));
 
 		// select the default layout
-		$this->layout = "email_default.tpl";
+		$this->setEmailLayout("web_default.ejs");
 	}
 
 	/**
@@ -110,7 +110,7 @@ class Response
 	public function createFromText($text, $code="OK", $message="")
 	{
 		$this->template = "message.tpl";
-		$this->content = ["code"=>$code, "message"=>$message, "text"=>$text];
+		$this->content = json_encode(["code"=>$code, "message"=>$message, "text"=>$text]);
 		$this->internal = true;
 		$this->render = true;
 		return $this;
@@ -144,7 +144,7 @@ class Response
 		if(empty($content['code'])) $content['code'] = "ok"; // for the API
 
 		$this->template = $template;
-		$this->content = $content;
+		$this->content = json_encode($content);
 		$this->images = $images;
 		$this->attachments = $attachments;
 		$this->internal = false;
@@ -196,7 +196,7 @@ class Response
 
 	 public function attachContent(){
 		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".dat";
-		$content = json_encode($this->content);
+		$content = $this->content;
 		file_put_contents($file,$content);
 		$this->attachments[] = $file;
 	 }
