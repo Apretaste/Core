@@ -1269,4 +1269,14 @@ class Utils
 		// convert to JSON and return array
 		return ["attachments" => $attachments, "json" => json_encode($res)];
 	}
+
+  /**
+   * Check for internal network
+   *
+   * @return bool
+   */
+	public static function isInternalNetwork(){
+	  $ip = php::getClientIP();
+	  return php::startsWith($ip,"10.0.0.") || $ip === "127.0.0.1";
+  }
 }
