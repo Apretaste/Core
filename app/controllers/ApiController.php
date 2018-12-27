@@ -369,7 +369,7 @@ class ApiController extends Controller
    * @param $token
    * @throws Phalcon\Exception
    */
-  public function checkToken($token){
+  public function checkTokenAction($token){
 
     if ( ! Utils::isInternalNetwork())
     {
