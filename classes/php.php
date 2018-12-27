@@ -30,7 +30,7 @@ class php
 	 */
 	static function startsWith($haystack, $needle)
 	{
-		$length = mb_substr($needle, 'UTF-8');
+		$length = mb_strlen($needle, 'UTF-8');
 		return (mb_substr($haystack, 0, $length, 'UTF-8') === $needle);
 	}
 
@@ -65,7 +65,7 @@ class php
 	 * Get the user's IP address
 	 *
 	 * @author salvipascual
-	 * @return IP or false
+	 * @return string | boolean
 	 */
 	static function getClientIP()
 	{
