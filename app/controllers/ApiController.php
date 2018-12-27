@@ -359,17 +359,19 @@ class ApiController extends Controller
 
     $this->response->setHeader("Content-type", "application/json");
 
-    echo (Utils::personExist(Utils::getEmailFromId($userId))) ?
-      '{"result": true }' : '{"result": false}';
+    echo (Utils::getEmailFromId($userId) === false) ?
+      '{"result": false }' : '{"result": true}';
   }
 
   /**
    * Check token
    *
    * @param $token
+   * @param $userId
+   *
    * @throws Phalcon\Exception
    */
-  public function checkTokenAction($token){
+  public function checkTokenAction($userId, $token){
 
     if ( ! Utils::isInternalNetwork())
     {
@@ -381,7 +383,7 @@ class ApiController extends Controller
     $security = new Security();
     $user = $security->loginByToken($token);
     echo ($user === false) ?
-      '{"result": false }' : '{"result": true}';
+      '{"result": false }' : ($user->id === $userId ? '{"result": true}' : '{"result": false}');
 
   }
 }
