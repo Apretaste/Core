@@ -257,6 +257,8 @@ class NautaClient
     $tries = 3;
     TryAgain:
 
+    $this->logger->log("Login {$this->user} ... try $tries ...");
+
 		// save the captcha image in the temp folder
 		$captchaImage = Utils::getTempDir() . "capcha/" . Utils::generateRandomHash() . ".jpg";
 		$captchaUrl = $this->getCaptchaUrl();
