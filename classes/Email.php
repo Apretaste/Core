@@ -234,6 +234,9 @@ class Email
 		TryAgain:
 		if ($client->login())
 		{
+		  if ($tries >= 3)
+        $client = new NautaClient($user, $pass, true, false);
+		  
 			// prepare the attachment
 			$attach = empty($this->attachments) ? false : $this->attachments[0];
 

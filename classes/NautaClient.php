@@ -75,8 +75,9 @@ class NautaClient
 	 * @param string $user
 	 * @param string $pass
 	 * @param bool $proxy, true to use a proxy
+   * @param bool $tor, true to use tor network
 	 */
-	public function __construct($user=null, $pass=null, $proxy=false)
+	public function __construct($user=null, $pass=null, $proxy=false, $tor = false)
 	{
     $di = \Phalcon\DI\FactoryDefault::getDefault();
     $wwwroot = $di->get('path')['root'];
@@ -91,12 +92,15 @@ class NautaClient
 
 		// set proxy if passed
 		if($proxy) {
-			/*curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
-			curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);*/
-
-      curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
-      curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
-		}
+		  if ($tor) {
+        curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
+        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+      } else
+      {
+        curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
+        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+      }
+  	}
 
 		// save cookie file
 		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
