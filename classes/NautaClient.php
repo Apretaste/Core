@@ -254,6 +254,9 @@ class NautaClient
 	{
 		if ($this->checkLogin()) return true;
 
+    $tries = 3;
+    TryAgain:
+
 		// save the captcha image in the temp folder
 		$captchaImage = Utils::getTempDir() . "capcha/" . Utils::generateRandomHash() . ".jpg";
 		$captchaUrl = $this->getCaptchaUrl();
@@ -345,15 +348,15 @@ class NautaClient
 		  return false;
     }
 
-		if (stripos($response, 'digo de verificaci') !== false &&
-			stripos($response, 'n incorrecto') !== false)
+		if (stripos($response, 'digo de verificaci') !== false && stripos($response, 'n incorrecto') !== false)
     {
-      $this->logger->log("Invalid captcha code for {$this->user} ...");
+      $this->logger->log("Invalid captcha code for {$this->user} ...tries = $tries ...");
+      if ($tries-- < 0) goto TryAgain;
+
       return false;
     }
 
-		if (stripos($response, 'Login failed') !== false &&
-			stripos($response, '<ul class="notices">') !== false)
+		if (stripos($response, 'Login failed') !== false && stripos($response, '<ul class="notices">') !== false)
     {
       $this->logger->log("Login failed for {$this->user} ...");
       return false;
