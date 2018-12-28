@@ -3437,7 +3437,7 @@ video {
 /* WRAPPERS */
 #wrapper {
   width: 100%;
-#  overflow-x: hidden;
+/*#  overflow-x: hidden;*/
 }
 .wrapper {
   padding: 0 20px;
@@ -8229,4 +8229,8 @@ body.md-skin {
 }
 .nobr{
 	white-space:nowrap;
+}
+
+svg {
+  opacity: 1 !important;
 }

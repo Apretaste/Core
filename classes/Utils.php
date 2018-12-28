@@ -1024,7 +1024,7 @@ class Utils
 				$db->close();
 			}
 			catch(Exception $e) {
-				$message .= " [CreateAlert:Database] ".$e->getMessage();
+				$message .= " [CreateAlert:Database] ".$e->getMessage().' '.$e->getFile().": ".$e->getLine();
 			}
 		}
 

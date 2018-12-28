@@ -1,0 +1,61 @@
+<?php $pies = [
+  "gender"               => "Gender",
+  "province"             => "Location",
+  "highest_school_level" => "Education level",
+  "skin"                 => "Skin",
+  "age_range"            => "Age",
+]; ?>
+<div class="row">
+
+    <div class="col-xs-2">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <i class="fa fa-user pull-left"
+                   style="font-size:37px; margin-right:10px;"></i>
+                <big><b><?= number_format($total_answer) ?></b></big><br/>
+                <small>Answers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+  <?php foreach ($pies as $var => $title) : ?>
+      <div class="col-xs-4">
+          <div class="panel panel-default">
+              <div class="panel-heading"><?= $title ?></div>
+              <div class="panel-body">
+                  <div id="chart_pie_<?= $var ?>" style="width:100%;"></div>
+              </div>
+          </div>
+      </div>
+  <?php endforeach; ?>
+</div>
+
+<!-- JS TO LOAD CHARTS -->
+
+<script type='text/javascript' src='https://www.google.com/jsapi'></script>
+<script type='text/javascript'>
+  google.load("visualization", "1", {packages: ["corechart"]});
+  <?php foreach($pies as $var => $title) :?>
+  google.setOnLoadCallback(by_<?= $var; ?>);
+
+  function <?= "by_$var"; ?>() {
+    var data = google.visualization.arrayToDataTable([
+      ['<?= $title; ?>', 'Total'],
+      <?php $collection = 'totals_by_' . $var; ?>
+      <?php foreach ($$collection as $item): ?>
+      ['<?= $item->$var; ?>',<?= $item->total; ?>],
+      <?php endforeach; ?>
+    ]);
+    var options = {};
+    var chart = new google.visualization.PieChart(document.getElementById('chart_pie_<?= $var; ?>'));
+    chart.draw(data, options);
+    showSVG();
+  }
+  <?php endforeach; ?>
+
+  $(function () {
+    showSVG();
+  })
+</script>
