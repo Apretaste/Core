@@ -338,10 +338,52 @@ class ApiController extends Controller
 	 *
 	 * @author salvipascual
 	 * @version 1.0
-	 * @return JSON with code
 	 */
 	public function checkAction()
 	{
 		echo '{"code":"200"}';
 	}
+
+  /**
+   * Check if user exists
+   *
+   * @param $userId
+   * @throws Phalcon\Exception
+   */
+  public function checkUserAction($userId)
+  {
+    if ( ! Utils::isInternalNetwork())
+    {
+      throw new Phalcon\Exception("Access denied for " . php::getClientIP() . " to Api::checkUserAction");
+    }
+
+    $this->response->setHeader("Content-type", "application/json");
+
+    echo (Utils::getEmailFromId($userId) === false) ?
+      '{"result": false }' : '{"result": true}';
+  }
+
+  /**
+   * Check token
+   *
+   * @param $token
+   * @param $userId
+   *
+   * @throws Phalcon\Exception
+   */
+  public function checkTokenAction($userId, $token){
+
+    if ( ! Utils::isInternalNetwork())
+    {
+      throw new Phalcon\Exception("Access denied for " . php::getClientIP() . " to Api::checkUserAction");
+    }
+
+    $this->response->setHeader("Content-type", "application/json");
+
+    $security = new Security();
+    $user = $security->loginByToken($token);
+    echo ($user === false) ?
+      '{"result": false }' : ($user->id === $userId ? '{"result": true}' : '{"result": false}');
+
+  }
 }
