@@ -93,10 +93,12 @@ class NautaClient
 		// set proxy if passed
 		if($proxy) {
 		  if ($tor) {
+        $this->logger->log("--- {$this->user} using TOR");
         curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
         curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
       } else
       {
+        $this->logger->log("--- {$this->user} using PROXY");
         curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
         curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
       }
