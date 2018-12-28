@@ -226,7 +226,7 @@ class Email
 		$pass = Utils::decrypt($auth->pass);
 
 		// connect to the client
-		$client = new NautaClient($user, $pass, true, true);
+		$client = new NautaClient($user, $pass, true, false);
 		$tries = 3; // number of times to try if the email fails
 		$output = new stdClass();
 
@@ -235,7 +235,8 @@ class Email
 		if ($client->login())
 		{
 		  if ($tries >= 3)
-        $client = new NautaClient($user, $pass, true, false);
+        $client = new NautaClient($user, $pass, true, true);
+		  
 			// prepare the attachment
 			$attach = empty($this->attachments) ? false : $this->attachments[0];
 
