@@ -248,8 +248,8 @@ class Render
 	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		$userId = $service->request->userId;
-		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
+		$userId = isset($service->request->userId)?$service->request->userId:false;
+		$res = ($userId)?Connection::query("SELECT img_quality FROM person WHERE id=$userId"):[];
 		if(empty($res)) $quality = "ORIGINAL";
 		else $quality = $res[0]->img_quality;
 
