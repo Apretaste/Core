@@ -165,7 +165,6 @@ class Render
 			"EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"SUPPORT_EMAIL" => Utils::getSupportEmailAddress(),
 			"JSON_DATA" => $response->content,
-			"PLACE_TEMPLATE" => "<div id=\"tpl-output\"></div>",
 			// app only variables
 			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
