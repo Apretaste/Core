@@ -415,7 +415,7 @@ class ApiController extends Controller
 
     $sendMessage = function($chat_id, $message, $tk)
     {
-      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=@$chat_id&text=".urlencode($message)."&parse_mode=HTML");
+      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML");
 
       $wwwroot = $this->di->get('path')['root'];
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
