@@ -390,7 +390,7 @@ class ApiController extends Controller
   public function apretinAction(){
 
     $wwwroot = $this->di->get('path')['root'];
-    
+
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
 
     $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
@@ -468,7 +468,7 @@ class ApiController extends Controller
         $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
 
         while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
-        while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
+        //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
 
         $sendMessage($chat, $body, $token);
 
