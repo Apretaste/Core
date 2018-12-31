@@ -443,6 +443,12 @@ class ApiController extends Controller
 
         $text = substr($text,1);
 
+        if ($text == 'granma' || $text == 'escuela')
+        {
+          $sendMessage($chat_id, "Granma y Escuela estan demorando mucho. El equipo esta trabajando en resolverlo. Lo sentimos.", $token);
+          return;
+        }
+
         if ($text == 'audiencia')
         {
           $r = Connection::query("SELECT count(*) as total FROM delivery where date(request_date) = current_date;");
