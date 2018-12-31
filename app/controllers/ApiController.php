@@ -392,12 +392,12 @@ class ApiController extends Controller
     $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
 
     $wwwroot = $this->di->get('path')['root'];
-    
-    $message = json_decode($this->request->getRawBody());
+
+    $message = $this->request->getJsonRawBody(true);
 
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
     $logger->log(date("Y-m-d h:i:s\n"));
-    $logger->log($message);
+    $logger->log(serialize($message));
     $logger->log(date("\n\n"));
     $logger->close();
 
