@@ -490,7 +490,7 @@ class ApiController extends Controller
       $query = $message['inline_query']['query'];
 
       $obj = new stdClass();
-      $obj->tyoe = 'article';
+      $obj->type = 'article';
       $obj->id = uniqid();
       $obj->title = 'Este es un resultado';
       $obj->input_message_content = new stdClass();
