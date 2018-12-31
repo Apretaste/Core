@@ -423,12 +423,12 @@ class ApiController extends Controller
       Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
     } else {
       // create a unique username and save the new person
-      $username = Utils::usernameFromEmail($fromEmail);
+      $usernameAp = Utils::usernameFromEmail($fromEmail);
       $personId = Connection::query("
 				INSERT INTO person (email, username, last_access, source)
-				VALUES ('{$fromEmail}', '$username', CURRENT_TIMESTAMP, 'telegram')");
+				VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
 
-      $sendMessage($chat, "Bienvenido a Apretaste &@$username", $token);
+      $sendMessage($chat, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
     }
 
     if ($text[0]=='/'){
@@ -446,7 +446,7 @@ class ApiController extends Controller
         $body = Render::renderHTML($service, $response);
 
         $body = substr($body, strpos($body,'<body'));
-        
+
         $sendMessage($chat, $body, $token);
       }
     }
