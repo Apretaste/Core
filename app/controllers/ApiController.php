@@ -386,4 +386,13 @@ class ApiController extends Controller
       '{"result": false }' : ($user->id === $userId ? '{"result": true}' : '{"result": false}');
 
   }
+
+  public function apretinAction(){
+    $wwwroot = $this->di->get('path')['root'];
+    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
+    $logger->log(date("Y-m-d h:i:s\n"));
+    $logger->log($this->request->getRawBody());
+    $logger->log(date("\n\n"));
+    $logger->close();
+  }
 }

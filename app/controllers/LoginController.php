@@ -86,21 +86,17 @@ class LoginController extends Controller
 		$logger->log("Login| Checking if user {$email} exists....");
 
 		// create the user if he/she does not exist
-		$utils = new Utils();
-		$connection = new Connection();
 		$action = "login";
-		if( ! $utils->personExist($email)) {
-
+		if( Utils::personExist($email)){
 			$logger->log("Login| User {$email} is new user!");
-
-			$username = $utils->usernameFromEmail($email);
-			$connection->query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
+			$username = Utils::usernameFromEmail($email);
+			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
 			$action = "register";
 		}
 
 		// create a new pin for the user
 		$pin = mt_rand(1000, 9999);
-		$connection->query("UPDATE person SET pin='$pin' WHERE email='$email'");
+		Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
 		// create response to email the new code
 		$response = new Response();
