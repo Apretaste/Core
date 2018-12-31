@@ -444,7 +444,8 @@ class ApiController extends Controller
       if($response->render) {
         // render the HTML body
         $body = Render::renderHTML($service, $response);
-
+        $body = substr($body, strpos($body, '<body'));
+        
         $tidy = new tidy();
         $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
 
