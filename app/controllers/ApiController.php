@@ -465,7 +465,18 @@ class ApiController extends Controller
         while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
 
         $sendMessage($chat, $body, $token);
+
+        return;
       }
     }
+
+    if (stripos($text,'@apretin_bot') !== false)
+    {
+      $sendMessage($chat, "Se te ofrece algo @$username. Que hablas de mi?", $token);
+    } else
+      if (stripos($text,'apretin') !== false)
+      {
+        $sendMessage($chat, "No te entiendo @$username. Que quieres saber?", $token);
+      }
   }
 }
