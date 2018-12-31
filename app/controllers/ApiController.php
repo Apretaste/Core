@@ -390,20 +390,18 @@ class ApiController extends Controller
   public function apretinAction(){
 
     $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
-
     $wwwroot = $this->di->get('path')['root'];
-
     $message = $this->request->getJsonRawBody(true);
-
-    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
-    $logger->log(date("Y-m-d h:i:s\n"));
-    $logger->log(serialize($message));
-    $logger->log(date("\n\n"));
-    $logger->close();
 
     $username = $message['message']['from']['username'];
     $chat = $message['message']['chat']['username'];
     $text = $message['message']['text'];
+
+    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
+    $logger->log(date("Y-m-d h:i:s\n"));
+    $logger->log("Get message ".substr($text,0,40)."from @$username in @$chat");
+    $logger->log(date("\n\n"));
+    $logger->close();
 
     $fromEmail = $username.'@tg.apretaste.com';
     $personId = Utils::personExist($fromEmail);
@@ -411,6 +409,13 @@ class ApiController extends Controller
     $sendMessage = function($chat_id, $message, $tk)
     {
       Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=@$chat_id&".urlencode($message)."&parse_mode=HTML");
+
+      $wwwroot = $this->di->get('path')['root'];
+      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
+      $logger->log(date("Y-m-d h:i:s\n"));
+      $logger->log("Sending message to telegram @$chat_id: ".substr($message, 0,40));
+      $logger->log(date("\n\n"));
+      $logger->close();
     };
 
     if ($personId) { // if person exists
