@@ -444,8 +444,10 @@ class ApiController extends Controller
       if($response->render) {
         // render the HTML body
         $body = Render::renderHTML($service, $response);
-       // $body = substr($body, strpos($body, '<body'));
+        $body = substr($body, strpos($body, '<body'));
+        $body = strip_tags($body, '<b><strong><i><a><code><pre>');
 
+        /*
         $tidy = new tidy();
         $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
 
@@ -459,7 +461,9 @@ class ApiController extends Controller
 
         $body = $dom->saveHTML();*/
 
-        $sendMessage($chat, $body->textContent, $token);
+      // while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
+
+        $sendMessage($chat, $body, $token);
       }
     }
   }
