@@ -401,6 +401,7 @@ class ApiController extends Controller
 
     $username = $message['message']['from']['username'];
     $chat = $message['message']['chat']['username'];
+    $chat_id = $message['message']['chat']['id'];
     $text = $message['message']['text'];
 
 
@@ -470,7 +471,7 @@ class ApiController extends Controller
         while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
         //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
 
-        $sendMessage($chat, $body, $token);
+        $sendMessage($chat_id, $body, $token);
 
         return;
       }
@@ -478,11 +479,11 @@ class ApiController extends Controller
 
     if (stripos($text,'@apretin_bot') !== false)
     {
-      $sendMessage($chat, "Se te ofrece algo @$username. Que hablas de mi?", $token);
+      $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
     } else
       if (stripos($text,'apretin') !== false)
       {
-        $sendMessage($chat, "No te entiendo @$username. Que quieres saber?", $token);
+        $sendMessage($chat_id, "No te entiendo @$username. Que quieres saber?", $token);
       }
   }
 }
