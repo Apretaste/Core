@@ -399,20 +399,6 @@ class ApiController extends Controller
 
     $logger->log(json_encode($message));
 
-    $username = $message['message']['from']['username'];
-    $chat = $message['message']['chat']['username'];
-    $chat_id = $message['message']['chat']['id'];
-    $text = $message['message']['text'];
-
-
-    $logger->log(date("Y-m-d h:i:s\n"));
-    $logger->log("Get message ".substr($text,0,40)."from @$username in @$chat");
-    $logger->log("\n\n");
-    $logger->close();
-
-    $fromEmail = $username.'@tg.apretaste.com';
-    $personId = Utils::personExist($fromEmail);
-
     $sendMessage = function($chat_id, $message, $tk)
     {
       $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML");
@@ -426,60 +412,107 @@ class ApiController extends Controller
       $logger->close();
     };
 
-    if ($personId) { // if person exists
-      Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
-    } else {
-      // create a unique username and save the new person
-      $usernameAp = Utils::usernameFromEmail($fromEmail);
-      $personId = Connection::query("
+    if (isset($message['message']))
+    {
+      $username = $message['message']['from']['username'];
+      $chat = $message['message']['chat']['username'];
+      $chat_id = $message['message']['chat']['id'];
+      $text = $message['message']['text'];
+
+      $logger->log(date("Y-m-d h:i:s\n"));
+      $logger->log("Get message ".substr($text,0,40)."from @$username in @$chat");
+      $logger->log("\n\n");
+      $logger->close();
+
+      $fromEmail = $username.'@tg.apretaste.com';
+      $personId = Utils::personExist($fromEmail);
+
+      if ($personId) { // if person exists
+        Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
+      } else {
+        // create a unique username and save the new person
+        $usernameAp = Utils::usernameFromEmail($fromEmail);
+        $personId = Connection::query("
 				INSERT INTO person (email, username, last_access, source)
 				VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
 
-      $sendMessage($chat, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
-    }
+        $sendMessage($chat, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
+      }
 
-    if ($text[0]=='/'){
+      if ($text[0]=='/'){
 
-      $text = substr($text,1);
+        $text = substr($text,1);
 
-      // run the request and get the service and response
-      $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
-      $service = $ret->service;
-      $response = $ret->response;
+        // run the request and get the service and response
+        $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
+        $service = $ret->service;
+        $response = $ret->response;
 
-      // if the request needs an email back
-      if($response->render) {
-        // render the HTML body
-        $body = Render::renderHTML($service, $response);
-        //$body = substr($body, strpos($body, '<body'));
+        // if the request needs an email back
+        if($response->render) {
+          // render the HTML body
+          $body = Render::renderHTML($service, $response);
+          //$body = substr($body, strpos($body, '<body'));
 
-        $tidy = new tidy();
-        $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
+          $tidy = new tidy();
+          $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
 
-        $dom = new DOMDocument;
-        @$dom->loadHTML($body);
+          $dom = new DOMDocument;
+          @$dom->loadHTML($body);
 
-        $xpath = new DOMXPath($dom);
-        $body = $xpath->query('//body')->item(0);
-        //$body->textContent;
-       /* $dom->saveXml($body);
+          $xpath = new DOMXPath($dom);
+          $body = $xpath->query('//body')->item(0);
+          //$body->textContent;
+          /* $dom->saveXml($body);
 
-        $body = $dom->saveHTML();*/
+           $body = $dom->saveHTML();*/
 
-        $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
+          $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
 
-        while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
-        //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
+          while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
+          //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
 
-        $sendMessage($chat_id, $body, $token);
+          $sendMessage($chat_id, $body, $token);
 
-        return;
+          return;
+        }
+      }
+
+      if (stripos($text,'apretin') !== false)
+      {
+        $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
       }
     }
 
-    if (stripos($text,'apretin') !== false)
+    if (isset($message['inline_query']))
     {
-      $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
+      $id = $message['inline_query']['id'];
+      $query = $message['inline_query']['query'];
+
+      $obj = new stdClass();
+      $obj->tyoe = 'article';
+      $obj->id = uniqid();
+      $obj->title = 'Este es un resultado';
+      $obj->input_message_content = new stdClass();
+      $obj->input_message_content->message_text = 'Este es la explicacion del resultado';
+
+      $data = [
+        $obj
+      ];
+
+      $json = json_encode($data);
+
+      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$token}/answerInlineQuery?inline_query_id=$id&results=".urlencode($json));
+
+      $wwwroot = $this->di->get('path')['root'];
+      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
+      $logger->log(date("Y-m-d h:i:s\n"));
+      $logger->log("Sending inline answer to telegram $id query = $query");
+      $logger->log("  RESULT: ".json_encode($results));
+      $logger->log("\n\n");
+      $logger->close();
+
     }
+
   }
 }
