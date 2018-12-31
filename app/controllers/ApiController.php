@@ -446,7 +446,7 @@ class ApiController extends Controller
         if ($text == 'audiencia')
         {
           $r = Connection::query("SELECT count(*) as total FROM delivery where date(request_date) = current_date;");
-          $sendMessage($chat_id, "Hoy han accedido {$r[0]->total} de usuarios a Apretaste!", $token);
+          $sendMessage($chat_id, "Hasta ahora hoy han accedido {$r[0]->total} usuarios a Apretaste!", $token);
           return;
         }
 
