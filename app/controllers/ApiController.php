@@ -402,7 +402,7 @@ class ApiController extends Controller
     $logger->close();
 
     $username = $message['message']['from']['username'];
-    $chat = $message['chat']['username'];
+    $chat = $message['message']['chat']['username'];
     $text = $message['message']['text'];
 
     if ($text[0]=='/'){
