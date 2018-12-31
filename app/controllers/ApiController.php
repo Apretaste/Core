@@ -436,12 +436,19 @@ class ApiController extends Controller
 				INSERT INTO person (email, username, last_access, source)
 				VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
 
-        $sendMessage($chat, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
+        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
       }
 
       if ($text[0]=='/'){
 
         $text = substr($text,1);
+
+        if ($text == 'audiencia')
+        {
+          $r = Connection::query("SELECT count(*) as total FROM delivery where date(request_date) = current_date;");
+          $sendMessage($chat_id, "Hoy han accedido {$r[0]->total} de usuarios a Apretaste!", $token);
+          return;
+        }
 
         // run the request and get the service and response
         $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
