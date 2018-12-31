@@ -444,8 +444,8 @@ class ApiController extends Controller
       if($response->render) {
         // render the HTML body
         $body = Render::renderHTML($service, $response);
-        $body = substr($body, strpos($body, '<body'));
-        
+       // $body = substr($body, strpos($body, '<body'));
+
         $tidy = new tidy();
         $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
 
@@ -454,11 +454,12 @@ class ApiController extends Controller
 
         $xpath = new DOMXPath($dom);
         $body = $xpath->query('//body')->item(0);
-        $dom->saveXml($body);
+        //$body->textContent;
+       /* $dom->saveXml($body);
 
-        $body = $dom->saveHTML();
+        $body = $dom->saveHTML();*/
 
-        $sendMessage($chat, $body, $token);
+        $sendMessage($chat, $body->textContent, $token);
       }
     }
   }
