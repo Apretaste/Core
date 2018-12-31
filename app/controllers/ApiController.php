@@ -388,11 +388,37 @@ class ApiController extends Controller
   }
 
   public function apretinAction(){
+
+    $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
+
     $wwwroot = $this->di->get('path')['root'];
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
     $logger->log(date("Y-m-d h:i:s\n"));
     $logger->log($this->request->getRawBody());
     $logger->log(date("\n\n"));
     $logger->close();
+
+    $message = json_decode($this->request->getRawBody());
+    $username = $message->message->from->username;
+    $chat = $message->chat->username;
+    //$type = $message->chat->type;
+    $text = $message->message->text;
+
+    if ($text[0]=='/'){
+
+      $text = substr($text,1);
+
+      // run the request and get the service and response
+      $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
+      $service = $ret->service;
+      $response = $ret->response;
+
+      // if the request needs an email back
+      if($response->render) {
+        // render the HTML body
+        $body = Render::renderHTML($service, $response);
+        Utils::file_get_contents_curl("https://api.telegram.org/bot{$token}/sendMessage?chat_id=@$chat&".urlencode($body)."&parse_mode=HTML");
+      }
+    }
   }
 }
