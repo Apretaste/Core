@@ -389,14 +389,16 @@ class ApiController extends Controller
 
   public function apretinAction(){
 
+    $wwwroot = $this->di->get('path')['root'];
+    
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
 
     $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
-    $wwwroot = $this->di->get('path')['root'];
+
     $message = $this->request->getJsonRawBody(true);
 
     $logger->log(json_encode($message));
-    
+
     $username = $message['message']['from']['username'];
     $chat = $message['message']['chat']['username'];
     $text = $message['message']['text'];
