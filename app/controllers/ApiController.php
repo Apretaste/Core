@@ -477,13 +477,9 @@ class ApiController extends Controller
       }
     }
 
-    if (stripos($text,'@apretin_bot') !== false)
+    if (stripos($text,'apretin') !== false)
     {
       $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
-    } else
-      if (stripos($text,'apretin') !== false)
-      {
-        $sendMessage($chat_id, "No te entiendo @$username. Que quieres saber?", $token);
-      }
+    }
   }
 }
