@@ -400,7 +400,7 @@ class ApiController extends Controller
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
     $logger->log(date("Y-m-d h:i:s\n"));
     $logger->log("Get message ".substr($text,0,40)."from @$username in @$chat");
-    $logger->log(date("\n\n"));
+    $logger->log("\n\n");
     $logger->close();
 
     $fromEmail = $username.'@tg.apretaste.com';
@@ -408,13 +408,14 @@ class ApiController extends Controller
 
     $sendMessage = function($chat_id, $message, $tk)
     {
-      Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=@$chat_id&".urlencode($message)."&parse_mode=HTML");
+      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=@$chat_id&".urlencode($message)."&parse_mode=HTML");
 
       $wwwroot = $this->di->get('path')['root'];
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
       $logger->log(date("Y-m-d h:i:s\n"));
       $logger->log("Sending message to telegram @$chat_id: ".substr($message, 0,40));
-      $logger->log(date("\n\n"));
+      $logger->log("  RESULT: ".json_encode($results));
+      $logger->log("\n\n");
       $logger->close();
     };
 
