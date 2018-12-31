@@ -462,6 +462,7 @@ class ApiController extends Controller
         $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
 
         while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
+        while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
 
         $sendMessage($chat, $body, $token);
       }
