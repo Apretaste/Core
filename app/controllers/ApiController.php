@@ -405,6 +405,26 @@ class ApiController extends Controller
     $chat = $message['message']['chat']['username'];
     $text = $message['message']['text'];
 
+    $fromEmail = $username.'@tg.apretaste.com';
+    $personId = Utils::personExist($fromEmail);
+
+    $sendMessage = function($chat_id, $message, $tk)
+    {
+      Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=@$chat_id&".urlencode($message)."&parse_mode=HTML");
+    };
+
+    if ($personId) { // if person exists
+      Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
+    } else {
+      // create a unique username and save the new person
+      $username = Utils::usernameFromEmail($fromEmail);
+      $personId = Connection::query("
+				INSERT INTO person (email, username, last_access, source)
+				VALUES ('{$fromEmail}', '$username', CURRENT_TIMESTAMP, 'telegram')");
+
+      $sendMessage($chat, "Bienvenido a Apretaste &@$username", $token);
+    }
+
     if ($text[0]=='/'){
 
       $text = substr($text,1);
@@ -418,7 +438,7 @@ class ApiController extends Controller
       if($response->render) {
         // render the HTML body
         $body = Render::renderHTML($service, $response);
-        Utils::file_get_contents_curl("https://api.telegram.org/bot{$token}/sendMessage?chat_id=@$chat&".urlencode($body)."&parse_mode=HTML");
+        $sendMessage($chat, $body, $token);
       }
     }
   }
