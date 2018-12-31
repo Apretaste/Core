@@ -401,10 +401,9 @@ class ApiController extends Controller
     $logger->log(date("\n\n"));
     $logger->close();
 
-    $username = $message->message->from->username;
-    $chat = $message->chat->username;
-    //$type = $message->chat->type;
-    $text = $message->message->text;
+    $username = $message['message']['from']['username'];
+    $chat = $message['chat']['username'];
+    $text = $message['message']['text'];
 
     if ($text[0]=='/'){
 
