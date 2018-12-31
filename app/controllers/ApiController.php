@@ -445,7 +445,17 @@ class ApiController extends Controller
         // render the HTML body
         $body = Render::renderHTML($service, $response);
 
-        $body = substr($body, strpos($body,'<body'));
+        $tidy = new tidy();
+        $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
+
+        $dom = new DOMDocument;
+        @$dom->loadHTML($body);
+
+        $xpath = new DOMXPath($dom);
+        $body = $xpath->query('//body')->item(0);
+        $dom->saveXml($body);
+
+        $body = $dom->saveHTML();
 
         $sendMessage($chat, $body, $token);
       }
