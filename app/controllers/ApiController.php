@@ -393,7 +393,7 @@ class ApiController extends Controller
 
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
 
-    $token = '680807893:AAEg7lK2_GdUFfFjQ8kc1QiY5ufDvaXBXcg';
+    $token = $this->di->get('config')['telegram']['apretin_token'];
 
     $message = $this->request->getJsonRawBody(true);
 
@@ -467,8 +467,8 @@ class ApiController extends Controller
 */
         if (stripos($text,'audiencia') === 0)
         {
-          $r = Connection::query("SELECT count(*) as total FROM delivery where date(request_date) = current_date;");
-          $sendMessage($chat_id, "Hasta ahora hoy han accedido {$r[0]->total} usuarios a Apretaste!", $token);
+          $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
+          $sendMessage($chat_id, "En esta semana han accedido un total de {$r[0]->total} usuarios a Apretaste!", $token);
           return;
         }
 /*
@@ -507,13 +507,13 @@ class ApiController extends Controller
         }*/
       }
 
-      if (stripos($text,'apretin') !== false)
+      /*if (stripos($text,'apretin') !== false)
       {
         $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
-      }
+      }*/
     }
 
-    if (isset($message['inline_query']))
+   /* if (isset($message['inline_query']))
     {
       $id = $message['inline_query']['id'];
       $query = $message['inline_query']['query'];
@@ -542,7 +542,7 @@ class ApiController extends Controller
       $logger->close();
 
     }
-
+*/
 
   }
 }
