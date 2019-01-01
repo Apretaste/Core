@@ -412,6 +412,23 @@ class ApiController extends Controller
       $logger->close();
     };
 
+    $welcome = function($username, $chat_id, $sendMessage, $token) {
+      $fromEmail = $username.'@tg.apretaste.com';
+      $personId = Utils::personExist($fromEmail);
+
+      if ($personId) { // if person exists
+        Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
+      } else {
+        // create a unique username and save the new person
+        $usernameAp = Utils::usernameFromEmail($fromEmail);
+        $personId = Connection::query("
+          INSERT INTO person (email, username, last_access, source)
+          VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
+
+        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma. Comparte con esta gran framilia.", $token);
+      }
+    };
+
     if (isset($message['message']))
     {
       $username = $message['message']['from']['username'];
@@ -424,19 +441,12 @@ class ApiController extends Controller
       $logger->log("\n\n");
       $logger->close();
 
-      $fromEmail = $username.'@tg.apretaste.com';
-      $personId = Utils::personExist($fromEmail);
+      $welcome ($username, $chat_id, $sendMessage, $token);
 
-      if ($personId) { // if person exists
-        Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
-      } else {
-        // create a unique username and save the new person
-        $usernameAp = Utils::usernameFromEmail($fromEmail);
-        $personId = Connection::query("
-				INSERT INTO person (email, username, last_access, source)
-				VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
-
-        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma.", $token);
+      if (isset($message['message']['new_chat_members'])){
+        foreach ($message['message']['new_chat_members'] as $newMember){
+          $welcome ($username, $chat_id, $sendMessage, $token);
+        }
       }
 
       if ($text[0]=='/'){
@@ -526,6 +536,7 @@ class ApiController extends Controller
       $logger->close();
 
     }
+
 
   }
 }
