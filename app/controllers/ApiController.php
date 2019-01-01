@@ -452,7 +452,7 @@ class ApiController extends Controller
 
       if (isset($message['message']['left_chat_member'])){
           $leftMember = $message['message']['left_chat_member'];
-          $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a comparte con la gran familia de Apretaste.", $token);
+          $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
       }
 
       if ($text[0]=='/'){
