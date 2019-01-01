@@ -413,7 +413,7 @@ class ApiController extends Controller
     };
 
     $welcome = function($username, $chat_id, $sendMessage, $token) {
-      $fromEmail = $username.'@tg.apretaste.com';
+     /* $fromEmail = $username.'@tg.apretaste.com';
       $personId = Utils::personExist($fromEmail);
 
       if ($personId) { // if person exists
@@ -424,9 +424,9 @@ class ApiController extends Controller
         $personId = Connection::query("
           INSERT INTO person (email, username, last_access, source)
           VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
-
-        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. A partir de ahora eres el usuario @$usernameAp en nuestra plataforma. Comparte con esta gran framilia.", $token);
-      }
+*/
+        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. Estoy alegre de tenerte aqui. Comparte con esta gran framilia.", $token);
+     // }
     };
 
     if (isset($message['message']))
@@ -441,31 +441,37 @@ class ApiController extends Controller
       $logger->log("\n\n");
       $logger->close();
 
-      $welcome ($username, $chat_id, $sendMessage, $token);
+     // $welcome ($username, $chat_id, $sendMessage, $token);
 
       if (isset($message['message']['new_chat_members'])){
         foreach ($message['message']['new_chat_members'] as $newMember){
-          $welcome ($username, $chat_id, $sendMessage, $token);
+          $sendMessage($chat_id, "Bienvenido a Apretaste {$newMember['first_name']} {$newMember['last_name']}. Comparte con esta gran familia.", $token);
+         // $welcome ($username, $chat_id, $sendMessage, $token);
         }
+      }
+
+      if (isset($message['message']['left_chat_member'])){
+          $leftMember = $message['message']['left_chat_member'];
+          $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a comparte con la gran familia de Apretaste.", $token);
       }
 
       if ($text[0]=='/'){
 
         $text = substr($text,1);
-
+/*
         if ($text == 'granma' || $text == 'escuela')
         {
           $sendMessage($chat_id, "Granma y Escuela estan demorando mucho. El equipo esta trabajando en resolverlo. Lo sentimos.", $token);
           return;
         }
-
+*/
         if ($text == 'audiencia')
         {
           $r = Connection::query("SELECT count(*) as total FROM delivery where date(request_date) = current_date;");
           $sendMessage($chat_id, "Hasta ahora hoy han accedido {$r[0]->total} usuarios a Apretaste!", $token);
           return;
         }
-
+/*
         // run the request and get the service and response
         $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
         $service = $ret->service;
@@ -490,7 +496,7 @@ class ApiController extends Controller
 
            $body = $dom->saveHTML();*/
 
-          $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
+         /* $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
 
           while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
           //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
@@ -498,7 +504,7 @@ class ApiController extends Controller
           $sendMessage($chat_id, $body, $token);
 
           return;
-        }
+        }*/
       }
 
       if (stripos($text,'apretin') !== false)
