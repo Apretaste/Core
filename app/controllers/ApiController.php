@@ -445,7 +445,7 @@ class ApiController extends Controller
 
       if (isset($message['message']['new_chat_members'])){
         foreach ($message['message']['new_chat_members'] as $newMember){
-          $sendMessage($chat_id, "Bienvenido a Apretaste {$newMember['first_name']} {$newMember['last_name']}. Comparte con esta gran familia.", $token);
+          $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. Comparte con esta gran familia.", $token);
          // $welcome ($username, $chat_id, $sendMessage, $token);
         }
       }
