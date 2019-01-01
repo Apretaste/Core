@@ -171,7 +171,8 @@ class Render
 			"APP_OS" => empty($service->input->ostype) ? "" : $service->input->ostype, // android|ios
 			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
 			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
-			"APP_IMG_DIR" => $environment=="app"?"APP_IMG_DIR":"",
+			"APP_IMG_DIR" => $environment=="app"?"{APP_IMG_DIR}":"",
+			"APP_ASSETS" => $environment=="app"?"{APP_ASSETS}":"",
 			// user variables
 			"NUM_NOTIFICATIONS" => Utils::getNumberOfNotifications($person->id),
 			"USER_USERNAME" => $username,

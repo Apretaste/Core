@@ -1,8 +1,6 @@
 <?php
 
-class Deploy
-{
-	public $utils = null;
+class Deploy{
 
 	/**
 	 * Extracts and deploys a new service to the service directory
@@ -18,12 +16,10 @@ class Deploy
 
 		// get the service data from the XML
 		$service = $this->loadFromXML($pathToXML);
-		$utils = $this->getUtils();
-		$connection = new Connection();
 
 		// remove the current project if it exist
 		$updating = false;
-		if ($utils->serviceExist($service['serviceName']))
+		if (Utils::serviceExist($service['serviceName']))
 		{
 			$this->removeService($service);
 			$updating = true;
@@ -33,14 +29,14 @@ class Deploy
 		foreach ($service['serviceAlias'] as $alias)
 		{
 			// check if the alias already exists as a service name
-			$r = $connection->deepQuery("SELECT * FROM service WHERE name = '$alias'");
+			$r = Connection::query("SELECT * FROM service WHERE name = '$alias'");
 			if (is_array($r) && isset($r[0]) && isset($r[0]->name))
 			{
 				throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as a service");
 			}
 
 			// check if the alias is already defined
-			$r = $connection->deepQuery("SELECT * FROM service_alias WHERE alias = '$alias' AND service <> '{$service['serviceName']}'");
+			$r = Connection::query("SELECT * FROM service_alias WHERE alias = '$alias' AND service <> '{$service['serviceName']}'");
 			if (is_array($r) && isset($r[0]) && isset($r[0]->alias))
 			{
 				throw new Exception("<b>SERVICE NOT DEPLOYED</b>: Service alias '$alias' exists as an alias");
@@ -59,18 +55,6 @@ class Deploy
 			"serviceName"=>$service["serviceName"],
 			"creatorEmail"=>$service["creatorEmail"]
 		);
-	}
-
-	/**
-	 * Get Utils member (singleton)
-	 *
-	 * @author kuma
-	 * @return Utils
-	 */
-	public function getUtils()
-	{
-		if (is_null($this->utils)) $this->utils = new Utils();
-		return $this->utils;
 	}
 
 	/**
@@ -118,11 +102,8 @@ class Deploy
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
-		// create a new connection
-		$connection = new Connection();
-
 		// remove the service from the services table
-		$connection->deepQuery("DELETE FROM service WHERE name='{$service['serviceName']}'");
+		Connection::query("DELETE FROM service WHERE name='{$service['serviceName']}'");
 
 		// remove the service folder
 		$dir = "$wwwroot/services/{$service['serviceName']}";
@@ -145,29 +126,27 @@ class Deploy
 	 * */
 	public function addService($service, $pathToZip, $pathToService, $updating = false)
 	{
-		$utils = $this->getUtils();
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
 		// save the new service in the database
-		$connection = new Connection();
 		$insertUserQuery = "
-			INSERT INTO service (name,description,creator_email,category,listed)
-			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['listed']}')";
-		$connection->deepQuery($insertUserQuery);
+			INSERT INTO service (name,description,creator_email,category,tpl_version,listed)
+			VALUES ('{$service['serviceName']}','{$service['serviceDescription']}','{$service['creatorEmail']}','{$service['serviceCategory']}','{$service['tpl-version']}','{$service['listed']}')";
+		Connection::query($insertUserQuery);
 
 		// clear old alias
 		$sqlClear = "DELETE FROM service_alias WHERE alias <> '";
 		$sqlClear .= implode("' AND alias <> '", $service['serviceAlias']);
 		$sqlClear .= "' AND service = '{$service['serviceName']}' ;";
-		$connection->deepQuery($sqlClear);
+		Connection::query($sqlClear);
 
 		// insert new alias
 		foreach ($service['serviceAlias'] as $alias)
 		{
-			$connection->deepQuery("INSERT IGNORE INTO service_alias (service, alias) VALUES ('{$service['serviceName']}','$alias');");
+			Connection::query("INSERT IGNORE INTO service_alias (service, alias) VALUES ('{$service['serviceName']}','$alias');");
 		}
 
 		// copy files to the service folder and remove temp files
@@ -192,7 +171,6 @@ class Deploy
 		$xml = simplexml_load_file($pathToXML);
 		$XMLData = array();
 
-		$utils = $this->getUtils();
 
 		// get the main data of the service
 		$XMLData['serviceName'] = strtolower(trim((String)$xml->serviceName));
@@ -209,7 +187,7 @@ class Deploy
 		$newarr = array();
 		foreach ($XMLData['serviceAlias'] as $alias)
 		{
-			$alias = $utils->clearStr((String) $alias);
+			$alias = Utils::clearStr((String) $alias);
 
 			if ($alias !== '')
 				$newarr[] = $alias;

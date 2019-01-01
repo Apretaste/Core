@@ -1273,6 +1273,6 @@ class Utils
 			$imgSrc = "$wwwhttp/temp/$file";
 		}
 		elseif($di->get('environment') == "app") $imgSrc = $file;
-		else $destination = "cid:$file";
+		else $imgSrc = "cid:$file";
 	}
 }
