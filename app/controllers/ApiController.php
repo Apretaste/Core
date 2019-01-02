@@ -469,13 +469,13 @@ class ApiController extends Controller
         {
           $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) as total FROM person where datediff(current_date, date(last_access)) <= 7;");
-          $r2 = Connection::query("SELECT count(*) as total FROM person where active = 1;;");
+          $r2 = Connection::query("SELECT count(*) as total FROM person where active = 1;");
           $r3 = Connection::query("SELECT count(*) as total FROM person;");
 
-          $sendMessage($chat_id, "En esta semana Apretaste ha tenido un total de <b>{$r[0]->total} accesos</b> 
-                                          tanto por web como por email, dados por <b>{$r1[0]->total} usuarios</b>. 
-                                          Actualmente hay <b>{$r2[0]->total} usuarios activos</b> de un total <b>{$r3[0]->total}</b> que
-                                          alguna vez han accedido.", $token);
+          $sendMessage($chat_id, "En esta semana Apretaste ha tenido un total de <strong>{$r[0]->total} accesos</strong> ".
+                                         "tanto por web como por email, dados por <strong>{$r1[0]->total} usuarios</strong>. ".
+                                         "Actualmente hay <strong>{$r2[0]->total} usuarios activos</strong> de un total <strong>{$r3[0]->total}</strong> que ".
+                                         "alguna vez han accedido.", $token);
           return;
         }
 /*
