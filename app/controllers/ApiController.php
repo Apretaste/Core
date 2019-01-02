@@ -467,13 +467,24 @@ class ApiController extends Controller
 */
         if (stripos($text,'audiencia') === 0)
         {
-          $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
+         // $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) as total FROM person where datediff(current_date, date(last_access)) <= 7;");
           $r2 = Connection::query("SELECT count(*) as total FROM person where active = 1;");
-          $r3 = Connection::query("SELECT count(*) as total FROM person;");
+         // $r3 = Connection::query("SELECT count(*) as total FROM person;");
 
           $sendMessage($chat_id, "En esta semana han accedido <strong>{$r1[0]->total} usuarios</strong> a Apretaste. ".
                                          "Actualmente hay <strong>{$r2[0]->total} usuarios activos</strong>.", $token);
+          return;
+
+        }
+
+        if (stripos($text,'enlaces') === 0)
+        {
+
+          $sendMessage($chat_id, "Estamos en las redes sociales:\n\n".
+                                 "Facebook - https://www.facebook.com/apretaste/\n".
+                                 "Twitter - https://twitter.com/apretaste\n".
+                                 "Youtube - https://www.youtube.com/c/Apretaste\n", $token);
           return;
         }
 /*
