@@ -1,9 +1,7 @@
 <?php
 
 class Request {
-	public $userId;
-	public $email;
-	public $username;
+	public $person;
 	public $subject;
 	public $body;
 	public $attachments;
@@ -11,7 +9,6 @@ class Request {
 	public $subservice;
 	public $query;
 	public $params;
-	public $lang;
 	public $appversion;
 	public $environment;
 }

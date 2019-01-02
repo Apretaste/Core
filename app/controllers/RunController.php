@@ -8,7 +8,7 @@ class RunController extends Controller
 {
 	private $fromName;
 	private $fromEmail;
-	private $personId;
+	private $person;
 	private $toEmail;
 	private $execStartTime;
 	private $deliveryId; // id of the table delivery
@@ -39,14 +39,14 @@ class RunController extends Controller
 		else $user = $security->getUser();
 
 		// if user is not logged, redirect to login page
-		if($user) $this->fromEmail = $user->email;
+		if($user) $person = Utils::getPerson($user->email);
 		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
 		// set the running environment
 		$this->di->set('environment', function() {return "web";});
 
 		// run the request & render the response
-		$ret = Render::runRequest($this->fromEmail, $this->subject, '', []);
+		$ret = Render::runRequest($person, $this->subject, '', []);
 		echo Render::renderHTML($ret->service, $ret->response);
 	}
 
@@ -177,13 +177,13 @@ class RunController extends Controller
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
-		$this->personId = $user->id;
+		$this->person->id = $user->id;
 
 		// create a new entry on the delivery table
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'app')");
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', 'app')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "app";});
@@ -238,7 +238,7 @@ class RunController extends Controller
 		}
 
 		// get path to the folder to save
-		$textFile = ""; $attachs = [];
+		$requestFile = ""; $attachs = [];
 		$folderName = str_replace(".zip", "", basename($this->attachment));
 
 		// get the text file and attached files
@@ -248,7 +248,7 @@ class RunController extends Controller
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
-				if(substr($filename, -4) == ".txt") $textFile = $filename;
+				if(substr($filename, -4) == ".json") $requestFile = $filename;
 				else $attachs[] = "$temp/attachments/$folderName/$filename";
 			}
 
@@ -259,55 +259,35 @@ class RunController extends Controller
 			return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 		}
 
-		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
-		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$textFile"));
-		if($input) {
-			if( ! isset($input->ostype)) $input->ostype = "android"; // adroid|ios
-			if( ! isset($input->method)) $input->method = "email"; // email|http
-			if( ! isset($input->apptype)) $input->apptype = "original"; // original|single
-			if( ! isset($input->timestamp)) $input->timestamp = time();
-			if (! isset ($input->tpl_version)) $input->tpl_version = 0;
-			$input->osversion = (isset($input->osversion))?filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION):"";
-			$input->nautaPass = base64_decode($input->token);
-		// get the input if the data is plain text (version <= 2.5)
-		} else {
-			$input = new stdClass();
-			$input->osversion = false;
-			$input->ostype = "android";
-			$input->method = "email";
-			$input->apptype = "original";
-			$input->timestamp = time(); // get only notifications
+		// get the request data from the JSON file
+		$requestData = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
 
-			$file = file("$temp/attachments/$folderName/$textFile");
-			if (isset($file[0])) $input->command = trim($file[0]);
-			else return Utils::createAlert("[RunController::runApp] Empty file $temp/attachments/$folderName/$textFile");
-			$input->appversion = isset($file[1]) && is_numeric(trim($file[1])) ? trim($file[1]) : "";
-			$input->nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
-		}
+		$requestData->osversion = filter_var($requestData->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
 		// save Nauta password if passed
-		if($input->nautaPass) {
-			$encryptPass = Utils::encrypt($input->nautaPass);
-			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->personId}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->personId}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->personId}' AND appname='apretaste'");
+		if($requestData->token) {
+			$nautaPass = base64_decode($requestData->token);
+			$encryptPass = Utils::encrypt($nautaPass);
+			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->person->id}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->person->id}', '$encryptPass', 'apretaste', '{$requestData->ostype}', '{$requestData->osversion}')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$requestData->ostype}', version='{$requestData->osversion}' WHERE person_id='{$this->person->id}' AND appname='apretaste'");
 		}
 
 		// make the app params global
-		$this->di->set('appversion', function() use($input) { return $input->appversion; });
-		$this->di->set('ostype', function() use($input) { return $input->ostype; });
-		$this->di->set('method', function() use($input) { return $input->method; });
+		$this->di->set('appversion', function() use($requestData) { return $requestData->appversion; });
+		$this->di->set('ostype', function() use($requestData) { return $requestData->ostype; });
+		$this->di->set('method', function() use($requestData) { return $requestData->method; });
 
 		// update the version of the app used
-		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");
+		Connection::query("UPDATE person SET appversion='{$requestData->appversion}' WHERE id='{$this->person->id}'");
 
 		// run the request
-		$ret = Render::runRequest($this->fromEmail, $input->command, '', $attachs, $input);
+		$ret = Render::runRequest($this->person, $requestData->command, '', $attachs, $requestData);
 		$service = $ret->service;
 		$response = $ret->response;
 
 		// send the service's EJS templates if the stored version doesn't match
-		if($service->tpl_version != $input->tpl_version) $response->attachTemplates($service);
+		if($service->tpl_version != $requestData->tpl_version) $response->attachTemplates($service);
 		
 		// send the data for the template as a JSON
 		$response->attachContent();	
@@ -322,10 +302,10 @@ class RunController extends Controller
 				$response->attachments[] = $cache;
 			}
 
-			$service->input = $input;
+			$service->input = $requestData;
 
 			// get extra data for the app
-			$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
+			$res = Utils::getExternalAppData($this->fromEmail, $requestData->timestamp, $service);
 			$response->attachments = array_merge($response->attachments, $res["attachments"]);
 			$extra = $res["json"];
 
@@ -355,14 +335,14 @@ class RunController extends Controller
 			request_service='{$service->serviceName}',
 			request_subservice='{$service->request->subservice}',
 			request_query='$safeQuery',
-			request_method='{$input->method}'
+			request_method='{$requestData->method}'
 			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		$input->token = "";
-		$input->nautaPass = $input->nautaPass ? "Yes" : "No";
+		$requestData->token = "";
+		$nautaPass = $nautaPass ? "Yes" : "No";
 		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
-		foreach ($input as $key => $value) $log .= " | $key:$value";
+		foreach ($requestData as $key => $value) $log .= " | $key:$value";
 		return  $log;
 	}
 
@@ -375,7 +355,7 @@ class RunController extends Controller
 		Connection::query("
 			UPDATE delivery 
 			SET delivery_code='555' 
-			WHERE id_person={$this->personId} 
+			WHERE id_person={$this->person->id} 
 			AND email_subject='{$this->subject}'");
 
 		// display the webhook log
@@ -386,50 +366,6 @@ class RunController extends Controller
 
 		// create entry in the error log
 		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
-	}
-
-	/**
-	 * Fires when we receive an email sent directly to Apretaste
-	 *
-	 * @return string
-	 */
-	private function runEmail()
-	{
-		// run the request and get the service and response
-		$ret = Render::runRequest($this->fromEmail, $this->subject, $this->body, [$this->attachment]);
-		$service = $ret->service;
-		$response = $ret->response;
-
-		// if the request needs an email back
-		if($response->render)
-		{
-			// render the HTML body
-			$body = Render::renderHTML($service, $response);
-
-			// prepare and send the email
-			$email = new Email();
-			$email->to = $this->fromEmail;
-			$email->requestDate = $this->execStartTime;
-			$email->deliveryId = $this->deliveryId;
-			$email->subject = $response->subject;
-			$email->body = $body;
-			$email->images = $response->images;
-			$email->attachments = $response->attachments;
-			$email->replyId = $this->messageId;
-			$email->send();
-		}
-
-		// update values in the delivery table
-		$safeQuery = Connection::escape($service->request->query);
-		Connection::query("
-			UPDATE delivery SET
-			request_service='{$service->serviceName}',
-			request_subservice='{$service->request->subservice}',
-			request_query='$safeQuery'
-			WHERE id={$this->deliveryId}");
-
-		// return message for the log
-		return "Email received and sent";
 	}
 
 	/**
@@ -471,17 +407,30 @@ class RunController extends Controller
 		// parse the incoming email
 		$this->parseEmail($file);
 
-		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
-		if($blocked) return false;
+		
+		$this->person = Utils::getPerson($this->fromEmail);
 
-		// get the person's numeric ID
-		$this->personId = Utils::personExist($this->fromEmail);
+		if ($this->person) { //if person exists
+			// do not respond to blocked accounts
+			if($this->person->blocked) return false;
+			
+			// update last access time and make person active
+			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->person->id}");
+		} else {
+			// create a unique username and save the new person
+			$username = Utils::usernameFromEmail($this->fromEmail);
+			Connection::query("INSERT INTO person (email, username, last_access, source)
+							   VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+			
+			$this->person = Utils::getPerson();
+			// add the welcome notification
+			Utils::addNotification($this->person->id, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
+		}
 
 		// get the environment from the mailbox
 		$mailbox = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
 		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
-		$environment = empty($res) ? "default" : $res[0]->environment;
+		$environment = empty($res) ? "invalid" : $res[0]->environment;
 
 		// set the running environment
 		$this->di->set('environment', function() use($environment) {return $environment;});
@@ -492,31 +441,16 @@ class RunController extends Controller
 			return false;
 		}
 
-		// update last access time and make person active
-		if ($this->personId) { //if person exists
-			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->personId}");
-		} else {
-			// create a unique username and save the new person
-			$username = Utils::usernameFromEmail($this->fromEmail);
-			$this->personId = Connection::query("
-				INSERT INTO person (email, username, last_access, source)
-				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
-
-			// add the welcome notification
-			Utils::addNotification($this->fromEmail, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
-		}
-
 		// insert a new email in the delivery table
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
 		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
-		elseif($environment == "email") $log = $this->runEmail();
 		else $log = $this->runSupport();
 
 		// save execution time to the db

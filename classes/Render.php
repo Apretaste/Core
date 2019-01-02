@@ -6,13 +6,13 @@ class Render
 	 * Based on a subject process a request and return the Response
 	 *
 	 * @author salvipascual
-	 * @param String $email
+	 * @param stdClass $person
 	 * @param String $subject
 	 * @param String $body
 	 * @param String[] $attachments
 	 * @return [Service, Response[]]
 	 */
-	public static function runRequest($email, $subject, $body, $attachments, $input=false)
+	public static function runRequest($person, $subject, $body, $attachments, $requestData=false)
 	{
 		// sanitize subject and body to avoid mysql injections
 		$subject = Utils::sanitize($subject);
@@ -50,21 +50,13 @@ class Render
 		$params = explode("|", $query);
 		$query = str_replace("|", " ", $query); // backward compatibility
 
-		// get user details
-		$result = Connection::query("SELECT id, username, lang FROM person WHERE email = '$email'");
-		$userId = $result[0]->id;
-		$lang = isset($result[0]->lang) ? $result[0]->lang : "es";
-		$username = isset($result[0]->username) ? $result[0]->username : "";
-
 		// get the current environment
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$environment = $di->get('environment');
 
 		// create a new Request object
 		$request = new Request();
-		$request->userId = $userId;
-		$request->email = $email;
-		$request->username = $username;
+		$request->person = $person;
 		$request->subject = $subject;
 		$request->body = $body;
 		$request->attachments = $attachments;
@@ -72,12 +64,11 @@ class Render
 		$request->subservice = trim($subServiceName);
 		$request->query = $query;
 		$request->params = $params;
-		$request->lang = $lang;
 		$request->environment = $environment; // web|app|api
-		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
-		$request->ostype = empty($input->ostype) ? "" : $input->ostype; // android|ios
-		$request->apptype = empty($input->apptype) ? "original" : $input->apptype; // original|single
-		$request->appmethod = empty($input->method) ? "email" : $input->method; // email|http
+		$request->appversion = empty($requestData->appversion) ? 1 : floatval($requestData->appversion);
+		$request->ostype = empty($requestData->ostype) ? "" : $requestData->ostype; // android|ios
+		$request->apptype = empty($requestData->apptype) ? "original" : $requestData->apptype; // original|single
+		$request->appmethod = empty($requestData->method) ? "email" : $requestData->method; // email|http
 
 		// create a new Service Object with info from the database
 		$result = Connection::query("SELECT * FROM service WHERE name = '$serviceName'");
@@ -90,18 +81,16 @@ class Render
 			$service->creatorEmail = $result[0]->creator_email;
 			$service->serviceCategory = $result[0]->category;
 			$service->insertionDate = $result[0]->insertion_date;
-			$service->tpl_version = $result[0]->tpl_version;
+			$service->version = $result[0]->version;
 		} else {
 			$service->serviceDescription = '';
 			$service->creatorEmail = 'soporte@apretaste.com';
 			$service->serviceCategory = 'service';
 			$service->insertionDate = date('Y-m-d');
-			$service->tpl_version = 0;
+			$service->version = 0;
 		}
 
 		$service->pathToService = $pathToService;
-		$service->utils = new Utils();
-		$service->social = new Social();
 		$service->request = $request;
 
 		// run the service and get the Response
@@ -137,7 +126,7 @@ class Render
 		if($response->json) return $response->json;
 
 		// set the email of the response if empty
-		if(empty($response->email)) $response->email = $service->request->email;
+		if(empty($response->email)) $response->email = $service->request->person->email;
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -235,7 +224,7 @@ class Render
 	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		$userId = $service->request->userId;
+		$userId = $service->request->person->id;
 		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
 		if(empty($res)) $quality = "ORIGINAL";
 		else $quality = $res[0]->img_quality;

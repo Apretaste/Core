@@ -322,10 +322,10 @@ class Social
 	 *
 	 * @return object
 	 * */
-	public static function prepareUserProfile($profile, $lang=false)
+	public static function prepareUserProfile($profile)
 	{
 		// ensure only use known languages and Spanish is default
-		if( ! $lang && $profile->lang) $lang = $profile->lang;
+		$lang = $profile->lang;
 		if( ! in_array($lang, ["en","es"])) $lang = "es";
 
 		// get the person's age

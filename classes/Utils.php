@@ -78,50 +78,27 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public static function serviceExist($name)
-	{
+	public static function serviceExist($name){
 		// if serviceName is an alias get the service name
-		$db = new Connection();
-		$r = $db->query("SELECT * FROM service_alias WHERE alias = '$name';");
-		if (isset($r[0]->service)) $name = $r[0]->service;
+		$r = Connection::query("SELECT * FROM service WHERE name = '$name';");
 
 		// check if service exist and return its name
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$www_root = $di->get('path')['root'];
-		if(file_exists("$www_root/services/$name/config.xml")) return $name;
+		if(isset($r[0]) && file_exists("$www_root/services/$name/service.php")) return $name;
 		else return false;
 	}
 
 	/**
-	 * Check if the Person exists in the database
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 * @return Boolean, true if Person exist
-	 */
-	public static function personExist($email)
-	{
-		$res = Connection::query("SELECT id FROM person WHERE LOWER(email)=LOWER('$email')");
-		return $res ? $res[0]->id : false;
-	}
-
-	/**
-	 * Get a person's profile
+	 * Check if a user exists and get the profile
 	 *
 	 * @author salvipascual
 	 * @return object|boolean
 	 */
-	public static function getPerson($email)
-	{
-		// get the person via email OR id
-		$where = strpos($email,'@') ? "email" : "id";
-		$person = Connection::query("SELECT * FROM person WHERE $where = '$email'");
-
-		// false if the person cant be found
-		if (empty($person)) return false;
-
-		// else, get the profile
-		return Social::prepareUserProfile($person[0]);
+	public static function getPerson($email){
+		// get the person via email
+		$person = Connection::query("SELECT * FROM person WHERE LOWER(email)=LOWER('$email')");
+		return $person ? $person[0] : false;
 	}
 
 	/**
@@ -573,14 +550,14 @@ class Utils
 	 * @param string $tag
 	 * @return array
 	 */
-	public static function addNotification($email, $origin, $text, $link='', $tag='INFO')
+	public static function addNotification($id, $origin, $text, $link='', $tag='INFO')
 	{
 		// get the person's numeric ID
-		$id_person = strpos($email,'@')?self::personExist($email):$email;
-		$email = strpos($email,'@')?$email:self::getEmailFromId($id_person);
+		$id = strpos($email,'@')?self::personExist($email):$email;
+		$email = strpos($email,'@')?$email:self::getEmailFromId($id);
 
 		// check if we should send a web push
-		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id_person' AND appname='apretaste' AND platform='web'");
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
 
 		// if the person has a valid appid, send a web push
@@ -609,7 +586,7 @@ class Utils
 		}
 
 		// increase number of notifications
-		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id_person");
+		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id");
 
 		// insert notification in the db and get id
 		return Connection::query("INSERT INTO notifications (id_person, email, origin, `text`, link, tag, ispush) VALUES ($id_person,'$email','$origin','$text','$link','$tag','$ispush')");

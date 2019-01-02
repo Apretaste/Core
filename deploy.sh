@@ -11,6 +11,7 @@ mkdir temp/nautaclient
 mkdir temp/capcha
 mkdir temp/templates
 mkdir temp/data
+mkdir temp/services
 mkdir services
 mkdir logs
 mkdir public/ads
