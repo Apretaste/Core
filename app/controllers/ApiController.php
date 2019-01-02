@@ -387,23 +387,42 @@ class ApiController extends Controller
 
   }
 
-  public function apretinAction(){
+  /**
+   * Apretin Bot
+   *
+   * @author kumahacker
+   * @throws Phalcon\Exception
+   */
+  public function apretinAction($retoken = ''){
 
-    $wwwroot = $this->di->get('path')['root'];
+    // logger function
+    $log = function($message) {
+      $wwwroot = $this->di->get('path')['root'];
+      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
+      if ( ! is_array($message)) $message = [$message];
+      foreach($message as $msg) $logger->log($msg);
+      $logger->close();
+    };
 
-    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
-
+    // get api token and message
     $token = $this->di->get('config')['telegram']['apretin_token'];
-
+    $security = $this->di->get('config')['telegram']['retoken'];
     $message = $this->request->getJsonRawBody(true);
 
-    $logger->log(json_encode($message));
+    if ($retoken != $security)
+    {
+        throw new Phalcon\Exception("Apretin access denied");
+    }
+
+    $log([
+      "Getting message ",
+      json_encode($message)
+    ]);
 
     $sendMessage = function($chat_id, $message, $tk)
     {
-      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML");
-
       $wwwroot = $this->di->get('path')['root'];
+      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML");
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
       $logger->log(date("Y-m-d h:i:s\n"));
       $logger->log("Sending message to telegram @$chat_id: ".substr($message, 0,40));
@@ -412,153 +431,55 @@ class ApiController extends Controller
       $logger->close();
     };
 
-    $welcome = function($username, $chat_id, $sendMessage, $token) {
-     /* $fromEmail = $username.'@tg.apretaste.com';
-      $personId = Utils::personExist($fromEmail);
-
-      if ($personId) { // if person exists
-        Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$personId}");
-      } else {
-        // create a unique username and save the new person
-        $usernameAp = Utils::usernameFromEmail($fromEmail);
-        $personId = Connection::query("
-          INSERT INTO person (email, username, last_access, source)
-          VALUES ('{$fromEmail}', '$usernameAp', CURRENT_TIMESTAMP, 'telegram')");
-*/
-        $sendMessage($chat_id, "Bienvenido a Apretaste @$username. Estoy alegre de tenerte aqui. Comparte con esta gran framilia.", $token);
-     // }
-    };
-
-    if (isset($message['message']))
-    {
+    if (isset($message['message'])) {
       $username = $message['message']['from']['username'];
-      $chat = $message['message']['chat']['username'];
-      $chat_id = $message['message']['chat']['id'];
-      $text = $message['message']['text'];
+      $chat     = $message['message']['chat']['username'];
+      $chat_id  = $message['message']['chat']['id'];
+      $text     = $message['message']['text'];
 
-      $logger->log(date("Y-m-d h:i:s\n"));
-      $logger->log("Get message ".substr($text,0,40)."from @$username in @$chat");
-      $logger->log("\n\n");
-      $logger->close();
+      $log([
+        date("Y-m-d h:i:s\n"),
+        "Get message " . substr($text, 0, 40) . "from @$username in @$chat",
+        "\n\n"
+      ]);
 
-     // $welcome ($username, $chat_id, $sendMessage, $token);
-
-      if (isset($message['message']['new_chat_members'])){
-        foreach ($message['message']['new_chat_members'] as $newMember){
+      if (isset($message['message']['new_chat_members'])) {
+        foreach ($message['message']['new_chat_members'] as $newMember) {
           $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. Comparte con esta gran familia.", $token);
-         // $welcome ($username, $chat_id, $sendMessage, $token);
         }
       }
 
-      if (isset($message['message']['left_chat_member'])){
-          $leftMember = $message['message']['left_chat_member'];
-          $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
+      if (isset($message['message']['left_chat_member'])) {
+        $leftMember = $message['message']['left_chat_member'];
+        $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
       }
 
-      if ($text[0]=='/'){
+      if ($text[0] == '/') {
 
-        $text = substr($text,1);
-/*
-        if ($text == 'granma' || $text == 'escuela')
-        {
-          $sendMessage($chat_id, "Granma y Escuela estan demorando mucho. El equipo esta trabajando en resolverlo. Lo sentimos.", $token);
+        $text = substr($text, 1);
+
+        if (stripos($text, 'audiencia') === 0) {
+          $r1 = Connection::query("SELECT count(*) AS total FROM person WHERE datediff(current_date, date(last_access)) <= 7;");
+          $r2 = Connection::query("SELECT count(*) AS total FROM person WHERE active = 1;");
+
+          $sendMessage($chat_id, "En esta semana han accedido <strong>{$r1[0]->total} usuarios</strong> a Apretaste. " .
+                                 "Actualmente hay <strong>{$r2[0]->total} usuarios activos</strong>.", $token);
           return;
         }
-*/
-        if (stripos($text,'audiencia') === 0)
-        {
-         // $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
-          $r1 = Connection::query("SELECT count(*) as total FROM person where datediff(current_date, date(last_access)) <= 7;");
-          $r2 = Connection::query("SELECT count(*) as total FROM person where active = 1;");
-         // $r3 = Connection::query("SELECT count(*) as total FROM person;");
 
-          $sendMessage($chat_id, "En esta semana han accedido <strong>{$r1[0]->total} usuarios</strong> a Apretaste. ".
-                                         "Actualmente hay <strong>{$r2[0]->total} usuarios activos</strong>.", $token);
-          return;
+        if (stripos($text, 'enlaces') === 0) {
 
-        }
-
-        if (stripos($text,'enlaces') === 0)
-        {
-
-          $sendMessage($chat_id, "Estamos en las redes sociales:\n\n".
-                                 "Facebook - https://www.facebook.com/apretaste/\n".
-                                 "Twitter - https://twitter.com/apretaste\n".
+          $sendMessage($chat_id, "Estamos en las redes sociales:\n\n" .
+                                 "Facebook - https://www.facebook.com/apretaste/\n" .
+                                 "Twitter - https://twitter.com/apretaste\n" .
                                  "Youtube - https://www.youtube.com/c/Apretaste\n", $token);
           return;
         }
-/*
-        // run the request and get the service and response
-        $ret = Render::runRequest($username.'@tg.apretaste.com', $text, '', []);
-        $service = $ret->service;
-        $response = $ret->response;
 
-        // if the request needs an email back
-        if($response->render) {
-          // render the HTML body
-          $body = Render::renderHTML($service, $response);
-          //$body = substr($body, strpos($body, '<body'));
-
-          $tidy = new tidy();
-          $body = $tidy->repairString($body, array('output-xhtml' => true,  'preserve-entities' => 1), 'utf8');
-
-          $dom = new DOMDocument;
-          @$dom->loadHTML($body);
-
-          $xpath = new DOMXPath($dom);
-          $body = $xpath->query('//body')->item(0);
-          //$body->textContent;
-          /* $dom->saveXml($body);
-
-           $body = $dom->saveHTML();*/
-
-         /* $body = html_entity_decode(strip_tags($body->textContent, '<b><strong><i><a><code><pre>'));
-
-          while(stripos($body,'  ')!== false) $body = str_replace($body,'  ',' ');
-          //while(stripos($body,"\n\n")!== false) $body = str_replace($body,"\n\n","\n");
-
-          $sendMessage($chat_id, $body, $token);
-
-          return;
-        }*/
+        $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
 
-      /*if (stripos($text,'apretin') !== false)
-      {
-        $sendMessage($chat_id, "Se te ofrece algo @$username. Que hablas de mi?", $token);
-      }*/
+      $sendMessage($chat_id, ":D", $token);
     }
-
-   /* if (isset($message['inline_query']))
-    {
-      $id = $message['inline_query']['id'];
-      $query = $message['inline_query']['query'];
-
-      $obj = new stdClass();
-      $obj->type = 'article';
-      $obj->id = uniqid();
-      $obj->title = 'Este es un resultado';
-      $obj->input_message_content = new stdClass();
-      $obj->input_message_content->message_text = 'Este es la explicacion del resultado';
-
-      $data = [
-        $obj
-      ];
-
-      $json = json_encode($data);
-
-      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$token}/answerInlineQuery?inline_query_id=$id&results=".urlencode($json));
-
-      $wwwroot = $this->di->get('path')['root'];
-      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
-      $logger->log(date("Y-m-d h:i:s\n"));
-      $logger->log("Sending inline answer to telegram $id query = $query");
-      $logger->log("  RESULT: ".json_encode($results));
-      $logger->log("\n\n");
-      $logger->close();
-
-    }
-*/
-
   }
 }
