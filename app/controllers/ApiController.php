@@ -426,7 +426,7 @@ class ApiController extends Controller
         if (!is_string($replyMarkup))
           $replyMarkup = json_encode($replyMarkup);
 
-        $replyMarkup = urlencode($replyMarkup);
+        //$replyMarkup = urlencode($replyMarkup);
 
       }
 
