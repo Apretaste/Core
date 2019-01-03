@@ -462,7 +462,7 @@ class ApiController extends Controller
           $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) AS total FROM person WHERE datediff(current_date, date(last_access)) <= 7;");
 
-          $sendMessage($chat_id, "En los &uacute;ltimos 7 d&iacute;s, <strong>{$r1[0]->total} usuarios</strong> han usado nuestra #app unas <strong>{$r[0]->total} veces</strong>.", $token);
+          $sendMessage($chat_id, "En los últimos 7 días, <strong>{$r1[0]->total} usuarios</strong> han usado nuestra #app unas <strong>{$r[0]->total} veces</strong>.", $token);
           return;
         }
 
