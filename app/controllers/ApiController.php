@@ -444,9 +444,9 @@ class ApiController extends Controller
 
     if (isset($message['callback_query'])) {
       $message['message'] = $message['callback_query']['message'];
-      $message['message']['text'] = $message['callback_query']['chat_instance']['data'];
+      $message['message']['text'] = $message['callback_query']['data'];
     }
-    
+
     if (isset($message['message'])) {
       $username = $message['message']['from']['username'];
       $chat     = $message['message']['chat']['username'];
