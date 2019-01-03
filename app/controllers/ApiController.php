@@ -419,10 +419,11 @@ class ApiController extends Controller
       json_encode($message)
     ]);
 
-    $sendMessage = function($chat_id, $message, $tk)
+    $sendMessage = function($chat_id, $message, $tk, $replyMarkup = [])
     {
+      $replyMarkup = urlencode(json_encode($replyMarkup));
       $wwwroot = $this->di->get('path')['root'];
-      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML");
+      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":""));
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
       $logger->log(date("Y-m-d h:i:s\n"));
       $logger->log("Sending message to telegram @$chat_id: ".substr($message, 0,40));
@@ -484,6 +485,14 @@ class ApiController extends Controller
           $sendMessage($chat_id, "Descarga nuestra #app desde Play Store\n https://play.google.com/store/apps/details?id=com.apretaste.apretaste", $token);
           return;
         }
+
+        if ($text == "menu" || stripos($text, 'menu@') === 0) {
+          $sendMessage($chat_id, "Menu", $token, [
+            ["Option 1", "Option 2"]
+          ]);
+          return;
+        }
+
 
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
