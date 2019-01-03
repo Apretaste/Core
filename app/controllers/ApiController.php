@@ -504,9 +504,9 @@ class ApiController extends Controller
           $sendMessage($chat_id, "Opciones de Apretin", $token, '{
           "inline_keyboard": [
             [
-              {"text":"Audiencia", "url": "tg://apretin_bot/audiencia"},
-              {"text":"Enlaces", "url": "tg://apretin_bot/enlaces"},
-              {"text":"Descarga la app", "url": "tg://apretin_bot/app"}
+              {"text":"Audiencia", "callback_data": "/audiencia"},
+              {"text":"Enlaces", "callback_data": "/enlaces"},
+              {"text":"Descarga la app", "callback_data": "/app"}
             ]
           ]}');
           return;
