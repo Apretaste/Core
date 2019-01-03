@@ -505,7 +505,7 @@ class ApiController extends Controller
           return;
         }
 
-        if ($text == "menu" || stripos($text, 'menu@') === 0) {
+        if ($text == "opciones" || stripos($text, 'opciones@') === 0) {
           $sendMessage($chat_id, "Opciones de Apretin", $token, '{
           "inline_keyboard": [
             [
