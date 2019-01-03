@@ -421,7 +421,9 @@ class ApiController extends Controller
 
     $sendMessage = function($chat_id, $message, $tk, $replyMarkup = [])
     {
-      $replyMarkup = urlencode(json_encode($replyMarkup));
+      if (!is_string($replyMarkup))
+        $replyMarkup = urlencode(json_encode($replyMarkup));
+
       $wwwroot = $this->di->get('path')['root'];
       $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":""));
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
@@ -487,12 +489,11 @@ class ApiController extends Controller
         }
 
         if ($text == "menu" || stripos($text, 'menu@') === 0) {
-          $sendMessage($chat_id, "Menu", $token, [
-            ["Option 1", "Option 2"]
-          ]);
+          $sendMessage($chat_id, "Menu", $token, '[
+            [{"text":"Option 1"}, {"text":"Option 2"}]
+          ]');
           return;
         }
-
 
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
