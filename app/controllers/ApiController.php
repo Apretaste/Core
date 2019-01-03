@@ -491,7 +491,8 @@ class ApiController extends Controller {
                                  "inline_keyboard": [
                                     [
                                       {"text":"...vamos por privado", "url": "https://t.me/apretin_bot"}
-                                    ]}');
+                                    ]
+                                 ]}');
           return;
         }
 
