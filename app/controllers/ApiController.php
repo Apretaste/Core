@@ -479,10 +479,14 @@ class ApiController extends Controller
 
         if ($text == "enlaces" || stripos($text, 'enlaces@') === 0) {
 
-          $sendMessage($chat_id, "Estamos en las redes sociales:\n\n" .
-                                 "Facebook - https://www.facebook.com/apretaste/\n" .
-                                 "Twitter - https://twitter.com/apretaste\n" .
-                                 "Youtube - https://www.youtube.com/c/Apretaste\n", $token);
+          $sendMessage($chat_id, "Estamos en las redes sociales:", $token, '{
+                                 "inline_keyboard": [
+                                    [
+                                      {"text":"Facebook", "url": "https://www.facebook.com/apretaste/"}, 
+                                      {"text":"Twitter", "url": "https://twitter.com/apretaste"},
+                                      {"text":"Youtube", "url": "https://www.youtube.com/c/Apretaste"}
+                                    ]
+                                  ]}');
           return;
         }
 
@@ -497,11 +501,12 @@ class ApiController extends Controller
         }
 
         if ($text == "menu" || stripos($text, 'menu@') === 0) {
-          $sendMessage($chat_id, "Menu", $token, '{
+          $sendMessage($chat_id, "Opciones de Apretin", $token, '{
           "inline_keyboard": [
             [
-              {"text":"Facebook", "url": "https://www.facebook.com/apretaste/"}, 
-              {"text":"Twitter", "url": "https://twitter.com/apretaste"}
+              {"text":"Audiencia", "url": "tg://apretin_bot/audiencia"},
+              {"text":"Enlaces", "url": "tg://apretin_bot/enlaces"},
+              {"text":"Descarga la app", "url": "tg://apretin_bot/app"}
             ]
           ]}');
           return;
