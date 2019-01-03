@@ -458,7 +458,7 @@ class ApiController extends Controller
 
         $text = substr($text, 1);
 
-        if (stripos($text, 'audiencia') === 0) {
+        if (stripos($text, 'audiencia@') === 0) {
           $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) AS total FROM person WHERE datediff(current_date, date(last_access)) <= 7;");
 
@@ -466,12 +466,22 @@ class ApiController extends Controller
           return;
         }
 
-        if (stripos($text, 'enlaces') === 0) {
+        if (stripos($text, 'enlaces@') === 0) {
 
           $sendMessage($chat_id, "Estamos en las redes sociales:\n\n" .
                                  "Facebook - https://www.facebook.com/apretaste/\n" .
                                  "Twitter - https://twitter.com/apretaste\n" .
                                  "Youtube - https://www.youtube.com/c/Apretaste\n", $token);
+          return;
+        }
+
+        if (stripos($text, 'start@') === 0) {
+          $sendMessage($chat_id, "Hola soy Apretín, el bot de @ApretasteCuba. En que puedo ayudarte.", $token);
+          return;
+        }
+
+        if (stripos($text, 'app@') === 0) {
+          $sendMessage($chat_id, "Descarga nuestra #app desde Play Store\n https://play.google.com/store/apps/details?id=com.apretaste.apretaste", $token);
           return;
         }
 
