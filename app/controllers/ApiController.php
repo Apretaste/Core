@@ -419,15 +419,19 @@ class ApiController extends Controller
       json_encode($message)
     ]);
 
-    $sendMessage = function($chat_id, $message, $tk, $replyMarkup = [])
+    $sendMessage = function($chat_id, $message, $tk, $replyMarkup = false)
     {
-      if (!is_string($replyMarkup))
-        $replyMarkup = json_encode($replyMarkup);
+      if ($replyMarkup !== false)
+      {
+        if (!is_string($replyMarkup))
+          $replyMarkup = json_encode($replyMarkup);
 
-      $replyMarkup = urlencode($replyMarkup);
+        $replyMarkup = urlencode($replyMarkup);
+
+      }
 
       $wwwroot = $this->di->get('path')['root'];
-      $url = "https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":"");
+      $url = "https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup !== false?"&reply_markup=$replyMarkup":"");
       $results = Utils::file_get_contents_curl($url);
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
       $logger->log(date("Y-m-d h:i:s\n"));
@@ -493,8 +497,8 @@ class ApiController extends Controller
         }
 
         if ($text == "menu" || stripos($text, 'menu@') === 0) {
-          $sendMessage($chat_id, "Menu", $token, '[
-            [{"text":"Option 1"}, {"text":"Option 2"}]
+          $sendMessage($chat_id, "Menu", $token, '{"inline_keyboard": [
+            [{"text":"Facebook", "url": "https://www.facebook.com/apretaste/"}, {"text":"Twitter", "url": "https://twitter.com/apretaste"}]
           ]');
           return;
         }
