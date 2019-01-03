@@ -422,7 +422,9 @@ class ApiController extends Controller
     $sendMessage = function($chat_id, $message, $tk, $replyMarkup = [])
     {
       if (!is_string($replyMarkup))
-        $replyMarkup = urlencode(json_encode($replyMarkup));
+        $replyMarkup = json_encode($replyMarkup);
+
+      $replyMarkup = urlencode($replyMarkup);
 
       $wwwroot = $this->di->get('path')['root'];
       $url = "https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":"");
