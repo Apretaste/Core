@@ -459,11 +459,10 @@ class ApiController extends Controller
         $text = substr($text, 1);
 
         if (stripos($text, 'audiencia') === 0) {
+          $r = Connection::query("SELECT count(*) as total FROM delivery where datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) AS total FROM person WHERE datediff(current_date, date(last_access)) <= 7;");
-          $r2 = Connection::query("SELECT count(*) AS total FROM person WHERE active = 1;");
 
-          $sendMessage($chat_id, "En esta semana han accedido <strong>{$r1[0]->total} usuarios</strong> a Apretaste. " .
-                                 "Actualmente hay <strong>{$r2[0]->total} usuarios activos</strong>.", $token);
+          $sendMessage($chat_id, "En los &uacute;ltimos 7 d&iacute;s, <strong>{$r1[0]->total} usuarios</strong> han usado nuestra #app unas <strong>{$r[0]->total} veces</strong>.", $token);
           return;
         }
 
