@@ -425,9 +425,11 @@ class ApiController extends Controller
         $replyMarkup = urlencode(json_encode($replyMarkup));
 
       $wwwroot = $this->di->get('path')['root'];
-      $results = Utils::file_get_contents_curl("https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":""));
+      $url = "https://api.telegram.org/bot{$tk}/sendMessage?chat_id=$chat_id&text=".urlencode($message)."&parse_mode=HTML".($replyMarkup != '[]'?"&reply_markup=$replyMarkup":"");
+      $results = Utils::file_get_contents_curl($url);
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/apretin.log");
       $logger->log(date("Y-m-d h:i:s\n"));
+      $logger->log($url);
       $logger->log("Sending message to telegram @$chat_id: ".substr($message, 0,40));
       $logger->log("  RESULT: ".json_encode($results));
       $logger->log("\n\n");
