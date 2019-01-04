@@ -464,6 +464,7 @@ class ApiController extends Controller {
       $chat     = $message['message']['chat']['username'];
       $chat_id  = $message['message']['chat']['id'];
       $text     = $message['message']['text'];
+      $message['message']['text'] = Connection::escape($message['message']['text']);
 
       $log([
         date("Y-m-d h:i:s\n"),
@@ -474,12 +475,21 @@ class ApiController extends Controller {
       if (isset($message['message']['new_chat_members'])) {
         foreach ($message['message']['new_chat_members'] as $newMember) {
           $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. Comparte con esta gran familia.", $token);
+
+          Connection::query("INSERT INTO telegram_members (username, first_name, last_name) 
+                    VALUES ('$username', '{$newMember['first_name']}', '{$newMember['last_name']}');");
         }
       }
 
       if (isset($message['message']['left_chat_member'])) {
         $leftMember = $message['message']['left_chat_member'];
         $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
+
+        Connection::query("INSERT IGNORE INTO telegram_members (username, first_name, last_name) 
+                    VALUES ('$username', '{$newMember['first_name']}', '{$newMember['last_name']}');");
+
+        Connection::query("UPDATE telegram_members SET left_date = CURRENT_TIMESTAMP, active = 0;");
+
       }
 
       if ($text[0] == '/') {
@@ -497,16 +507,24 @@ class ApiController extends Controller {
         }
 
         if ($text == "audiencia" || stripos($text, 'audiencia@') === 0) {
+
           $r  = Connection::query("SELECT count(*) AS total FROM delivery WHERE datediff(current_date, date(request_date)) <= 7;");
           $r1 = Connection::query("SELECT count(*) AS total FROM person WHERE datediff(current_date, date(last_access)) <= 7;");
 
-          $sendMessage($chat_id, "En los últimos 7 días, <strong>{$r1[0]->total} usuarios</strong> han usado nuestra #app unas <strong>{$r[0]->total} veces</strong>.", $token);
+          $msg = "En los últimos 7 días, <strong>{$r1[0]->total} usuarios</strong> han usado nuestra #app unas <strong>{$r[0]->total} veces</strong>.";
+          $sendMessage($chat_id, $msg, $token);
+
+          $msg = Connection::escape($msg);
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
+                      VALUES ('$username','audiencia', '{$message['message']['text']}', '$msg')");
           return;
         }
 
         if ($text == "enlaces" || stripos($text, 'enlaces@') === 0) {
 
-          $sendMessage($chat_id, "Estamos en las redes sociales:", $token, '{
+          $msg = 'Estamos en las redes sociales';
+
+          $sendMessage($chat_id, $msg, $token, '{
                                  "inline_keyboard": [
                                     [
                                       {"text":"Facebook", "url": "https://www.facebook.com/apretaste/"}, 
@@ -514,11 +532,21 @@ class ApiController extends Controller {
                                       {"text":"Youtube", "url": "https://www.youtube.com/c/Apretaste"}
                                     ]
                                   ]}');
+
+          $msg = Connection::escape($msg);
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
+                      VALUES ('$username','enlaces', '{$message['message']['text']}', '$msg')");
+
           return;
         }
 
         if ($text == "start" || stripos($text, 'start@') === 0) {
-          $sendMessage($chat_id, "Hola soy Apretín, el bot de @ApretasteCuba. En que puedo ayudarte.", $token);
+          $msg = "Hola soy Apretín, el bot de @ApretasteCuba. En que puedo ayudarte.";
+          $sendMessage($chat_id, $msg, $token);
+          $msg = Connection::escape($msg);
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
+                      VALUES ('$username','start', '{$message['message']['text']}', '$msg')");
+
           return;
         }
 
@@ -528,7 +556,8 @@ class ApiController extends Controller {
         }
 
         if ($text == "opciones" || stripos($text, 'opciones@') === 0) {
-          $sendMessage($chat_id, "Opciones de Apretin", $token, '{
+          $msg = "Opciones de Apretin";
+          $sendMessage($chat_id, $msg, $token, '{
           "inline_keyboard": [
             [
               {"text":"Audiencia", "callback_data": "/audiencia"},
@@ -536,13 +565,25 @@ class ApiController extends Controller {
               {"text":"Descarga la app", "callback_data": "/app"}
             ]
           ]}');
+
+          $msg = Connection::escape($msg);
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
+                      VALUES ('$username','opciones', '{$message['message']['text']}', '$msg')");
+
           return;
         }
 
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
 
+      $msg = ':D';
+
       $sendMessage($chat_id, ":D", $token);
+
+      $msg = Connection::escape($msg);
+      Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
+                      VALUES ('$username','unknown', '{$message['message']['text']}', '$msg')");
+
     }
   }
 }
