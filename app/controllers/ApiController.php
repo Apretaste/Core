@@ -472,21 +472,21 @@ class ApiController extends Controller {
         "\n\n",
       ]);
 
+      Connection::query("INSERT IGNORE INTO telegram_members (username, first_name, last_name) 
+                    VALUES ('$username', '{$message['from']['first_name']}', '{$message['from']['last_name']}');");
+
+      Connection::query("UPDATE telegram_members SET last_access = CURRENT_TIMESTAMP, active = 1;");
+
+
       if (isset($message['message']['new_chat_members'])) {
         foreach ($message['message']['new_chat_members'] as $newMember) {
           $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. Comparte con esta gran familia.", $token);
-
-          Connection::query("INSERT INTO telegram_members (username, first_name, last_name) 
-                    VALUES ('$username', '{$newMember['first_name']}', '{$newMember['last_name']}');");
         }
       }
 
       if (isset($message['message']['left_chat_member'])) {
         $leftMember = $message['message']['left_chat_member'];
         $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
-
-        Connection::query("INSERT IGNORE INTO telegram_members (username, first_name, last_name) 
-                    VALUES ('$username', '{$newMember['first_name']}', '{$newMember['last_name']}');");
 
         Connection::query("UPDATE telegram_members SET left_date = CURRENT_TIMESTAMP, active = 0;");
 
