@@ -98,7 +98,7 @@ class Render
 
 		if(empty($subServiceName) || ! method_exists($service, $subserviceFunction) ) $response = $service->_main($request);
 		else $response = $service->$subserviceFunction($request);
-		
+
 		// create and return the response
 		$response->service = $service;
 		return $response;
@@ -169,7 +169,6 @@ class Render
 		$layout = file_get_contents($response->layout);
 		$systemVariables['RAW_TEMPLATE'] = str_replace('{$PLACE_TEMPLATE}', $systemVariables['RAW_TEMPLATE'], $layout);
 
-
 		// add link popups for the web
 		if($environment == "web") {
 			// get page content
@@ -227,9 +226,9 @@ class Render
 					$thumbnail = Utils::getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
 
 					// optimize image or use the optimized cache
-					if(!file_exists($thumbnail)){
+					if( ! file_exists($thumbnail)){
 						Utils::optimizeImage($file, $thumbnail, $quality);
-						if( !file_exists($thumbnail)) {
+						if( ! file_exists($thumbnail)) {
 							Utils::createAlert("[Render::optimizeImages] file cannot be optimized: $file");
 							$thumbnail = $file;
 						}

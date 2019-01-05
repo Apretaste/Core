@@ -130,10 +130,43 @@ class Response
 	}
 
 	/**
+	 * Configures the contents to be sent as a attached ZIP
+	 *
+	 * @author ricardo@apretaste.org
+	 * @return String, path to the file created
+	 */
+	public function generateZipResponse()
+	{
+		// get a random name for the file and folder
+		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+
+		// create the zip file
+		$zip = new ZipArchive;
+		$zip->open($zipFile, ZipArchive::CREATE);
+
+		//attach the response and the data, if reload, the response doesn't exists
+		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
+		$zip->addFile($this->dataFile, "data.json");
+
+		// all files and attachments
+		foreach ($this->images as $image) $zip->addFile($image, basename($image));
+		foreach ($this->attachments as $attachment) $zip->addFile($attachment, basename($attachment));
+		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
+
+		//attach the service files if nedded
+		if($this->attachService) $this->addServiceFiles($zip);
+
+		// close the zip file
+		$zip->close();
+
+		// return the path to the file
+		return $zipFile;
+	}
+
+	/**
 	 * Add the service EJS templates, config, styles and scripts to the response zip
 	 * @author ricardo@apretaste.org
 	 */
-
 	private function addServiceFiles(&$zip){
 		$path = $this->service->pathToService;
 		$name = $this->service->name;
@@ -174,44 +207,9 @@ class Response
 	 * Create the JSON file of the content
 	 * @author ricardo@apretaste.org
 	 */
-
-	 private function createResponseJSON(){
+	private function createResponseJSON(){
 		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".json";
 		file_put_contents($file,$this->content);
 		$this->responseFile = $file;
-	 }
-
-	 /**
-	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
-	 *
-	 * @author ricardo@apretaste.org
-	 * @return String, path to the file created
-	 */
-	public function generateZipResponse()
-	{
-		// get a random name for the file and folder
-		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
-
-		// create the zip file
-		$zip = new ZipArchive;
-		$zip->open($zipFile, ZipArchive::CREATE);
-
-		//attach the response and the data, if reload, the response doesn't exists
-		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
-		$zip->addFile($this->dataFile, "data.json");
-
-		// all files and attachments
-		foreach ($this->images as $image) $zip->addFile($image, basename($image));
-		foreach ($this->attachments as $attachment) $zip->addFile($attachment, basename($attachment));
-		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
-
-		//attach the service files if nedded
-		if($this->attachService) $this->addServiceFiles($zip);
-
-		// close the zip file
-		$zip->close();
-
-		// return the path to the file
-		return $zipFile;
 	}
 }

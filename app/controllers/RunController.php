@@ -27,7 +27,7 @@ class RunController extends Controller
 	 * @author salvipascual
 	 * @get String $subject, subject line of the email
 	 */
-	public function displayAction()
+	public function webAction()
 	{
 		// get the service to load
 		$this->subject = $this->request->get("subject");
@@ -45,101 +45,15 @@ class RunController extends Controller
 		// set the running environment
 		$this->di->set('environment', function() {return "web";});
 
+		// create a new entry on the delivery table
+		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
+		Connection::query("
+			INSERT INTO delivery (id, id_person, request_date, environment) 
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', 'web')");
+
 		// run the request & render the response
 		$ret = Render::runRequest($person, $this->subject, '', []);
 		echo Render::renderHTML($ret->service, $ret->response);
-	}
-
-	/**
-	 * Receives an HTTP petition and returns a JSON
-	 *
-	 * @author salvipascual
-	 * @get String $token
-	 * @get String $subject
-	 * @get String $body
-	 * @get String $attachments
-	 */
-	public function apiAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
-
-		// set the running environment
-		$this->di->set('environment', function() {return "api";});
-
-		// get params from GET (or from the encripted API)
-		$token = $this->request->get("token");
-		$subject = $this->request->get("subject");
-		$body = $this->request->get("body");
-		$attachment = $this->request->get("attachment");
-
-		// if is not encrypted, get the email from the token
-		$email = Utils::detokenize($token);
-		if(empty($token) || empty($email)) {
-			echo '{"code":"error","message":"bad authentication"}';
-			return false;
-		}
-
-		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$haveAttachments = empty($attachment) ? 0 : 1;
-		$logger = new File("$wwwroot/logs/api.log");
-		$logger->log("User:$email, Subject:$subject, Attachments:$haveAttachments");
-		$logger->close();
-
-		// some services cannot be called from the API
-		$serviceName = strtoupper(explode(" ", $subject)[0]);
-		if (strtoupper($serviceName) == 'EXCLUYEME') {
-			echo '{"code":"error","message":"service not accesible"}';
-			return false;
-		}
-
-		// check if the user is blocked
-		$person = Utils::getPerson($email);
-		if($person->blocked) {
-			echo '{"code":"error","message":"user blocked"}';
-			return false;
-		}
-
-		// download attachments and save the paths in the array
-		$attach = [];
-		if ($attachment)
-		{
-			// get the path for the image
-			$temp = Utils::getTempDir().'attach_images/'.Utils::generateRandomHash().".jpg";
-
-			// clean base64 string
-			$data = explode(',', $attachment);
-			$data = isset($data[1]) ? $data[1] : $data[0];
-
-			// save base64 string as a JPG image
-			$im = imagecreatefromstring(base64_decode($data));
-			imagejpeg($im, $temp);
-			imagedestroy($im);
-			$attach[] = $temp;
-		}
-
-		// run the request and get the service and first response
-		$ret = Render::runRequest($person, $subject, $body, $attach);
-		$service = $ret->service;
-		$response = $ret->response;
-
-		// respond by email, if there is an email to send
-		if($response->email && $response->render)
-		{
-			$sender = new Email();
-			$sender->to = $response->email;
-			$sender->subject = $response->subject;
-			$sender->body = Render::renderHTML($service, $response);
-			$sender->send();
-		}
-
-		// update last access time to current
-		Connection::query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE id='{$person->id}'");
-
-		// respond to the API
-		if($response->render) echo Render::renderJSON($response);
-		else echo '{"code":"ok"}';
 	}
 
 	/**
@@ -224,18 +138,108 @@ class RunController extends Controller
 	}
 
 	/**
+	 * Receives an email petition from Apretaste Webhook and responds via email
+	 *
+	 * @author ricardo@apretaste.org
+	 * @param POST data from Apretaste webhook
+	 */
+	public function emailAction()
+	{
+		// get the time when the service started executing
+		$this->execStartTime = date("Y-m-d H:i:s");
+
+		// save the email as a MIME object
+		$message = json_decode(file_get_contents('php://input'), true);
+		$file = Utils::getTempDir() . 'mails/' . Utils::generateRandomHash();
+		file_put_contents($file, $message["data"]);
+
+		// parse the incoming email
+		$this->parseEmail($file);
+		
+		// get the person from email
+		$this->person = Utils::getPerson($this->fromEmail);
+
+		if ($this->person) { //if person exists
+			// do not respond to blocked accounts
+			if($this->person->blocked) return false;
+			
+			// update last access time and make person active
+			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->person->id}");
+		} else {
+			// create a unique username and save the new person
+			$username = Utils::usernameFromEmail($this->fromEmail);
+			Connection::query("
+				INSERT INTO person (email, username, last_access, source)
+				VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
+			
+			// get the person from email
+			$this->person = Utils::getPerson($this->fromEmail);
+
+			// add the welcome notification
+			Utils::addNotification($this->person->id, "PERFIL", "Bienvenido a Apretaste", "PERFIL bienvenido");
+		}
+
+		// get the environment from the mailbox
+		$mailbox = str_replace(".", "", explode("@", $this->toEmail)[0]);
+		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
+		$environment = empty($res) ? "default" : $res[0]->environment;
+
+		// set the running environment
+		$this->di->set('environment', function() use($environment) {return $environment;});
+
+		// if the app is reporting a failure
+		if($environment == "failure") {
+			// update code for failure emails
+			Connection::query("
+				UPDATE delivery 
+				SET delivery_code='555' 
+				WHERE id_person={$this->person->id} 
+				AND email_subject='{$this->subject}'");
+
+			// display the webhook log
+			$wwwroot = $this->di->get('path')['root'];
+			$logger = new File("$wwwroot/logs/webhook.log");
+			$logger->log("Environmet:FAILURE | From:{$this->fromEmail} To:{$this->toEmail} | Subject:{$this->subject}");
+			$logger->close();
+
+			// create entry in the error log
+			Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
+			return false;
+		}
+
+		// insert a new email in the delivery table
+		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
+		$attach = $this->attachment ? basename($this->attachment) : "";
+		$domain = explode("@", $this->fromEmail)[1];
+		Connection::query("
+			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_subject, email_body, email_attachments)
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->subject}', '{$this->body}', '$attach')");
+
+		// execute the right environment type
+		if($environment == "support") $log = $this->runSupport();
+		else $log = $this->runApp();
+
+		// save execution time to the db
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($this->execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->deliveryId}");
+
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/webhook.log");
+		$logger->log("Environmet:$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->close();
+	}
+
+	/**
 	 * Fires when we receive a an email from the app
 	 */
 	private function runApp()
 	{
-		// error if no attachment is received
-		if( ! file_exists($this->attachment)) {
-			$output = new stdClass();
-			$output->code = "515";
-			$output->message = "Error on attached file";
-			echo json_encode($output);
-			return false;
-		}
+		// do not return if attachment is not received
+		if( ! file_exists($this->attachment)) 
+			return Utils::createAlert("[RunController::runApp] Error ZIP file was not received for delivery ID: {$this->deliveryId}");
 
 		// get path to the folder to save
 		$requestFile = ""; $attachs = [];
@@ -248,16 +252,15 @@ class RunController extends Controller
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
-				if(substr($filename, -5) == ".json") $requestFile = $filename;
+				if($filename == "request.json") $requestFile = $filename;
 				else $attachs[] = "$temp/attachments/$folderName/$filename";
 			}
 
 			// extract file contents
 			$zip->extractTo("$temp/attachments/$folderName");
 			$zip->close();
-		} else {
-			return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
-		}
+		} 
+		else return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 
 		// get the request data from the JSON file
 		$requestData = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
@@ -280,15 +283,16 @@ class RunController extends Controller
 		// update the version of the app used
 		Connection::query("UPDATE person SET appversion='{$requestData->appversion}' WHERE id='{$this->person->id}'");
 
-		$isReload = $requestData->command=="reload";
-		// run the request if it's not a reload
-		if (!$isReload){
+		// check if the request is a reload
+		$isReload = $requestData->command == "reload";
+		if ($isReload) $response = new Response();
+		else {
+			// process the service
 			$response = Render::runRequest($this->person, $requestData->command, '', $attachs, $requestData);
-			
-			// send the service's EJS templates if the stored version doesn't match
-			if($response->service->version != $requestData->serviceversion) $response->attachService = true;
+
+			// send the EJS templates for new versions
+			if($response->service->version > $requestData->serviceversion) $response->attachService = true;
 		}
-		else $response = new Response();
 
 		// if the request needs an email back
 		if($response->render || $isReload){
@@ -317,7 +321,7 @@ class RunController extends Controller
 		}
 
 		// update values in the delivery table
-		if(!$isReload){
+		if( ! $isReload) {
 			$safeQuery = Connection::escape($response->service->request->query, 1024);
 			Connection::query("
 				UPDATE delivery SET
@@ -326,8 +330,7 @@ class RunController extends Controller
 				request_query='$safeQuery',
 				request_method='{$requestData->method}'
 				WHERE id={$this->deliveryId}");
-		}
-		else {
+		} else {
 			Connection::query("
 				UPDATE delivery SET
 				request_service='reload',
@@ -336,7 +339,6 @@ class RunController extends Controller
 				request_method='{$requestData->method}'
 				WHERE id={$this->deliveryId}");
 		}
-		
 
 		// return message for the log
 		$requestData->token = "";
@@ -344,28 +346,6 @@ class RunController extends Controller
 		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
 		foreach ($requestData as $key => $value) if(is_string($value)) $log .= " | $key:$value";
 		return  $log;
-	}
-
-	/**
-	 * Fires when the app reports an email was not received
-	 */
-	private function runFailure()
-	{
-		// update code for failure emails
-		Connection::query("
-			UPDATE delivery 
-			SET delivery_code='555' 
-			WHERE id_person={$this->person->id} 
-			AND email_subject='{$this->subject}'");
-
-		// display the webhook log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new File("$wwwroot/logs/webhook.log");
-		$logger->log("Environmet:FAILURE | From:{$this->fromEmail} To:{$this->toEmail} | Subject:{$this->subject}");
-		$logger->close();
-
-		// create entry in the error log
-		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
 	}
 
 	/**
@@ -386,84 +366,6 @@ class RunController extends Controller
 
 		// return message for the log
 		return "Support ticket created";
-	}
-
-	/**
-	 * Receives an email petition from Apretaste Webhook and responds via email
-	 *
-	 * @author ricardo@apretaste.org
-	 * @param POST data from Apretaste webhook
-	 */
-	public function ApWebhookAction()
-	{
-		// get the time when the service started executing
-		$this->execStartTime = date("Y-m-d H:i:s");
-
-		// save the email as a MIME object
-		$message = json_decode(file_get_contents('php://input'), true);
-		$file = Utils::getTempDir() . 'mails/' . Utils::generateRandomHash();
-		file_put_contents($file, $message["data"]);
-
-		// parse the incoming email
-		$this->parseEmail($file);
-
-		
-		$this->person = Utils::getPerson($this->fromEmail);
-
-		if ($this->person) { //if person exists
-			// do not respond to blocked accounts
-			if($this->person->blocked) return false;
-			
-			// update last access time and make person active
-			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->person->id}");
-		} else {
-			// create a unique username and save the new person
-			$username = Utils::usernameFromEmail($this->fromEmail);
-			Connection::query("INSERT INTO person (email, username, last_access, source)
-							   VALUES ('{$this->fromEmail}', '$username', CURRENT_TIMESTAMP, '$environment')");
-			
-			$this->person = Utils::getPerson();
-			// add the welcome notification
-			Utils::addNotification($this->person->id, "Bienvenido", "Bienvenido a Apretaste", "WEB bienvenido.apretaste.com");
-		}
-
-		// get the environment from the mailbox
-		$mailbox = str_replace(".", "", explode("+", explode("@", $this->toEmail)[0])[0]);
-		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
-		$environment = empty($res) ? "invalid" : $res[0]->environment;
-
-		// set the running environment
-		$this->di->set('environment', function() use($environment) {return $environment;});
-
-		// if the app is reporting a failure
-		if($environment == "failure") {
-			$this->runFailure();
-			return false;
-		}
-
-		// insert a new email in the delivery table
-		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
-		$attach = $this->attachment ? basename($this->attachment) : "";
-		$domain = explode("@", $this->fromEmail)[1];
-		Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_subject, email_body, email_attachments)
-			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->subject}', '{$this->body}', '$attach')");
-
-		// execute the right environment type
-		if($environment == "app") $log = $this->runApp();
-		else $log = $this->runSupport();
-
-		// save execution time to the db
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($this->execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->deliveryId}");
-
-		// display the webhook log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new File("$wwwroot/logs/webhook.log");
-		$logger->log("Environmet:$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
-		$logger->close();
 	}
 
 	/**
