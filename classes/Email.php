@@ -30,7 +30,7 @@ class Email
 			$res = $this->sendEmailViaWebmail();
 
 			// failover to Gmail
-			if($res->code != "200") $res = $this->sendEmailViaGmail();
+			//if($res->code != "200") $res = $this->sendEmailViaGmail();
 		} 
 		// respond to people outside Cuba
 		else 
