@@ -472,17 +472,13 @@ class ApiController extends Controller {
         "\n\n",
       ]);
 
-      Connection::query("INSERT IGNORE INTO telegram_members (username, first_name, last_name) 
-                    VALUES ('$username', '{$message['message']['from']['first_name']}', 
-                    '{$message['message']['from']['last_name']}');");
+      Connection::query("INSERT IGNORE INTO telegram_members (username) VALUES ('$username');");
 
       Connection::query("UPDATE telegram_members SET 
                                 first_name = '{$message['message']['from']['first_name']}', 
                                 last_name = '{$message['message']['from']['last_name']}',
                                 last_access = CURRENT_TIMESTAMP, active = 1 
                                 WHERE username = '$username';");
-
-      Connection::query("UPDATE telegram_members SET last_access = CURRENT_TIMESTAMP, active = 1 WHERE username = '$username';");
 
       if (isset($message['message']['new_chat_members'])) {
         foreach ($message['message']['new_chat_members'] as $newMember) {
@@ -495,7 +491,6 @@ class ApiController extends Controller {
         $sendMessage($chat_id, "Es triste que te vayas {$leftMember['first_name']} {$leftMember['last_name']}. Esperemos que regreses pronto a compartir con la gran familia de Apretaste.", $token);
 
         Connection::query("UPDATE telegram_members SET left_date = CURRENT_TIMESTAMP, active = 0;");
-
       }
 
       if ($text[0] == '/') {
