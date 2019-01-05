@@ -10,7 +10,6 @@ class Email
 	public $deliveryId;
 	public $subject;
 	public $body;
-	public $replyId; // id to reply
 	public $attachments = []; // array of paths
 	public $images = []; // array of paths
 	public $method;
@@ -267,37 +266,6 @@ class Email
 	}
 
 	/**
-	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
-	 *
-	 * @author salvipascual
-	 * @return String, path to the file created
-	 */
-	public function setContentAsZipAttachment()
-	{
-		// get a random name for the file and folder
-		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
-		$htmlFile = substr(md5(date('dHhms') . rand()), 0, 8) . ".html";
-
-		// create the zip file
-		$zip = new ZipArchive;
-		$zip->open($zipFile, ZipArchive::CREATE);
-
-		// all files and attachments
-		if (is_array($this->images)) foreach ($this->images as $i) $zip->addFile($i, basename($i));
-		if (is_array($this->attachments)) foreach ($this->attachments as $a) $zip->addFile($a, basename($a));
-
-		// close the zip file
-		$zip->close();
-
-		// add to the attachments and clean the body
-		$this->attachments = [$zipFile];
-		$this->body = "";
-
-		// return the path to the file
-		return $zipFile;
-	}
-
-	/**
 	 * Handler to send email using SMTP
 	 *
 	 * @author salvipascual
@@ -325,8 +293,6 @@ class Email
 		$mail->setReturnPath($this->from);
 		$mail->setHeader('X-Mailer', '');
 		$mail->setHeader('Sender', $this->from);
-		$mail->setHeader('In-Reply-To', $this->replyId);
-		$mail->setHeader('References', $this->replyId);
 
 		// add images to the template
 		if(is_array($this->images)) foreach ($this->images as $image) {

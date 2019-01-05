@@ -2,6 +2,7 @@
 
 use G4\Crypto\Crypt;
 use G4\Crypto\Adapter\OpenSSL;
+use Phalcon\DI\FactoryDefault;
 
 class Utils
 {
@@ -14,7 +15,7 @@ class Utils
 	public static function getValidEmailAddress()
 	{
 		// get the current environment
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$environment = $di->get('environment');
 
 		// get a random mailbox
@@ -83,7 +84,7 @@ class Utils
 		$r = Connection::query("SELECT * FROM service WHERE name = '$name';");
 
 		// check if service exist and return its name
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$www_root = $di->get('path')['root'];
 		if(isset($r[0]) && file_exists("$www_root/services/$name/service.php")) return $name;
 		else return false;
@@ -218,8 +219,7 @@ class Utils
 	public static function getPathToService($serviceName)
 	{
 		// get the path to service
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
+		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 		$path = "$wwwroot/services/$serviceName";
 
 		// check if the path exist and return it
@@ -248,7 +248,7 @@ class Utils
 		$openedTickets = $openedTickets[0]->opened_tickets;
 
 		// get the image of the raffle
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".jpg";
 
@@ -306,7 +306,7 @@ class Utils
 		}
 
 		// include SimpleImage class
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		require_once $di->get('path')['root']."/lib/SimpleImage.php";
 
 		// optimize image
@@ -391,10 +391,8 @@ class Utils
 	 * @author salvipascual
 	 * @return string
 	 */
-	public static function getTempDir()
-	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		return $di->get('path')['root'] . "/temp/";
+	public static function getTempDir(){
+		return FactoryDefault::getDefault()->get('path')['root'] . "/temp/";
 	}
 
 	/**
@@ -406,7 +404,7 @@ class Utils
 	 */
 	public static function getPublicTempDir($path='root')
 	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')[$path];
 
 		if($path == 'root') return "$wwwroot/public/temp/";
@@ -563,7 +561,7 @@ class Utils
 		// if the person has a valid appid, send a web push
 		if($ispush)
 		{
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
+			$di = FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 			$wwwhttp = $di->get('path')['http'];
 
@@ -668,7 +666,7 @@ class Utils
 	public static function encrypt($text)
 	{
 		// get the seed from the config file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$seed = $di->get('config')['global']['seed'];
 
 		// configure crypto with SSL
@@ -693,7 +691,7 @@ class Utils
 	public static function decrypt($text)
 	{
 		// get the seed from the config file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$seed = $di->get('config')['global']['seed'];
 
 		// configure crypto with SSL
@@ -744,9 +742,9 @@ class Utils
 		if (strpos($email, '_t') == false) return false;
 
 		// get the handle
-		$res = explode("_t", $email);
-		$res = explode("@", $res[1]);
-		$handle = explode("@", $res[0]);
+		$responseData = explode("_t", $email);
+		$responseData = explode("@", $responseData[1]);
+		$handle = explode("@", $responseData[0]);
 
 		// return the handle if exist
 		if( ! $handle) return false;
@@ -980,7 +978,7 @@ class Utils
 		$message = "$severity: $text";
 
 		// get the tier from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 
 		// save WARNINGS and ERRORS in the database
 		if($severity != "NOTICE") {
@@ -1063,174 +1061,86 @@ class Utils
 	 * Get external data for the app
 	 *
 	 * @author salvipascual
-	 * @param String $email
-	 * @param String $timestamp
-	 * @param Service $serv
+	 * @param stdClass $person
+	 * @param stdClass $requestData
+	 * @param Service $service
+	 * @param Response $response
 	 * @return array (Object, Attachments)
 	 */
-	public static function getExternalAppData($email, $timestamp, $serv=null)
-	{
-		// get the last update date
-		$lastUpdateTime = empty($timestamp) ? 0 : intval($timestamp);
-		$lastUpdateDate = date("Y-m-d H:i:s", $lastUpdateTime);
-
-		$input = isset($serv) && isset($serv->input)?$serv->input:false;
-
-		$original = isset($serv) &&
-					isset($serv->serviceName) &&
-					isset($serv->input->apptype) &&
-					$serv->input->apptype == "original";
-
-		$version4 = $input && isset($input->appversion) && $input->appversion>=4;
-
-		// get the person object
-		$person = Connection::query("SELECT * FROM person WHERE email='$email'");
-		$person = $person[0];
-
+	public static function getAppData($person, $requestData, $service, &$response){
+		
 		// create the response
-		$res = new stdClass();
-		$res->timestamp = time();
-		$res->username = $person->username;
-		$res->credit = number_format($person->credit, 2, '.', '');
-		$res->tpl_version = $input?$serv->tpl_version:0;
+		$responseData = new stdClass();
+		$responseData->reload = $requestData->command=="reload";
 
-		// get the list of mailboxes
-		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
+		if($responseData->reload){
+			$profile = Social::prepareUserProfile(clone $person);
+			$responseData->profile_picture = basename($profile->picture_internal);
+			// attach user picture if exist
+			if($profile->picture_internal) $response->attachments[] = $profile->picture_internal;
+
+			// add services to the response
+			$services = Connection::query("
+				SELECT name, description, category
+				FROM service
+				WHERE listed=1");
+			
+			$responseData->active_services = [];
+			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
+			foreach ($services as $s) {
+				$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
+				if(file_exists($icon)) $response->serviceIcons[] = $icon;
+				else $icon = "";
+
+				$serv = new stdClass();
+				$serv->name = $s->name;
+				$serv->description = $s->description;
+				$serv->category = $s->category;
+				$serv->icon = basename($icon);
+				$responseData->active_services[] = $serv;
+			}
+		}
+
+		$responseData->username = $person->username;
+		$responseData->credit = number_format($person->credit, 2, '.', '');
+		$responseData->profile_completion = Social::getProfileCompletion($person);
+		$responseData->img_quality = $person->img_quality;
+
+		// get unread notifications
+		$responseData->notifications = Connection::query("
+			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
+			FROM notifications
+			WHERE id_person={$person->id}  AND `send` = 0
+			ORDER BY inserted_date DESC");
+
+		// mark notifications as send
+		if($responseData->notifications) Connection::query("
+			UPDATE notifications SET send=1
+			WHERE id_person={$person->id}  AND `send` = 0");
+
+		// get the latest versin from the config
+		$lastAppVersion = FactoryDefault::getDefault()->get('config')['global']['appversion'];
+		$responseData->latest_app_version = "$lastAppVersion";
+
+		// get or create the user's token
+		$responseData->token = $person->token;
+		if(empty($responseData->token)) {
+			$responseData->token = md5(time().rand());
+			Connection::query("UPDATE person SET token='{$responseData->token}' WHERE email='$email'");
+		}
 
 		// add the response mailbox
+		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$res->mailbox = "$inbox@gmail.com";
+		$responseData->mailbox = "$inbox@gmail.com";
 
-		// check if there is any change in the profile
-		$attachments = [];
-		if($lastUpdateTime < strtotime($person->last_update_date))
-		{
-			// get the full profile
-			$person = Social::prepareUserProfile($person);
-			
-			if($original && !$version4){
-				$res->profile = new stdClass();
+		$responseData->cache = "$response->cache";
+		$responseData->has_service_templates = $response->attachService;
 
-				// add user profile to the response
-				$res->profile->full_name = $person->full_name;
-				$res->profile->date_of_birth = $person->date_of_birth;
-				$res->profile->gender = $person->gender;
-				$res->profile->phone = empty($person->cellphone) ? $person->phone : $person->cellphone;
-				$res->profile->eyes = $person->eyes;
-				$res->profile->skin = $person->skin;
-				$res->profile->body_type = $person->body_type;
-				$res->profile->hair = $person->hair;
-				$res->profile->province = $person->province;
-				$res->profile->city = $person->city;
-				$res->profile->highest_school_level = $person->highest_school_level;
-				$res->profile->occupation = $person->occupation;
-				$res->profile->marital_status = $person->marital_status;
-				$res->profile->interests = $person->interests;
-				$res->profile->sexual_orientation = $person->sexual_orientation;
-				$res->profile->religion = $person->religion;
-				$res->profile->picture = basename($person->picture_internal);
-			}
-			else $res->picture = basename($person->picture_internal);
-
-			// attach user picture if exist
-			if($person->picture_internal) $attachments[] = $person->picture_internal;
-		}
-
-		if($version4 && !isset($res->picture)) {
-			$person = Social::prepareUserProfile($person);
-			$res->picture = basename($person->picture_internal);
-		}
-
-		// get unread notifications, by service if app only for one service
-		$notificationsClause = "id_person=$person->id";
-		$notificationsClause .= $version4?" AND `send` = 0":" AND viewed = 0";
-
-		if (!$original && isset($serv)) {
-			$name = $serv->serviceName;
-			$notificationsClause .= " AND (`origin`='$name' OR `origin`='chat') ";
-		}
-
-		$orderBy = $version4?"":"ORDER BY inserted_date DESC";
-
-		$res->notifications = Connection::query("
-			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
-			FROM notifications
-			WHERE $notificationsClause
-			ORDER BY inserted_date DESC");
-
-		// mark notifications as read
-		$updateClause = $version4?"send=1":"viewed=1, viewed_date=CURRENT_TIMESTAMP";
-		if($res->notifications && $original) Connection::query("
-			UPDATE notifications SET $updateClause
-			WHERE $notificationsClause");
-
-		if ($original) {
-			// get list of active services
-			$res->active = [];
-			$active = Connection::query("SELECT name FROM service WHERE listed=1");
-			foreach ($active as $a) $res->active[] = $a->name;
-
-			// get access to the configuration
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$wwwroot = $di->get('path')['root'];
-
-			// get VIP services if you referred 10+ users
-			// if listed=2 means is a VIP service, if listed=1 is a service
-			$referred = Connection::query("SELECT COUNT(id) as nbr FROM _referir WHERE father='$email'");
-			$listed = ($referred[0]->nbr >= 10) ? "listed>=1" : "listed=1";
-
-			// get all services since last update
-			$services = Connection::query("
-				SELECT name, description, category, creator_email, insertion_date
-				FROM service
-				WHERE $listed AND insertion_date > '$lastUpdateDate'");
-
-			// add services to the response
-			$res->services = [];
-			foreach ($services as $s) {
-				// attach user picture if exist
-				$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
-				if(file_exists($icon)) $attachments[] = $icon;
-				else $icon = "";
-
-				$service = new stdClass();
-				$service->name = $s->name;
-				$service->description = $s->description;
-				$service->category = $s->category;
-				$service->creator = $s->creator_email;
-				$service->updated = $s->insertion_date;
-				$service->icon = basename($icon);
-				$res->services[] = $service;
-			}
-
-			// get the latest versin from the config
-			$appversion = $di->get('config')['global']['appversion'];
-			$res->latest = "$appversion";
-		}
-
-		// get image quality
-		$res->img_quality = $person->img_quality;
-
-		// get or create the user's token
-		$res->token = $person->token;
-		if(empty($res->token)) {
-			$res->token = md5(time().rand());
-			Connection::query("UPDATE person SET token='{$res->token}' WHERE email='$email'");
-		}
-
-		// get a random input domain
-		if(!$version4){
-			$domain = Connection::query("SELECT email FROM delivery_input WHERE environment='http' AND active=1 ORDER BY RAND() LIMIT 1");
-			$res->domain = $domain[0]->email;
-		}
-
-		// calculate profile completion
-		$res->profile_completion = Social::getProfileCompletion($person);
-
-		// convert to JSON and return array
-		return ["attachments" => $attachments, "json" => json_encode($res)];
+		// convert to JSON
+		return json_encode($responseData);
 	}
 
 	/**
@@ -1241,9 +1151,8 @@ class Utils
 
 	public static function parseImgDir(&$imgSrc){
 		$file = basename($imgSrc);
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		if($di->get('environment') == "web")
-		{
+		$di = FactoryDefault::getDefault();
+		if($di->get('environment') == "web"){
 			$wwwroot = $di->get('path')['root'];
 			$wwwhttp = $di->get('path')['http'];
 			if(!file_exists("$wwwroot/public/temp/$file")) @copy($imgSrc, "$wwwroot/public/temp/$file");

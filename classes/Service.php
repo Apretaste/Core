@@ -2,10 +2,10 @@
 
 class Service
 {
-	public $serviceName;
-	public $serviceDescription;
+	public $name;
+	public $description;
 	public $creatorEmail;
-	public $serviceCategory;
+	public $category;
 	public $insertionDate;
 	public $pathToService;
 	public $appversion;

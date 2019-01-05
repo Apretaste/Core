@@ -356,7 +356,6 @@ class Social
 		if($profile->picture) {
 			$profile->picture_internal = "$wwwroot/public/profile/{$profile->picture}.jpg";
 			$profile->picture_public = "$wwwhttp/profile/{$profile->picture}.jpg";
-			$profile->pictureURL = $profile->picture;
 			$profile->picture = true;
 		}else{
 			$profile->picture_internal = "$wwwroot/public/images/user.jpg";
@@ -367,12 +366,11 @@ class Social
 		$profile->extra_pictures=json_decode($profile->extra_pictures,true);
 		$profile->extraPictures_internal=array();
 		$profile->extraPictures_public=array();
-		$profile->extraPicturesURL=array();
 		if(count($profile->extra_pictures)>0) {
 			foreach ($profile->extra_pictures as $key => $picture) {
 				$profile->extraPictures_internal[$key]= "$wwwroot/public/profile/{$picture}.jpg";
 				$profile->extraPictures_public[$key]= "$wwwhttp/profile/{$picture}.jpg";
-				$profile->extraPicturesURL[$key]= $picture;
+				$profile->extra_pictures[$key] = true;
 			}
 		}
 
@@ -391,8 +389,7 @@ class Social
 		if (empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
-
+		unset($profile->id, $profile->email, $profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 		return $profile;
 	}
 

@@ -3,6 +3,7 @@
 use Phalcon\Mvc\Controller;
 use Aws\Sns\Message;
 use Aws\Sns\MessageValidator;
+use \Phalcon\Logger\Adapter\File;
 
 class RunController extends Controller
 {
@@ -12,7 +13,6 @@ class RunController extends Controller
 	private $toEmail;
 	private $execStartTime;
 	private $deliveryId; // id of the table delivery
-	private $messageId;
 	private $subject;
 	private $body;
 	private $attachment;
@@ -83,7 +83,7 @@ class RunController extends Controller
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
 		$haveAttachments = empty($attachment) ? 0 : 1;
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger = new File("$wwwroot/logs/api.log");
 		$logger->log("User:$email, Subject:$subject, Attachments:$haveAttachments");
 		$logger->close();
 
@@ -95,8 +95,8 @@ class RunController extends Controller
 		}
 
 		// check if the user is blocked
-		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1");
-		if(count($blocked)>0) {
+		$person = Utils::getPerson($email);
+		if($person->blocked) {
 			echo '{"code":"error","message":"user blocked"}';
 			return false;
 		}
@@ -120,7 +120,7 @@ class RunController extends Controller
 		}
 
 		// run the request and get the service and first response
-		$ret = Render::runRequest($email, $subject, $body, $attach);
+		$ret = Render::runRequest($person, $subject, $body, $attach);
 		$service = $ret->service;
 		$response = $ret->response;
 
@@ -135,7 +135,7 @@ class RunController extends Controller
 		}
 
 		// update last access time to current
-		Connection::query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE email='$email'");
+		Connection::query("UPDATE person SET last_access=CURRENT_TIMESTAMP WHERE id='{$person->id}'");
 
 		// respond to the API
 		if($response->render) echo Render::renderJSON($response);
@@ -177,7 +177,7 @@ class RunController extends Controller
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
-		$this->person->id = $user->id;
+		$this->person = Utils::getPerson($user->email);
 
 		// create a new entry on the delivery table
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
@@ -215,7 +215,7 @@ class RunController extends Controller
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger = new File("$wwwroot/logs/webhook.log");
 		$logger->log("Environmet:app | From:{$this->fromEmail} To:{$this->toEmail} | $log");
 		$logger->close();
 
@@ -248,7 +248,7 @@ class RunController extends Controller
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
-				if(substr($filename, -4) == ".json") $requestFile = $filename;
+				if(substr($filename, -5) == ".json") $requestFile = $filename;
 				else $attachs[] = "$temp/attachments/$folderName/$filename";
 			}
 
@@ -261,7 +261,6 @@ class RunController extends Controller
 
 		// get the request data from the JSON file
 		$requestData = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
-
 		$requestData->osversion = filter_var($requestData->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
 		// save Nauta password if passed
@@ -281,68 +280,69 @@ class RunController extends Controller
 		// update the version of the app used
 		Connection::query("UPDATE person SET appversion='{$requestData->appversion}' WHERE id='{$this->person->id}'");
 
-		// run the request
-		$ret = Render::runRequest($this->person, $requestData->command, '', $attachs, $requestData);
-		$service = $ret->service;
-		$response = $ret->response;
-
-		// send the service's EJS templates if the stored version doesn't match
-		if($service->tpl_version != $requestData->tpl_version) $response->attachTemplates($service);
-		
-		// send the data for the template as a JSON
-		$response->attachContent();	
+		$isReload = $requestData->command=="reload";
+		// run the request if it's not a reload
+		if (!$isReload){
+			$response = Render::runRequest($this->person, $requestData->command, '', $attachs, $requestData);
+			
+			// send the service's EJS templates if the stored version doesn't match
+			if($response->service->version != $requestData->serviceversion) $response->attachService = true;
+		}
+		else $response = new Response();
 
 		// if the request needs an email back
-		if($response->render)
-		{
-			// is there is a cache time, add it
-			if($response->cache) {
-				$cache = "$temp/cache/{$response->cache}.cache";
-				file_put_contents($cache, "");
-				$response->attachments[] = $cache;
+		if($response->render || $isReload){
+			// get extra data for the app and create an attachment file for the data structure
+			$responseData = Utils::getAppData($this->person, $requestData, $response->service, $response);
+			$response->dataFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".json";
+			file_put_contents($response->dataFile, $responseData);
+
+			//optimize images
+			Render::optimizeImages($response->images, $this->person->img_quality, $requestData->ostype);
+
+			$this->resPath = $response->generateZipResponse();			
+			if($this->sendEmails){
+				// prepare and send the email
+				$email = new Email();
+				$email->to = $this->fromEmail;
+				$email->requestDate = $this->execStartTime;
+				$email->deliveryId = $this->deliveryId;
+				$email->subject = $this->subject;
+				$email->body = $this->body;
+				$email->response = $response;
+				$email->images = $response->images;
+				$email->attachments = [$this->resPath];
+				$email->send();
 			}
-
-			$service->input = $requestData;
-
-			// get extra data for the app
-			$res = Utils::getExternalAppData($this->fromEmail, $requestData->timestamp, $service);
-			$response->attachments = array_merge($response->attachments, $res["attachments"]);
-			$extra = $res["json"];
-
-			// create an attachment file for the extra structure
-			$ntfFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".ext";
-			file_put_contents($ntfFile, $extra);
-			$response->attachments[] = $ntfFile;
-
-			// prepare and send the email
-			$email = new Email();
-			$email->to = $this->fromEmail;
-			$email->requestDate = $this->execStartTime;
-			$email->deliveryId = $this->deliveryId;
-			$email->subject = $this->subject;
-			$email->body = $this->body;
-			$email->replyId = $this->messageId;
-			$email->images = $response->images;
-			$email->attachments = $response->attachments;
-			$this->resPath = $email->setContentAsZipAttachment();
-			if($this->sendEmails) $email->send();
 		}
 
 		// update values in the delivery table
-		$safeQuery = Connection::escape($service->request->query, 1024);
-		Connection::query("
-			UPDATE delivery SET
-			request_service='{$service->serviceName}',
-			request_subservice='{$service->request->subservice}',
-			request_query='$safeQuery',
-			request_method='{$requestData->method}'
-			WHERE id={$this->deliveryId}");
+		if(!$isReload){
+			$safeQuery = Connection::escape($response->service->request->query, 1024);
+			Connection::query("
+				UPDATE delivery SET
+				request_service='{$response->service->name}',
+				request_subservice='{$response->service->request->subservice}',
+				request_query='$safeQuery',
+				request_method='{$requestData->method}'
+				WHERE id={$this->deliveryId}");
+		}
+		else {
+			Connection::query("
+				UPDATE delivery SET
+				request_service='reload',
+				request_subservice='',
+				request_query='',
+				request_method='{$requestData->method}'
+				WHERE id={$this->deliveryId}");
+		}
+		
 
 		// return message for the log
 		$requestData->token = "";
-		$nautaPass = $nautaPass ? "Yes" : "No";
+		$nautaPass = isset($nautaPass) ? "Yes" : "No";
 		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
-		foreach ($requestData as $key => $value) $log .= " | $key:$value";
+		foreach ($requestData as $key => $value) if(is_string($value)) $log .= " | $key:$value";
 		return  $log;
 	}
 
@@ -360,7 +360,7 @@ class RunController extends Controller
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger = new File("$wwwroot/logs/webhook.log");
 		$logger->log("Environmet:FAILURE | From:{$this->fromEmail} To:{$this->toEmail} | Subject:{$this->subject}");
 		$logger->close();
 
@@ -446,8 +446,8 @@ class RunController extends Controller
 		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
 		Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_id, email_subject, email_body, email_attachments)
-			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->messageId}', '{$this->subject}', '{$this->body}', '$attach')");
+			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_subject, email_body, email_attachments)
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
@@ -461,7 +461,7 @@ class RunController extends Controller
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger = new File("$wwwroot/logs/webhook.log");
 		$logger->log("Environmet:$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
 		$logger->close();
 	}
@@ -476,7 +476,6 @@ class RunController extends Controller
 		// parse the file
 		$parser = new PhpMimeMailParser\Parser();
 		$parser->setPath($emailPath);
-		$messageId = str_replace(array("<",">","'"), "", $parser->getHeader('message-id'));
 		$from = $parser->getAddresses('from');
 		$fromEmail = $from[0]['address'];
 		$fromName = $from[0]['display'];

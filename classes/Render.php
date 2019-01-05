@@ -1,5 +1,5 @@
 <?php
-
+use \Phalcon\DI\FactoryDefault;
 class Render
 {
 	/**
@@ -51,12 +51,12 @@ class Render
 		$query = str_replace("|", " ", $query); // backward compatibility
 
 		// get the current environment
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$environment = $di->get('environment');
 
 		// create a new Request object
 		$request = new Request();
-		$request->person = $person;
+		$request->person = clone $person;
 		$request->subject = $subject;
 		$request->body = $body;
 		$request->attachments = $attachments;
@@ -73,19 +73,19 @@ class Render
 		// create a new Service Object with info from the database
 		$result = Connection::query("SELECT * FROM service WHERE name = '$serviceName'");
 		$service = new $serviceName();
-		$service->serviceName = $serviceName;
+		$service->name = $serviceName;
 
 		if (isset($result[0]))
 		{
-			$service->serviceDescription = $result[0]->description;
+			$service->description = $result[0]->description;
 			$service->creatorEmail = $result[0]->creator_email;
-			$service->serviceCategory = $result[0]->category;
+			$service->category = $result[0]->category;
 			$service->insertionDate = $result[0]->insertion_date;
 			$service->version = $result[0]->version;
 		} else {
-			$service->serviceDescription = '';
+			$service->description = '';
 			$service->creatorEmail = 'soporte@apretaste.com';
-			$service->serviceCategory = 'service';
+			$service->category = 'service';
 			$service->insertionDate = date('Y-m-d');
 			$service->version = 0;
 		}
@@ -98,44 +98,37 @@ class Render
 
 		if(empty($subServiceName) || ! method_exists($service, $subserviceFunction) ) $response = $service->_main($request);
 		else $response = $service->$subserviceFunction($request);
-
-		// get only the first response
-		// @TODO remove when services send only one response
-		if(is_array($response)) $response = $response[0];
-
+		
 		// create and return the response
-		$return = new stdClass();
-		$return->service = $service;
-		$return->response = $response;
-		return $return;
+		$response->service = $service;
+		return $response;
 	}
 
 	/**
 	 * Render the template and return the HTML content
 	 *
 	 * @author salvipascual
-	 * @param Service $service, service to be rendered
 	 * @param Response $response, response object to render
 	 * @return String, template in HTML
 	 * @throw Exception
 	 */
-	public static function renderHTML($service, Response &$response)
+	public static function renderHTML(Response &$response)
 	{
 		// if the response includes json, don't render HTML
 		// this is used mainly to build email APIs
 		if($response->json) return $response->json;
 
 		// set the email of the response if empty
-		if(empty($response->email)) $response->email = $service->request->person->email;
+		if(empty($response->email)) $response->email = $response->service->request->person->email;
 
 		// get the path
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$environment = $di->get('environment');
 		$wwwroot = $di->get('path')['root'];
 
 		// select the right file to load
 		if($response->internal) $userTemplateFile = "$wwwroot/app/templates/{$response->template}";
-		else $userTemplateFile = "{$service->pathToService}/templates/{$response->template}";
+		else $userTemplateFile = "{$response->service->pathToService}/templates/{$response->template}";
 
 		// get the person
 		$person = Utils::getPerson($response->email);
@@ -148,18 +141,18 @@ class Render
 			"_ENVIRONMENT" => $environment, // app|web|api
 			// template variables
 			"RAW_TEMPLATE" => file_get_contents($userTemplateFile),
-			"SERVICE_NAME" => strtolower($service->serviceName),
-			"SERVICE_CREATOR" => $service->creatorEmail,
+			"SERVICE_NAME" => strtolower($response->service->name),
+			"SERVICE_CREATOR" => $response->service->creatorEmail,
 			"DELIVERY_EMAIL" => Utils::getValidEmailAddress(),
 			"EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
 			"SUPPORT_EMAIL" => Utils::getSupportEmailAddress(),
 			"JSON_DATA" => $response->content,
 			// app only variables
-			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
+			"APP_VERSION" => empty($response->service->input->appversion) ? 1 : floatval($response->service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
-			"APP_OS" => empty($service->input->ostype) ? "" : $service->input->ostype, // android|ios
-			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
-			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
+			"APP_OS" => empty($response->service->input->ostype) ? "" : $response->service->input->ostype, // android|ios
+			"APP_TYPE" => empty($response->service->input->apptype) ? "original" : $response->service->input->apptype, // original|single
+			"APP_METHOD" => empty($response->service->input->method) ? "email" : $response->service->input->method, // email|http
 			"APP_IMG_DIR" => $environment=="app"?"{APP_IMG_DIR}":"",
 			"APP_ASSETS" => $environment=="app"?"{APP_ASSETS}":"",
 			// user variables
@@ -193,9 +186,6 @@ class Render
 			$rendered = $mainHTML;
 		}
 
-		// optimize images for the app
-		self::optimizeImages($response, $rendered, $service);
-
 		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $rendered);
 	}
@@ -216,82 +206,40 @@ class Render
 	}
 
 	/**
-	 * Optimize images of response and associated html
+	 * Optimize images of response for the app
 	 * @param $response
 	 * @param $html
 	 * @param $service
 	 */
-	private static function optimizeImages(&$response, &$html, $service)
-	{
-		// get the image quality
-		$userId = $service->request->person->id;
-		$res = Connection::query("SELECT img_quality FROM person WHERE id=$userId");
-		if(empty($res)) $quality = "ORIGINAL";
-		else $quality = $res[0]->img_quality;
-
+	public static function optimizeImages(&$resImages, $quality, $ostype){
 		// do not optmize for original quality
 		if($quality == "ORIGINAL") return false;
-
-		// get rid of images
-		if($quality == "SIN_IMAGEN") $response->images = [];
-		else
-		{
-			// get link to the http
-			$di = \Phalcon\DI\FactoryDefault::getDefault();
-			$wwwhttp = $di->get('path')['http'];
-
+		else{
 			// setup params for the app
-			$format = $service->request->environment=='app' && $service->request->ostype=='android' ? 'webp' : 'jpg';
-			$quality = $service->request->environment=='app' ? 15 : 50;
+			$format = $ostype=='android' ? 'webp' : 'jpg';
+			$quality = 15;
 
 			// create thumbnails for images
 			$images = [];
-			if(is_array($response->images)) foreach ($response->images as $file)
-			{
-				if(file_exists($file))
-				{
+			if(is_array($resImages)) foreach ($resImages as $file){
+				if(file_exists($file)){
 					// thumbnail the image or use thumbnail cache
 					$thumbnail = Utils::getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
 
 					// optimize image or use the optimized cache
-					if( ! file_exists($thumbnail)) {
+					if(!file_exists($thumbnail)){
 						Utils::optimizeImage($file, $thumbnail, $quality);
-						if( ! file_exists($thumbnail)) {
+						if( !file_exists($thumbnail)) {
 							Utils::createAlert("[Render::optimizeImages] file cannot be optimized: $file");
 							$thumbnail = $file;
 						}
 					}
-
 					// use the image only if it can be compressed
-					$better = (filesize($file) > filesize($thumbnail)) ? $thumbnail : $file;
+					$better = (filesize($file) > filesize($thumbnail))?$thumbnail:$file;
 					$images[] = $better;
-					$original = basename($file);
-					$better = basename($better);
-
-					if (stripos($html, "'$wwwhttp/temp/$original'") !== false || stripos($html, "\"$wwwhttp/temp/$original\"") !== false) {
-						$wwwroot = $di->get('path')['root'];
-						@copy($thumbnail,"$wwwroot/public/temp/$better");
-					}
-
-					// replace old image in the html by new image
-					$html = str_replace([
-						"'$original'",
-						"\"$original\"",
-						"'cid:$original'",
-						"\"cid:$original\"",
-						"'$wwwhttp/temp/$original'",
-						"\"$wwwhttp/temp/$original\""
-					],[
-						"'$better'",
-						"\"$better\"",
-						"'cid:$better'",
-						"\"cid:$better\"",
-						"'$wwwhttp/temp/$better'",
-						"\"$wwwhttp/temp/$better\""
-					], $html);
 				}
 			}
-			$response->images = $images;
+			$resImages = $images;
 		}
 	}
 
@@ -304,7 +252,7 @@ class Render
 	public static function getAd($service)
 	{
 		// get the current environment
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$environment = $di->get('environment');
 
 		// get app versions

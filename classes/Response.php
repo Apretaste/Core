@@ -4,14 +4,18 @@ class Response
 {
 	public $email;
 	public $subject;
+	public $layout;
 	public $template;
 	public $content;
-	public $json; // NULL unless the return is an email API
-	public $images;
-	public $attachments;
-	public $internal; // false if the user provides the template
-	public $render; // false if the response should not be email to the user
-	public $layout;
+	public $json = null; // NULL unless the return is an email API
+	public $responseFile;
+	public $dataFile;
+	public $serviceIcons = [];
+	public $images = [];
+	public $attachments = [];
+	public $attachService = false;
+	public $internal = true; // false if the user provides the template
+	public $render = false; // false if the response should not be email to the user
 	public $cache = 0;
 	public $service = false;
 
@@ -24,11 +28,6 @@ class Response
 	{
 		$this->template = "message.tpl";
 		$this->content = json_encode(["text"=>"Empty response"]);
-		$this->images = [];
-		$this->attachments = [];
-		$this->json = null;
-		$this->internal = true;
-		$this->render = false;
 
 		// get the service that is calling me, if the object was created from inside a service
 		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -36,7 +35,7 @@ class Response
 		if(php::endsWith($file, "service.php")) $this->service = basename(dirname($file));
 
 		// select the default layout
-		$this->setEmailLayout("web_default.ejs");
+		$this->setLayout("web_default.ejs");
 	}
 
 	/**
@@ -45,8 +44,7 @@ class Response
 	 * @author salvipascual
 	 * @param String $cache | year, month, day, number of hours
 	 */
-	public function setCache($cache = "year")
-	{
+	public function setCache($cache = "year"){
 		if($cache == "year") $cache = 512640;
 		if($cache == "month") $cache = 43200;
 		if($cache == "week") $cache = 10080;
@@ -55,35 +53,12 @@ class Response
 	}
 
 	/**
-	 * Set the subject for the response
-	 *
-	 * @author salvipascual
-	 * @param String $subject
-	 */
-	public function setResponseSubject($subject)
-	{
-		$this->subject = $subject;
-	}
-
-	/**
-	 * Set the email of the response in the cases where is not the same as the requestor
-	 * Useful for confirmations or for programmers to track actions/errors on their services
-	 *
-	 * @author salvipascual
-	 * @param String $email
-	 */
-	public function setResponseEmail($email)
-	{
-		$this->email = $email;
-	}
-
-	/**
 	 * Set the layout of the response
 	 *
 	 * @author salvipascual
 	 * @param String $layout, empty to set default layout
 	 */
-	public function setEmailLayout($layout)
+	public function setLayout($layout)
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
@@ -113,6 +88,7 @@ class Response
 		$this->content = json_encode(["code"=>$code, "message"=>$message, "text"=>$text]);
 		$this->internal = true;
 		$this->render = true;
+		$this->createResponseJSON();
 		return $this;
 	}
 
@@ -149,55 +125,93 @@ class Response
 		$this->attachments = $attachments;
 		$this->internal = false;
 		$this->render = true;
+		$this->createResponseJSON();
 		return $this;
 	}
 
 	/**
-	 * Attach the service EJS templates
-	 * 
+	 * Add the service EJS templates, config, styles and scripts to the response zip
 	 * @author ricardo@apretaste.org
-	 * @param Service $service
 	 */
 
-	public function attachTemplates($service){
-		$serv_temp_dir = Utils::getTempDir()."templates/".$service->serviceName;
-		if(!file_exists($serv_temp_dir)) mkdir($serv_temp_dir);
-		$tpl_zip = $serv_temp_dir.'/'.$service->tpl_version.'.zip';
-		if(!file_exists($tpl_zip)){
-			$tpl_dir = $service->pathToService."/templates";
-			$layout_dir = $service->pathToService."/layout";
+	private function addServiceFiles(&$zip){
+		$path = $this->service->pathToService;
+		$name = $this->service->name;
+		$tpl_dir = $path."/templates";
+		$layout_dir = $path."/layout";
+		$img_dir = $path."/images";
+		$files = ['config.json','styles.css','scripts.js'];
 
-			// create the zip file
-			$zip = new ZipArchive;
-			$zip->open($tpl_zip, ZipArchive::CREATE);
-
-			$templates = array_diff(scandir($tpl_dir), array('..', '.'));
-			foreach($templates as $tpl){
-				$file = $tpl_dir."/$tpl";
-				$zip->addFile($file,basename($file));
-			}
-
-			if(file_exists($layout_dir)){
-				$layouts = array_diff(scandir($layout_dir), array('..', '.'));
-				foreach($templates as $tpl){
-					$file = $layout_dir."/$tpl";
-					$zip->addFile($file,basename($file));
-				}
-			}
-			$zip->close();
+		$templates = array_diff(scandir($tpl_dir), array('..', '.'));
+		foreach($templates as $tpl){
+			$file = $tpl_dir."/$tpl";
+			$zip->addFile($file,"$name/templates/".basename($file));
 		}
-		$this->attachments[] = $tpl_zip;
+
+		if(file_exists($layout_dir)){
+			$layouts = array_diff(scandir($layout_dir), array('..', '.'));
+			foreach($layouts as $layout){
+				$file = $layout_dir."/$layout";
+				$zip->addFile($file,"$name/layouts/".basename($file));
+			}
+		}
+
+		if(file_exists($img_dir)){
+			$images = array_diff(scandir($img_dir), array('..', '.'));
+			foreach($images as $img){
+				$file = $img_dir."/$img";
+				$zip->addFile($file,"$name/images/".basename($file));
+			}
+		}
+
+		foreach($files as $f){
+			$f = $path."/$f";
+			if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+		}
 	}
 
 	/**
-	 * Attach the content of the response as a JSON
+	 * Create the JSON file of the content
 	 * @author ricardo@apretaste.org
 	 */
 
-	 public function attachContent(){
-		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".dat";
-		$content = $this->content;
-		file_put_contents($file,$content);
-		$this->attachments[] = $file;
+	 private function createResponseJSON(){
+		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".json";
+		file_put_contents($file,$this->content);
+		$this->responseFile = $file;
 	 }
+
+	 /**
+	 * Configures the contents to be sent as a ZIP attached instead of directly in the body of the message
+	 *
+	 * @author ricardo@apretaste.org
+	 * @return String, path to the file created
+	 */
+	public function generateZipResponse()
+	{
+		// get a random name for the file and folder
+		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+
+		// create the zip file
+		$zip = new ZipArchive;
+		$zip->open($zipFile, ZipArchive::CREATE);
+
+		//attach the response and the data, if reload, the response doesn't exists
+		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
+		$zip->addFile($this->dataFile, "data.json");
+
+		// all files and attachments
+		foreach ($this->images as $image) $zip->addFile($image, basename($image));
+		foreach ($this->attachments as $attachment) $zip->addFile($attachment, basename($attachment));
+		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
+
+		//attach the service files if nedded
+		if($this->attachService) $this->addServiceFiles($zip);
+
+		// close the zip file
+		$zip->close();
+
+		// return the path to the file
+		return $zipFile;
+	}
 }
