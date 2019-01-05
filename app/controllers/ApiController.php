@@ -164,7 +164,7 @@ class ApiController extends Controller {
    * @param GET email
    * @param GET lang, two digits languge code, IE: en, es
    *
-   * @return JSON
+   * @return string | boolean
    */
   public function startAction() {
     // allow JS clients to use the API
@@ -212,7 +212,11 @@ class ApiController extends Controller {
     $sender->to      = $email;
     $sender->subject = $subject;
     $sender->body    = $body;
-    $res             = $sender->send();
+    $res             = $sender->sendEmailViaGmail();
+
+    if ($res->code != "200") {
+      $sender->send();
+    }
 
     // return error response
     if ($res->code != "200") {
