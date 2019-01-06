@@ -216,8 +216,7 @@ class Utils
 	 * @param String $serviceName, name of the service to access
 	 * @return String, path to the service, or false if the service do not exist
 	 */
-	public static function getPathToService($serviceName)
-	{
+	public static function getPathToService($serviceName){
 		// get the path to service
 		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 		$path = "$wwwroot/services/$serviceName";
@@ -1067,7 +1066,7 @@ class Utils
 	 * @param Response $response
 	 * @return array (Object, Attachments)
 	 */
-	public static function getAppData($person, $requestData, $service, &$response){
+	public static function getAppData($person, $requestData, &$response){
 		
 		// create the response
 		$responseData = new stdClass();
