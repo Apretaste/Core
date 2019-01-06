@@ -2,41 +2,19 @@
 
 class Response
 {
-	public $email;
-	public $subject;
+	public $serviceName;
 	public $layout;
 	public $template;
-	public $content;
-	public $json = null; // NULL unless the return is an email API
-	public $responseFile;
-	public $dataFile;
-	public $serviceIcons = [];
+	public $json;
 	public $images = [];
-	public $attachments = [];
-	public $attachService = false;
-	public $internal = true; // false if the user provides the template
-	public $render = false; // false if the response should not be email to the user
+	public $files = [];
+	public $render = false; // false if the response should not be sent to the user
 	public $cache = 0;
-	public $service = false;
 
-	/**
-	 * Create default template
-	 *
-	 * @author salvipascual
-	 */
-	public function __construct()
-	{
-		$this->template = "message.tpl";
-		$this->content = json_encode(["text"=>"Empty response"]);
-
-		// get the service that is calling me, if the object was created from inside a service
-		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-		$file = isset($trace[0]['file']) ? $trace[0]['file'] : "";
-		if(php::endsWith($file, "service.php")) $this->service = basename(dirname($file));
-
-		// select the default layout
-		$this->setLayout("web_default.ejs");
-	}
+	public $dataFile;
+	public $attachService = false;
+	public $serviceIcons = [];
+	public $responseFile;
 
 	/**
 	 * Set the cache in minutes. If no time is passed, default will be 1 year
@@ -69,7 +47,7 @@ class Response
 
 		// else, check if is a service layout
 		else {
-			$file = Utils::getPathToService($this->service) . "/layouts/$layout";
+			$file = Utils::getPathToService($this->serviceName) . "/layouts/$layout";
 			if(file_exists($file)) $this->layout = $file;
 		}
 	}
@@ -79,29 +57,14 @@ class Response
 	 *
 	 * @author salvipascual
 	 * @param String, $text
-	 * @param String, $code, error code if exist
-	 * @param String, $message, error message if exist
 	 */
-	public function createFromText($text, $code="OK", $message="")
+	public function createFromText($text)
 	{
-		$this->template = "message.tpl";
-		$this->content = json_encode(["code"=>$code, "message"=>$message, "text"=>$text]);
-		$this->internal = true;
-		$this->render = true;
-		$this->createResponseJSON();
-		return $this;
-	}
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
 
-	/**
-	 * Receives a JSON text to be sent back by email. Used for email APIs
-	 *
-	 * @author salvipascual
-	 * @param String, $json
-	 */
-	public function createFromJSON($json)
-	{
-		$this->json = $json;
-		$this->internal = true;
+		$this->template = "$wwwroot/app/templates/message.tpl";
+		$this->json = json_encode(["text"=>$text]);
 		$this->render = true;
 		return $this;
 	}
@@ -113,24 +76,20 @@ class Response
 	 * @param String $template, name of the file in the template folder
 	 * @param String[] $content, in the way ["key"=>"var"]
 	 * @param String[] $images, paths to the images to embeb
-	 * @param String[] $attachments, paths to the files to attach
+	 * @param String[] $files, paths to the files to attach
 	 */
-	public function createFromTemplate($template, $content, $images=[], $attachments=[])
+	public function createFromTemplate($template, $content, $images=[], $files=[])
 	{
-		if(empty($content['code'])) $content['code'] = "ok"; // for the API
-
-		$this->template = $template;
-		$this->content = json_encode($content);
+		$this->template = Utils::getPathToService($this->serviceName)."/templates/".$template;
+		$this->json = json_encode($content);
 		$this->images = $images;
-		$this->attachments = $attachments;
-		$this->internal = false;
+		$this->files = $files;
 		$this->render = true;
-		$this->createResponseJSON();
 		return $this;
 	}
 
 	/**
-	 * Configures the contents to be sent as a attached ZIP
+	 * Configures the jsons to be sent as a attached ZIP
 	 *
 	 * @author ricardo@apretaste.org
 	 * @return String, path to the file created
@@ -148,13 +107,47 @@ class Response
 		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
 		$zip->addFile($this->dataFile, "data.json");
 
-		// all files and attachments
+		// all files and files
 		foreach ($this->images as $image) $zip->addFile($image, basename($image));
-		foreach ($this->attachments as $attachment) $zip->addFile($attachment, basename($attachment));
+		foreach ($this->files as $attachment) $zip->addFile($attachment, basename($attachment));
 		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
 
 		//attach the service files if nedded
-		if($this->attachService) $this->addServiceFiles($zip);
+		if($this->attachService) {
+			$path = $this->service->pathToService;
+			$name = $this->service->name;
+			$tpl_dir = $path."/templates";
+			$layout_dir = $path."/layout";
+			$img_dir = $path."/images";
+			$files = ['config.json','styles.css','scripts.js'];
+
+			$templates = array_diff(scandir($tpl_dir), array('..', '.'));
+			foreach($templates as $tpl){
+				$file = $tpl_dir."/$tpl";
+				$zip->addFile($file,"$name/templates/".basename($file));
+			}
+
+			if(file_exists($layout_dir)){
+				$layouts = array_diff(scandir($layout_dir), array('..', '.'));
+				foreach($layouts as $layout){
+					$file = $layout_dir."/$layout";
+					$zip->addFile($file,"$name/layouts/".basename($file));
+				}
+			}
+
+			if(file_exists($img_dir)){
+				$images = array_diff(scandir($img_dir), array('..', '.'));
+				foreach($images as $img){
+					$file = $img_dir."/$img";
+					$zip->addFile($file,"$name/images/".basename($file));
+				}
+			}
+
+			foreach($files as $f){
+				$f = $path."/$f";
+				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+			}
+		}
 
 		// close the zip file
 		$zip->close();
@@ -164,52 +157,13 @@ class Response
 	}
 
 	/**
-	 * Add the service EJS templates, config, styles and scripts to the response zip
+	 * Create the JSON file of the json
 	 * @author ricardo@apretaste.org
 	 */
-	private function addServiceFiles(&$zip){
-		$path = $this->service->pathToService;
-		$name = $this->service->name;
-		$tpl_dir = $path."/templates";
-		$layout_dir = $path."/layout";
-		$img_dir = $path."/images";
-		$files = ['config.json','styles.css','scripts.js'];
-
-		$templates = array_diff(scandir($tpl_dir), array('..', '.'));
-		foreach($templates as $tpl){
-			$file = $tpl_dir."/$tpl";
-			$zip->addFile($file,"$name/templates/".basename($file));
-		}
-
-		if(file_exists($layout_dir)){
-			$layouts = array_diff(scandir($layout_dir), array('..', '.'));
-			foreach($layouts as $layout){
-				$file = $layout_dir."/$layout";
-				$zip->addFile($file,"$name/layouts/".basename($file));
-			}
-		}
-
-		if(file_exists($img_dir)){
-			$images = array_diff(scandir($img_dir), array('..', '.'));
-			foreach($images as $img){
-				$file = $img_dir."/$img";
-				$zip->addFile($file,"$name/images/".basename($file));
-			}
-		}
-
-		foreach($files as $f){
-			$f = $path."/$f";
-			if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
-		}
-	}
-
-	/**
-	 * Create the JSON file of the content
-	 * @author ricardo@apretaste.org
-	 */
-	private function createResponseJSON(){
-		$file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".json";
-		file_put_contents($file,$this->content);
-		$this->responseFile = $file;
+	private function createResponseJSON()
+	{
+		// $file = Utils::getTempDir()."data/".substr(md5(date('dHhms').rand()), 0, 8).".json";
+		// file_put_jsons($file,$this->json);
+		// $this->responseFile = $file;
 	}
 }

@@ -1,5 +1,7 @@
 <?php
+
 use \Phalcon\DI\FactoryDefault;
+
 class Render
 {
 	/**
@@ -221,7 +223,7 @@ class Render
 			// create thumbnails for images
 			$images = [];
 			if(is_array($resImages)) foreach ($resImages as $file){
-				if(file_exists($file)){
+				if(file_exists($file)) {
 					// thumbnail the image or use thumbnail cache
 					$thumbnail = Utils::getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
 

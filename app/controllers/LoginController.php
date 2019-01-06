@@ -89,7 +89,7 @@ class LoginController extends Controller
 		$utils = new Utils();
 		$connection = new Connection();
 		$action = "login";
-		if( ! $utils->personExist($email)) {
+		if( ! $utils->getPerson($email)) {
 
 			$logger->log("Login| User {$email} is new user!");
 

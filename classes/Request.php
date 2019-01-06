@@ -1,14 +1,7 @@
 <?php
 
-class Request {
-	public $person;
-	public $subject;
-	public $body;
-	public $attachments;
-	public $service;
-	public $subservice;
-	public $query;
-	public $params;
-	public $appversion;
-	public $environment;
+class Request 
+{
+	public $person; // object Person with no passwords or tokens
+	public $input; // data sent from the app
 }

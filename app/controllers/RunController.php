@@ -30,7 +30,7 @@ class RunController extends Controller
 	public function webAction()
 	{
 		// get the service to load
-		$this->subject = $this->request->get("subject");
+		$command = $this->request->get("cm");
 		$token = $this->request->get('token');
 
 		// try login by token or load from the session
@@ -40,20 +40,99 @@ class RunController extends Controller
 
 		// if user is not logged, redirect to login page
 		if($user) $person = Utils::getPerson($user->email);
-		else {header("Location:/login?redirect={$this->subject}"); exit;}
+		else {header("Location:/login?redirect=$command"); exit;}
 
 		// set the running environment
 		$this->di->set('environment', function() {return "web";});
 
-		// create a new entry on the delivery table
-		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
-		Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', 'web')");
 
-		// run the request & render the response
-		$ret = Render::runRequest($person, $this->subject, '', []);
-		echo Render::renderHTML($ret->service, $ret->response);
+		//
+		// START: TO MOVE TO ANOTHER FILE
+		//
+
+
+		// get the name of the service based on the subject line
+		$pieces = explode(" ", $command);
+		$serviceName = strtolower($pieces[0]);
+		$subServiceName = isset($pieces[1]) ? strtolower($pieces[1]) : "";
+
+		// create the input
+		$input = new stdClass();
+		$input->command = $command;
+		$input->data = new stdClass(); // TODO get data via params
+		$input->files = new stdClass(); // TODO get files via params
+		$input->ostype = "web";
+		$input->method = "web";
+		$input->apptype = "http";
+		$input->osversion = "";
+		$input->appversion = 0;
+		$input->serviceversion = 0;
+		$input->token = false;
+
+		// create a new Request object
+		$request = new Request();
+		$request->person = clone $person;
+		$request->input = $input;
+
+		// create a new Response
+		$response = new Response();
+		$response->serviceName = $serviceName;
+
+		// include and create a new service object
+		$servicePath = Utils::getPathToService($serviceName);
+		include_once "$servicePath/service.php";
+		$serviceObj = new Service();
+
+		// run the service and get the Response
+		if(empty($subServiceName)) $serviceResponse = $serviceObj->_main($request, $response);
+		elseif(method_exists($serviceObj, "_$subServiceName")) {
+			$subserviceFunction = "_$subServiceName";
+			$serviceResponse = $service->$subserviceFunction($request, $response);
+		}else{
+			Utils::createAlert("[RunController::webAction] Error no subservice '$subServiceName' on service '$serviceName'");
+			echo "Hemos encontrado un error y le dejamos saber a nuestro equipo tecnico. Intente nuevamente.";
+			return false;
+		}
+
+
+		//
+		// TO MOVE TO YET ANOTHER FILE
+		//
+
+
+		// get public and internal paths
+		$wwwroot = $this->di->get('path')['root'];
+		$wwwhttp = $this->di->get('path')['http'];
+
+		// get the HTML template and the JS and CSS files
+		$webstart = file_get_contents("$wwwroot/app/layouts/webstart.html");
+		$templateHTML = file_get_contents($serviceResponse->template);
+		$templateCSS = file_get_contents("$servicePath/styles.css");
+		$templateJS = file_get_contents("$servicePath/scripts.js");
+
+		// replace shortags on the template 
+		$webstart = str_replace('{{APP_SERVICE_NAME}}', $serviceName, $webstart);
+		$webstart = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $webstart);
+		$webstart = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app", $webstart);
+		$webstart = str_replace('{{APP_TEMPLATE_CSS}}', $templateCSS, $webstart);
+		$webstart = str_replace('{{APP_TEMPLATE_JS}}', $templateJS, $webstart);
+		$webstart = str_replace('{{APP_JSON_RESPONSE}}', $serviceResponse->json, $webstart);
+		$webstart = str_replace('{{APP_TEMPLATE_CODE}}', $templateHTML, $webstart);
+
+
+		//
+		// END: TO MOVE TO ANOTHER FILE
+		//
+
+
+		// create a new entry on the delivery table
+		$deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
+		Connection::query("
+			INSERT INTO delivery (id, id_person, environment, email_subject)
+			VALUES ({$this->deliveryId}, {$person->id}, 'web', '$command')");
+
+		// display the template on screen
+		echo $webstart;
 	}
 
 	/**
