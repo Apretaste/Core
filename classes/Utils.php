@@ -1144,21 +1144,111 @@ class Utils
 	}
 
 	/**
-	 * Change the src of an image depending of the environment
-	 * @author ricardo@apretaste.org
-	 * @param String $imgSrc
+	 * Create a Service object and execute the response
+	 * 
+	 * @author salvipascual
+	 * @param Person $person
+	 * @param Input $input
+	 * @param String $environment: web/app
 	 */
+	public static function runService($person, Input $input, $environment)
+	{
+		// get the name of the service based on the subject line
+		$pieces = explode(" ", $input->command);
+		$serviceName = strtolower($pieces[0]);
+		$subServiceName = isset($pieces[1]) ? strtolower($pieces[1]) : "";
 
-	public static function parseImgDir(&$imgSrc){
-		$file = basename($imgSrc);
-		$di = FactoryDefault::getDefault();
-		if($di->get('environment') == "web"){
-			$wwwroot = $di->get('path')['root'];
-			$wwwhttp = $di->get('path')['http'];
-			if(!file_exists("$wwwroot/public/temp/$file")) @copy($imgSrc, "$wwwroot/public/temp/$file");
-			$imgSrc = "$wwwhttp/temp/$file";
+		// create a new Request object
+		$request = new Request();
+		$request->person = clone $person;
+		$request->input = $input;
+		$request->environment = $environment;
+
+		// create a new Response
+		$response = new Response();
+		$response->serviceName = $serviceName;
+
+		// @TODO check if the service exist
+		// else trow an exception and stop
+
+		// include and create a new service object
+		include_once Utils::getPathToService($serviceName) . "/service.php";
+		$serviceObj = new Service();
+
+		// run the service
+		$func = "_$subServiceName";
+		if(method_exists($serviceObj, $func)) $service->$func($request, $response);
+		else $serviceObj->_main($request, $response);
+
+		// return the service's response
+		return $response;
+	}
+
+	/**
+	 * Configures the jsons to be sent as a attached ZIP
+	 *
+	 * @author ricardo@apretaste.org
+	 * @return String, path to the file created
+	 */
+	public function generateZipResponse()
+	{
+		// get a random name for the file and folder
+		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+
+		// create the zip file
+		$zip = new ZipArchive;
+		$zip->open($zipFile, ZipArchive::CREATE);
+
+		//attach the response and the data, if reload, the response doesn't exists
+		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
+		$zip->addFile($this->dataFile, "data.json");
+
+		// all files and files
+		foreach ($this->images as $image) $zip->addFile($image, basename($image));
+		foreach ($this->files as $attachment) $zip->addFile($attachment, basename($attachment));
+		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
+
+		//attach the service files if nedded
+		if($this->attachService) {
+			$path = $this->service->pathToService;
+			$name = $this->service->name;
+			$tpl_dir = $path."/templates";
+			$layout_dir = $path."/layout";
+			$img_dir = $path."/images";
+			$files = ['config.json','styles.css','scripts.js'];
+
+			$templates = array_diff(scandir($tpl_dir), array('..', '.'));
+			foreach($templates as $tpl){
+				$file = $tpl_dir."/$tpl";
+				$zip->addFile($file,"$name/templates/".basename($file));
+			}
+
+			if(file_exists($layout_dir)){
+				$layouts = array_diff(scandir($layout_dir), array('..', '.'));
+				foreach($layouts as $layout){
+					$file = $layout_dir."/$layout";
+					$zip->addFile($file,"$name/layouts/".basename($file));
+				}
+			}
+
+			if(file_exists($img_dir)){
+				$images = array_diff(scandir($img_dir), array('..', '.'));
+				foreach($images as $img){
+					$file = $img_dir."/$img";
+					$zip->addFile($file,"$name/images/".basename($file));
+				}
+			}
+
+			foreach($files as $f){
+				$f = $path."/$f";
+				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+			}
 		}
-		elseif($di->get('environment') == "app") $imgSrc = $file;
-		else $imgSrc = "cid:$file";
+
+		// close the zip file
+		$zip->close();
+
+		// return the path to the file
+		return $zipFile;
 	}
 }

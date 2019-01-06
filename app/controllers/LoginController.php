@@ -78,7 +78,7 @@ class LoginController extends Controller
 			// get redirect link and redirect
 			$redirect = empty($redirect) ? "servicios" : $redirect;
 			if($user->isManager) $this->response->redirect($user->startPage);
-			else $this->response->redirect("run/display?subject=$redirect&action=login");
+			else $this->response->redirect("run/web?cm=$redirect&action=login");
 			$this->view->disable();
 			return false;
 		}
@@ -169,7 +169,7 @@ class LoginController extends Controller
 		// get redirect link and redirect
 		$redirect = empty($redirect) ? "servicios" : $redirect;
 		if($user->isManager) $redirectLink = $user->startPage;
-		else $redirectLink = "run/display?subject=$redirect&action=$action";
+		else $redirectLink = "run/web?cm=$redirect&action=$action";
 
 		$logger->log("Login | Login successful, redirect to $redirectLink");
 

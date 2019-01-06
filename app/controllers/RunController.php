@@ -7,12 +7,13 @@ use \Phalcon\Logger\Adapter\File;
 
 class RunController extends Controller
 {
+	private $deliveryId; // id of the table delivery
+	private $execStartTime; // time when the service started
+
 	private $fromName;
 	private $fromEmail;
 	private $person;
 	private $toEmail;
-	private $execStartTime;
-	private $deliveryId; // id of the table delivery
 	private $subject;
 	private $body;
 	private $attachment;
@@ -20,6 +21,37 @@ class RunController extends Controller
 	private $idEmail;
 	private $resPath = false; // path to the response zip
 	private $sendEmails = true;
+
+	/**
+	 * Initialize basic attributes for the service
+	 * @author salvipascual
+	 */
+	public function beforeExecuteRoute()
+	{
+		// create a unique ID for each petition
+		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
+
+		// get the time when the service started executing
+		$this->execStartTime = date("Y-m-d H:i:s");
+	}
+
+	/**
+	 * Calculate the procesing time after execution
+	 * @author salvipascual
+	 */
+	public function afterExecuteRoute()
+	{
+		// get the current execution time
+		$currentTime = new DateTime();
+		$startedTime = new DateTime($this->execStartTime);
+		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
+
+		// save the final running time
+		Connection::query("
+			UPDATE delivery 
+			SET request_date='{$this->execStartTime}', process_time='$executionTime' 
+			WHERE id={$this->deliveryId}");
+	}
 
 	/**
 	 * Receives an HTTP petition and display to the web
@@ -31,6 +63,7 @@ class RunController extends Controller
 	{
 		// get the service to load
 		$command = $this->request->get("cm");
+		$data = $this->request->get("dt");
 		$token = $this->request->get('token');
 
 		// try login by token or load from the session
@@ -43,96 +76,55 @@ class RunController extends Controller
 		else {header("Location:/login?redirect=$command"); exit;}
 
 		// set the running environment
+		// @TODO do we need this? shall we erase it?
 		$this->di->set('environment', function() {return "web";});
 
-
-		//
-		// START: TO MOVE TO ANOTHER FILE
-		//
-
-
-		// get the name of the service based on the subject line
-		$pieces = explode(" ", $command);
-		$serviceName = strtolower($pieces[0]);
-		$subServiceName = isset($pieces[1]) ? strtolower($pieces[1]) : "";
-
 		// create the input
-		$input = new stdClass();
+		$input = new Input();
 		$input->command = $command;
-		$input->data = new stdClass(); // TODO get data via params
-		$input->files = new stdClass(); // TODO get files via params
+		$input->data = json_decode($data);
+		$input->files = []; // TODO get files via params
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
-		$input->osversion = "";
-		$input->appversion = 0;
-		$input->serviceversion = 0;
-		$input->token = false;
 
-		// create a new Request object
-		$request = new Request();
-		$request->person = clone $person;
-		$request->input = $input;
-
-		// create a new Response
-		$response = new Response();
-		$response->serviceName = $serviceName;
-
-		// include and create a new service object
-		$servicePath = Utils::getPathToService($serviceName);
-		include_once "$servicePath/service.php";
-		$serviceObj = new Service();
-
-		// run the service and get the Response
-		if(empty($subServiceName)) $serviceResponse = $serviceObj->_main($request, $response);
-		elseif(method_exists($serviceObj, "_$subServiceName")) {
-			$subserviceFunction = "_$subServiceName";
-			$serviceResponse = $service->$subserviceFunction($request, $response);
-		}else{
-			Utils::createAlert("[RunController::webAction] Error no subservice '$subServiceName' on service '$serviceName'");
-			echo "Hemos encontrado un error y le dejamos saber a nuestro equipo tecnico. Intente nuevamente.";
-			return false;
-		}
-
-
-		//
-		// TO MOVE TO YET ANOTHER FILE
-		//
-
+		// run the service and get the response
+		$response = Utils::runService($person, $input, "web");
 
 		// get public and internal paths
 		$wwwroot = $this->di->get('path')['root'];
 		$wwwhttp = $this->di->get('path')['http'];
+		$servicePath = Utils::getPathToService($response->serviceName);
 
 		// get the HTML template and the JS and CSS files
-		$webstart = file_get_contents("$wwwroot/app/layouts/webstart.html");
-		$templateHTML = file_get_contents($serviceResponse->template);
-		$templateCSS = file_get_contents("$servicePath/styles.css");
-		$templateJS = file_get_contents("$servicePath/scripts.js");
+		$templateHTML = file_get_contents($response->template);
 
-		// replace shortags on the template 
-		$webstart = str_replace('{{APP_SERVICE_NAME}}', $serviceName, $webstart);
-		$webstart = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $webstart);
-		$webstart = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app", $webstart);
-		$webstart = str_replace('{{APP_TEMPLATE_CSS}}', $templateCSS, $webstart);
-		$webstart = str_replace('{{APP_TEMPLATE_JS}}', $templateJS, $webstart);
-		$webstart = str_replace('{{APP_JSON_RESPONSE}}', $serviceResponse->json, $webstart);
-		$webstart = str_replace('{{APP_TEMPLATE_CODE}}', $templateHTML, $webstart);
+		// get the layout and put the template inside
+		if(empty($response->layout)) $response->layout = "$wwwroot/app/layouts/web_layout.ejs";
+		$layoutHTML = file_get_contents($response->layout);
+		$layoutHTML = str_replace('{{APP_TEMPLATE_CODE}}', $templateHTML, $layoutHTML);
 
+		// get the HTML starting point
+		$startHTML = file_get_contents("$wwwroot/app/layouts/web_start.ejs");
+		$startCSS = file_get_contents("$servicePath/styles.css");
+		$startJS = file_get_contents("$servicePath/scripts.js");
 
-		//
-		// END: TO MOVE TO ANOTHER FILE
-		//
-
+		// replace shortags on the HTML code
+		$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
+		$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
+		$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
+		$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app", $startHTML);
+		$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
+		$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
+		$startHTML = str_replace('{{APP_TEMPLATE_JS}}', $startJS, $startHTML);
 
 		// create a new entry on the delivery table
-		$deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
 			INSERT INTO delivery (id, id_person, environment, email_subject)
 			VALUES ({$this->deliveryId}, {$person->id}, 'web', '$command')");
 
 		// display the template on screen
-		echo $webstart;
+		echo $startHTML;
 	}
 
 	/**
@@ -145,9 +137,6 @@ class RunController extends Controller
 	{
 		// get the token from the URL
 		$token = trim($this->request->get("token"));
-
-		// get the time when the service started executing
-		$this->execStartTime = date("Y-m-d H:i:s");
 
 		// get the user from the token
 		$security = new Security();
@@ -173,10 +162,9 @@ class RunController extends Controller
 		$this->person = Utils::getPerson($user->email);
 
 		// create a new entry on the delivery table
-		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', 'app')");
+			INSERT INTO delivery (id, id_person, environment) 
+			VALUES ({$this->deliveryId}, {$this->person->id}, 'app')");
 
 		// set up environment
 		$this->di->set('environment', function() {return "app";});
@@ -185,15 +173,9 @@ class RunController extends Controller
 		$this->sendEmails = false;
 		$log = $this->runApp();
 
-		// get the current execution time
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($this->execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-
 		// save final data to the db
 		Connection::query("
 			UPDATE delivery SET 
-			process_time='$executionTime',
 			delivery_code='200',
 			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
@@ -224,9 +206,6 @@ class RunController extends Controller
 	 */
 	public function emailAction()
 	{
-		// get the time when the service started executing
-		$this->execStartTime = date("Y-m-d H:i:s");
-
 		// save the email as a MIME object
 		$message = json_decode(file_get_contents('php://input'), true);
 		$file = Utils::getTempDir() . 'mails/' . Utils::generateRandomHash();
@@ -291,18 +270,12 @@ class RunController extends Controller
 		$attach = $this->attachment ? basename($this->attachment) : "";
 		$domain = explode("@", $this->fromEmail)[1];
 		Connection::query("
-			INSERT INTO delivery (id, id_person, request_date, mailbox, request_domain, environment, email_subject, email_body, email_attachments)
-			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->execStartTime}', '{$this->toEmail}', '$domain', '$environment', '{$this->subject}', '{$this->body}', '$attach')");
+			INSERT INTO delivery (id, id_person, mailbox, request_domain, environment, email_subject, email_body, email_attachments)
+			VALUES ({$this->deliveryId}, {$this->person->id}, '{$this->toEmail}', '$domain', '$environment', '{$this->subject}', '{$this->body}', '$attach')");
 
 		// execute the right environment type
 		if($environment == "support") $log = $this->runSupport();
 		else $log = $this->runApp();
-
-		// save execution time to the db
-		$currentTime = new DateTime();
-		$startedTime = new DateTime($this->execStartTime);
-		$executionTime = $currentTime->diff($startedTime)->format('%H:%I:%S');
-		Connection::query("UPDATE delivery SET process_time='$executionTime' WHERE id={$this->deliveryId}");
 
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
