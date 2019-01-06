@@ -183,7 +183,7 @@ class ApiController extends Controller {
       return FALSE;
     }
 
-    $domain = substr($email, strpos('@') + 1);
+    $domain = substr($email, strpos($email,'@') + 1);
     $domain_exists = Connection::query("select count(*) as total from (select SUBSTRING(email,locate('@', email)+1) as domain from person group by domain) as subq where domain = '$domain';");
 
     // check if the email is valid
