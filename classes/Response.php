@@ -49,23 +49,6 @@ class Response
 	}
 
 	/**
-	 * Build an HTML template response based on a text passed by the user
-	 *
-	 * @author salvipascual
-	 * @param String, $text
-	 */
-	public function createFromText($text)
-	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-
-		$this->template = "$wwwroot/app/templates/message.tpl";
-		$this->json = json_encode(["text"=>$text]);
-		$this->render = true;
-		return $this;
-	}
-
-	/**
 	 * Build an HTML template from a set of variables and a template name passed by the user
 	 *
 	 * @author salvipascual
@@ -74,7 +57,7 @@ class Response
 	 * @param String[] $images, paths to the images to embeb
 	 * @param String[] $files, paths to the files to attach
 	 */
-	public function createFromTemplate($template, $content, $images=[], $files=[])
+	public function setTemplate($template, $content, $images=[], $files=[])
 	{
 		$this->template = Utils::getPathToService($this->serviceName)."/templates/".$template;
 		$this->json = json_encode($content);

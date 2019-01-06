@@ -18,12 +18,26 @@ var apretaste = {
 	// }
 	//
 	send: function (json) {
-		// call function
-		console.log('send data to ' + json.command);
+		// redirect default to true if not passed
+		if(json.redirect == undefined) json.redirect = true;
 
-		// call callback
+		// make a simple redirect
+		if(json.redirect) {
+			var href = '/run/web?cm='+json.command;
+			if(json.data) href += '&dt='+JSON.stringify(json.data);
+			setTimeout(function() { // delay redirect to avoid errors
+				window.location.replace(href);
+			}, 50);
+			return false;
+		}
+
+		// call via fetch for non-redirect
+		// @TODO
+
+		// call callback when passed
+		// @TODO
 		if(json.callback) {
-			window[json.callback](['hola']);
+			window[json.callback.name](json.callback.data);
 		}
 	}
 }

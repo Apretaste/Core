@@ -1176,7 +1176,7 @@ class Utils
 
 		// run the service
 		$func = "_$subServiceName";
-		if(method_exists($serviceObj, $func)) $service->$func($request, $response);
+		if(method_exists($serviceObj, $func)) $serviceObj->$func($request, $response);
 		else $serviceObj->_main($request, $response);
 
 		// return the service's response
