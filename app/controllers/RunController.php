@@ -33,6 +33,8 @@ class RunController extends Controller
 		$command = $this->request->get("cm");
 		$token = $this->request->get('token');
 
+		if(!$command) $command = "servicios";
+
 		// try login by token or load from the session
 		$security = new Security();
 		if($token) $user = $security->loginByToken($token);
@@ -81,7 +83,7 @@ class RunController extends Controller
 		// include and create a new service object
 		$servicePath = Utils::getPathToService($serviceName);
 		include_once "$servicePath/service.php";
-		$serviceObj = new Service();
+		$serviceObj = new $serviceName();
 
 		// run the service and get the Response
 		if(empty($subServiceName)) $serviceResponse = $serviceObj->_main($request, $response);
@@ -376,7 +378,7 @@ class RunController extends Controller
 		// if the request needs an email back
 		if($response->render || $isReload){
 			// get extra data for the app and create an attachment file for the data structure
-			$responseData = Utils::getAppData($this->person, $requestData, $response->service, $response);
+			$responseData = Utils::getAppData($this->person, $requestData, $response);
 			$response->dataFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".json";
 			file_put_contents($response->dataFile, $responseData);
 
