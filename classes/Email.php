@@ -406,6 +406,10 @@ class Email {
    */
   public function sendEmailViaSSH() {
 
+    $di = \Phalcon\DI\FactoryDefault::getDefault();
+    $wwwroot = $di->get('path')['root'];
+    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/ssh2smtp.log");
+
     $this->method = "ssh";
 
     // borrow a random Nauta account
@@ -449,12 +453,18 @@ class Email {
       'to_name' => $person_to->full_name
     ];
 
+    $logger->log("SEND post to ssh webhook: ".json_encode($postData)."\n");
+
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 
     // Execute the request
     $response = curl_exec($ch);
     $response = @json_decode($response);
     $response->code = $response->result ? 200 : 500;
+
+    $logger->log("RESPONSE: ".json_encode($response)."\n");
+
+    $logger->close();
 
     return $response;
   }
