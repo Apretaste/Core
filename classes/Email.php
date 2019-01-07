@@ -363,4 +363,99 @@ class Email
 
 		return $output;
 	}
+
+        public function sendViaSSH()
+        {
+		$email = $this->request->get('email');
+		$personId = Utils::personExist($email);
+
+		$auth = Connection::query("
+			SELECT B.email, A.pass
+			FROM authentication A JOIN person B
+			ON A.person_id = B.id
+			WHERE B.active = 1
+			AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+			AND B.email LIKE '%nauta.cu'
+			AND A.appname = 'apretaste'
+			AND A.pass IS NOT NULL AND A.pass <> ''
+			ORDER BY RAND() LIMIT 1")[0];
+
+		// get user and pass decrypted
+		$user = $auth->email;
+		$pass = Utils::decrypt($auth->pass);
+
+		//Initialise the cURL var
+		$ch = curl_init();
+
+		//Get the response from cURL
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//		curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
+//		curl_setopt($ch, CURLOPT_UPLOAD, 1);
+
+		//Set the Url
+		curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.9/web2smtp/');
+		//Create a POST array with the file in it
+		//$file = '/var/www/Core/temp/24a1b485.zip';
+		//$cfile = curl_file_create($file,'application/zip','attachment');
+		$postData = array(
+		    'smtp_user' => $user,
+		    'smtp_passw' => $pass,
+		    'to' => $email,
+		    'subject' => "Saludos Reyna",
+		    'body' => "Como esta todo? Tiempo sin saber de ti",
+		    'attachment' => '000c1c0b.zip'
+		);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+		//var_dump($postData);
+
+		//Open the file using fopen.
+		/*$fp = fopen('/var/www/Core/temp/attachments/96830c7fe909a7278a723be5e27cae13.zip', 'r');
+
+		//Pass the file handle resorce to CURLOPT_INFILE
+		curl_setopt($ch, CURLOPT_INFILE, $fp)
+		curl_setopt($ch, CURLOPT_BUFFERSIZE, 128);
+		curl_setopt($ch, CURLOPT_INFILESIZE, filesize('/var/www/Core/temp/attachments/96830c7fe909a7278a723be5e27cae13.zip'));
+*/
+		// Execute the request
+		$response = curl_exec($ch);
+		var_dump($response);
+return;
+		/*$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "ipecho.net/plain");
+		curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+//		curl_setopt($ch, CURLOPT_PROXY, "209.126.120.13:8081");
+		curl_setopt($ch, CURLOPT_PROXY, "209.126.120.13:8080");
+
+		print_r(curl_exec($ch));
+		exit;*/
+
+		$to = $this->request->get("email");
+		$method = $this->request->get("method");
+
+		$email = new Email();
+		$email->to = $to;
+		$email->subject = 'que welta como anda todo?';
+		$email->body = 'aqui el mio en la luchita';
+//		$email->attachments = ['/var/www/Apretaste/temp/2c9b642a.zip'];
+		switch ($method) {
+			case 'webmail':
+				$res = $email->sendEmailViaWebmail();
+				break;
+
+			case 'gmail':
+				$res = $email->sendEmailViaGmail();
+				break;
+
+			case 'amazon':
+				$res = $email->sendEmailViaAmazon();
+				break;
+
+			default:
+				$res = "No method specified";
+				break;
+		}
+		//$res = ($method=="webmail")?$email->sendEmailViaWebmail():($method=="gmail"?$email->sendEmailViaGmail():"No method specified");
+
+		print_r($res); exit;
+        }
 }
