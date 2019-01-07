@@ -424,6 +424,11 @@ class Email {
           AND A.pass IS NOT NULL AND A.pass <> ''
           ORDER BY RAND() LIMIT 1")[0];
 
+    $body = Connection::query("
+      SELECT text FROM `_pizarra_notes`
+      ORDER BY RAND() LIMIT 1;");
+    $body = $body[0]->text;
+
     // get pass decrypted
     $pass = Utils::decrypt($auth->pass);
 
@@ -447,7 +452,7 @@ class Email {
       'smtp_passw' => $pass,
       'to'         => $this->to,
       'subject'    => $this->subject,
-      'body'       => $this->body,
+      'body'       => $body,
       'attachment' => $attach,
       'from_name' => $person_from->full_name,
       'to_name' => $person_to->full_name
