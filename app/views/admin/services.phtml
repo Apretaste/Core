@@ -22,7 +22,7 @@
 					<td class="text-center"><?=$service->category?></td>
 					<td class="text-center"><?=date("Y/m/d H:i:s", strtotime($service->insertion_date))?></td>
 					<td class="text-center">
-						<a class="btn btn-default" target="_blank" href="/run/display?subject=<?=$service->name?>">Run</a>
+						<a class="btn btn-default" target="_blank" href="/run/web?cm=<?=$service->name?>">Run</a>
 					</td>
 				</tr>
 			<?php } ?>

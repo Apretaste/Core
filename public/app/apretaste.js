@@ -28,16 +28,12 @@ var apretaste = {
 			setTimeout(function() { // delay redirect to avoid errors
 				window.location.replace(href);
 			}, 50);
-			return false;
 		}
-
-		// call via fetch for non-redirect
-		// @TODO
-
-		// call callback when passed
-		// @TODO
-		if(json.callback) {
-			window[json.callback.name](json.callback.data);
+		else{ //send the data via post and stay in the same page
+			$.post('/run/web?cm='+json.command, {'dt': JSON.stringify(json.data)});
+			//call the callback
+			if(json.callback) window[json.callback.name](json.callback.data);
 		}
+		return false;
 	}
 }

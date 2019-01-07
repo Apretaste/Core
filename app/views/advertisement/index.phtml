@@ -24,7 +24,7 @@
 					<td class="text-center"><?= date("m/d H:i", strtotime($ad->inserted)) ?></td>
 					<td class="text-center"><?= date("m/d H:i", strtotime($ad->expires)) ?></td>
 					<td class="text-center">
-						<a class="btn btn-default" target="_blank" href="/run/display?subject=PUBLICIDAD VER <?= $ad->id ?>">View</a>
+						<a class="btn btn-default" target="_blank" href="/run/web?cm=PUBLICIDAD VER <?= $ad->id ?>">View</a>
 						<!-- <a class="btn btn-default" href="/advertisement/report?id=<?= $ad->id ?>">Report</a> -->
 						<a class="btn btn-default" href="/advertisement/update?id=<?= $ad->id ?>">Edit</a>
                         <?php if ($ad->active == '1'): ?>

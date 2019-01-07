@@ -103,7 +103,7 @@ catch(Exception $e)
 		if(empty($service)) $service = "servicios";
 
 		// redirect to the service or to the services page
-		header("Location:/run/display?subject=$service"); exit;
+		header("Location:/run/web?cm=$service"); exit;
 	}
 
 	// log error

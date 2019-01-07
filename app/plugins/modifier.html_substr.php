@@ -29,7 +29,7 @@ function smarty_modifier_html_substr($string, $length, $addstring, $link, $link_
 			$currentTag = "";
 
 			$noTagLength = strlen(strip_tags($string));
-			$apretaste = "http://apretaste.local/run/display?subject=";
+			$apretaste = "http://apretaste.local/run/web?cm=";
 
 			// Parser loop
 			$string_length = strlen($string);

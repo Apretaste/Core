@@ -227,6 +227,16 @@ class Utils
 	}
 
 	/**
+	 * Return the version of the service
+	 * @param String $serviceName
+	 * @return Int $version
+	 */
+	public static function getServiceVersion($serviceName){
+		$path = self::getPathToService($serviceName);
+		if($path) return json_decode(file_get_contents($path."/config.json"))->version;
+	}
+
+	/**
 	 * Return the current Raffle or false if no Raffle was found
 	 *
 	 * @author salvipascual
@@ -567,7 +577,7 @@ class Utils
 			// convert the link to URL
 			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
-			$url = empty($link) ? "" : "$wwwhttp/run/display?subject=$link{$tokenStr}";
+			$url = empty($link) ? "" : "$wwwhttp/run/web?cm=$link{$tokenStr}";
 
 			// get the image for the service
 			$service = strtolower($origin);
@@ -946,24 +956,6 @@ class Utils
 	}
 
 	/**
-	 * Clear double spaces and other stuffs from HTML content
-	 *
-	 * @param string $html
-	 * @return mixed
-	 */
-	public static function clearHtml($html)
-	{
-		$html = str_replace('&nbsp;',' ',$html);
-
-		do {
-			$tmp = $html;
-			$html = preg_replace('#<([^ >]+)[^>]*>[[:space:]]*</\1>#', '', $html );
-		} while ( $html !== $tmp );
-
-		return $html;
-	}
-
-	/**
 	 * Create an alert and notify the alert group
 	 *
 	 * @author salvipascual
@@ -1020,27 +1012,6 @@ class Utils
 	}
 
 	/**
-	 * Replace Spanish tildes by their unicode characters
-	 *
-	 * @author salvipascual
-	 * @param String $text
-	 * @return String
-	 */
-	public static function removeTildes($text)
-	{
-		$text = str_replace(array("á", "Á", "&aacute;", "&Aacute;"), "a", $text);
-		$text = str_replace(array("é", "É", "&eacute;", "&Eacute;"), "e", $text);
-		$text = str_replace(array("í", "Í", "&iacute;", "&Iacute;"), "i", $text);
-		$text = str_replace(array("ó", "Ó", "&oacute;", "&Oacute;"), "o", $text);
-		$text = str_replace(array("ú", "Ú", "&uacute;", "&Uacute;"), "u", $text);
-		$text = str_replace(array("ñ", "Ñ", "&ntilde;", "&Ntilde;"), "n", $text);
-		$text = str_replace("¡", "&iexcl;", $text);
-		$text = str_replace("¿", "&iquest;", $text);
-
-		return $text;
-	}
-
-	/**
 	 * Erase SQL code from input text to avoid sql injections
 	 *
 	 * @author salvipascual
@@ -1061,20 +1032,19 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param stdClass $person
-	 * @param stdClass $requestData
-	 * @param Service $service
+	 * @param Input $input
 	 * @param Response $response
 	 * @return array (Object, Attachments)
 	 */
-	public static function getAppData($person, $requestData, &$response){
+	public static function getAppData($person, $input, &$response){
 		
 		// create the response
-		$responseData = new stdClass();
-		$responseData->reload = $requestData->command=="reload";
+		$appData = new stdClass();
+		$appData->reload = $input->command=="reload";
 
-		if($responseData->reload){
+		if($appData->reload){
 			$profile = Social::prepareUserProfile(clone $person);
-			$responseData->profile_picture = basename($profile->picture_internal);
+			$appData->profile_picture = basename($profile->picture_internal);
 			// attach user picture if exist
 			if($profile->picture_internal) $response->attachments[] = $profile->picture_internal;
 
@@ -1084,11 +1054,11 @@ class Utils
 				FROM service
 				WHERE listed=1");
 			
-			$responseData->active_services = [];
+			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 			foreach ($services as $s) {
 				$icon = "$wwwroot/services/{$s->name}/{$s->name}.png";
-				if(file_exists($icon)) $response->serviceIcons[] = $icon;
+				if(file_exists($icon)) $appData->serviceIcons[] = $icon;
 				else $icon = "";
 
 				$serv = new stdClass();
@@ -1096,36 +1066,36 @@ class Utils
 				$serv->description = $s->description;
 				$serv->category = $s->category;
 				$serv->icon = basename($icon);
-				$responseData->active_services[] = $serv;
+				$appData->active_services[] = $serv;
 			}
 		}
 
-		$responseData->username = $person->username;
-		$responseData->credit = number_format($person->credit, 2, '.', '');
-		$responseData->profile_completion = Social::getProfileCompletion($person);
-		$responseData->img_quality = $person->img_quality;
+		$appData->username = $person->username;
+		$appData->credit = number_format($person->credit, 2, '.', '');
+		$appData->profile_completion = Social::getProfileCompletion($person);
+		$appData->img_quality = $person->img_quality;
 
 		// get unread notifications
-		$responseData->notifications = Connection::query("
+		$appData->notifications = Connection::query("
 			SELECT `text`, `origin` AS service, `link`, `inserted_date` AS received
 			FROM notifications
 			WHERE id_person={$person->id}  AND `send` = 0
 			ORDER BY inserted_date DESC");
 
 		// mark notifications as send
-		if($responseData->notifications) Connection::query("
+		if($appData->notifications) Connection::query("
 			UPDATE notifications SET send=1
 			WHERE id_person={$person->id}  AND `send` = 0");
 
 		// get the latest versin from the config
 		$lastAppVersion = FactoryDefault::getDefault()->get('config')['global']['appversion'];
-		$responseData->latest_app_version = "$lastAppVersion";
+		$appData->latest_app_version = "$lastAppVersion";
 
 		// get or create the user's token
-		$responseData->token = $person->token;
-		if(empty($responseData->token)) {
-			$responseData->token = md5(time().rand());
-			Connection::query("UPDATE person SET token='{$responseData->token}' WHERE email='$email'");
+		$appData->token = $person->token;
+		if(empty($appData->token)) {
+			$appData->token = md5(time().rand());
+			Connection::query("UPDATE person SET token='{$appData->token}' WHERE email='$email'");
 		}
 
 		// add the response mailbox
@@ -1133,13 +1103,10 @@ class Utils
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
-		$responseData->mailbox = "$inbox@gmail.com";
+		$appData->mailbox = "$inbox@gmail.com";
 
-		$responseData->cache = "$response->cache";
-		$responseData->has_service_templates = $response->attachService;
-
-		// convert to JSON
-		return json_encode($responseData);
+		$appData->cache = "$response->cache";
+		return $appData;
 	}
 
 	/**
@@ -1150,7 +1117,7 @@ class Utils
 	 * @param Input $input
 	 * @param String $environment: web/app
 	 */
-	public static function runService($person, Input $input, $environment)
+	public static function runService($person, $input, $environment)
 	{
 		// get the name of the service based on the subject line
 		$pieces = explode(" ", $input->command);
@@ -1187,10 +1154,10 @@ class Utils
 	 * Configures the jsons to be sent as a attached ZIP
 	 *
 	 * @author ricardo@apretaste.org
+	 * @param Response $response
 	 * @return String, path to the file created
 	 */
-	public function generateZipResponse()
-	{
+	public function generateZipResponse(Response $response, $appData, $attachService = false){
 		// get a random name for the file and folder
 		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
 
@@ -1198,19 +1165,23 @@ class Utils
 		$zip = new ZipArchive;
 		$zip->open($zipFile, ZipArchive::CREATE);
 
-		//attach the response and the data, if reload, the response doesn't exists
-		if(file_exists($this->responseFile)) $zip->addFile($this->responseFile, "response.json");
-		$zip->addFile($this->dataFile, "data.json");
+		//add all files and images
+		foreach ($response->images as $image) $zip->addFile($image, basename($image));
+		foreach ($response->files as $attachment) $zip->addFile($attachment, basename($attachment));
+		if($appData->reload){
+			foreach ($appData->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
+			unset($appData->serviceIcons);
+		}
 
-		// all files and files
-		foreach ($this->images as $image) $zip->addFile($image, basename($image));
-		foreach ($this->files as $attachment) $zip->addFile($attachment, basename($attachment));
-		foreach ($this->serviceIcons as $icon) $zip->addFile($icon, "icons/".basename($icon));
+		//attach the response, if reload, the response doesn't exists
+		if($response->json) $zip->addFromString("response.json",$response->json);
+		$appData->has_service_templates = $attachService;
+		$zip->addFromString("data.json", json_encode($appData));
 
 		//attach the service files if nedded
-		if($this->attachService) {
-			$path = $this->service->pathToService;
-			$name = $this->service->name;
+		if($attachService) {
+			$path = self::getPathToService($response->serviceName);
+			$name = $response->serviceName;
 			$tpl_dir = $path."/templates";
 			$layout_dir = $path."/layout";
 			$img_dir = $path."/images";
@@ -1243,11 +1214,23 @@ class Utils
 				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
 			}
 		}
-
+		
 		// close the zip file
 		$zip->close();
 
 		// return the path to the file
 		return $zipFile;
+	}
+
+	public static function parseImgDir(&$imgSrc, $environment){
+		$file = basename($imgSrc);
+		$di = FactoryDefault::getDefault();
+		if($environment == "app") $imgSrc = "{{APP_SERVICE_PATH}}".$file;
+		else{
+			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
+			if(!file_exists("$wwwroot/public/temp/$file")) @copy($imgSrc, "$wwwroot/public/temp/$file");
+			$imgSrc = "$wwwhttp/temp/$file";
+		}
 	}
 }

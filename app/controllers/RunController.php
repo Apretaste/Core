@@ -162,6 +162,7 @@ class RunController extends Controller
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
 		$this->person = Utils::getPerson($user->email);
+		$this->beforeExecuteRoute();
 
 		// create a new entry on the delivery table
 		Connection::query("
@@ -182,6 +183,8 @@ class RunController extends Controller
 			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
 			WHERE id={$this->deliveryId}");
+
+		$this->afterExecuteRoute();
 
 		// move the file to the public temp folder
 		$path = "";
@@ -292,7 +295,7 @@ class RunController extends Controller
 	private function runApp()
 	{
 		// do not return if attachment is not received
-		if( ! file_exists($this->attachment)) 
+		if(!file_exists($this->attachment)) 
 			return Utils::createAlert("[RunController::runApp] Error ZIP file was not received for delivery ID: {$this->deliveryId}");
 
 		// get path to the folder to save
@@ -317,48 +320,48 @@ class RunController extends Controller
 		else return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 
 		// get the request data from the JSON file
-		$requestData = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
-		$requestData->osversion = filter_var($requestData->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
+		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+		$input->files = $attachs;
 
 		// save Nauta password if passed
-		if($requestData->token) {
-			$nautaPass = base64_decode($requestData->token);
+		if($input->token) {
+			$nautaPass = base64_decode($input->token);
 			$encryptPass = Utils::encrypt($nautaPass);
 			$auth = Connection::query("SELECT id FROM authentication WHERE person_id='{$this->person->id}' AND appname='apretaste'");
-			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->person->id}', '$encryptPass', 'apretaste', '{$requestData->ostype}', '{$requestData->osversion}')");
-			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$requestData->ostype}', version='{$requestData->osversion}' WHERE person_id='{$this->person->id}' AND appname='apretaste'");
+			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->person->id}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
+			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->person->id}' AND appname='apretaste'");
 		}
 
 		// make the app params global
-		$this->di->set('appversion', function() use($requestData) { return $requestData->appversion; });
-		$this->di->set('ostype', function() use($requestData) { return $requestData->ostype; });
-		$this->di->set('method', function() use($requestData) { return $requestData->method; });
+		$this->di->set('appversion', function() use($input) { return $input->appversion; });
+		$this->di->set('ostype', function() use($input) { return $input->ostype; });
+		$this->di->set('method', function() use($input) { return $input->method; });
 
 		// update the version of the app used
-		Connection::query("UPDATE person SET appversion='{$requestData->appversion}' WHERE id='{$this->person->id}'");
+		Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->person->id}'");
 
 		// check if the request is a reload
-		$isReload = $requestData->command == "reload";
-		if ($isReload) $response = new Response();
+		$isReload = $input->command == "reload";
+		if ($isReload) {
+			$response = new Response();
+			$attachService = false;
+		}
 		else {
 			// process the service
-			$response = Render::runRequest($this->person, $requestData->command, '', $attachs, $requestData);
-
+			$response = Utils::runService($this->person, $input, "app");
 			// send the EJS templates for new versions
-			if($response->service->version > $requestData->serviceversion) $response->attachService = true;
+			$attachService = Utils::getServiceVersion($response->serviceName) > $input->serviceversion;
 		}
 
 		// if the request needs an email back
 		if($response->render || $isReload){
 			// get extra data for the app and create an attachment file for the data structure
-			$responseData = Utils::getAppData($this->person, $requestData, $response);
-			$response->dataFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".json";
-			file_put_contents($response->dataFile, $responseData);
-
+			$appData = Utils::getAppData($this->person, $input, $response);
 			//optimize images
-			Render::optimizeImages($response->images, $this->person->img_quality, $requestData->ostype);
+			Render::optimizeImages($response->images, $this->person->img_quality, $input->ostype);
 
-			$this->resPath = $response->generateZipResponse();			
+			$this->resPath = Utils::generateZipResponse($response, $appData, $attachService);
 			if($this->sendEmails){
 				// prepare and send the email
 				$email = new Email();
@@ -375,30 +378,20 @@ class RunController extends Controller
 		}
 
 		// update values in the delivery table
-		if( ! $isReload) {
-			$safeQuery = Connection::escape($response->service->request->query, 1024);
-			Connection::query("
-				UPDATE delivery SET
-				request_service='{$response->service->name}',
-				request_subservice='{$response->service->request->subservice}',
-				request_query='$safeQuery',
-				request_method='{$requestData->method}'
-				WHERE id={$this->deliveryId}");
-		} else {
-			Connection::query("
-				UPDATE delivery SET
-				request_service='reload',
-				request_subservice='',
-				request_query='',
-				request_method='{$requestData->method}'
-				WHERE id={$this->deliveryId}");
-		}
+		$input->data = json_encode($input->data);
+		$safeQuery = Connection::escape($input->data, 1024);
+		Connection::query("
+			UPDATE delivery SET
+			request_service='{$input->command}',
+			request_query='$safeQuery',
+			request_method='{$input->method}'
+			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		$requestData->token = "";
+		$input->token = "";
 		$nautaPass = isset($nautaPass) ? "Yes" : "No";
 		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
-		foreach ($requestData as $key => $value) if(is_string($value)) $log .= " | $key:$value";
+		foreach ($input as $key => $value) if(is_string($value)) $log .= " | $key:$value";
 		return  $log;
 	}
 
