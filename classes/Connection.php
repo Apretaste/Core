@@ -64,7 +64,7 @@ class Connection
 
 				// query the database
 				$db->multi_query($sql);
-				while ($db->next_result()); // @TODO do we need this line? 
+				while ($db->next_result());
 				return $db->insert_id;
 			}
 		}

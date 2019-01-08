@@ -7,6 +7,7 @@ class Response
 	public $layout;
 	public $template;
 	public $json;
+	public $imgQuality = "ORIGINAL";
 	public $images = [];
 	public $files = [];
 	public $render = false; // false if the response should not be sent to the user
@@ -61,8 +62,8 @@ class Response
 	public function setTemplate($template, $content, $images=[], $files=[])
 	{
 		// optimize the images 
-		Utils::optimizedImageContent($content, $images, $this->input);
-
+		Utils::optimizedImageContent($content, $images, $this->input, $this->imgQuality);
+		
 		// save the template
 		$this->template = Utils::getPathToService($this->serviceName)."/templates/".$template;
 		$this->json = json_encode($content);

@@ -102,16 +102,12 @@ class LoginController extends Controller
 		$pin = mt_rand(1000, 9999);
 		$connection->query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
-		// create response to email the new code
-		$response = new Response();
-		$response->email = $email;
-		$response->setEmailLayout('email_minimal.tpl');
-		$response->createFromTemplate("pinrecover_es.tpl", array("pin"=>$pin));
-		$response->internal = true;
+		$body = "Su codigo secreto es: $pin.
+		Use este codigo para registrarse en nuestra app o web. 
+		Si usted no esperaba este codigo, elimine este email ahora. 
+		Por favor no comparta el numero con nadie que se lo pida.";
 
-		// render the template as html
-		$body = Render::renderHTML(new Service(), $response);
-		$logger->log("Login| Sending PIN code to {$email} ....");
+		$logger->log("Login| Sending PIN code to {$email}");
 		// email the code to the user
 		$sender = new Email();
 		$sender->to = $email;
@@ -119,7 +115,7 @@ class LoginController extends Controller
 		$sender->body = $body;
 		$res = $sender->send();
 
-		$logger->log("Login| PIN code $pin sent successful to {$email} ....");
+		$logger->log("Login| PIN code $pin sent successful to {$email}");
 
 		$logger->close();
 

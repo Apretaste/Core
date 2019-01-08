@@ -488,7 +488,6 @@ class Social
 			$chat->last_note = (strlen($n->lastNote) > 30) ? substr($n->lastNote,0,30).'...' : $n->lastNote;
 			$chat->last_note = ($n->from_user!=$id && $n->read_date==null) ? "<strong>$chat->last_note</strong>" : $chat->last_note;
 			$chat->profile = Social::prepareUserProfile($n);
-			$chat->cantidad = []; // @TODO delete
 			$chats[] = $chat;
 		}
 

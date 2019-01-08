@@ -187,17 +187,11 @@ class ApiController extends Controller
 		$pin = mt_rand(1000, 9999);
 		Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
-		// create response to email the new code
 		$subject = "Code: $pin";
-		$response = new Response();
-		$response->email = $email;
-		$response->setEmailLayout('email_minimal.tpl');
-		$response->setResponseSubject($subject);
-		$response->createFromTemplate("pinrecover_$lang.tpl", array("pin"=>$pin));
-		$response->internal = true;
-
-		// render the template as html
-		$body = Render::renderHTML(new Service(), $response);
+		$body = "Su codigo secreto es: $pin.
+		Use este codigo para registrarse en nuestra app o web. 
+		Si usted no esperaba este codigo, elimine este email ahora. 
+		Por favor no comparta el numero con nadie que se lo pida.";
 
 		// email the code to the user
 		$sender = new Email();

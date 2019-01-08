@@ -294,7 +294,8 @@ class Utils
 	public static function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
-		if( ! file_exists($fromPath)) return false;
+		if(!file_exists($fromPath) || $quality == "ORIGINAL") return;
+		if($quality == "REDUCIDA") $quality = 40; else $quality == 15;
 
 		// get path to save and extensions
 		if(empty($toPath)) $toPath = $fromPath;
@@ -305,7 +306,7 @@ class Utils
 			// convert valid files to webp and optimize
 			if(in_array($fromExt, ['jpg','jpeg','png'])) {
 				shell_exec("cwebp $fromPath -q $quality -o $toPath");
-				return true;
+				return;
 			// for invalid files, change ext and optimize via SimpleImage
 			}else{
 				$toPath = rtrim($toPath, $toExt) . $fromExt;
@@ -324,10 +325,7 @@ class Utils
 			$img->save($toPath, $quality, $toExt);
 		} catch (Exception $e) {
 			self::createAlert("[Utils::optimizeImage] EXCEPTION: ".Debug::getReadableException($e));
-			return false;
 		}
-
-		return true;
 	}
 
 	/**
@@ -1131,6 +1129,7 @@ class Utils
 		$response = new Response();
 		$response->serviceName = $serviceName;
 		$response->input = $input;
+		if($input->environment == "app") $response->imgQuality = $person->img_quality;
 
 		// check if the service exist, else stop
 		if( ! Utils::serviceExist($serviceName)) {
@@ -1230,44 +1229,43 @@ class Utils
 	 * @param JSON $content
 	 * @param Array $images
 	 * @param String $environment: web/app
+	 * @param String $quality: original/reducida/muy reducida
 	 */
-	public static function optimizedImageContent(&$content, &$images, $input)
+	public static function optimizedImageContent(&$content, &$images, $input, $quality = "ORIGINAL")
 	{
 		// do not work for empty images
 		if(empty($images)) return;
+		// convert content to String
+		$content = json_encode($content);
 
 		// for the web
 		if($input->environment == "web") {
 			// get path to root
 			$di = FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
+			$wwwhttp = $di->get('path')['http'];
 
-			// optimize and move the image to public/temp
+			// do not optimize for web and copy the image to public/temp
 			for ($i=0; $i<count($images); $i++) { 
 				$file = "$wwwroot/public/temp/".basename($images[$i]);
-				if(file_exists($images[$i]) && !file_exists($file)) Utils::optimizeImage($images[$i], $file);
-				$images[$i] = $file;
+				if(file_exists($images[$i]) && !file_exists($file)) @copy($images[$i], $file);
+				$file = "$wwwhttp/temp/".basename($file);
+				$content = str_replace($images[$i], $file, $content);
 			}
-		}
-
-		// for the app
-		if($input->environment == "app") {
-			// convert content to String
-			$content = json_encode($content);
-
+		} 
+		else if($input->environment == "app") { // for the app
 			for ($i=0; $i<count($images); $i++) {
 				// optimize each image as webp for Android or jpg for iOS
 				$ext = $input->ostype == "android" ? "webp" : "jpg";
-				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".".$ext;
-				Utils::optimizeImage($images[$i], $file);
+				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
+				Utils::optimizeImage($images[$i], $file, $quality);
 
 				// replace image on both $content and $images
-				$content = str_replace(basename($images[$i]), basename($file), $content);
+				$content = str_replace($images[$i], basename($file), $content);
 				$images[$i] = $file;
 			}
-
-			// convert the JSON back to structure
-			$content = json_decode($content);
 		}
+		// convert the JSON back to structure
+		$content = json_decode($content);
 	}
 }

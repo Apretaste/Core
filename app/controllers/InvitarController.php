@@ -62,9 +62,10 @@ class InvitarController extends Controller
 		}
 
 		// send email to the host
+		//@TODO replace all of this old tpl code
 		$email = new Email();
 		$email->to = $host;
-		$email->subject = "Gracias por darle internet a un Cubano";
+		$email->subject = "Gracias por darle internet a un Cubano"; 
 		$email->sendFromTemplate("invitationThankYou.tpl", ['num_notifications'=>0], "empty.tpl");
 
 		// send email to the guest

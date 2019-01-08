@@ -326,6 +326,7 @@ class RunController extends Controller
 		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
 		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 		$input->files = $attachs;
+		$input->environment = "app";
 
 		// save Nauta password if passed
 		if($input->token) {
@@ -352,7 +353,7 @@ class RunController extends Controller
 		}
 		else {
 			// process the service
-			$response = Utils::runService($this->person, $input, "app");
+			$response = Utils::runService($this->person, $input);
 			// send the EJS templates for new versions
 			$attachService = Utils::getServiceVersion($response->serviceName) > $input->serviceversion;
 		}
@@ -361,8 +362,6 @@ class RunController extends Controller
 		if($response->render || $isReload){
 			// get extra data for the app and create an attachment file for the data structure
 			$appData = Utils::getAppData($this->person, $input, $response);
-			//optimize images
-			Render::optimizeImages($response->images, $this->person->img_quality, $input->ostype);
 
 			$this->resPath = Utils::generateZipResponse($response, $appData, $attachService);
 			if($this->sendEmails){
