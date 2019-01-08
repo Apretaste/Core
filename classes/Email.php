@@ -495,7 +495,7 @@ class Email {
 
       // marcar failover utilizado
       if ($response->code == 200)
-        Connection::query("UPDATE person set failover = 2 WHERE email = '{$auth->email}';");
+        Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       else
       {
         // trash failover
