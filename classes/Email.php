@@ -447,10 +447,10 @@ class Email {
           AND A.pass IS NOT NULL AND A.pass <> ''
           AND B.failover = 1
           ORDER BY RAND() LIMIT 1")[0];
+
+          Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       }
 
-      Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
-      
       $body = Connection::query("
       SELECT text FROM `_pizarra_notes`
       ORDER BY RAND() LIMIT 1;");
