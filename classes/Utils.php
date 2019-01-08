@@ -79,14 +79,12 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public static function serviceExist($name){
-		// if serviceName is an alias get the service name
-		$r = Connection::query("SELECT * FROM service WHERE name = '$name';");
-
-		// check if service exist and return its name
+	public static function serviceExist($name)
+	{
 		$di = FactoryDefault::getDefault();
-		$www_root = $di->get('path')['root'];
-		if(isset($r[0]) && file_exists("$www_root/services/$name/service.php")) return $name;
+		$wwwroot = $di->get('path')['root'];
+
+		if(file_exists("$wwwroot/services/$name/service.php")) return $name;
 		else return false;
 	}
 
@@ -96,7 +94,8 @@ class Utils
 	 * @author salvipascual
 	 * @return object|boolean
 	 */
-	public static function getPerson($email){
+	public static function getPerson($email)
+	{
 		// get the person via email
 		$person = Connection::query("SELECT * FROM person WHERE LOWER(email)=LOWER('$email')");
 		return $person ? $person[0] : false;
@@ -1115,9 +1114,8 @@ class Utils
 	 * @author salvipascual
 	 * @param Person $person
 	 * @param Input $input
-	 * @param String $environment: web/app
 	 */
-	public static function runService($person, $input, $environment)
+	public static function runService($person, $input)
 	{
 		// get the name of the service based on the subject line
 		$pieces = explode(" ", $input->command);
@@ -1128,14 +1126,17 @@ class Utils
 		$request = new Request();
 		$request->person = clone $person;
 		$request->input = $input;
-		$request->environment = $environment;
 
 		// create a new Response
 		$response = new Response();
 		$response->serviceName = $serviceName;
+		$response->input = $input;
 
-		// @TODO check if the service exist
-		// else trow an exception and stop
+		// check if the service exist, else stop
+		if( ! Utils::serviceExist($serviceName)) {
+			Utils::createAlert("[Utils::runService] Service '$serviceName' was not found");
+			return false;
+		}
 
 		// include and create a new service object
 		include_once Utils::getPathToService($serviceName) . "/service.php";
@@ -1157,7 +1158,7 @@ class Utils
 	 * @param Response $response
 	 * @return String, path to the file created
 	 */
-	public function generateZipResponse(Response $response, $appData, $attachService = false){
+	public static function generateZipResponse(Response $response, $appData, $attachService = false){
 		// get a random name for the file and folder
 		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
 
@@ -1222,15 +1223,51 @@ class Utils
 		return $zipFile;
 	}
 
-	public static function parseImgDir(&$imgSrc, $environment){
-		$file = basename($imgSrc);
-		$di = FactoryDefault::getDefault();
-		if($environment == "app") $imgSrc = "{{APP_SERVICE_PATH}}".$file;
-		else{
+	/**
+	 * Optimize the images to send by the user
+	 * 
+	 * @author salvipascual
+	 * @param JSON $content
+	 * @param Array $images
+	 * @param String $environment: web/app
+	 */
+	public static function optimizedImageContent(&$content, &$images, $input)
+	{
+		// do not work for empty images
+		if(empty($images)) return;
+
+		// for the web
+		if($input->environment == "web") {
+			// get path to root
+			$di = FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
-			$wwwhttp = $di->get('path')['http'];
-			if(!file_exists("$wwwroot/public/temp/$file")) @copy($imgSrc, "$wwwroot/public/temp/$file");
-			$imgSrc = "$wwwhttp/temp/$file";
+
+			// optimize and move the image to public/temp
+			for ($i=0; $i<count($images); $i++) { 
+				$file = "$wwwroot/public/temp/".basename($images[$i]);
+				if(file_exists($images[$i]) && !file_exists($file)) Utils::optimizeImage($images[$i], $file);
+				$images[$i] = $file;
+			}
+		}
+
+		// for the app
+		if($input->environment == "app") {
+			// convert content to String
+			$content = json_encode($content);
+
+			for ($i=0; $i<count($images); $i++) {
+				// optimize each image as webp for Android or jpg for iOS
+				$ext = $input->ostype == "android" ? "webp" : "jpg";
+				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".".$ext;
+				Utils::optimizeImage($images[$i], $file);
+
+				// replace image on both $content and $images
+				$content = str_replace(basename($images[$i]), basename($file), $content);
+				$images[$i] = $file;
+			}
+
+			// convert the JSON back to structure
+			$content = json_decode($content);
 		}
 	}
 }

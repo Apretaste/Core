@@ -29,11 +29,14 @@ var apretaste = {
 				window.location.replace(href);
 			}, 50);
 		}
-		else{ //send the data via post and stay in the same page
+		else{ 
+			//send the data via post and stay in the same page
 			$.post('/run/web?cm='+json.command, {'dt': JSON.stringify(json.data)});
+
 			//call the callback
 			if(json.callback) window[json.callback.name](json.callback.data);
 		}
+
 		return false;
 	}
 }

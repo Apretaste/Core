@@ -66,7 +66,8 @@ class RunController extends Controller
 		$data = $this->request->get("dt");
 		$token = $this->request->get('token');
 
-		if(!$command) $command = "servicios";
+		// if empty get the default service
+		if(empty($command)) $command = "SERVICIOS";
 
 		// try login by token or load from the session
 		$security = new Security();
@@ -86,12 +87,13 @@ class RunController extends Controller
 		$input->command = $command;
 		$input->data = json_decode($data);
 		$input->files = []; // TODO get files via params
+		$input->environment = "web";
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
 
 		// run the service and get the response
-		$response = Utils::runService($person, $input, "web");
+		$response = Utils::runService($person, $input);
 
 		// get public and internal paths
 		$wwwroot = $this->di->get('path')['root'];
@@ -115,7 +117,8 @@ class RunController extends Controller
 		$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
 		$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
 		$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
-		$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app", $startHTML);
+		$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
+		$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
 		$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
 		$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
 		$startHTML = str_replace('{{APP_TEMPLATE_JS}}', $startJS, $startHTML);

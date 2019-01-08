@@ -3,6 +3,7 @@
 class Response
 {
 	public $serviceName;
+	public $input; // Input object
 	public $layout;
 	public $template;
 	public $json;
@@ -59,6 +60,10 @@ class Response
 	 */
 	public function setTemplate($template, $content, $images=[], $files=[])
 	{
+		// optimize the images 
+		Utils::optimizedImageContent($content, $images, $this->input);
+
+		// save the template
 		$this->template = Utils::getPathToService($this->serviceName)."/templates/".$template;
 		$this->json = json_encode($content);
 		$this->images = $images;
