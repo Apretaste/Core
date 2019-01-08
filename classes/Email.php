@@ -412,8 +412,31 @@ class Email {
 
     $this->method = "ssh";
 
-    // borrow a random Nauta account
-    $auth = Connection::query("
+    // rotate failover
+    Connection::query("UPDATE person SET failover = 0 
+                          WHERE datediff(current_date, date(failover_date)) > 7
+                          AND failover = 2;");
+
+    // get last failover
+    $failover = Connection::query("
+          SELECT B.email, A.pass
+          FROM authentication A JOIN person B
+          ON A.person_id = B.id
+          WHERE B.failover = 2;
+    ");
+
+    $tries = 4;
+    do
+    {
+      $tries--;
+
+      if (isset($failover[0]) && isset($failover[0]->email))
+      {
+        $auth = $failover;
+      }
+      else // borrow a random Nauta account
+      {
+        $auth = Connection::query("
           SELECT B.email, A.pass
           FROM authentication A JOIN person B
           ON A.person_id = B.id
@@ -422,50 +445,65 @@ class Email {
           AND B.email LIKE '%nauta.cu'
           AND A.appname = 'apretaste'
           AND A.pass IS NOT NULL AND A.pass <> ''
+          AND B.failover = 1
           ORDER BY RAND() LIMIT 1")[0];
+      }
 
-    $body = Connection::query("
+      $body = Connection::query("
       SELECT text FROM `_pizarra_notes`
       ORDER BY RAND() LIMIT 1;");
-    $body = $body[0]->text;
 
-    // get pass decrypted
-    $pass = Utils::decrypt($auth->pass);
+      $body = $body[0]->text;
 
-    //Initialise the cURL var
-    $ch = curl_init();
+      // get pass decrypted
+      $pass = Utils::decrypt($auth->pass);
 
-    //Get the response from cURL
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+      //Initialise the cURL var
+      $ch = curl_init();
 
-    //Set the Url
-    curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.9/web2smtp/');
+      //Get the response from cURL
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
-    $attach = empty($this->attachments) ? FALSE : $this->attachments[0];
-    $attach = basename($attach);
+      //Set the Url
+      curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.9/web2smtp/');
 
-    $person_from = Utils::getPerson($auth->email);
-    $person_to = Utils::getPerson($this->to);
+      $attach = empty($this->attachments) ? FALSE : $this->attachments[0];
+      $attach = basename($attach);
 
-    $postData = [
-      'smtp_user'  => $auth->email,
-      'smtp_passw' => $pass,
-      'to'         => $this->to,
-      'subject'    => $this->subject,
-      'body'       => $body,
-      'attachment' => $attach,
-      'from_name' => $person_from->full_name,
-      'to_name' => $person_to->full_name
-    ];
+      $person_from = Utils::getPerson($auth->email);
+      $person_to = Utils::getPerson($this->to);
 
-    $logger->log("SEND post to ssh webhook: ".json_encode($postData)."\n");
+      $postData = [
+        'smtp_user'  => $auth->email,
+        'smtp_passw' => $pass,
+        'to'         => $this->to,
+        'subject'    => $this->subject,
+        'body'       => $body,
+        'attachment' => $attach,
+        'from_name' => $person_from->full_name,
+        'to_name' => $person_to->full_name
+      ];
 
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+      $logger->log("SEND post to ssh webhook: ".json_encode($postData)."\n");
 
-    // Execute the request
-    $response = curl_exec($ch);
-    $response = @json_decode($response);
-    $response->code = $response->result ? 200 : 500;
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+
+      // Execute the request
+      $response = curl_exec($ch);
+      $response = @json_decode($response);
+      $response->code = $response->result ? 200 : 500;
+
+      // marcar failover utilizado
+      if ($response->code == 200)
+        Connection::query("UPDATE person set failover = 2 WHERE email = '{$auth->email}';");
+      else
+      {
+        // trash failover
+        $failover = [];
+        Connection::query("UPDATE person set failover = 0 WHERE email = '{$auth->email}';");
+      }
+
+    } while ($response->code != 200 && $tries > 0);
 
     $logger->log("RESPONSE: ".json_encode($response)."\n");
 
