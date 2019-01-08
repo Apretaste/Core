@@ -433,6 +433,7 @@ class Email {
       if (isset($failover[0]) && isset($failover[0]->email))
       {
         $auth = $failover;
+        Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       }
       else // borrow a random Nauta account
       {
@@ -490,13 +491,11 @@ class Email {
 
       // Execute the request
       $response = curl_exec($ch);
-      $response = @json_decode($response);
+      $response = json_decode($response);
       $response->code = $response->result ? 200 : 500;
 
       // marcar failover utilizado
-      if ($response->code == 200)
-        Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
-      else
+      if ($response->code != 200)
       {
         // trash failover
         $failover = [];
