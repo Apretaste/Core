@@ -644,9 +644,9 @@ class Utils
 
 		// create SQL to get notifications
 		$notifications = Connection::query("
-			SELECT id_person, origin, inserted_date, text, viewed, viewed_date, link, tag, ispush
+			SELECT origin, inserted_date, text, viewed, viewed_date, link, tag, ispush
 			FROM notifications
-			WHERE id_person = $personId
+			WHERE id_person = $personId AND hidden = 0 
 			$services
 			ORDER BY inserted_date DESC
 			LIMIT $limit");
@@ -1120,6 +1120,9 @@ class Utils
 		$serviceName = strtolower($pieces[0]);
 		$subServiceName = isset($pieces[1]) ? strtolower($pieces[1]) : "";
 
+		//compatibility with actual notifications @TODO delete when not necessary
+		if(isset($pieces[2])) $input->data->query = $pieces[2];
+
 		// create a new Request object
 		$request = new Request();
 		$request->person = clone $person;
@@ -1144,7 +1147,11 @@ class Utils
 		// run the service
 		$func = "_$subServiceName";
 		if(method_exists($serviceObj, $func)) $serviceObj->$func($request, $response);
-		else $serviceObj->_main($request, $response);
+		else {
+			//compatibility with actual notifications @TODO delete when not necessary
+			if ($func!="_") $request->input->data->query = ltrim($func,'_');
+			$serviceObj->_main($request, $response);
+		}
 
 		// return the service's response
 		return $response;
