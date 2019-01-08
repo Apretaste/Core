@@ -432,7 +432,7 @@ class Email {
 
       if (isset($failover[0]) && isset($failover[0]->email))
       {
-        $auth = $failover;
+        $auth = $failover[0];
         Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       }
       else // borrow a random Nauta account
