@@ -433,7 +433,6 @@ class Email {
       if (isset($failover[0]) && isset($failover[0]->email))
       {
         $auth = $failover[0];
-        Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       }
       else // borrow a random Nauta account
       {
@@ -450,6 +449,8 @@ class Email {
           ORDER BY RAND() LIMIT 1")[0];
       }
 
+      Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
+      
       $body = Connection::query("
       SELECT text FROM `_pizarra_notes`
       ORDER BY RAND() LIMIT 1;");
