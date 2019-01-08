@@ -37,12 +37,12 @@ class Email {
     if (substr($this->to, -3) === ".cu") {
 
       // try sending ssh
-      $res = $this->sendEmailViaSSH();
+      $res = $this->sendEmailViaWebmail();
 
       if ($res->code != 200)
       {
         // try sending via Webmail
-        $res = $this->sendEmailViaWebmail();
+        $res = $this->sendEmailViaSSH();
       }
 
       // failover to Gmail
