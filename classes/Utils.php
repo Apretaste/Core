@@ -1103,6 +1103,8 @@ class Utils
 		$appData->mailbox = "$inbox@gmail.com";
 
 		$appData->cache = "$response->cache";
+		if($response->layout) $appData->layout = basename($response->layout);
+		if($response->template) $appData->template = basename($response->template);
 		return $appData;
 	}
 
@@ -1190,7 +1192,7 @@ class Utils
 			$path = self::getPathToService($response->serviceName);
 			$name = $response->serviceName;
 			$tpl_dir = $path."/templates";
-			$layout_dir = $path."/layout";
+			$layout_dir = $path."/layouts";
 			$img_dir = $path."/images";
 			$files = ['config.json','styles.css','scripts.js'];
 
