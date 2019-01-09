@@ -36,7 +36,7 @@ class TopupController extends Controller
 		$captcha = $this->request->get('captcha');
 
 		// validate user inputs
-		$failEmail = empty($email) || !Utils::personExist($email);
+		$failEmail = empty($email) || !Utils::getPerson($email);
 		$failCredits = !is_numeric($credits) || $credits < 5 || $credits > 50;
 		$failToken = empty($token);
 		$failCaptcha = strtoupper($captcha) != strtoupper($this->session->get('phrase'));
@@ -103,8 +103,8 @@ class TopupController extends Controller
 	public function checkEmailAction()
 	{
 		$email = $this->request->get('text');
-		$personId = Utils::personExist($email);
-		echo $personId ? "true" : "false";
+		$person = Utils::getPerson($email);
+		echo $person ? "true" : "false";
 		$this->view->disable();
 	}
 

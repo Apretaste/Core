@@ -100,7 +100,7 @@ class ApiController extends Controller
 		}
 
 		// check if the email exist
-		if(Utils::personExist($email)) {
+		if(Utils::getPerson($email)) {
 			echo '{"code":"error","message":"existing user"}';
 			return false;
 		}
@@ -176,7 +176,7 @@ class ApiController extends Controller
 
 		// if user does not exist, create it
 		$newUser = "false";
-		if( ! Utils::personExist($email))
+		if( ! Utils::getPerson($email))
 		{
 			$newUser = "true";
 			$username = Utils::usernameFromEmail($email);
@@ -275,12 +275,12 @@ class ApiController extends Controller
 		}
 
 		// get the person's numeric ID
-		$personId = Utils::personExist($email);
+		$person = Utils::gerPerson($email);
 
 		// update appid and appname
 		Connection::query("
-			DELETE FROM authentication WHERE appname='$appname' AND person_id='$personId';
-			INSERT INTO authentication (person_id,appid,appname) VALUES ('$personId','$appid','$appname')");
+			DELETE FROM authentication WHERE appname='$appname' AND person_id='{$person->id}';
+			INSERT INTO authentication (person_id,appid,appname) VALUES ('{$person->id}','$appid','$appname')");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -312,18 +312,18 @@ class ApiController extends Controller
 		$token = Utils::generateRandomHash();
 
 		// get the person's numeric ID
-		$personId = Utils::personExist($email);
+		$person = Utils::getPerson($email);
 
 		// check if the row already exists
-		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$personId' AND appname='apretaste' AND platform='web'");
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='{$person->id}' AND appname='apretaste' AND platform='web'");
 		
 		// if the row do not exist, create it
 		if(empty($row)) {
-			Connection::query("INSERT INTO authentication(token,person_id,appid,appname,platform) VALUES ('$token','$personId','$appid','apretaste','web')");
+			Connection::query("INSERT INTO authentication(token,person_id,appid,appname,platform) VALUES ('$token','{$person->id}','$appid','apretaste','web')");
 		}
 		// if the row exist and the appid is different, update it
 		elseif($row[0]->appid != $appid) {
-			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE person_id='$personId' AND appname='apretaste' AND platform='web'");
+			Connection::query("UPDATE authentication SET appid='$appid', token='$token' WHERE person_id='{$person->id}' AND appname='apretaste' AND platform='web'");
 		}
 	}
 

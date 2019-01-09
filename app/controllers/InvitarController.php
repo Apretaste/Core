@@ -54,8 +54,7 @@ class InvitarController extends Controller
 		$this->view->email = $host;
 
 		// do not invite people who are already using Apretaste
-		$utils = new Utils();
-		if($utils->personExist($guest))
+		if(Utils::getPerson($guest))
 		{
 			$this->view->already = true;
 			return $this->dispatcher->forward(["controller"=>"invitar","action"=>"index"]);
