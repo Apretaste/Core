@@ -85,7 +85,7 @@ class RunController extends Controller
 		// create the input
 		$input = new Input();
 		$input->command = $command;
-		$input->data = json_decode($data);
+		$input->data = ($data)?json_decode($data):new stdClass();
 		$input->files = []; // TODO get files via params
 		$input->environment = "web";
 		$input->ostype = "web";
@@ -327,6 +327,7 @@ class RunController extends Controller
 		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 		$input->files = $attachs;
 		$input->environment = "app";
+		$input->data = isset($input->data)?json_decode($input->data):new stdClass();
 
 		// save Nauta password if passed
 		if($input->token) {

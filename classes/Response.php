@@ -59,9 +59,9 @@ class Response
 	 * @param String[] $images, paths to the images to embeb
 	 * @param String[] $files, paths to the files to attach
 	 */
-	public function setTemplate($template, $content, $images=[], $files=[])
-	{
+	public function setTemplate($template, $content = false, $images=[], $files=[]){
 		// optimize the images 
+		if(!$content) $content = new stdClass();
 		Utils::optimizedImageContent($content, $images, $this->input, $this->imgQuality);
 		
 		// save the template

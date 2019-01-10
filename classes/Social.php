@@ -510,6 +510,30 @@ public static function chatOcult($from_user,$to_user){
 	 COMMIT
 	 ");
 }
+
+	/**
+	 * Get if the user is blocked or has been blocked by
+	 * 
+	 * @author ricardo@apretaste.com
+	 * @param String $user1
+	 * @param String $user2
+	 * @return stdClass
+	 */
+	public static function isBlocked(String $user1, String $user2){
+		$res=new stdClass();
+
+		$r = Connection::query("SELECT * FROM ((SELECT COUNT(user1) AS blockedByMe FROM relations
+				WHERE user1 = '$user1' AND user2 = '$user2'
+				AND `type` = 'blocked' AND confirmed=1) AS A,
+				(SELECT COUNT(user1) AS blocked FROM relations
+				WHERE user1 = '$user2' AND user2 = '$user1'
+				AND `type` = 'blocked' AND confirmed=1) AS B)");
+
+		$res->blocked=($r[0]->blocked>0)?true:false;
+		$res->blockedByMe=($r[0]->blockedByMe>0)?true:false;
+
+		return $res;
+	}
 	/**
 	 * Return a list of Chats between $email1 & $email2
 	 *

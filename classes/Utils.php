@@ -129,9 +129,9 @@ class Utils
 	 *
 	 * @author salvipascual
 	 * @param String $username
-	 * @return String email or false
+	 * @return stdClass $person or false
 	 */
-	public static function getEmailFromUsername($username)
+	public static function getPersonFromUsername($username)
 	{
 		// do not try empty inputs
 		if(empty($username)) return false;
@@ -140,11 +140,11 @@ class Utils
 		$username = str_replace("@", "", $username);
 
 		// get the email
-		$email = Connection::query("SELECT email FROM person WHERE username='$username'");
+		$person = Connection::query("SELECT * FROM person WHERE username='$username'");
 
 		// return the email or false if not found
-		if(empty($email)) return false;
-		else return $email[0]->email;
+		if(empty($person)) return false;
+		else return $person[0];
 	}
 
 	/**
@@ -1246,6 +1246,7 @@ class Utils
 		if(empty($images)) return;
 		// convert content to String
 		$content = json_encode($content);
+		$content = str_replace('\\', '', $content); //prevent troubles with json parse
 
 		// for the web
 		if($input->environment == "web") {
@@ -1258,7 +1259,7 @@ class Utils
 			for ($i=0; $i<count($images); $i++) { 
 				$file = "$wwwroot/public/temp/".basename($images[$i]);
 				if(file_exists($images[$i]) && !file_exists($file)) @copy($images[$i], $file);
-				$file = "$wwwhttp/temp/".basename($file);
+				$file = basename($file);
 				$content = str_replace($images[$i], $file, $content);
 			}
 		} 
