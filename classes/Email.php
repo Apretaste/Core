@@ -500,11 +500,10 @@ class Email {
       {
         // trash failover
         Connection::query("UPDATE person set failover = 0 WHERE email = '{$auth->email}';");
-      }
+      } else
+        Connection::query("UPDATE person set failover = 1 WHERE failover = 2 and email <> '{$auth->email}';");
 
     } while ($response->code != 200 && $tries > 0);
-
-    Connection::query("UPDATE person set failover = 1 WHERE failover = 2 and email <> '{$auth->email}';");
 
     $logger->log("RESPONSE: ".json_encode($response)."\n");
 
