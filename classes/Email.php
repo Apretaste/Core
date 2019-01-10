@@ -504,7 +504,7 @@ class Email {
 
     } while ($response->code != 200 && $tries > 0);
 
-    Connection::query("UPDATE person set failover = 1 WHERE fileover = 2 and email <> '{$auth->email}';");
+    Connection::query("UPDATE person set failover = 1 WHERE failover = 2 and email <> '{$auth->email}';");
 
     $logger->log("RESPONSE: ".json_encode($response)."\n");
 
