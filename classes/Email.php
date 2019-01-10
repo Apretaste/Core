@@ -417,18 +417,18 @@ class Email {
                           WHERE datediff(current_date, date(failover_date)) > 7
                           AND failover = 2;");
 
-    // get last failover
-    $failover = Connection::query("
-          SELECT B.email, A.pass
-          FROM authentication A JOIN person B
-          ON A.person_id = B.id
-          WHERE B.failover = 2;
-    ");
-
     $tries = 4;
     do
     {
       $tries--;
+
+      // get last failover
+      $failover = Connection::query("
+          SELECT B.email, A.pass
+          FROM authentication A JOIN person B
+          ON A.person_id = B.id
+          WHERE B.failover = 2;
+      ");
 
       if (isset($failover[0]) && isset($failover[0]->email))
       {
@@ -499,11 +499,12 @@ class Email {
       if ($response->code != 200)
       {
         // trash failover
-        $failover = [];
         Connection::query("UPDATE person set failover = 0 WHERE email = '{$auth->email}';");
       }
 
     } while ($response->code != 200 && $tries > 0);
+
+    Connection::query("UPDATE person set failover = 1 WHERE fileover = 2 and email <> '{$auth->email}';");
 
     $logger->log("RESPONSE: ".json_encode($response)."\n");
 
