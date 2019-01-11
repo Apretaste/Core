@@ -100,6 +100,9 @@ class RunController extends Controller
 		$wwwhttp = $this->di->get('path')['http'];
 		$servicePath = Utils::getPathToService($response->serviceName);
 
+		// exit if no template, normal when redirect=false
+		if(!$response->template) exit;
+
 		// get the HTML template and the JS and CSS files
 		$templateHTML = file_get_contents($response->template);
 
