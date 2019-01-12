@@ -100,39 +100,39 @@ class RunController extends Controller
 		$wwwhttp = $this->di->get('path')['http'];
 		$servicePath = Utils::getPathToService($response->serviceName);
 
-		// exit if no template, normal when redirect=false
-		if(!$response->template) exit;
+		if($response->template){
+			// get the HTML template and the JS and CSS files
+			$templateHTML = file_get_contents($response->template);
 
-		// get the HTML template and the JS and CSS files
-		$templateHTML = file_get_contents($response->template);
+			// get the layout and put the template inside
+			if(empty($response->layout)) $response->layout = "$wwwroot/app/layouts/web_layout.ejs";
+			$layoutHTML = file_get_contents($response->layout);
+			$layoutHTML = str_replace('{{APP_TEMPLATE_CODE}}', $templateHTML, $layoutHTML);
 
-		// get the layout and put the template inside
-		if(empty($response->layout)) $response->layout = "$wwwroot/app/layouts/web_layout.ejs";
-		$layoutHTML = file_get_contents($response->layout);
-		$layoutHTML = str_replace('{{APP_TEMPLATE_CODE}}', $templateHTML, $layoutHTML);
+			// get the HTML starting point
+			$startHTML = file_get_contents("$wwwroot/app/layouts/web_start.ejs");
+			$startCSS = file_get_contents("$servicePath/styles.css");
+			$startJS = file_get_contents("$servicePath/scripts.js");
 
-		// get the HTML starting point
-		$startHTML = file_get_contents("$wwwroot/app/layouts/web_start.ejs");
-		$startCSS = file_get_contents("$servicePath/styles.css");
-		$startJS = file_get_contents("$servicePath/scripts.js");
+			// replace shortags on the HTML code
+			$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
+			$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
+			$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
+			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
+			$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
+			$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
+			$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
+			$startHTML = str_replace('{{APP_TEMPLATE_JS}}', $startJS, $startHTML);
 
-		// replace shortags on the HTML code
-		$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
-		$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
-		$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
-		$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
-		$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
-		$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
-		$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
-		$startHTML = str_replace('{{APP_TEMPLATE_JS}}', $startJS, $startHTML);
+			// display the template on screen
+			echo $startHTML;
+		}
+		
 
 		// create a new entry on the delivery table
 		Connection::query("
 			INSERT INTO delivery (id, id_person, environment, email_subject)
 			VALUES ({$this->deliveryId}, {$person->id}, 'web', '$command')");
-
-		// display the template on screen
-		echo $startHTML;
 	}
 
 	/**

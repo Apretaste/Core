@@ -1,53 +1,47 @@
-<div class="container">
+<div class="col s12 m10 l8 offset-m1 offset-l2">
 	<!-- MENU -->
 	<div class="row">
-		<div class="col s12">
-			<nav>
-				<div class="nav-wrapper white">
-					<span class="brand-logo left green-text hide-on-small-only">
-						<span style="font-family:Tahoma;">Apretaste!</span>
-					</span>
-					<ul class="right">
-						<li>
-							<a class="black-text" href="#!" onclick="apretaste.send({'command':'SERVICIOS'})">
-								<i class="material-icons">apps</i>
-							</a>
-						</li>
-						<li>
-							<a class="black-text" href="#!" onclick="apretaste.send({'command':'PERFIL'})">
-								<i class="material-icons">account_box</i>
-							</a>
-						</li>
-						<li>
-							<a class="black-text" href="#!" onclick="apretaste.send({'command':'NOTIFICACIONES'})">
-								<i class="material-icons">notifications</i>
-							</a>
-						</li>
-						<li>
-							<a class="btn-small red lighten-1" href="/logout">
-								<i class="material-icons">exit_to_app</i>
-							</a>
-						</li>
-					</ul>
-				</div>
-			</nav>
-		</div>
+		<nav>
+			<div class="nav-wrapper white">
+				<span class="brand-logo left green-text hide-on-small-only">
+					<span style="font-family:Tahoma;">Apretaste!</span>
+				</span>
+				<ul class="right">
+					<li>
+						<a class="black-text" href="#!" onclick="apretaste.send({'command':'SERVICIOS'})">
+						<i class="material-icons">apps</i>
+						</a>
+					</li>
+					<li>
+						<a class="black-text" href="#!" onclick="apretaste.send({'command':'PERFIL'})">
+						<i class="material-icons">account_box</i>
+						</a>
+					</li>
+					<li>
+						<a class="black-text" href="#!" onclick="apretaste.send({'command':'NOTIFICACIONES'})">
+						<i class="material-icons">notifications</i>
+						</a>
+					</li>
+					<li>
+						<a class="btn-small red lighten-1" href="/logout">
+						<i class="material-icons">exit_to_app</i>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
 	</div>
 
 	<!-- CONTENT -->
 	<div class="row">
-		<div class="col s12">
-			{{APP_TEMPLATE_CODE}}
-		</div>
+		{{APP_TEMPLATE_CODE}}
 	</div>
 
 	<!-- FOOTER -->
-	<div class="row">
-		<div class="col s12 center-align">
-			Apretaste &copy; <%=(new Date).getFullYear()%>; All rights reserved.
-			<div class="divider"></div>
-			<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a> |
-			<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">T&eacute;rminos</a>
-		</div>
+	<div class="row center-align">
+		Apretaste &copy; <%=(new Date).getFullYear()%>; All rights reserved.
+		<div class="divider"></div>
+		<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a> |
+		<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">Términos</a>
 	</div>
 </div>
