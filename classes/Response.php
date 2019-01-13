@@ -60,6 +60,13 @@ class Response
 	 * @param String[] $files, paths to the files to attach
 	 */
 	public function setTemplate($template, $content = false, $images=[], $files=[]){
+
+		//Convert special chars to html entities
+		$content = json_decode(json_encode($content),true);
+		array_walk_recursive($content, function (&$value) {
+			$value = htmlentities($value);
+		});
+		
 		// optimize the images 
 		if(!$content) $content = new stdClass();
 		Utils::optimizedImageContent($content, $images, $this->input, $this->imgQuality);

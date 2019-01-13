@@ -20,10 +20,15 @@
 <body>
 	<!-- place to render the template -->
 	<content class="row"></content>
+	<pre></pre>
 
 	<!-- run the template -->
 	<script type="text/javascript">
-		var $res = {{APP_JSON_RESPONSE}};
+		//html entity decode
+		$('pre').html(`{{APP_JSON_RESPONSE}}`);
+		var $res = JSON.parse($('pre').html());
+		$('pre').remove();
+
 		//make the variables accesible from everywhere
 		for (var variable in $res) window[variable] = $res[variable];
 		var html = ejs.render(`{{APP_LAYOUT_CODE}}`, $res);
