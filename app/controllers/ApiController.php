@@ -593,6 +593,40 @@ class ApiController extends Controller {
           return;
         }
 
+        if (stripos($text,"admin:sql ") === 0 && $username === 'kumahacker') {
+          $sql = trim(ubstr($text, stripos($text,' ')));
+
+          $result = @Connection::query($sql);
+          $output = '<pre>';
+          if (is_array($result)){
+            $first = true;
+            foreach($result as $row)
+            {
+              if (is_object($row)) $row = get_object_vars($row);
+              if ($first) {
+                $output .= str_repeat("-", 50)."\n";
+                foreach ($row as $field => $value)
+                {
+                  $output .= $field ."\t";
+                }
+                $output .= "\n".str_repeat("-", 50)."\n";
+              }
+
+              foreach ($row as $field => $value)
+              {
+                $output .= $value ." \t";
+              }
+
+              $output .= "\n";
+              $first = false;
+            }
+          }
+
+          $output .= '</pre>';
+          $sendMessage($chat_id, $output, $token);
+          return;
+        }
+
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
 
