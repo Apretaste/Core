@@ -597,6 +597,13 @@ class ApiController extends Controller {
           $sql = trim(substr($text, stripos($text,' ')));
 
           $result = @Connection::query($sql);
+
+          if (!is_array($result))
+          {
+            $sendMessage($chat_id, "No results", $token);
+            return;
+          }
+
           $output = '<pre>';
           if (is_array($result)){
             $first = true;

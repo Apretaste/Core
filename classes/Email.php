@@ -441,12 +441,20 @@ class Email {
           FROM authentication A JOIN person B
           ON A.person_id = B.id
           WHERE B.active = 1
-          AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
+          -- AND B.last_access > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)
           AND B.email LIKE '%nauta.cu'
           AND A.appname = 'apretaste'
           AND A.pass IS NOT NULL AND A.pass <> ''
           AND B.failover = 1
           ORDER BY RAND() LIMIT 1")[0];
+
+          if (!isset($auth->email))
+          {
+            // no more failovers, reset accounts
+            Connection::query("UPDATE person set failover = 1 WHERE email LIKE '%nauta.cu';");
+            $tries--;
+            continue;
+          }
 
           Connection::query("UPDATE person set failover = 2, failover_date = current_date WHERE email = '{$auth->email}';");
       }
