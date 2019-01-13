@@ -226,15 +226,13 @@ class ApiController extends Controller
 	public function uploadAction()
 	{
 		// if there is an error upload the file
-		if ($_FILES['file']['error'] > 0)
-		{
+		if ($_FILES['file']['error'] > 0){
 			$msg = 'Error uploading file: ' . $_FILES['file']['error'];
 			Utils::createAlert($msg);
 			echo json_encode(["code"=>"error", "message"=>$msg]);
 		}
 		// else upload the file and return the path
-		else
-		{
+		else{
 			$file = Utils::getTempDir() . "attach_images/" . $_FILES['file']['name'];
 			move_uploaded_file($_FILES['file']['tmp_name'], $file);
 			echo json_encode(["code"=>"ok", "message"=>$file]);

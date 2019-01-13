@@ -1,17 +1,12 @@
 #!/bin/bash
 mkdir temp
 mkdir temp/templates_c
-mkdir temp/cache
-mkdir temp/extra
 mkdir temp/thumbnails
 mkdir temp/mails
 mkdir temp/attachments
 mkdir temp/attach_images
 mkdir temp/nautaclient
 mkdir temp/capcha
-mkdir temp/templates
-mkdir temp/data
-mkdir temp/services
 mkdir services
 mkdir logs
 mkdir public/ads

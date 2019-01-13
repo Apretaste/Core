@@ -86,11 +86,20 @@ class RunController extends Controller
 		$input = new Input();
 		$input->command = $command;
 		$input->data = ($data)?json_decode($data):new stdClass();
-		$input->files = []; // TODO get files via params
+		$input->files = [];
 		$input->environment = "web";
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
+
+		//get files
+		if(!empty($_FILES)) foreach($_FILES as $file){
+			if ($file['error'] == UPLOAD_ERR_OK){
+				$path = Utils::getTempDir() . "attach_images/" .$file['name'];
+				move_uploaded_file($file['tmp_name'], $path);
+				$input->files[basename($path)] = $path;
+			}
+		}
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
@@ -316,7 +325,7 @@ class RunController extends Controller
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if($filename == "request.json") $requestFile = $filename;
-				else $attachs[] = "$temp/attachments/$folderName/$filename";
+				else $attachs[$filename] = "$temp/attachments/$folderName/$filename";
 			}
 
 			// extract file contents
