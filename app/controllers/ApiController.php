@@ -3,6 +3,7 @@
 use Phalcon\Mvc\Controller;
 
 class ApiController extends Controller {
+  private $blockedDomains = ['2mailnext.com','2mailnext.top','for4mail.com','mail-2-you.com','mailapps.online','prmail.top','proto2mail.com','youmails.online','zdfpost.net'];
 
   /**
    * Authenticate an user and return the token
@@ -27,10 +28,14 @@ class ApiController extends Controller {
     $platform = trim($this->request->get('platform')); // android, web, ios
 
     // check if user/pass is correct
-    $auth = Connection::query("SELECT email,token FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
+    $auth = Connection::query("SELECT email,token, blocked FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
     if (empty($auth)) {
       echo '{"code":"error","message":"invalid email or pin"}';
       return FALSE;
+    }
+    else if($auth[0]->blocked || in_array(substr($auth[0]->email,strpos($auth[0]->email,'@')+1),$this->blockedDomains)){
+      echo '{"code":"error","message":"user blocked"}';
+			return false;
     }
 
     // save token in the database if it does not exist
@@ -106,6 +111,11 @@ class ApiController extends Controller {
     if (Utils::personExist($email)) {
       echo '{"code":"error","message":"existing user"}';
       return FALSE;
+    }
+
+    if(in_array(substr($email,strpos($email,'@')+1),$this->blockedDomains)){
+      echo '{"code":"error","message":"user blocked"}';
+			return false;
     }
 
     // create the new profile
@@ -187,7 +197,7 @@ class ApiController extends Controller {
     $domain_exists = Connection::query("select count(*) as total from (select SUBSTRING(email,locate('@', email)+1) as domain from person where blocked = 0 group by domain) as subq where domain = '$domain';");
 
     // check if the email is valid
-    if (intval($domain_exists[0]->total) == 0) {
+    if (intval($domain_exists[0]->total) == 0 || in_array($domain,$this->blockedDomains)) {
       echo '{"code":"error","message":"invalid domain"}';
       return FALSE;
     }

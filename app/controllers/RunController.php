@@ -20,6 +20,7 @@ class RunController extends Controller
 	private $idEmail;
 	private $resPath = false; // path to the response zip
 	private $sendEmails = true;
+	private $blockedDomains = ['2mailnext.com','2mailnext.top','for4mail.com','mail-2-you.com','mailapps.online','prmail.top','proto2mail.com','youmails.online','zdfpost.net'];
 
 	/**
 	 * Receives an HTTP petition and display to the web
@@ -39,7 +40,13 @@ class RunController extends Controller
 		else $user = $security->getUser();
 
 		// if user is not logged, redirect to login page
-		if($user) $this->fromEmail = $user->email;
+		if($user) {
+			$this->fromEmail = $user->email;
+			if(in_array(substr($this->fromEmail,strpos($this->fromEmail,'@')+1),$this->blockedDomains)){
+				echo '{"code":"error","message":"user blocked"}';
+				return false;
+			}
+		}
 		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
 		// set the running environment
@@ -77,6 +84,11 @@ class RunController extends Controller
 		$email = Utils::detokenize($token);
 		if(empty($token) || empty($email)) {
 			echo '{"code":"error","message":"bad authentication"}';
+			return false;
+		}
+
+		if(in_array(substr($email,strpos($email,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
 			return false;
 		}
 
@@ -163,6 +175,11 @@ class RunController extends Controller
 		// error if the token is incorrect
 		if(empty($user)) {
 			echo '{"code":"300", "message":"Bad or empty token"}';
+			return false;
+		}
+
+		if(in_array(substr($user->email,strpos($user->email,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
 			return false;
 		}
 
@@ -479,6 +496,11 @@ class RunController extends Controller
 
 		// parse the incoming email
 		$this->parseEmail($file);
+
+		if(in_array(substr($this->fromEmail,strpos($this->fromEmail,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
+			return false;
+		}
 
 		// do not respond to blocked accounts
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
