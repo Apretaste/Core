@@ -40,7 +40,13 @@ class RunController extends Controller
 		else $user = $security->getUser();
 
 		// if user is not logged, redirect to login page
-		if($user) $this->fromEmail = $user->email;
+		if($user) {
+			$this->fromEmail = $user->email;
+			if(in_array(substr($this->fromEmail,strpos($this->fromEmail,'@')+1),$this->blockedDomains)){
+				echo '{"code":"error","message":"user blocked"}';
+				return false;
+			}
+		}
 		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
 		// set the running environment

@@ -84,7 +84,7 @@ class Security
 		if(empty($token)) return false;
 
 		// get the email and pin using the token
-		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token'");
+		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token' AND blocked=0");
 		if(empty($person)) return false;
 
 		// log in the user and return
