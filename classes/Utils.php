@@ -1279,4 +1279,31 @@ class Utils
 	  $ip = php::getClientIP();
 	  return php::startsWith($ip,"10.0.0.") || $ip === "127.0.0.1";
   }
+
+  public static function file_get_contents_curl($url)
+  {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //Set curl to return the data instead of printing it to the browser.
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_URL, $url);
+
+    $data = curl_exec($ch);
+
+    /* Check for 404 (file not found). */
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if($httpCode == 404)
+    {
+      /* Handle 404 here. */
+      $data = false;
+    }
+    curl_close($ch);
+
+    return $data;
+  }
 }
