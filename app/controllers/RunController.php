@@ -107,12 +107,9 @@ class RunController extends Controller
 		}
 
 		// check if the user is blocked
-		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1;");
-
-		if (isset($blocked[0])) {
+		if (Utils::isUserBlocked($email)) {
       $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
       $logger->log("User:$email, BLOCKED!");
-      $logger->log("SELECT email FROM person WHERE email='$email' AND blocked=1;");
       $logger->close();
 			echo '{"code":"error","message":"user blocked"}';
 			return false;
