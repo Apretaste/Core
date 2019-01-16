@@ -186,8 +186,7 @@ class RunController extends Controller
 		}
 
 		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
-		if($blocked) return false;
+    if (Utils::isUserBlocked($user->email)) return false;
 
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
