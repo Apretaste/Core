@@ -1306,4 +1306,20 @@ class Utils
 
     return $data;
   }
+
+  /**
+   * Check if user is blocked
+   *
+   * @param $email
+   *
+   * @return bool
+   */
+  static function isUserBlocked($email) {
+    $blocked = Connection::query("SELECT email FROM person WHERE lower(email) = lower('$email') AND blocked=1;");
+    if (isset($blocked[0])) {
+      Connection::query("UPDATE person SET pin = 0, token = null WHERE email = '$email';");
+      return true;
+    }
+    return false;
+  }
 }
