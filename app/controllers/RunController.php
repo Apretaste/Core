@@ -97,7 +97,7 @@ class RunController extends Controller
 		$haveAttachments = empty($attachment) ? 0 : 1;
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("User:$email, Subject:$subject, Attachments:$haveAttachments");
-		$logger->close();
+    $logger->close();
 
 		// some services cannot be called from the API
 		$serviceName = strtoupper(explode(" ", $subject)[0]);
@@ -107,8 +107,13 @@ class RunController extends Controller
 		}
 
 		// check if the user is blocked
-		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1");
-		if(count($blocked)>0) {
+		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1;");
+
+		if (isset($blocked[0])) {
+      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+      $logger->log("User:$email, BLOCKED!");
+      $logger->log("SELECT email FROM person WHERE email='$email' AND blocked=1;");
+      $logger->close();
 			echo '{"code":"error","message":"user blocked"}';
 			return false;
 		}
