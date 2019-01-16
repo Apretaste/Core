@@ -554,12 +554,7 @@ class Utils
 	 * @param string $tag
 	 * @return array
 	 */
-	public static function addNotification($id, $origin, $text, $link='', $tag='INFO')
-	{
-		// get the person's numeric ID
-		$id = strpos($email,'@')?self::personExist($email):$email;
-		$email = strpos($email,'@')?$email:self::getEmailFromId($id);
-
+	public static function addNotification($id, $origin, $text, $link='', $tag='INFO'){
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
@@ -593,7 +588,7 @@ class Utils
 		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (id_person, email, origin, `text`, link, tag, ispush) VALUES ($id_person,'$email','$origin','$text','$link','$tag','$ispush')");
+		return Connection::query("INSERT INTO notifications (id_person, origin, `text`, link, tag, ispush) VALUES ($id_person,'$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**
@@ -1092,7 +1087,7 @@ class Utils
 		$appData->token = $person->token;
 		if(empty($appData->token)) {
 			$appData->token = md5(time().rand());
-			Connection::query("UPDATE person SET token='{$appData->token}' WHERE email='$email'");
+			Connection::query("UPDATE person SET token='{$appData->token}' WHERE email='{$person->email}'");
 		}
 
 		// add the response mailbox
