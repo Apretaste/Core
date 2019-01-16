@@ -1315,7 +1315,7 @@ class Utils
    * @return bool
    */
   static function isUserBlocked($email) {
-    $blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1;");
+    $blocked = Connection::query("SELECT email FROM person WHERE lower(email) = lower('$email') AND blocked=1;");
     if (isset($blocked[0])) {
       Connection::query("UPDATE person SET pin = 0, token = null WHERE email = '$email';");
       return true;
