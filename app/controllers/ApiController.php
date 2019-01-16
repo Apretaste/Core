@@ -212,6 +212,11 @@ class ApiController extends Controller {
 
     // create a new pin for the user
     $pin = mt_rand(1000, 9999);
+    $wwwroot = $this->di->get('path')['root'];
+    $logger  = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+    $logger->log("SENT PIN email:$email, pin:$pin");
+    $logger->close();
+
     Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
     // create response to email the new code
@@ -250,7 +255,7 @@ class ApiController extends Controller {
     }
 
     // save the API log
-    $wwwroot = $this->di->get('path')['root'];
+
     $logger  = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
     $logger->log("START email:$email, lang:$lang, new:$newUser");
     $logger->close();
