@@ -87,7 +87,7 @@ class LoginController extends Controller
 
 		// create the user if he/she does not exist
 		$action = "login";
-		if( Utils::personExist($email)){
+		if( ! Utils::personExist($email)){
 			$logger->log("Login| User {$email} is new user!");
 			$username = Utils::usernameFromEmail($email);
 			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'web')");
