@@ -100,17 +100,6 @@ class AdminController extends Controller
 	}
 
 	/**
-	 * List of services
-	 */
-	public function servicesAction()
-	{
-		$services = Connection::query("SELECT * FROM service");
-
-		$this->view->title = "List of services (".count($services).")";
-		$this->view->services = $services;
-	}
-
-	/**
 	 * Show the dropped emails for the last 7 days
 	 * @author salvipascual
 	 */

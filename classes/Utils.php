@@ -79,10 +79,8 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public static function serviceExist($name)
-	{
-		$di = FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
+	public static function serviceExist($name){
+		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 
 		if(file_exists("$wwwroot/services/$name/service.php")) return $name;
 		else return false;

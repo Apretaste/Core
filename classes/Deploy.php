@@ -39,6 +39,20 @@ class Deploy{
 		);
 	}
 
+	public static function updateServiceInfo($servicePath){
+		$configFile = "$servicePath/config.json";
+		$service = json_decode(file_get_contents($configFile));
+
+		$service->listed = intval($service->listed);
+
+		// save the new service in the database
+		Connection::query("INSERT INTO service (name,description,creator_email,category,version,listed)
+		VALUES ('{$service->name}','{$service->description}','{$service->creator}','{$service->category}','{$service->version}','{$service->listed}')
+		ON DUPLICATE KEY UPDATE
+		description='{$service->description}',creator_email='{$service->creator}',category='{$service->category}',
+		version='{$service->version}',listed='{$service->listed}'");
+	}
+
 	/**
 	 * Extract the service zip and return the path to it
 	 *
