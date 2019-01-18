@@ -92,11 +92,26 @@ class Utils
 	 * @author salvipascual
 	 * @return object|boolean
 	 */
-	public static function getPerson($email)
-	{
-		// get the person via email
-		$person = Connection::query("SELECT * FROM person WHERE LOWER(email)=LOWER('$email')");
+	public static function getPerson($identifier){
+		// get the person via email, id or username
+		if(filter_var($identifier, FILTER_VALIDATE_EMAIL)) $where = "email";
+		else $where = is_numeric($identifier) ? "id" : "username";
+
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$identifier'");
 		return $person ? $person[0] : false;
+	}
+
+	/**
+	 * Check if a user is blocked
+	 *
+	 * @author salvipascual
+	 * @return boolean
+	 */
+	public static function isAllowedDomain($email){
+		$domain = substr($email, strpos($email,'@') + 1);
+		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
+		if(!empty($isAllowed)) return true;
+		return false;
 	}
 
 	/**
