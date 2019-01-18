@@ -64,7 +64,7 @@ class Response
 		//Convert special chars to html entities
 		$content = json_decode(json_encode($content),true);
 		array_walk_recursive($content, function (&$value) {
-			$value = htmlentities($value);
+			$value = $value = str_replace("\n","",htmlentities($value));
 		});
 		
 		// optimize the images 
