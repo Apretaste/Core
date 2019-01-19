@@ -505,7 +505,7 @@ class RunController extends Controller
 
 		// do not respond to blocked accounts
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
-		if($blocked) return false;
+		if($blocked || !Utils::isAllowedDomain($this->fromEmail)) return false;
 
 		// get the person's numeric ID
 		$this->personId = Utils::personExist($this->fromEmail);

@@ -108,6 +108,19 @@ class Utils
 	}
 
 	/**
+	 * Check if the domain of the email is allowed
+	 *
+	 * @author salvipascual
+	 * @return boolean
+	 */
+	public static function isAllowedDomain($email){
+		$domain = substr($email, strpos($email,'@') + 1);
+		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
+		if(!empty($isAllowed)) return true;
+		return false;
+	}
+
+	/**
 	 * Check if the Person exists in the database
 	 *
 	 * @author salvipascual

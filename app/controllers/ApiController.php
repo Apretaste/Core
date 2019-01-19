@@ -3,7 +3,6 @@
 use Phalcon\Mvc\Controller;
 
 class ApiController extends Controller {
-  private $blockedDomains = ['2mailnext.com','2mailnext.top','for4mail.com','mail-2-you.com','mailapps.online','prmail.top','proto2mail.com','youmails.online','zdfpost.net'];
 
   /**
    * Check if user is blocked
@@ -24,7 +23,17 @@ class ApiController extends Controller {
       return false;
     }
 
-    return !(in_array(substr($email,strpos($email,'@')+1),$this->blockedDomains));
+    if(!Utils::isAllowedDomain($email)){
+      $wwwroot = $this->di->get('path')['root'];
+      $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+			$logger->log("Domain of email:$email not allowed");
+			$logger->close();
+
+			echo '{"code":"error","message":"domain not allowed"}';
+			return false;
+		}
+
+    return true;
   }
 
   /**
@@ -43,7 +52,7 @@ class ApiController extends Controller {
     header("Access-Control-Allow-Origin: *");
 
     // get the values from the post
-    $email    = trim($this->request->get('email'));
+    $email = trim($this->request->get('email'));
 
     if ( ! $this->isEnabledUser($email)) return false;
 
@@ -138,11 +147,6 @@ class ApiController extends Controller {
       return FALSE;
     }
 
-    if(in_array(substr($email,strpos($email,'@')+1),$this->blockedDomains)){
-      echo '{"code":"error","message":"user blocked"}';
-			return false;
-    }
-
     // create the new profile
     $username = Utils::usernameFromEmail($email);
     Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
@@ -223,12 +227,6 @@ class ApiController extends Controller {
 
     $domain = substr($email, strpos($email,'@') + 1);
     $domain_exists = Connection::query("select count(*) as total from (select SUBSTRING(email,locate('@', email)+1) as domain from person where blocked = 0 group by domain) as subq where domain = '$domain';");
-
-    // check if the email is valid
-    if (intval($domain_exists[0]->total) == 0 || in_array($domain,$this->blockedDomains)) {
-      echo '{"code":"error","message":"invalid domain"}';
-      return FALSE;
-    }
 
     // if user does not exist, create it
     $newUser = "false";

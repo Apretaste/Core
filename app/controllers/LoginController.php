@@ -65,6 +65,14 @@ class LoginController extends Controller
 			return false;
 		}
 
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("Login| Domain of user {$email} is not allowed");
+			$logger->close();
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
+		}
+
 		$blocked = Connection::query("SELECT id FROM person WHERE email='{$email}' AND blocked = 1");
 		if(!empty($blocked)){
 			$logger->log("Login| User blocked: {$email}");
@@ -156,6 +164,13 @@ class LoginController extends Controller
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return false;
+		}
+
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("Login| Domain of user {$email} is not allowed");
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return;
 		}
 
 		// log in the user
