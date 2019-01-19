@@ -398,4 +398,33 @@ class AdminController extends Controller
 		// redirect back
 		header("Location: gmail");
 	}
+
+	/**
+	 * add credits
+	 *
+	 * @author kuma
+	 */
+	public function addcreditAction()
+	{
+		if ($this->request->isPost())
+		{
+			$email = $this->request->getPost('email');
+			$credit = $this->request->getPost('credit');
+			// check if the person exists
+			$id = Utils::personExist($email);
+			// check all values are correct
+			if(!$id || empty($credit) || $credit <= 0) {
+				$this->view->message = "Error incorrect email or amount";
+				$this->view->messageType = 'danger';
+			} else {
+				// add credit
+				Connection::query("UPDATE person SET credit=credit+$credit WHERE id=$id");
+				$this->view->message = "User's credit updated successfull";
+				// show ok message
+				$this->view->message = "Credito agregado correctamente. <a href='/admin/profilesearch?email=$email'>Check user profile</a>.";
+				$this->view->messageType = 'success';
+			}
+		}
+		$this->view->title = "Add credit";
+	}
 }
