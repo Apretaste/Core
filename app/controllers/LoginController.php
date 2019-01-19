@@ -50,7 +50,7 @@ class LoginController extends Controller
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/web.log");
 
 		// params from GET and default options
-		$email = $this->request->get('email');
+		$email = strtolower($this->request->get('email'));
 		$redirect = $this->request->get('redirect');
 
 		$logger->log("Login| User {$email} start the login");
@@ -59,6 +59,23 @@ class LoginController extends Controller
 		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 			$logger->log("Login| {$email} is not valid email address, redirecting...");
+
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
+		}
+
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("Login| Domain of user {$email} is not allowed");
+			$logger->close();
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return false;
+		}
+
+		$blocked = Connection::query("SELECT id FROM person WHERE email='{$email}' AND blocked = 1");
+		if(!empty($blocked)){
+			$logger->log("Login| User blocked: {$email}");
 
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
@@ -147,6 +164,13 @@ class LoginController extends Controller
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return false;
+		}
+
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("Login| Domain of user {$email} is not allowed");
+			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
+			$this->view->disable();
+			return;
 		}
 
 		// log in the user

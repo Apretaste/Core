@@ -86,6 +86,7 @@ class Security
 		// get the email and pin using the token
 		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token' AND blocked=0");
 		if(empty($person)) return false;
+		else if(!Utils::isAllowedDomain($person[0]->email)) return false;
 
 		// log in the user and return
 		return $this->login($person[0]->email, $person[0]->pin);
