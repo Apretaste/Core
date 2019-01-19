@@ -60,20 +60,16 @@ class Response
 	 * @param String[] $files, paths to the files to attach
 	 */
 	public function setTemplate($template, $content = false, $images=[], $files=[]){
-
-		//Convert special chars to html entities
-		$content = json_decode(json_encode($content),true);
-		array_walk_recursive($content, function (&$value) {
-			$value = $value = str_replace("\n","",htmlentities($value));
-		});
-		
-		// optimize the images 
+		// encode the response, send empty object if there is no data
 		if(!$content) $content = new stdClass();
+		$content = json_encode($content, JSON_UNESCAPED_UNICODE);
+
+		// optimize the images 
 		Utils::optimizedImageContent($content, $images, $this->input, $this->imgQuality);
-		
+
 		// save the template
 		$this->template = Utils::getPathToService($this->serviceName)."/templates/".$template;
-		$this->json = json_encode($content);
+		$this->json = $content;
 		$this->images = $images;
 		$this->files = $files;
 		$this->render = true;

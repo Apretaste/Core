@@ -1243,7 +1243,7 @@ class Utils
 	 * Optimize the images to send by the user
 	 * 
 	 * @author salvipascual
-	 * @param JSON $content
+	 * @param String $content from json_parse
 	 * @param Array $images
 	 * @param String $environment: web/app
 	 * @param String $quality: original/reducida/muy reducida
@@ -1253,7 +1253,7 @@ class Utils
 		// do not work for empty images
 		if(empty($images)) return;
 		// convert content to String
-		$content = json_encode($content);
+		
 		$content = str_replace('\\', '', $content); //prevent troubles with json parse
 
 		// for the web
@@ -1283,7 +1283,5 @@ class Utils
 				$images[$i] = $file;
 			}
 		}
-		// convert the JSON back to structure
-		$content = json_decode($content);
 	}
 }
