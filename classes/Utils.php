@@ -1193,7 +1193,7 @@ class Utils
 		//attach the response, if reload, the response doesn't exists
 		if($response->json) $zip->addFromString("response.json",$response->json);
 		$appData->has_service_templates = $attachService;
-		if($attachService) $appData->service_version = Utils::getServiceVersion($response->input->serviceName);
+		if($attachService) $appData->service_version = Utils::getServiceVersion($response->serviceName);
 		$zip->addFromString("data.json", json_encode($appData));
 
 		//attach the service files if nedded
