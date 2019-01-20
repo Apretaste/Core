@@ -693,7 +693,10 @@ class ApiController extends Controller {
         }
 
       if ($send){
-        $sendMessage($chat_id, "Hey @$username, habla bonito...", $token);
+        if (stripos($text, 'apretin') !== false)
+          $sendMessage($chat_id, "Oye @$username, a mi me hablas bien!", $token);
+        else
+          $sendMessage($chat_id, "Hey @$username, habla bonito...", $token);
       }
 
       Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
