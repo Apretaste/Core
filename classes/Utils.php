@@ -1273,16 +1273,28 @@ class Utils
 			}
 		} 
 		else if($input->environment == "app") { // for the app
+			$serviceImgs = [];
 			for ($i=0; $i<count($images); $i++) {
+				$isServiceImg = (strpos($images[$i],'/services/') && strpos($images[$i],'/images/'));				
+
+				// do not oprimize images that are part of the service files
+				if($isServiceImg){
+					$content = str_replace($images[$i], basename($images[$i]), $content);
+					$serviceImgs[] = $images[$i];
+					continue;
+				}
+
 				// optimize each image as webp for Android or jpg for iOS
 				$ext = $input->ostype == "android" ? "webp" : "jpg";
 				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
 				Utils::optimizeImage($images[$i], $file, $quality);
-
 				// replace image on both $content and $images
 				$content = str_replace($images[$i], basename($file), $content);
 				$images[$i] = $file;
 			}
+			
+			//don't send images that are part of the service files
+			$images = array_diff($images,$serviceImgs);
 		}
 	}
 }
