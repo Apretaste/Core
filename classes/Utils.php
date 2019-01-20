@@ -79,10 +79,8 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public static function serviceExist($name)
-	{
-		$di = FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
+	public static function serviceExist($name){
+		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 
 		if(file_exists("$wwwroot/services/$name/service.php")) return $name;
 		else return false;
@@ -94,11 +92,26 @@ class Utils
 	 * @author salvipascual
 	 * @return object|boolean
 	 */
-	public static function getPerson($email)
-	{
-		// get the person via email
-		$person = Connection::query("SELECT * FROM person WHERE LOWER(email)=LOWER('$email')");
+	public static function getPerson($identifier){
+		// get the person via email, id or username
+		if(filter_var($identifier, FILTER_VALIDATE_EMAIL)) $where = "email";
+		else $where = is_numeric($identifier) ? "id" : "username";
+
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$identifier'");
 		return $person ? $person[0] : false;
+	}
+
+	/**
+	 * Check if a user is blocked
+	 *
+	 * @author salvipascual
+	 * @return boolean
+	 */
+	public static function isAllowedDomain($email){
+		$domain = substr($email, strpos($email,'@') + 1);
+		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
+		if(!empty($isAllowed)) return true;
+		return false;
 	}
 
 	/**
@@ -554,12 +567,7 @@ class Utils
 	 * @param string $tag
 	 * @return array
 	 */
-	public static function addNotification($id, $origin, $text, $link='', $tag='INFO')
-	{
-		// get the person's numeric ID
-		$id = strpos($email,'@')?self::personExist($email):$email;
-		$email = strpos($email,'@')?$email:self::getEmailFromId($id);
-
+	public static function addNotification($id, $origin, $text, $link='', $tag='INFO'){
 		// check if we should send a web push
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
@@ -593,7 +601,7 @@ class Utils
 		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (id_person, email, origin, `text`, link, tag, ispush) VALUES ($id_person,'$email','$origin','$text','$link','$tag','$ispush')");
+		return Connection::query("INSERT INTO notifications (id_person, origin, `text`, link, tag, ispush) VALUES ($id_person,'$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**
@@ -1092,7 +1100,7 @@ class Utils
 		$appData->token = $person->token;
 		if(empty($appData->token)) {
 			$appData->token = md5(time().rand());
-			Connection::query("UPDATE person SET token='{$appData->token}' WHERE email='$email'");
+			Connection::query("UPDATE person SET token='{$appData->token}' WHERE email='{$person->email}'");
 		}
 
 		// add the response mailbox
@@ -1185,6 +1193,7 @@ class Utils
 		//attach the response, if reload, the response doesn't exists
 		if($response->json) $zip->addFromString("response.json",$response->json);
 		$appData->has_service_templates = $attachService;
+		if($attachService) $appData->service_version = Utils::getServiceVersion($response->serviceName);
 		$zip->addFromString("data.json", json_encode($appData));
 
 		//attach the service files if nedded
@@ -1235,7 +1244,7 @@ class Utils
 	 * Optimize the images to send by the user
 	 * 
 	 * @author salvipascual
-	 * @param JSON $content
+	 * @param String $content from json_parse
 	 * @param Array $images
 	 * @param String $environment: web/app
 	 * @param String $quality: original/reducida/muy reducida
@@ -1245,7 +1254,7 @@ class Utils
 		// do not work for empty images
 		if(empty($images)) return;
 		// convert content to String
-		$content = json_encode($content);
+		
 		$content = str_replace('\\', '', $content); //prevent troubles with json parse
 
 		// for the web
@@ -1264,18 +1273,28 @@ class Utils
 			}
 		} 
 		else if($input->environment == "app") { // for the app
+			$serviceImgs = [];
 			for ($i=0; $i<count($images); $i++) {
+				$isServiceImg = (strpos($images[$i],'/services/') && strpos($images[$i],'/images/'));				
+
+				// do not oprimize images that are part of the service files
+				if($isServiceImg){
+					$content = str_replace($images[$i], basename($images[$i]), $content);
+					$serviceImgs[] = $images[$i];
+					continue;
+				}
+
 				// optimize each image as webp for Android or jpg for iOS
 				$ext = $input->ostype == "android" ? "webp" : "jpg";
 				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
 				Utils::optimizeImage($images[$i], $file, $quality);
-
 				// replace image on both $content and $images
 				$content = str_replace($images[$i], basename($file), $content);
 				$images[$i] = $file;
 			}
+			
+			//don't send images that are part of the service files
+			$images = array_diff($images,$serviceImgs);
 		}
-		// convert the JSON back to structure
-		$content = json_decode($content);
 	}
 }

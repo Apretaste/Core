@@ -70,9 +70,15 @@ class RunController extends Controller
 		if(empty($command)) $command = "SERVICIOS";
 
 		// try login by token or load from the session
-		$security = new Security();
-		if($token) $user = $security->loginByToken($token);
-		else $user = $security->getUser();
+		if($token){
+			$user = Security::loginByToken($token);
+			if(is_string($user)){
+				echo $user;
+				header("Location:/login?redirect=$command");
+				exit;
+			}
+		}
+		else $user = Security::getUser();
 
 		// if user is not logged, redirect to login page
 		if($user) $person = Utils::getPerson($user->email);
@@ -126,7 +132,7 @@ class RunController extends Controller
 			// replace shortags on the HTML code
 			$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
-			$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
+			$startHTML = str_replace('{{APP_SERVICE_PATH}}/images', '{{APP_IMAGE_PATH}}', $startHTML);
 			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
 			$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
 			$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
@@ -156,19 +162,18 @@ class RunController extends Controller
 		$token = trim($this->request->get("token"));
 
 		// get the user from the token
-		$security = new Security();
-		$user = $security->loginByToken($token);
+		$user = Security::loginByToken($token);
 
 		// error if the token is incorrect
-		if(empty($user)) {
-			echo '{"code":"300", "message":"Bad or empty token"}';
-			return false;
+		if(is_string($user)){
+			echo $user;
+			return;
 		}
 
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
 			echo '{"code":"301", "message":"No content file was received"}';
-			return false;
+			return;
 		}
 
 		// create attachments array
@@ -237,9 +242,9 @@ class RunController extends Controller
 		// get the person from email
 		$this->person = Utils::getPerson($this->fromEmail);
 
-		if ($this->person) { //if person exists
-			// do not respond to blocked accounts
-			if($this->person->blocked) return false;
+		if ($this->person){ //if person exists
+			// do not respond to blocked accounts or not allowed domains
+			if($this->person->blocked || !Utils::isAllowedDomain($this->fromEmail)) return;
 			
 			// update last access time and make person active
 			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->person->id}");
@@ -282,7 +287,7 @@ class RunController extends Controller
 
 			// create entry in the error log
 			Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
-			return false;
+			return;
 		}
 
 		// insert a new email in the delivery table

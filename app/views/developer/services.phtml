@@ -1,0 +1,126 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="" style="text-align:right">
+			<button type="button" class="btn btn-primary" onclick="showModal('','create');">
+				<span class="glyphicon glyphicon-plus"></span> Create from Git
+			</button>
+		</div>
+		<table id="servicesTable" class="table">
+			<thead>
+				<tr>
+					<th>Details</th>
+					<th class="text-center">Category</th>
+					<th class="text-center">Last Update</th>
+					<th class="text-center">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ($services as $service) {?>
+				<tr>
+					<td>
+						<b><?=$service->name?></b>
+						<?php if(empty($service->listed)) echo '<span class="label label-default">hidden</span>';?>
+					</td>
+					<td class="text-center"><?=$service->category?></td>
+					<td class="text-center"><?=date("Y/m/d H:i:s", strtotime($service->insertion_date))?></td>
+					<td class="text-center">
+						<a class="btn btn-default" target="_blank" href="/run/web?cm=<?=$service->name?>">Run</a>
+						<button class="btn btn-default" onclick="updateService('<?=$service->name?>');">Update</button>
+						<button class="btn btn-default" onclick="showModal('<?=$service->name?>','reset')">Reset</button>
+						<button class="btn btn-default" onclick="showModal('<?=$service->name?>','checkout')" href="/developer/services/checkout?service=<?=$service->name?>">Checkout</button>
+					</td>
+				</tr>
+			<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<div class="modal fade" id="serviceModal" tabindex="-1" role="dialog" aria-labelledby="serviceModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <label for="commit" class="col-form-label"></label>
+            <input type="text" class="form-control" id="commit">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+		<button type="button" class="btn btn-primary"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+	function showModal(service, modal){
+		$("#serviceModal").modal('show');
+		title = $("#serviceModal").find('.modal-title');
+		label = $("#serviceModal").find('.modal-body label');
+		input = $("#serviceModal").find('.modal-body input');
+		input.attr('placeholder','');
+		input.val('');
+		button = $("#serviceModal").find('.modal-footer .btn-primary');
+		button.unbind('click');
+		if(modal=="create"){
+			title.text('New Service');
+			label.text('Name of the service exactly as shown in Apretaste repository');
+			input.attr('placeholder','Name of the service');
+			button.text('Create');
+			button.click(() => {
+				let service = $("#serviceModal").find('.modal-body input').val();
+				let data = {'service': service, 'action':'create'};
+				$.post("/developer/services", data,
+					function (data, textStatus, jqXHR) {
+						alert(data);
+					}
+				);
+			});
+		}
+		else if(modal=="reset"){
+			title.text('Reset Service: ' + service);
+			label.text('Commit to reset');
+			input.attr('placeholder','Empty to reset to master');
+			button.text('Reset');
+			button.click(() => {
+				let commit = $("#serviceModal").find('.modal-body input').val();
+				let data = {'service': service, 'commit':commit, 'action':'reset'};
+				$.post("/developer/services", data,
+					function (data, textStatus, jqXHR) {
+						alert(data);
+					}
+				);
+			});
+		}
+		else if(modal=="checkout"){
+			title.text('Checkout branch in service: ' + service);
+			label.text('Branch to switch');
+			button.text('Checkout');
+			button.click(() => {
+				let branch = $("#serviceModal").find('.modal-body input').val();
+				let data = {'service': service, 'branch':branch, 'action':'checkout'};
+				$.post("/developer/services", data,
+					function (data, textStatus, jqXHR) {
+						alert(data);
+					}
+				);
+			});
+		}
+	}
+
+	function updateService(service){
+		$.post("/developer/services?service="+service+"&action=update",
+			function (data, textStatus, jqXHR) {
+				alert(data);
+			});
+	};
+</script>

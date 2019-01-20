@@ -20,14 +20,10 @@
 <body>
 	<!-- place to render the template -->
 	<content class="row"></content>
-	<pre></pre>
 
 	<!-- run the template -->
 	<script type="text/javascript">
-		//html entity decode
-		$('pre').html(`{{APP_JSON_RESPONSE}}`);
-		var $res = JSON.parse($('pre').html());
-		$('pre').remove();
+		var $res = {{APP_JSON_RESPONSE}}
 
 		//make the variables accesible from everywhere
 		for (var variable in $res) window[variable] = $res[variable];

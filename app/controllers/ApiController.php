@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use \Phalcon\Logger\Adapter\File;
 
 class ApiController extends Controller
 {
@@ -18,30 +19,51 @@ class ApiController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
+		//Open the logger
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/api.log");
+
 		// get the values from the post
-		$email = trim($this->request->get('email'));
+		$email = strtolower(trim($this->request->get('email')));
 		$pin = trim($this->request->get('pin'));
 		$appid = trim($this->request->get('appid'));
 		$appname = trim($this->request->get('appname')); // apretaste, pizarra, piropazo
 		$platform = trim($this->request->get('platform')); // android, web, ios
 
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("AUTH domain of email:$email from appname:$appname not allowed");
+			$logger->close();
+
+			echo '{"code":"error","message":"domain not allowed"}';
+			return;
+		}
+
 		// check if user/pass is correct
-		$auth = Connection::query("SELECT email,token FROM person WHERE LOWER(email)=LOWER('$email') AND pin='$pin'");
-		if(empty($auth)) {
+		$auth = Connection::query("SELECT email,token, blocked FROM person WHERE email='$email' AND pin='$pin'");
+		if(empty($auth)){
+			$logger->log("AUTH email($email) or pin($pin) invalid");
+			$logger->close();
+
 			echo '{"code":"error","message":"invalid email or pin"}';
-			return false;
+			return;
+		}
+
+		if($auth[0]->blocked){
+			$logger->log("AUTH user $email is blocked");
+			$logger->close();
+
+			echo '{"code":"error","message":"user is blocked"}';
+			return;
 		}
 
 		// save token in the database if it does not exist
 		$token = trim($auth[0]->token);
-		if(empty($token)) {
+		if(empty($token)){
 			$token = md5($email.$pin.rand());
 			Connection::query("UPDATE person SET token='$token' WHERE email='$email'");
 		}
 
 		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("AUTH email:$email, pin:$pin, appname:$appname");
 		$logger->close();
 
@@ -71,7 +93,7 @@ class ApiController extends Controller
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger = new File("$wwwroot/logs/api.log");
 		$logger->log("LOGOUT token:$token");
 		$logger->close();
 
@@ -91,18 +113,31 @@ class ApiController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		$email = trim($this->request->get('email'));
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/api.log");
+		$email = strtolower(trim($this->request->get('email')));
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$logger->log("AUTH email:$email invalid");
+			$logger->close();
+
 			echo '{"code":"error","message":"invalid email"}';
-			return false;
+			return;
+		}
+
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("AUTH domain of email:$email not allowed");
+			$logger->close();
+
+			echo '{"code":"error","message":"domain not allowed"}';
+			return;
 		}
 
 		// check if the email exist
 		if(Utils::getPerson($email)) {
 			echo '{"code":"error","message":"existing user"}';
-			return false;
+			return;
 		}
 
 		// create the new profile
@@ -110,8 +145,6 @@ class ApiController extends Controller
 		Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("REGISTER email:$email");
 		$logger->close();
 
@@ -131,19 +164,36 @@ class ApiController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
-		$email = trim($this->request->get('email'));
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/api.log");
+
+		$email = strtolower(trim($this->request->get('email')));
+
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("LOOKUP domain of email:$email not allowed");
+			$logger->close();
+
+			echo '{"code":"error","message":"domain not allowed"}';
+			return;
+		}
 
 		// check if the user exist
-		$res = Connection::query("SELECT email,pin FROM person WHERE LOWER(email)=LOWER('$email')");
+		$res = Connection::query("SELECT email, pin, blocked FROM person WHERE email='$email'");
 		$exist = empty($res) ? 'false' : 'true';
+
+		if(!empty($res) && $res[0]->blocked){
+			$logger->log("LOOKUP user $email is blocked");
+			$logger->close();
+
+			echo '{"code":"error","message":"user is blocked"}';
+			return;
+		}
 
 		// check if the user already created a pin
 		$pin = "unset";
 		if( ! empty($res) && ! empty($res[0]->pin)) $pin = "set";
 
 		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("LOOKUP user:$email, pin:$pin");
 		$logger->close();
 
@@ -163,21 +213,42 @@ class ApiController extends Controller
 		// allow JS clients to use the API
 		header("Access-Control-Allow-Origin: *");
 
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/api.log");
+
 		// params from GEt and default options
 		$email = trim($this->request->get('email'));
 		$lang = strtolower(trim($this->request->get('lang')));
 		if(array_search($lang, ['es', 'en']) === false) $lang = "es";
 
 		// check if the email is valid
-		if ( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$logger->log("AUTH email:$email invalid");
+			$logger->close();
+
 			echo '{"code":"error","message":"invalid email"}';
 			return false;
 		}
 
+		if(!Utils::isAllowedDomain($email)){
+			$logger->log("LOOKUP domain of email:$email not allowed");
+			$logger->close();
+
+			echo '{"code":"error","message":"domain not allowed"}';
+			return;
+		}
+
 		// if user does not exist, create it
 		$newUser = "false";
-		if( ! Utils::getPerson($email))
-		{
+		$person = Utils::getPerson($email);
+		if($person && $person->blocked){
+			$logger->log("LOOKUP user $email is blocked");
+			$logger->close();
+
+			echo '{"code":"error","message":"user is blocked"}';
+			return;
+		}
+		else if(!$person){
 			$newUser = "true";
 			$username = Utils::usernameFromEmail($email);
 			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
@@ -207,8 +278,6 @@ class ApiController extends Controller
 		}
 
 		// save the API log
-		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("START email:$email, lang:$lang, new:$newUser");
 		$logger->close();
 
@@ -282,7 +351,7 @@ class ApiController extends Controller
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+		$logger = new File("$wwwroot/logs/api.log");
 		$logger->log("UPDATEAPPID token:$token, appid:$appid, appname:$appname");
 		$logger->close();
 
