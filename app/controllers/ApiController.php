@@ -684,10 +684,18 @@ class ApiController extends Controller {
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
 
-      // $msg = ':D';
-      // $sendMessage($chat_id, ":D", $token);
+      $bad_words = ['pinga', 'cojone'];
+      $send = false;
+      foreach ($bad_words as $word)
+        if (stripos($text, $word) !== false) {
+          $send = true;
+          break;
+        }
 
-      // $msg = Connection::escape($msg);
+      if ($send){
+        $sendMessage($chat_id, "Hey @$username, habla bonito...", $token);
+      }
+
       Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
                       VALUES ('$username','unknown', '{$message['message']['text']}', '', '$chat_id')");
 
