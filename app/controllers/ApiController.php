@@ -494,7 +494,6 @@ class ApiController extends Controller {
         }
 
         $replyMarkup = urlencode($replyMarkup);
-
       }
 
       $wwwroot = $this->di->get('path')['root'];
@@ -520,6 +519,7 @@ class ApiController extends Controller {
 
     if (isset($message['message'])) {
       $private  = $message['message']['chat']['type'] == 'private';
+      $chat_username = isset($message['message']['chat']['username']) ? $message['message']['chat']['username'] : "";
       $username = $message['message']['from']['username'];
       $chat     = $message['message']['chat']['username'];
       $chat_id  = $message['message']['chat']['id'];
@@ -538,12 +538,13 @@ class ApiController extends Controller {
       {
         if (isset($message['message']['new_chat_members'])) {
           foreach ($message['message']['new_chat_members'] as $newMember) {
-            $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. Comparte con esta gran familia.", $token);
+            $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. \n\nEste grupo fue creado con el objetivo de intercambiar entre los usuarios de la plataforma Apretaste y sus desarrolladores. La idea es tener un canal alternativo para comunicarnos, compartir ideas, sugerencias, noticias, etc. \n\n Comparte con esta gran familia. ", $token);
           }
         }
       }
 
       Connection::query("INSERT IGNORE INTO telegram_members (username) VALUES ('$username');");
+      Connection::query("INSERT IGNORE INTO telegram_chats (id, title, `type`, username) VALUES ('$chat_id','{$message['message']['chat']['title']}','{$message['message']['chat']['type']}', '$chat_username');");
 
       Connection::query("UPDATE telegram_members SET 
                                 first_name = '{$message['message']['from']['first_name']}', 
@@ -581,8 +582,8 @@ class ApiController extends Controller {
           $sendMessage($chat_id, $msg, $token);
 
           $msg = Connection::escape($msg);
-          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
-                      VALUES ('$username','audiencia', '{$message['message']['text']}', '$msg')");
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','audiencia', '{$message['message']['text']}', '$msg', '$chat_id')");
           return;
         }
 
@@ -600,8 +601,8 @@ class ApiController extends Controller {
                                   ]}');
 
           $msg = Connection::escape($msg);
-          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
-                      VALUES ('$username','enlaces', '{$message['message']['text']}', '$msg')");
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','enlaces', '{$message['message']['text']}', '$msg', '$chat_id')");
 
           return;
         }
@@ -610,8 +611,8 @@ class ApiController extends Controller {
           $msg = "Hola soy Apretín, el bot de @ApretasteCuba. En que puedo ayudarte.";
           $sendMessage($chat_id, $msg, $token);
           $msg = Connection::escape($msg);
-          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
-                      VALUES ('$username','start', '{$message['message']['text']}', '$msg')");
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','start', '{$message['message']['text']}', '$msg', '$chat_id')");
 
           return;
         }
@@ -633,8 +634,8 @@ class ApiController extends Controller {
           ]}');
 
           $msg = Connection::escape($msg);
-          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
-                      VALUES ('$username','opciones', '{$message['message']['text']}', '$msg')");
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','opciones', '{$message['message']['text']}', '$msg', '$chat_id')");
 
           return;
         }
@@ -687,8 +688,8 @@ class ApiController extends Controller {
       // $sendMessage($chat_id, ":D", $token);
 
       // $msg = Connection::escape($msg);
-      Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message)
-                      VALUES ('$username','unknown', '{$message['message']['text']}', '')");
+      Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','unknown', '{$message['message']['text']}', '', '$chat_id')");
 
     }
   }
