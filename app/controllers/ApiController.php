@@ -583,6 +583,8 @@ class ApiController extends Controller {
               $data_email = $parts[0];
               $data_pin = intval($parts[1]);
 
+              $sendMessage($chat_id, "Estoy buscando tu cuenta $data_email en Apretaste! Dame un chance...", $token);
+
               $r = Connection::query("SELECT id, email FROM person WHERE email = '$data_email' AND pin = $data_pin AND pin <> null AND pin <> 0;");
               if (isset($r[0])){
                 Connection::query("UPDATE telegram_members SET id_person = {$r[0]->id} WHERE username = '$username';");
