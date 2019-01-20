@@ -573,6 +573,34 @@ class ApiController extends Controller {
           return;
         }
 
+        if ($text == "soy" || stripos($text, 'soy@') === 0) {
+          $data = trim(substr($text, strpos($text." ", ' ')));
+          if (!empty($data)){
+            while (strpos($data,"  ")!== false) $data = str_replace("  ", " ", $data);
+            $parts = explode(" ", $data);
+            if (isset($part[0]) && isset($part[1]))
+            {
+              $data_email = $parts[0];
+              $data_pin = intval($parts[1]);
+
+              $r = Connection::query("SELECT id, email FROM person WHERE email = '$data_email' AND pin = $data_pin AND pin <> null AND pin <> 0;");
+              if (isset($r[0])){
+                Connection::query("UPDATE telegram_members SET id_person = {$r[0]->id} WHERE username = '$username';");
+                $sendMessage($chat_id, "Enhorabuena! Ya se quien eres en Apretaste! Ahora tendremos mejores opciones para ti.", $token);
+                return;
+              } else
+              {
+                $sendMessage($chat_id, "No encuentro quien eres. Revisa bien tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba. Recuerda separarlos por un espacio.", $token);
+                return;
+              }
+            } else
+            {
+              $sendMessage($chat_id, "No entiendo quien eres. Debes escribir tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba separados por un espacio.", $token);
+              return;
+            }
+          }
+        }
+
         if ($text == "audiencia" || stripos($text, 'audiencia@') === 0) {
 
           $r  = Connection::query("SELECT count(*) AS total FROM delivery WHERE datediff(current_date, date(request_date)) <= 7;");
