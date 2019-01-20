@@ -593,12 +593,11 @@ class ApiController extends Controller {
                 $sendMessage($chat_id, "No encuentro quien eres. Revisa bien tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba. Recuerda separarlos por un espacio.", $token);
                 return;
               }
-            } else
-            {
-              $sendMessage($chat_id, "No entiendo quien eres. Debes escribir tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba separados por un espacio.", $token);
-              return;
             }
           }
+
+          $sendMessage($chat_id, "No entiendo quien eres. Debes escribir tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba separados por un espacio.", $token);
+          return;
         }
 
         if ($text == "audiencia" || stripos($text, 'audiencia@') === 0) {
