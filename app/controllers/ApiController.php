@@ -607,7 +607,7 @@ class ApiController extends Controller {
         // PIN command
         if (stripos($text, 'pin ') === 0 || stripos($text, 'pin@') === 0) {
           $data_email = trim(substr($text, strpos($text . " ", ' ')));
-          if (!empty($email)) {
+          if (!empty($data_email)) {
             $sendMessage($chat_id, "Estoy buscando tu PIN asociado a tu $data_email en Apretaste! Dame un chance...", $token);
             $r = Connection::query("SELECT pin FROM person WHERE email = '$data_email' AND pin is not null AND pin <> 0;");
 
