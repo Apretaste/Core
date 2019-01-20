@@ -576,9 +576,9 @@ class ApiController extends Controller {
         if (stripos($text, 'soy ') === 0 || stripos($text, 'soy@') === 0) {
           $data = trim(substr($text, strpos($text." ", ' ')));
           if (!empty($data)){
-            while (strpos($data,"  ")!== false) $data = str_replace("  ", " ", $data);
+            while (strpos($data,"  ") !== false) $data = str_replace("  ", " ", $data);
             $parts = explode(" ", $data);
-            if (isset($part[0]) && isset($part[1]))
+            if (isset($parts[0]) && isset($parts[1]))
             {
               $data_email = $parts[0];
               $data_pin = intval($parts[1]);
