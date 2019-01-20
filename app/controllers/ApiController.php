@@ -659,7 +659,9 @@ class ApiController extends Controller {
             [
               {"text":"Audiencia", "callback_data": "/audiencia"},
               {"text":"Enlaces", "callback_data": "/enlaces"},
-              {"text":"Descarga la app", "callback_data": "/app"}
+              {"text":"Descarga la app", "callback_data": "/app"},
+              {"text":"Enlazar con A!", "callback_data": "/soy"},
+              {"text":"Recibir PIN", "callback_data": "/pin"}
             ]
           ]}');
 
