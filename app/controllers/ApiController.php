@@ -573,7 +573,7 @@ class ApiController extends Controller {
           return;
         }
 
-        if ($text == "soy" || stripos($text, 'soy@') === 0) {
+        if (stripos($text, 'soy ') === 0 || stripos($text, 'soy@') === 0) {
           $data = trim(substr($text, strpos($text." ", ' ')));
           if (!empty($data)){
             while (strpos($data,"  ")!== false) $data = str_replace("  ", " ", $data);
