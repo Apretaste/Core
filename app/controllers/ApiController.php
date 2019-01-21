@@ -3,32 +3,70 @@
 use Phalcon\Mvc\Controller;
 use \Phalcon\Logger\Adapter\File;
 
-class ApiController extends Controller
-{
-	/**
-	 * Authenticate an user and return the token
-	 *
-	 * @author salvipascual
-	 * @version 1.1
-	 * @param POST email
-	 * @param POST pin
-	 * @return JSON with token
-	 */
-	public function authAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+class ApiController extends Controller {
 
-		//Open the logger
+  /**
+   * Check if user is blocked
+   *
+   * @param $email
+   *
+   * @return bool
+   */
+  public function isEnabledUser($email) {
+
+    // check if the user is blocked
+    if (Utils::isUserBlocked($email)) {
+      $wwwroot = $this->di->get('path')['root'];
+      $logger  = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+      $logger->log("User:$email, BLOCKED!");
+      $logger->close();
+      echo '{"code":"error","message":"user blocked"}';
+      return FALSE;
+    }
+
+    if (!Utils::isAllowedDomain($email)) {
+      $wwwroot = $this->di->get('path')['root'];
+      $logger  = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+      $logger->log("Domain of email:$email not allowed");
+      $logger->close();
+
+      echo '{"code":"error","message":"domain not allowed"}';
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * Authenticate an user and return the token
+   *
+   * @author salvipascual
+   * @version 1.1
+   *
+   * @param POST email
+   * @param POST pin
+   *
+   * @return bool | JSON with token
+   */
+  public function authAction() {
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
+
+    //Open the logger
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new File("$wwwroot/logs/api.log");
 
 		// get the values from the post
-		$email = strtolower(trim($this->request->get('email')));
-		$pin = trim($this->request->get('pin'));
-		$appid = trim($this->request->get('appid'));
-		$appname = trim($this->request->get('appname')); // apretaste, pizarra, piropazo
-		$platform = trim($this->request->get('platform')); // android, web, ios
+    $email = strtolower(trim($this->request->get('email')));
+
+    if (!$this->isEnabledUser($email)) {
+      return FALSE;
+    }
+
+    $pin      = trim($this->request->get('pin'));
+    $appid    = trim($this->request->get('appid'));
+    $appname  = trim($this->request->get('appname')); // apretaste, pizarra, piropazo
+    $platform = trim($this->request->get('platform')); // android, web, ios
 
 		if(!Utils::isAllowedDomain($email)){
 			$logger->log("AUTH domain of email:$email from appname:$appname not allowed");
@@ -67,29 +105,32 @@ class ApiController extends Controller
 		$logger->log("AUTH email:$email, pin:$pin, appname:$appname");
 		$logger->close();
 
-		// return ok response
-		echo '{"code":"ok","token":"'.$token.'"}';
-	}
+    // return ok response
+    echo '{"code":"ok","token":"' . $token . '"}';
 
-	/**
-	 * Authenticate an user and return the token
-	 *
-	 * @author salvipascual
-	 * @version 1.1
-	 * @param POST email
-	 * @param POST pin
-	 * @return JSON with token
-	 */
-	public function logoutAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+    return TRUE;
+  }
 
-		// get the values from the post
-		$token = trim($this->request->get('token'));
+  /**
+   * Authenticate an user and return the token
+   *
+   * @author salvipascual
+   * @version 1.1
+   *
+   * @param POST email
+   * @param POST pin
+   *
+   * @return JSON with token
+   */
+  public function logoutAction() {
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
 
-		// delete the token
-		Connection::query("UPDATE person SET token=NULL WHERE token='$token'");
+    // get the values from the post
+    $token = trim($this->request->get('token'));
+
+    // delete the token
+    Connection::query("UPDATE person SET token=NULL WHERE token='$token'");
 
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
@@ -97,25 +138,30 @@ class ApiController extends Controller
 		$logger->log("LOGOUT token:$token");
 		$logger->close();
 
-		// return ok response
-		echo '{"code":"ok"}';
-	}
+    // return ok response
+    echo '{"code":"ok"}';
+  }
 
-	/**
-	 * Register a new user from its email
-	 *
-	 * @author salvipascual
-	 * @param GET email
-	 * @return JSON with username
-	 */
-	public function registerAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+  /**
+   * Register a new user from its email
+   *
+   * @author salvipascual
+   *
+   * @param GET email
+   *
+   * @return bool | JSON with username
+   */
+  public function registerAction() {
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
 
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new File("$wwwroot/logs/api.log");
 		$email = strtolower(trim($this->request->get('email')));
+
+    if (!$this->isEnabledUser($email)) {
+      return FALSE;
+    }
 
 		// check if the email is valid
 		if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -140,29 +186,30 @@ class ApiController extends Controller
 			return;
 		}
 
-		// create the new profile
-		$username = Utils::usernameFromEmail($email);
-		Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
+    // create the new profile
+    $username = Utils::usernameFromEmail($email);
+    Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 
 		// save the API log
 		$logger->log("REGISTER email:$email");
 		$logger->close();
 
-		// return ok response
-		echo '{"code":"ok","username":"'.$username.'"}';
-	}
+    // return ok response
+    echo '{"code":"ok","username":"' . $username . '"}';
+  }
 
-	/**
-	 * Check if an email exist in Apretaste and if the pin is set
-	 *
-	 * @author salvipascual
-	 * @param GET email
-	 * @return JSON
-	 */
-	public function lookupAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+  /**
+   * Check if an email exist in Apretaste and if the pin is set
+   *
+   * @author salvipascual
+   *
+   * @param GET email
+   *
+   * @return JSON
+   */
+  public function lookupAction() {
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
 
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new File("$wwwroot/logs/api.log");
@@ -197,29 +244,85 @@ class ApiController extends Controller
 		$logger->log("LOOKUP user:$email, pin:$pin");
 		$logger->close();
 
-		echo '{"code":"ok","exist":"'.$exist.'","pin":"'.$pin.'"}';
-	}
+    echo '{"code":"ok","exist":"' . $exist . '","pin":"' . $pin . '"}';
+  }
 
-	/**
-	 * Creates a new user if it does not exist and email the code
-	 *
-	 * @author salvipascual
-	 * @param GET email
-	 * @param GET lang, two digits languge code, IE: en, es
-	 * @return JSON
-	 */
-	public function startAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+  /**
+   * Send PIN to user
+   *
+   * @param $email
+   * @param $pin
+   * @param $lang
+   * @param object $res
+   *
+   * @return bool
+   */
+  private function sendPIN($email, $pin, $lang = 'es', &$res = null) {
+    $wwwroot = $this->di->get('path')['root'];
+
+    $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+    $logger->log("SENT PIN email:$email, pin:$pin");
+    $logger->close();
+
+    Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
+
+    // create response to email the new code
+    $subject         = "Code: $pin";
+    $response        = new Response();
+    $response->email = $email;
+    $response->setEmailLayout('email_minimal.tpl');
+    $response->setResponseSubject($subject);
+    $response->createFromTemplate("pinrecover_$lang.tpl", ["pin" => $pin]);
+    $response->internal = TRUE;
+
+    // render the template as html
+    $body = Render::renderHTML(new Service(), $response);
+
+    // email the code to the user
+    $sender          = new Email();
+    $sender->to      = $email;
+    $sender->subject = $subject;
+    $sender->body    = $body;
+    try {
+      $res = $sender->sendEmailViaGmail();
+    } catch (Exception $e) {
+      $res       = new stdClass();
+      $res->code = "404";
+    }
+
+    if ($res->code != "200") {
+      $res = $sender->send();
+    }
+
+    return $res->code === "200";
+  }
+
+  /**
+   * Creates a new user if it does not exist and email the code
+   *
+   * @author salvipascual
+   *
+   * @param GET email
+   * @param GET lang, two digits languge code, IE: en, es
+   *
+   * @return string | boolean
+   */
+  public function startAction() {
+    $wwwroot = $this->di->get('path')['root'];
+
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
 
 		$wwwroot = $this->di->get('path')['root'];
-		$logger = new File("$wwwroot/logs/api.log");
-
-		// params from GEt and default options
+		$logger = new File("$wwwroot/logs/api.log");// params from GEt and default options
 		$email = trim($this->request->get('email'));
-		$lang = strtolower(trim($this->request->get('lang')));
-		if(array_search($lang, ['es', 'en']) === false) $lang = "es";
+
+		if (!$this->isEnabledUser($email)) {
+      return FALSE;
+    }
+
+    $lang = strtolower(trim($this->request->get('lang')));
+		if(array_search($lang, ['es', 'en']) === FALSE) { $lang = "es";}
 
 		// check if the email is valid
 		if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -254,9 +357,8 @@ class ApiController extends Controller
 			Connection::query("INSERT INTO person (email, username, source) VALUES ('$email', '$username', 'api')");
 		}
 
-		// create a new pin for the user
-		$pin = mt_rand(1000, 9999);
-		Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
+    // create a new pin for the user
+    $pin = mt_rand(1000, 9999);
 
 		$subject = "Code: $pin";
 		$body = "Su codigo secreto es: $pin.
@@ -308,38 +410,39 @@ class ApiController extends Controller
 		}
 	}
 
-	/**
-	 * Update the appid and appname for a certain token
-	 *
-	 * @author salvipascual
-	 * @version 1.0
-	 * @param POST token
-	 * @param POST appid
-	 * @param POST appname
-	 * @return JSON with code
-	 */
-	public function updateAppIdAction()
-	{
-		// allow JS clients to use the API
-		header("Access-Control-Allow-Origin: *");
+  /**
+   * Update the appid and appname for a certain token
+   *
+   * @author salvipascual
+   * @version 1.0
+   *
+   * @param POST token
+   * @param POST appid
+   * @param POST appname
+   *
+   * @return JSON with code
+   */
+  public function updateAppIdAction() {
+    // allow JS clients to use the API
+    header("Access-Control-Allow-Origin: *");
 
-		// get params from GET
-		$token = $this->request->get("token");
-		$appid = trim($this->request->get('appid'));
-		$appname = trim($this->request->get('appname'));
+    // get params from GET
+    $token   = $this->request->get("token");
+    $appid   = trim($this->request->get('appid'));
+    $appname = trim($this->request->get('appname'));
 
-		// force appid and appname
-		if(empty($appid) || empty($appname)) {
-			echo '{"code":"error","message":"missing appid or appname"}';
-			return false;
-		}
+    // force appid and appname
+    if (empty($appid) || empty($appname)) {
+      echo '{"code":"error","message":"missing appid or appname"}';
+      return FALSE;
+    }
 
-		// check if token exists
-		$email = Utils::detokenize($token);
-		if(empty($email)) {
-			echo '{"code":"error","message":"invalid token"}';
-			return false;
-		}
+    // check if token exists
+    $email = Utils::detokenize($token);
+    if (empty($email)) {
+      echo '{"code":"error","message":"invalid token"}';
+      return FALSE;
+    }
 
 		// get the person's numeric ID
 		$person = Utils::gerPerson($email);
@@ -355,25 +458,25 @@ class ApiController extends Controller
 		$logger->log("UPDATEAPPID token:$token, appid:$appid, appname:$appname");
 		$logger->close();
 
-		// return ok response
-		echo '{"code":"ok"}';
-	}
+    // return ok response
+    echo '{"code":"ok"}';
+  }
 
-	/**
-	 * Save a user's appid to contact him/her later via web push notifications
-	 *
-	 * @author salvipascual
-	 * @param POST email
-	 * @param POST appid
-	 */
-	public function saveAppIdAction()
-	{
-		$email = $this->request->get('email');
-		$appid = $this->request->get('appid');
-	
-		// escape values before saving to the db
-		$email = Connection::escape($email);
-		$appid = Connection::escape($appid);
+  /**
+   * Save a user's appid to contact him/her later via web push notifications
+   *
+   * @author salvipascual
+   *
+   * @param POST email
+   * @param POST appid
+   */
+  public function saveAppIdAction() {
+    $email = $this->request->get('email');
+    $appid = $this->request->get('appid');
+
+    // escape values before saving to the db
+    $email = Connection::escape($email);
+    $appid = Connection::escape($appid);
 
 		// create login token
 		$token = Utils::generateRandomHash();
@@ -383,7 +486,7 @@ class ApiController extends Controller
 
 		// check if the row already exists
 		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='{$person->id}' AND appname='apretaste' AND platform='web'");
-		
+
 		// if the row do not exist, create it
 		if(empty($row)) {
 			Connection::query("INSERT INTO authentication(token,person_id,appid,appname,platform) VALUES ('$token','{$person->id}','$appid','apretaste','web')");
@@ -394,17 +497,56 @@ class ApiController extends Controller
 		}
 	}
 
-	/**
-	 * Used for the app to check if there is http conectivity
-	 *
-	 * @author salvipascual
-	 * @version 1.0
-	 * @return JSON with code
-	 */
-	public function checkAction()
-	{
-		echo '{"code":"200"}';
-	}
+  /**
+   * Used for the app to check if there is http conectivity
+   *
+   * @author salvipascual
+   * @version 1.0
+   */
+  public function checkAction() {
+    echo '{"code":"200"}';
+  }
+
+  /**
+   * Check if user exists
+   *
+   * @param $userId
+   *
+   * @throws Phalcon\Exception
+   */
+  public function checkUserAction($userId) {
+    if (!Utils::isInternalNetwork()) {
+      throw new Phalcon\Exception("Access denied for " . php::getClientIP() . " to Api::checkUserAction");
+    }
+
+    $this->response->setHeader("Content-type", "application/json");
+
+    echo (Utils::getEmailFromId($userId) === FALSE) ?
+      '{"result": false }' : '{"result": true}';
+  }
+
+  /**
+   * Check token
+   *
+   * @param $token
+   * @param $userId
+   *
+   * @throws Phalcon\Exception
+   */
+  public function checkTokenAction($userId, $token) {
+
+    if (!Utils::isInternalNetwork()) {
+      throw new Phalcon\Exception("Access denied for " . php::getClientIP() . " to Api::checkUserAction");
+    }
+
+    $this->response->setHeader("Content-type", "application/json");
+
+    $security = new Security();
+    $user     = $security->loginByToken($token);
+    echo ($user === FALSE) ?
+      '{"result": false }' : ($user->id === $userId ? '{"result": true}' : '{"result": false}');
+
+  }
 
   /**
    * Apretin Bot
@@ -472,12 +614,13 @@ class ApiController extends Controller
     }
 
     if (isset($message['message'])) {
-      $private  = $message['message']['chat']['type'] == 'private';
-      $chat_username = isset($message['message']['chat']['username']) ? $message['message']['chat']['username'] : "";
-      $username = $message['message']['from']['username'];
-      $chat     = $message['message']['chat']['username'];
-      $chat_id  = $message['message']['chat']['id'];
-      $text     = $message['message']['text'];
+      $chat_type = $message['message']['chat']['type'];
+      $private                    = $chat_type == 'private';
+      $chat_username              = isset($message['message']['chat']['username']) ? $message['message']['chat']['username'] : "";
+      $username                   = $message['message']['from']['username'];
+      $chat                       = $message['message']['chat']['username'];
+      $chat_id                    = $message['message']['chat']['id'];
+      $text                       = $message['message']['text'];
       $message['message']['text'] = Connection::escape($message['message']['text']);
 
       $log([
@@ -486,10 +629,16 @@ class ApiController extends Controller
         "\n\n",
       ]);
 
+      // check valid group
+      if (array_search($chat_username,['ApretasteCuba', 'apretaste']) && ! $private)
+      {
+        $sendMessage($chat_id, "Uff, no me gusta estar aqui...", $token);
+        return;
+      }
+
       $new = Connection::query("SELECT username FROM telegram_members WHERE username = '$username';");
 
-      if (!isset($new[0]))
-      {
+      if (!isset($new[0])) {
         if (isset($message['message']['new_chat_members'])) {
           foreach ($message['message']['new_chat_members'] as $newMember) {
             $sendMessage($chat_id, "Hola {$newMember['first_name']} {$newMember['last_name']}, te doy la bienvenida a Apretaste. \n\nEste grupo fue creado con el objetivo de intercambiar entre los usuarios de la plataforma Apretaste y sus desarrolladores. La idea es tener un canal alternativo para comunicarnos, compartir ideas, sugerencias, noticias, etc. \n\n Comparte con esta gran familia. ", $token);
@@ -527,6 +676,83 @@ class ApiController extends Controller
           return;
         }
 
+        // PIN command
+        if (stripos($text, 'pin ') === 0 || stripos($text, 'pin@') === 0) {
+          $data_email = trim(substr($text, strpos($text . " ", ' ')));
+          if (!empty($data_email)) {
+            $sendMessage($chat_id, "Estoy buscando tu PIN asociado a tu $data_email en Apretaste! Dame un chance...", $token);
+            $r = Connection::query("SELECT pin FROM person WHERE email = '$data_email' AND pin is not null AND pin <> 0;");
+
+            if (isset($r[0]))
+            {
+              $pin = intval($r[0]->pin);
+              $res = null;
+              $this->sendPIN($data_email, $pin, 'es', $res);
+              $msg = Connection::escape("Te envie el PIN a $data_email! Revisa tu correo y dime quien eres...");
+              $sendMessage($chat_id, $msg, $token,'{
+              "inline_keyboard": [
+                [
+                  {"text":"Soy ...", "callback_data": "/soy email pin"},
+                  {"text":"Reenviar PIN", "callback_data": "/enlaces"},
+                  {"text":"No me llega el PIN", "callback_data": "/opciones"}
+                ]
+              ]}');
+
+              Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username', 'pin', '{$message['message']['text']}', '$msg', '$chat_id')");
+
+              return;
+            }
+          }
+        }
+
+        // SOY command
+        if (stripos($text, 'soy ') === 0 || stripos($text, 'soy@') === 0) {
+          $data = trim(substr($text, strpos($text . " ", ' ')));
+
+          if (!empty($data)) {
+            while (strpos($data, "  ") !== FALSE) {
+              $data = str_replace("  ", " ", $data);
+            }
+            $parts = explode(" ", $data);
+            if (isset($parts[0]) && isset($parts[1])) {
+              $data_email = $parts[0];
+              $data_pin   = intval($parts[1]);
+
+              $sendMessage($chat_id, "Estoy buscando tu cuenta $data_email en Apretaste! Dame un chance...", $token);
+
+              $r = Connection::query("SELECT id, email FROM person WHERE email = '$data_email' AND pin = $data_pin AND pin is not null AND pin <> 0;");
+
+              if (isset($r[0])) {
+                Connection::query("UPDATE telegram_members SET id_person = {$r[0]->id} WHERE username = '$username';");
+                $msg = Connection::escape("Enhorabuena! Ya se quien eres en Apretaste! Ahora tendremos mejores opciones para ti.");
+                $sendMessage($chat_id, $msg, $token);
+
+                $msg = Connection::escape($msg);
+                Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','soy', '{$message['message']['text']}', '$msg', '$chat_id')");
+
+                return;
+              }
+              else {
+                $msg = Connection::escape("No encuentro quien eres. Revisa bien tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba. Recuerda separarlos por un espacio.");
+                $sendMessage($chat_id, $msg, $token);
+                Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','soy', '{$message['message']['text']}', '$msg', '$chat_id')");
+
+                return;
+              }
+            }
+          }
+          $msg = Connection::escape("No entiendo quien eres. Debes escribir tu email y el pin utilizado para autenticarte en la #app de @ApretasteCuba separados por un espacio.");
+          $sendMessage($chat_id, $msg, $token);
+          Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+                      VALUES ('$username','soy', '{$message['message']['text']}', '$msg', '$chat_id')");
+
+          return;
+        }
+
+        // AUDIENCIA command
         if ($text == "audiencia" || stripos($text, 'audiencia@') === 0) {
 
           $r  = Connection::query("SELECT count(*) AS total FROM delivery WHERE datediff(current_date, date(request_date)) <= 7;");
@@ -541,6 +767,7 @@ class ApiController extends Controller
           return;
         }
 
+        // ENALCES command
         if ($text == "enlaces" || stripos($text, 'enlaces@') === 0) {
 
           $msg = 'Estamos en las redes sociales';
@@ -561,21 +788,23 @@ class ApiController extends Controller
           return;
         }
 
+        // START command
         if ($text == "start" || stripos($text, 'start@') === 0) {
           $msg = "Hola soy Apretín, el bot de @ApretasteCuba. En que puedo ayudarte.";
           $sendMessage($chat_id, $msg, $token);
           $msg = Connection::escape($msg);
           Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
                       VALUES ('$username','start', '{$message['message']['text']}', '$msg', '$chat_id')");
-
           return;
         }
 
+        // APP command
         if ($text == "app" || stripos($text, 'app@') === 0) {
           $sendMessage($chat_id, "Descarga nuestra #app desde Play Store\n https://play.google.com/store/apps/details?id=com.apretaste.apretaste", $token);
           return;
         }
 
+        // OPCIONES command
         if ($text == "opciones" || stripos($text, 'opciones@') === 0) {
           $msg = "Opciones de Apretin";
           $sendMessage($chat_id, $msg, $token, '{
@@ -583,7 +812,9 @@ class ApiController extends Controller
             [
               {"text":"Audiencia", "callback_data": "/audiencia"},
               {"text":"Enlaces", "callback_data": "/enlaces"},
-              {"text":"Descarga la app", "callback_data": "/app"}
+              {"text":"Descarga la app", "callback_data": "/app"},
+              {"text":"Enlazar con A!", "callback_data": "/soy"},
+              {"text":"Recibir PIN", "callback_data": "/pin"}
             ]
           ]}');
 
@@ -594,39 +825,38 @@ class ApiController extends Controller
           return;
         }
 
-        if (stripos($text,"admin:sql ") === 0 && $username === 'kumahacker') {
-          $sql = trim(substr($text, stripos($text,' ')));
+        // Admin Commands
+        if (stripos($text, "admin:sql ") === 0 && $username === 'kumahacker') {
+          $sql = trim(substr($text, stripos($text, ' ')));
 
           $result = @Connection::query($sql);
 
-          if (!is_array($result))
-          {
+          if (!is_array($result)) {
             $sendMessage($chat_id, "No results", $token);
             return;
           }
 
           $output = '<pre>';
-          if (is_array($result)){
-            $first = true;
-            foreach($result as $row)
-            {
-              if (is_object($row)) $row = get_object_vars($row);
+          if (is_array($result)) {
+            $first = TRUE;
+            foreach ($result as $row) {
+              if (is_object($row)) {
+                $row = get_object_vars($row);
+              }
               if ($first) {
-                $output .= str_repeat("-", 50)."\n";
-                foreach ($row as $field => $value)
-                {
-                  $output .= $field ."\t";
+                $output .= str_repeat("-", 50) . "\n";
+                foreach ($row as $field => $value) {
+                  $output .= $field . "\t";
                 }
-                $output .= "\n".str_repeat("-", 50)."\n";
+                $output .= "\n" . str_repeat("-", 50) . "\n";
               }
 
-              foreach ($row as $field => $value)
-              {
-                $output .= $value ." \t";
+              foreach ($row as $field => $value) {
+                $output .= $value . " \t";
               }
 
               $output .= "\n";
-              $first = false;
+              $first  = FALSE;
             }
           }
 
@@ -638,19 +868,22 @@ class ApiController extends Controller
         $sendMessage($chat_id, "Lo siento @$username, pero no entendi que quisiste decir.", $token);
       }
 
-      $bad_words = ['pinga', 'cojone'];
-      $send = false;
-      foreach ($bad_words as $word)
-        if (stripos($text, $word) !== false) {
-          $send = true;
+      $bad_words = explode(',', 'pinga,cojone,pingon,maricon,puta,singao,hijo de puta');
+      $send      = FALSE;
+      foreach ($bad_words as $word) {
+        if (stripos($text, $word) !== FALSE) {
+          $send = TRUE;
           break;
         }
+      }
 
-      if ($send){
-        if (stripos($text, 'apretin') !== false)
+      if ($send) {
+        if (stripos($text, 'apretin') !== FALSE) {
           $sendMessage($chat_id, "Oye @$username, a mi me hablas bien!", $token);
-        else
+        }
+        else {
           $sendMessage($chat_id, "Hey @$username, habla bonito...", $token);
+        }
       }
 
       Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)

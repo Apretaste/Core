@@ -87,6 +87,19 @@ class Utils
 	}
 
 	/**
+	 * Check if the domain of the email is allowed
+	 *
+	 * @author salvipascual
+	 * @return boolean
+	 */
+	public static function isAllowedDomain($email){
+		$domain = substr($email, strpos($email,'@') + 1);
+		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
+		if(!empty($isAllowed)) return true;
+		return false;
+	}
+
+	/**
 	 * Check if a user exists and get the profile
 	 *
 	 * @author salvipascual
@@ -1042,7 +1055,7 @@ class Utils
 	 * @return array (Object, Attachments)
 	 */
 	public static function getAppData($person, $input, &$response){
-		
+
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
@@ -1058,7 +1071,7 @@ class Utils
 				SELECT name, description, category
 				FROM service
 				WHERE listed=1");
-			
+
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 			foreach ($services as $s) {
@@ -1118,7 +1131,7 @@ class Utils
 
 	/**
 	 * Create a Service object and execute the response
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param Person $person
 	 * @param Input $input
@@ -1232,7 +1245,7 @@ class Utils
 				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
 			}
 		}
-		
+
 		// close the zip file
 		$zip->close();
 
@@ -1242,7 +1255,7 @@ class Utils
 
 	/**
 	 * Optimize the images to send by the user
-	 * 
+	 *
 	 * @author salvipascual
 	 * @param String $content from json_parse
 	 * @param Array $images
@@ -1254,7 +1267,7 @@ class Utils
 		// do not work for empty images
 		if(empty($images)) return;
 		// convert content to String
-		
+
 		$content = str_replace('\\', '', $content); //prevent troubles with json parse
 
 		// for the web
@@ -1265,17 +1278,17 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// do not optimize for web and copy the image to public/temp
-			for ($i=0; $i<count($images); $i++) { 
+			for ($i=0; $i<count($images); $i++) {
 				$file = "$wwwroot/public/temp/".basename($images[$i]);
 				if(file_exists($images[$i]) && !file_exists($file)) @copy($images[$i], $file);
 				$file = basename($file);
 				$content = str_replace($images[$i], $file, $content);
 			}
-		} 
+		}
 		else if($input->environment == "app") { // for the app
 			$serviceImgs = [];
 			for ($i=0; $i<count($images); $i++) {
-				$isServiceImg = (strpos($images[$i],'/services/') && strpos($images[$i],'/images/'));				
+				$isServiceImg = (strpos($images[$i],'/services/') && strpos($images[$i],'/images/'));
 
 				// do not oprimize images that are part of the service files
 				if($isServiceImg){
@@ -1292,9 +1305,62 @@ class Utils
 				$content = str_replace($images[$i], basename($file), $content);
 				$images[$i] = $file;
 			}
-			
+
 			//don't send images that are part of the service files
 			$images = array_diff($images,$serviceImgs);
 		}
 	}
+
+  /**
+   * Check for internal network
+   *
+   * @return bool
+   */
+	public static function isInternalNetwork(){
+	  $ip = php::getClientIP();
+	  return php::startsWith($ip,"10.0.0.") || $ip === "127.0.0.1";
+  }
+
+  public static function file_get_contents_curl($url)
+  {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //Set curl to return the data instead of printing it to the browser.
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_URL, $url);
+
+    $data = curl_exec($ch);
+
+    /* Check for 404 (file not found). */
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if($httpCode == 404)
+    {
+      /* Handle 404 here. */
+      $data = false;
+    }
+    curl_close($ch);
+
+    return $data;
+  }
+
+  /**
+   * Check if user is blocked
+   *
+   * @param $email
+   *
+   * @return bool
+   */
+  static function isUserBlocked($email) {
+    $blocked = Connection::query("SELECT email FROM person WHERE lower(email) = lower('$email') AND blocked=1;");
+    if (isset($blocked[0])) {
+      Connection::query("UPDATE person SET pin = 0, token = null WHERE email = '$email';");
+      return true;
+    }
+    return false;
+  }
 }

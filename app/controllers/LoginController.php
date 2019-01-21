@@ -121,7 +121,7 @@ class LoginController extends Controller
 		Por favor no comparta el numero con nadie que se lo pida.";
 
 		$logger->log("Login| Sending PIN code to {$email}");
-		
+
 		// email the code to the user
 		$codeEmail = new Email();
 		$codeEmail->to = $email;
