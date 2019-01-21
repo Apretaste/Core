@@ -115,19 +115,6 @@ class Utils
 	}
 
 	/**
-	 * Check if a user is blocked
-	 *
-	 * @author salvipascual
-	 * @return boolean
-	 */
-	public static function isAllowedDomain($email){
-		$domain = substr($email, strpos($email,'@') + 1);
-		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
-		if(!empty($isAllowed)) return true;
-		return false;
-	}
-
-	/**
 	 * Create a unique username using the email
 	 *
 	 * @author salvipascual
@@ -593,6 +580,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
+      $email = self::getEmailFromId($id);
 			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/web?cm=$link{$tokenStr}";
@@ -614,7 +602,7 @@ class Utils
 		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id");
 
 		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (id_person, origin, `text`, link, tag, ispush) VALUES ($id_person,'$origin','$text','$link','$tag','$ispush')");
+		return Connection::query("INSERT INTO notifications (id_person, origin, `text`, link, tag, ispush) VALUES ($id,'$origin','$text','$link','$tag','$ispush')");
 	}
 
 	/**

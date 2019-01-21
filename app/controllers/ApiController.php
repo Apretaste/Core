@@ -252,12 +252,11 @@ class ApiController extends Controller {
    *
    * @param $email
    * @param $pin
-   * @param $lang
    * @param object $res
    *
    * @return bool
    */
-  private function sendPIN($email, $pin, $lang = 'es', &$res = null) {
+  private function sendPIN($email, $pin, &$res = null) {
     $wwwroot = $this->di->get('path')['root'];
 
     $logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
@@ -266,23 +265,19 @@ class ApiController extends Controller {
 
     Connection::query("UPDATE person SET pin='$pin' WHERE email='$email'");
 
-    // create response to email the new code
-    $subject         = "Code: $pin";
-    $response        = new Response();
-    $response->email = $email;
-    $response->setEmailLayout('email_minimal.tpl');
-    $response->setResponseSubject($subject);
-    $response->createFromTemplate("pinrecover_$lang.tpl", ["pin" => $pin]);
-    $response->internal = TRUE;
-
-    // render the template as html
-    $body = Render::renderHTML(new Service(), $response);
+    $subject = "Code: $pin";
+    $body = "Su codigo secreto es: $pin.
+		Use este codigo para registrarse en nuestra app o web. 
+		Si usted no esperaba este codigo, elimine este email ahora. 
+		Por favor no comparta el numero con nadie que se lo pida.";
 
     // email the code to the user
-    $sender          = new Email();
-    $sender->to      = $email;
+    $sender = new Email();
+    $sender->to = $email;
     $sender->subject = $subject;
-    $sender->body    = $body;
+    $sender->body = $body;
+    $res = $sender->send();
+
     try {
       $res = $sender->sendEmailViaGmail();
     } catch (Exception $e) {
@@ -359,19 +354,8 @@ class ApiController extends Controller {
 
     // create a new pin for the user
     $pin = mt_rand(1000, 9999);
-
-		$subject = "Code: $pin";
-		$body = "Su codigo secreto es: $pin.
-		Use este codigo para registrarse en nuestra app o web. 
-		Si usted no esperaba este codigo, elimine este email ahora. 
-		Por favor no comparta el numero con nadie que se lo pida.";
-
-		// email the code to the user
-		$sender = new Email();
-		$sender->to = $email;
-		$sender->subject = $subject;
-		$sender->body = $body;
-		$res = $sender->send();
+		$res = null;
+    $this->sendPIN($email, $pin, $res);
 
 		// return error response
 		if($res->code != "200") {
@@ -385,6 +369,7 @@ class ApiController extends Controller {
 
 		// return ok response
 		echo '{"code":"ok", "newuser":"'.$newUser.'"}';
+		return true;
 	}
 
 	/**
