@@ -23,7 +23,8 @@
 
 	<!-- run the template -->
 	<script type="text/javascript">
-		var $res = {{APP_JSON_RESPONSE}};
+		var $res = {{APP_JSON_RESPONSE}}
+
 		//make the variables accesible from everywhere
 		for (var variable in $res) window[variable] = $res[variable];
 		var html = ejs.render(`{{APP_LAYOUT_CODE}}`, $res);

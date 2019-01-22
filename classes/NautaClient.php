@@ -75,8 +75,9 @@ class NautaClient
 	 * @param string $user
 	 * @param string $pass
 	 * @param bool $proxy, true to use a proxy
+   * @param bool $tor, true to use tor network
 	 */
-	public function __construct($user=null, $pass=null, $proxy=false)
+	public function __construct($user=null, $pass=null, $proxy=false, $tor = false)
 	{
     $di = \Phalcon\DI\FactoryDefault::getDefault();
     $wwwroot = $di->get('path')['root'];
@@ -91,12 +92,17 @@ class NautaClient
 
 		// set proxy if passed
 		if($proxy) {
-			/*curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
-			curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);*/
-
-      curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
-      curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
-		}
+		  if ($tor) {
+        $this->logger->log("--- {$this->user} using TOR");
+        curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
+        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+      } else
+      {
+        $this->logger->log("--- {$this->user} using PROXY");
+        curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
+        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+      }
+  	}
 
 		// save cookie file
 		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
@@ -248,6 +254,11 @@ class NautaClient
 	{
 		if ($this->checkLogin()) return true;
 
+    $tries = 3;
+    TryAgain:
+
+    $this->logger->log("Login {$this->user} ... try $tries ...");
+
 		// save the captcha image in the temp folder
 		$captchaImage = Utils::getTempDir() . "capcha/" . Utils::generateRandomHash() . ".jpg";
 		$captchaUrl = $this->getCaptchaUrl();
@@ -339,15 +350,15 @@ class NautaClient
 		  return false;
     }
 
-		if (stripos($response, 'digo de verificaci') !== false &&
-			stripos($response, 'n incorrecto') !== false)
+		if (stripos($response, 'digo de verificaci') !== false && stripos($response, 'n incorrecto') !== false)
     {
-      $this->logger->log("Invalid captcha code for {$this->user} ...");
+      $this->logger->log("Invalid captcha code for {$this->user} ...tries = $tries ...");
+      if ($tries-- < 0) goto TryAgain;
+
       return false;
     }
 
-		if (stripos($response, 'Login failed') !== false &&
-			stripos($response, '<ul class="notices">') !== false)
+		if (stripos($response, 'Login failed') !== false && stripos($response, '<ul class="notices">') !== false)
     {
       $this->logger->log("Login failed for {$this->user} ...");
       return false;

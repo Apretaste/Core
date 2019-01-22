@@ -18,21 +18,21 @@ var apretaste = {
 	// }
 	//
 	send: function (json) {
-		// prepare data to make the request
+		// prepare to make a clean request
 		json.command = json.command.trim().replace(' ', '_');
-		if(json.redirect == undefined) json.redirect = true;
 		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
+		if(json.redirect == undefined) json.redirect = true;
 
 		// make a simple redirect
 		if(json.redirect) {
 			var href = '/run/web?cm='+json.command;
 			if(json.data) href += '&dt='+json.data;
-			setTimeout(function() { // delay redirect to avoid errors
+			setTimeout(function() { // delay redirect to avoid Phalcon errors
 				window.location.replace(href);
 			}, 50);
 		} else {
 			//send the data via post and stay in the same page
-			setTimeout(function() { // delay redirect to avoid errors
+			setTimeout(function() { // delay redirect to avoid Phalcon errors
 				$.ajax({
 					type: "GET",
 					url: '/run/web?cm='+json.command,

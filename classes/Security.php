@@ -1,26 +1,19 @@
 <?php
 
+use \Phalcon\DI\FactoryDefault;
+
 class Security
 {
 	/**
 	 * Login a user
 	 *
 	 * @author salvipascual
-	 * @param String $emal
-	 * @param String $pin
+	 * @param String $email
 	 * @return Object | Boolean
 	 */
-	public function login($email, $pin)
-	{
-		// check if the user/pin is ok
-		$person = Connection::query("SELECT id, first_name, picture, blocked FROM person WHERE email='$email' AND pin='$pin'");
-		
-		// do not respond to blocked accounts
-		if(empty($person) || $person[0]->blocked) return false; else $person = $person[0];
-
+	public static function login($person){
 		// get the path to root folder
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$httproot = $di->get('path')['http'];
+		$httproot = FactoryDefault::getDefault()->get('path')['http'];
 
 		// get the profile image
 		if($person->picture) $picture = "$httproot/profile/{$person->picture}.jpg";
@@ -29,12 +22,12 @@ class Security
 		// create the user object to save in the session
 		$user = new stdClass();
 		$user->id = $person->id;
-		$user->email = $email;
+		$user->email = $person->email;
 		$user->name = $person->first_name;
 		$user->picture = $picture;
 
 		// add manager data if the user works at Apretaste
-		$manager = Connection::query("SELECT occupation, pages, start_page FROM manage_users WHERE email='$email'");
+		$manager = Connection::query("SELECT occupation, pages, start_page FROM manage_users WHERE email='$person->email'");
 		$user->isManager = ! empty($manager);
 		$user->position = empty($manager) ? "" : $manager[0]->occupation;
 		$user->pages = empty($manager) ? [] : explode(",", $manager[0]->pages);
@@ -45,8 +38,7 @@ class Security
 		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
 
 		// save the user in the session
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$di->getShared("session")->set("user", $user);
+		FactoryDefault::getDefault()->getShared("session")->set("user", $user);
 		return $user;
 	}
 
@@ -55,21 +47,16 @@ class Security
 	 *
 	 * @author salvipascual
 	 * @param String $emal
-	 * @return Object | Boolean
+	 * @return Boolean
 	 */
-	public function loginByIP($email)
-	{
-		// get the lastest IP and date
-		$person = Connection::query("SELECT last_ip, pin FROM person WHERE email='$email'");
-		if(empty($person)) return false; else $person = $person[0];
-
+	public static function loginByIP($person){
 		// check if user can be logged
 		$ip = php::getClientIP();
 		$localIP = $ip == "127.0.0.1";
 		$sameIP = $ip == $person->last_ip;
 
 		// log in the user and return
-		if($localIP || $sameIP) return $this->login($email, $person->pin);
+		if($localIP || $sameIP) return self::login($person);
 		else return false;
 	}
 
@@ -80,17 +67,21 @@ class Security
 	 * @param String $token
 	 * @return Object | Boolean
 	 */
-	public function loginByToken($token)
+	public static function loginByToken($token)
 	{
 		// do not allow empty tokens
-		if(empty($token)) return false;
+		if(empty($token)) return '{"code":"300", "message":"Empty token"}';
 
 		// get the email and pin using the token
-		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token'");
-		if(empty($person)) return false;
+		$person = Connection::query("SELECT id, email, first_name, pin, blocked, picture FROM person WHERE token='$token'");
+		if(empty($person)) return '{"code":"301", "message":"Bad token"}';
+		else $person = $person[0];
+
+		if($person->blocked) return '{"code":"302", "message":"User is blocked"}';
+		else if(!Utils::isAllowedDomain($person->email)) return '{"code":"303", "message":"Domain of email is not allowed"}';
 
 		// log in the user and return
-		return $this->login($person[0]->email, $person[0]->pin);
+		return self::login($person);
 	}
 
 	/**
@@ -98,10 +89,10 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function logout()
+	public static function logout()
 	{
 		// get the group from the configs file
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$di->getShared("session")->remove("user");
 		header("Location: /login"); exit;
 	}
@@ -114,7 +105,7 @@ class Security
 	public function checkLogin()
 	{
 		// check if the user is logged, else redirect
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		return $di->getShared("session")->has("user");
 	}
 
@@ -125,7 +116,7 @@ class Security
 	 */
 	public function checkAccess($page)
 	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$user = $di->getShared("session")->get("user");
 
 		if(empty($user->pages)) return false;
@@ -140,7 +131,7 @@ class Security
 	public function enforceLogin()
 	{
 		// check if the user is logged, else redirect
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = FactoryDefault::getDefault();
 		$isUserLogin = $di->getShared("session")->has("user");
 
 		// block when a user is not logged
@@ -156,9 +147,8 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function getUser()
-	{
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
+	public function getUser(){
+		$di = FactoryDefault::getDefault();
 		return $di->getShared("session")->get("user");
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use Phalcon\DI\FactoryDefault;
 
 class DeveloperController extends Controller
 {
@@ -198,5 +199,62 @@ class DeveloperController extends Controller
 		$this->view->title = "Alerts ($total)";
 		$this->view->alerts = $alerts;
 		$this->view->buttons = [["caption"=>"Fix all checked", "href"=>"#", "onclick"=>"$('#formAlerts').submit();"]];
+	}
+
+	/**
+	* List of services
+	*/
+	public function servicesAction(){
+		$action = $this->request->get("action");
+
+		if(empty($action)){
+			$services = Connection::query("SELECT * FROM service");
+			$this->view->title = "List of services (".count($services).")";
+			$this->view->services = $services;
+		}
+		else if($action=="create"){
+			$this->view->disable();
+			$service = $this->request->get("service");
+			if(empty($service)) return "No service specified";
+
+			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
+			$servicesDir = "$wwwroot/services";
+
+			if(file_exists("$servicesDir/$service/service.php")) return "Service exists in storage";
+			
+			$result = shell_exec("cd $servicesDir && git clone https://github.com/Apretaste/$service.git 2>&1");
+			Deploy::updateServiceInfo($serviceDir);
+			return $result;
+		}
+		else{
+			$this->view->disable();
+			$service = $this->request->get("service");
+			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
+			$servicePath = "$wwwroot/services/$service";
+			if(!file_exists("$servicePath/service.php")) return "Service not found in storage";
+
+			if($action="update"){
+				$result = shell_exec("cd $servicePath && git pull 2>&1");
+				
+				Deploy::updateServiceInfo($servicePath);
+				return $result;
+			}
+			else if($action=="reset"){
+				$commit = $this->request->get("commit");
+				if(empty($commit)) $commit = "origin/master";
+				$result = shell_exec("cd $servicePath && git reset --hard $commit 2>&1");
+
+				Deploy::updateServiceInfo($servicePath);
+				return $result;
+			}
+			else if($action=="checkout"){
+				$branch = $this->request->get("branch");
+				if(empty($branch)) $branch = "master";
+				$result = shell_exec("cd $servicePath && git checkout $branch 2>&1");
+
+				Deploy::updateServiceInfo($servicePath);
+				return $result;
+			}
+		}
 	}
 }

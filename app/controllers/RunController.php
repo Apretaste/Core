@@ -71,9 +71,15 @@ class RunController extends Controller
 		else $command = str_replace("_", " ", $command);
 
 		// try login by token or load from the session
-		$security = new Security();
-		if($token) $user = $security->loginByToken($token);
-		else $user = $security->getUser();
+		if($token){
+			$user = Security::loginByToken($token);
+			if(is_string($user)){
+				echo $user;
+				header("Location:/login?redirect=$command");
+				exit;
+			}
+		}
+		else $user = Security::getUser();
 
 		// if user is not logged, redirect to login page
 		if($user) $person = Utils::getPerson($user->email);
@@ -92,6 +98,15 @@ class RunController extends Controller
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
+
+		//get files
+		if(!empty($_FILES)) foreach($_FILES as $file){
+			if ($file['error'] == UPLOAD_ERR_OK){
+				$path = Utils::getTempDir() . "attach_images/" .$file['name'];
+				move_uploaded_file($file['tmp_name'], $path);
+				$input->files[basename($path)] = $path;
+			}
+		}
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
@@ -147,19 +162,18 @@ class RunController extends Controller
 		$token = trim($this->request->get("token"));
 
 		// get the user from the token
-		$security = new Security();
-		$user = $security->loginByToken($token);
+		$user = Security::loginByToken($token);
 
 		// error if the token is incorrect
-		if(empty($user)) {
-			echo '{"code":"300", "message":"Bad or empty token"}';
-			return false;
+		if(is_string($user)){
+			echo $user;
+			return;
 		}
 
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
 			echo '{"code":"301", "message":"No content file was received"}';
-			return false;
+			return;
 		}
 
 		// create attachments array
@@ -225,9 +239,9 @@ class RunController extends Controller
 		// get the person from email
 		$this->person = Utils::getPerson($this->fromEmail);
 
-		if ($this->person) { //if person exists
-			// do not respond to blocked accounts
-			if($this->person->blocked) return false;
+		if ($this->person){ //if person exists
+			// do not respond to blocked accounts or not allowed domains
+			if($this->person->blocked || !Utils::isAllowedDomain($this->fromEmail)) return;
 			
 			// update last access time and make person active
 			Connection::query("UPDATE person SET active=1, last_access=CURRENT_TIMESTAMP WHERE id={$this->person->id}");
@@ -270,7 +284,7 @@ class RunController extends Controller
 
 			// create entry in the error log
 			Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
-			return false;
+			return;
 		}
 
 		// insert a new email in the delivery table
@@ -313,7 +327,7 @@ class RunController extends Controller
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if($filename == "request.json") $requestFile = $filename;
-				else $attachs[] = "$temp/attachments/$folderName/$filename";
+				else $attachs[$filename] = "$temp/attachments/$folderName/$filename";
 			}
 
 			// extract file contents
