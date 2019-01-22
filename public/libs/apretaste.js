@@ -18,23 +18,34 @@ var apretaste = {
 	// }
 	//
 	send: function (json) {
-		// redirect default to true if not passed
+		// prepare data to make the request
+		json.command = json.command.trim().replace(' ', '_');
 		if(json.redirect == undefined) json.redirect = true;
+		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
 
 		// make a simple redirect
 		if(json.redirect) {
 			var href = '/run/web?cm='+json.command;
-			if(json.data) href += '&dt='+JSON.stringify(json.data);
+			if(json.data) href += '&dt='+json.data;
 			setTimeout(function() { // delay redirect to avoid errors
 				window.location.replace(href);
 			}, 50);
-		}
-		else{ 
+		} else {
 			//send the data via post and stay in the same page
-			$.post('/run/web?cm='+json.command, {'dt': JSON.stringify(json.data)});
-
-			//call the callback
-			if(json.callback) window[json.callback.name](json.callback.data);
+			setTimeout(function() { // delay redirect to avoid errors
+				$.ajax({
+					type: "GET",
+					url: '/run/web?cm='+json.command,
+					data: {'dt': json.data},
+					success: function() {
+						// run the callback
+						if(json.callback.name != undefined && json.callback.name != "") {
+							var data = json.callback.data == undefined ? {} : json.callback.data;
+							if(json.callback) window[json.callback.name](data);							
+						}
+					}
+				});
+			}, 50);
 		}
 
 		return false;

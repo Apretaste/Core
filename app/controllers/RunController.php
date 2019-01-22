@@ -68,6 +68,7 @@ class RunController extends Controller
 
 		// if empty get the default service
 		if(empty($command)) $command = "SERVICIOS";
+		else $command = str_replace("_", " ", $command);
 
 		// try login by token or load from the session
 		$security = new Security();
@@ -85,7 +86,7 @@ class RunController extends Controller
 		// create the input
 		$input = new Input();
 		$input->command = $command;
-		$input->data = ($data)?json_decode($data):new stdClass();
+		$input->data = $data ? json_decode(base64_decode($data)) : new stdClass();
 		$input->files = []; // TODO get files via params
 		$input->environment = "web";
 		$input->ostype = "web";
@@ -118,7 +119,7 @@ class RunController extends Controller
 			$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_PATH}}', $servicePath, $startHTML);
-			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
+			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/", $startHTML);
 			$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
 			$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
 			$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
@@ -127,7 +128,6 @@ class RunController extends Controller
 			// display the template on screen
 			echo $startHTML;
 		}
-		
 
 		// create a new entry on the delivery table
 		Connection::query("
@@ -168,7 +168,6 @@ class RunController extends Controller
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
 		$this->person = Utils::getPerson($user->email);
-		$this->beforeExecuteRoute();
 
 		// create a new entry on the delivery table
 		Connection::query("
@@ -189,8 +188,6 @@ class RunController extends Controller
 			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
 			WHERE id={$this->deliveryId}");
-
-		$this->afterExecuteRoute();
 
 		// move the file to the public temp folder
 		$path = "";

@@ -17,9 +17,8 @@ class Social
 	 * @return String
 	 */
 	public static function profileToText($profile, $lang="es")
-	 {
-		switch ($lang)
-		{
+	{
+		switch ($lang) {
 			case 'es': return Social::profileToTextSpanish($profile);
 			case 'en': return Social::profileToTextEnglish($profile);
 			default: return Social::profileToTextSpanish($profile);
@@ -316,10 +315,7 @@ class Social
 	 * Prepare a user profile to be displayed properly
 	 *
 	 * @author salvipascual
-	 *
 	 * @param object $profile
-	 * @param mixed $lang, language to return the profile text
-	 *
 	 * @return object
 	 * */
 	public static function prepareUserProfile($profile)
@@ -331,15 +327,18 @@ class Social
 		// get the person's age
 		$profile->age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
+		// make the coutry code lowercase
+		$profile->country = strtolower($profile->country);
+
 		// try to guest the location based on the domain
 		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
-		if(empty($profile->country) && $inCuba) $profile->country = "CU";
+		if(empty($profile->country) && $inCuba) $profile->country = "cu";
 
 		// get the most accurate location possible
 		$location = "";
 		if($profile->city) $location = ucwords(strtolower($profile->city));
-		elseif($profile->country=="US" && $profile->usstate) $location = Social::getStateNameFromCode($profile->usstate);
-		elseif($profile->country=="CU" && $profile->province) $location = Social::getProvinceNameFromCode($profile->province);
+		elseif($profile->country=="us" && $profile->usstate) $location = Social::getStateNameFromCode($profile->usstate);
+		elseif($profile->country=="cu" && $profile->province) $location = Social::getProvinceNameFromCode($profile->province);
 		else $location = Social::getCountryNameFromCode($profile->country, $lang);
 		$profile->location = substr($location, 0, 23);
 
@@ -347,32 +346,13 @@ class Social
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
 		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
 
-		// create paths to root and http
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$wwwhttp = $di->get('path')['http'];
-
-		// get the image of the person if exist
-		if($profile->picture) {
-			$profile->picture_internal = "$wwwroot/public/profile/{$profile->picture}.jpg";
-			$profile->picture_public = "$wwwhttp/profile/{$profile->picture}.jpg";
-			$profile->picture = true;
-		}else{
-			$profile->picture_internal = "$wwwroot/public/images/user.jpg";
-			$profile->picture_public = "$wwwhttp/images/user.jpg";
-		}
+		// get the image of the person, if exist
+		if($profile->picture) $profile->picture = "{$profile->picture}.jpg";
+		else $profile->picture = false;
 
 		// get the extra images of the person if exist
-		$profile->extra_pictures=json_decode($profile->extra_pictures,true);
-		$profile->extraPictures_internal=array();
-		$profile->extraPictures_public=array();
-		if(count($profile->extra_pictures)>0) {
-			foreach ($profile->extra_pictures as $key => $picture) {
-				$profile->extraPictures_internal[$key]= "$wwwroot/public/profile/{$picture}.jpg";
-				$profile->extraPictures_public[$key]= "$wwwhttp/profile/{$picture}.jpg";
-				$profile->extra_pictures[$key] = true;
-			}
-		}
+		// @TODO once we define how to save extra pictures
+		$profile->extra_pictures = [];
 
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
@@ -389,7 +369,7 @@ class Social
 		if (empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->id, $profile->email, $profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
+		unset($profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 		return $profile;
 	}
 
