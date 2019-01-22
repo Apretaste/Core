@@ -1,6 +1,7 @@
 <?php
 
 // group of functions for social purposes
+use Phalcon\DI\FactoryDefault;
 
 class Social
 {
@@ -347,7 +348,8 @@ class Social
 		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
 
 		// get the image of the person, if exist
-		if($profile->picture) $profile->picture = "{$profile->picture}.jpg";
+		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
+		if($profile->picture) $profile->picture = "$wwwroot/public/profile/{$profile->picture}.jpg";
 		else $profile->picture = false;
 
 		// get the extra images of the person if exist
