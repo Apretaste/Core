@@ -65,10 +65,14 @@ class RunController extends Controller
 		$command = $this->request->get("cm");
 		$data = $this->request->get("dt");
 		$token = $this->request->get('token');
+		$redirect = $this->request->get('rd');
 
 		// if empty get the default service
 		if(empty($command)) $command = "SERVICIOS";
 		else $command = str_replace("_", " ", $command);
+
+		if(empty($redirect)) $redirect = true;
+		else $redirect = ($redirect==='false')?false:true;
 
 		// try login by token or load from the session
 		if($token){
@@ -94,11 +98,12 @@ class RunController extends Controller
 		$input->command = $command;
 		$input->data = $data ? json_decode(base64_decode($data)) : new stdClass();
 		$input->files = []; // TODO get files via params
+		$input->redirect = $redirect;
 		$input->environment = "web";
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
-
+		
 		//get files
 		if(!empty($_FILES)) foreach($_FILES as $file){
 			if ($file['error'] == UPLOAD_ERR_OK){
@@ -116,7 +121,7 @@ class RunController extends Controller
 		$wwwhttp = $this->di->get('path')['http'];
 		$servicePath = Utils::getPathToService($response->serviceName);
 
-		if($response->template){
+		if($response->template && $input->redirect){
 			// get the HTML template and the JS and CSS files
 			$templateHTML = file_get_contents($response->template);
 
@@ -342,6 +347,7 @@ class RunController extends Controller
 		$input->files = $attachs;
 		$input->environment = "app";
 		$input->data = isset($input->data)?json_decode($input->data):new stdClass();
+		if(!isset($input->redirect)) $input->redirect = true;
 
 		// save Nauta password if passed
 		if($input->token) {
@@ -374,7 +380,7 @@ class RunController extends Controller
 		}
 
 		// if the request needs an email back
-		if($response->render || $isReload){
+		if(($response->render && $input->redirect) || $isReload){
 			// get extra data for the app and create an attachment file for the data structure
 			$appData = Utils::getAppData($this->person, $input, $response);
 
