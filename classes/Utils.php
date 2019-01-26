@@ -975,7 +975,7 @@ class Utils
 	 * @param stdClass $person
 	 * @param Input $input
 	 * @param Response $response
-	 * @return array (Object, Attachments)
+	 * @return stdClass $appData
 	 */
 	public static function getAppData($person, $input, &$response)
 	{	
@@ -987,7 +987,7 @@ class Utils
 			$profile = Social::prepareUserProfile(clone $person);
 			$appData->profile_picture = basename($profile->picture);
 			// attach user picture if exist
-			if($profile->picture) $response->attachments[] = $profile->picture;
+			if($profile->picture) $response->images[] = $profile->picture;
 
 			// add services to the response
 			$services = Connection::query("
