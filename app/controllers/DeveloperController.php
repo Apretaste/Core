@@ -233,7 +233,7 @@ class DeveloperController extends Controller
 			$servicePath = "$wwwroot/services/$service";
 			if(!file_exists("$servicePath/service.php")) return "Service not found in storage";
 
-			if($action="update"){
+			if($action=="update"){
 				$result = shell_exec("cd $servicePath && git pull 2>&1");
 				
 				Deploy::updateServiceInfo($servicePath);
