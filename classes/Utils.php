@@ -103,14 +103,15 @@ class Utils
 	 * Check if a user exists and get the profile
 	 *
 	 * @author salvipascual
+	 * @param String $niddle: Can be an email, @username or ID
 	 * @return object|boolean
 	 */
-	public static function getPerson($identifier){
+	public static function getPerson($niddle){
 		// get the person via email, id or username
-		if(filter_var($identifier, FILTER_VALIDATE_EMAIL)) $where = "email";
-		else $where = is_numeric($identifier) ? "id" : "username";
+		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "email";
+		else $where = is_numeric($niddle) ? "id" : "username";
 
-		$person = Connection::query("SELECT * FROM person WHERE $where = '$identifier'");
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$niddle'");
 		return $person ? $person[0] : false;
 	}
 
@@ -135,49 +136,6 @@ class Utils
 		} while($exist);
 
 		return $username;
-	}
-
-	/**
-	 * Get the email from an username
-	 *
-	 * @author salvipascual
-	 * @param String $username
-	 * @return stdClass $person or false
-	 */
-	public static function getPersonFromUsername($username)
-	{
-		// do not try empty inputs
-		if(empty($username)) return false;
-
-		// remove the @ symbol
-		$username = str_replace("@", "", $username);
-
-		// get the email
-		$person = Connection::query("SELECT * FROM person WHERE username='$username'");
-
-		// return the email or false if not found
-		if(empty($person)) return false;
-		else return $person[0];
-	}
-
-	/**
-	 * Get the email from an id
-	 *
-	 * @author salvipascual
-	 * @param Int $id
-	 * @return String email or false
-	 */
-	public static function getEmailFromId($id)
-	{
-		// do not try empty inputs
-		if(empty($id)) return false;
-
-		// get the email
-		$email = Connection::query("SELECT email FROM person WHERE id=$id");
-
-		// return the email or false if not found
-		if(empty($email)) return false;
-		else return $email[0]->email;
 	}
 
 	/**
@@ -872,12 +830,10 @@ class Utils
 		$html = $doc->saveHTML();
 
 		$pbody = stripos($html, '<body>');
-		if ($pbody !== false)
-			$html = substr($html, $pbody + 6);
+		if ($pbody !== false) $html = substr($html, $pbody + 6);
 
 		$pbody = stripos($html, '</body');
-		if ($pbody !== false)
-			$html = substr($html, 0, $pbody);
+		if ($pbody !== false) $html = substr($html, 0, $pbody);
 
 		return $html;
 	}
@@ -887,39 +843,18 @@ class Utils
 	 *
 	 * @param string $path
 	 */
-	public static function rmdir($path){
+	public static function rmdir($path)
+	{
 		if (is_dir($path)) {
 			$dir = scandir($path);
-			foreach ( $dir as $d )
-			{
+			foreach ( $dir as $d ) {
 				if ($d != "." && $d != "..") {
-					if (is_dir("$path/$d"))
-					{
-						self::rmdir("$path/$d");
-					}
-					else
-					{
-						unlink("$path/$d");
-					}
+					if (is_dir("$path/$d")) self::rmdir("$path/$d");
+					else unlink("$path/$d");
 				}
 			}
 			rmdir($path);
 		}
-	}
-
-	/**
-	 * Get the completion percentage of a profile
-	 *
-	 * @REMOVE delete from the system and remove
-	 * @author salvipascual
-	 * @param String $email
-	 *
-	 * @return Number, percentage of completion
-	 */
-	public static function getProfileCompletion($email)
-	{
-		$profile = self::getPerson($email);
-		return $profile->completion;
 	}
 
 	/**
@@ -1040,19 +975,19 @@ class Utils
 	 * @param stdClass $person
 	 * @param Input $input
 	 * @param Response $response
-	 * @return array (Object, Attachments)
+	 * @return stdClass $appData
 	 */
-	public static function getAppData($person, $input, &$response){
-
+	public static function getAppData($person, $input, &$response)
+	{	
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
 
 		if($appData->reload){
 			$profile = Social::prepareUserProfile(clone $person);
-			$appData->profile_picture = basename($profile->picture_internal);
+			$appData->profile_picture = basename($profile->picture);
 			// attach user picture if exist
-			if($profile->picture_internal) $response->attachments[] = $profile->picture_internal;
+			if($profile->picture) $response->images[] = $profile->picture;
 
 			// add services to the response
 			$services = Connection::query("
@@ -1136,7 +1071,7 @@ class Utils
 
 		// create a new Request object
 		$request = new Request();
-		$request->person = clone $person;
+		$request->person = Social::prepareUserProfile(clone $person);
 		$request->input = $input;
 
 		// create a new Response

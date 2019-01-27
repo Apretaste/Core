@@ -17,22 +17,27 @@ var apretaste = {
 	// 	}
 	// }
 	//
-	send: function (json) {
-		// redirect default to true if not passed
+	send: function(json){
+		// prepare to make a clean request
+		json.command = json.command.trim().replace(' ', '_');
 		if(json.redirect == undefined) json.redirect = true;
+		if(json.callback == undefined) json.callback = false;
+		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
 		var href = '/run/web?cm='+json.command;
 
 		// make a simple redirect
-		if(json.redirect) {
-			if(json.data) href += '&dt='+JSON.stringify(json.data);
-			setTimeout(function() { // delay redirect to avoid errors
+		if(json.redirect){
+			if(json.data) href += '&dt='+json.data;
+			setTimeout(() => { // delay redirect to avoid errors
 				window.location.replace(href);
 			}, 50);
 		}
-		else{ 
+		else{
 			if(json.files==undefined){
 				//send the data via post and stay in the same page
-				$.post(href, {'dt': JSON.stringify(json.data)});
+				setTimeout(() => { // delay redirect to avoid errors
+					$.post(href, {'dt': json.data, 'rd': false});
+				}, 50);
 			}
 			else{
 				let form_data = new FormData();
@@ -42,21 +47,23 @@ var apretaste = {
 					n++;
 				});
 
-				if(json.data) form_data.append('dt', JSON.stringify(json.data));
+				if(json.data) form_data.append('dt', json.data);
+				form_data.append('rd', false);
 
-				$.ajax({
-					url: href,
-					type:"POST",
-					cache:false,
-					processData:false,
-					contentType: false,
-					data: form_data
-				});
+				setTimeout(() => { // delay redirect to avoid errors
+					$.ajax({
+						url: href,
+						type:"POST",
+						cache:false,
+						processData:false,
+						contentType: false,
+						data: form_data
+					});
+				}, 50);		
 			}
 			//call the callback
 			if(json.callback) window[json.callback.name](json.callback.data);
 		}
-
 		return false;
 	}
 }
