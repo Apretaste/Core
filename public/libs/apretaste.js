@@ -17,17 +17,18 @@ var apretaste = {
 	// 	}
 	// }
 	//
-	send: function (json) {
+	send: function(json) {
 		// prepare to make a clean request
 		json.command = json.command.trim().replace(' ', '_');
-		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
 		if(json.redirect == undefined) json.redirect = true;
+		if(json.callback == undefined) json.callback = false;
+		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
+		var href = '/run/web?cm='+json.command;
 
 		// make a simple redirect
 		if(json.redirect) {
-			var href = '/run/web?cm='+json.command;
 			if(json.data) href += '&dt='+json.data;
-			setTimeout(function() { // delay redirect to avoid Phalcon errors
+			setTimeout(() => { // delay redirect to avoid errors
 				window.location.replace(href);
 			}, 100);
 		} else {

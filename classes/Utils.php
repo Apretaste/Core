@@ -106,14 +106,13 @@ class Utils
 	 * @param String $niddle: Can be an email, @username or ID
 	 * @return object|boolean
 	 */
-	public static function getPerson($niddle)
-	{
-		// select where condition from @username, email or ID
-		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "LOWER(email)";
-		else $where = is_numeric($niddle) ? "id" : "LOWER(username)";
+	public static function getPerson($niddle){
+		// get the person via email, id or username
+		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "email";
+		else $where = is_numeric($niddle) ? "id" : "username";
 
-		$person = Connection::query("SELECT * FROM person WHERE $where = LOWER('$niddle')");
-		return $person ? Social::prepareUserProfile($person[0]) : false;
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$niddle'");
+		return $person ? $person[0] : false;
 	}
 
 	/**
@@ -918,7 +917,7 @@ class Utils
 	 * @param stdClass $person
 	 * @param Input $input
 	 * @param Response $response
-	 * @return array (Object, Attachments)
+	 * @return stdClass $appData
 	 */
 	public static function getAppData($person, $input, &$response)
 	{	
@@ -928,9 +927,9 @@ class Utils
 
 		if($appData->reload){
 			$profile = Social::prepareUserProfile(clone $person);
-			$appData->profile_picture = basename($profile->picture_internal);
+			$appData->profile_picture = basename($profile->picture);
 			// attach user picture if exist
-			if($profile->picture_internal) $response->attachments[] = $profile->picture_internal;
+			if($profile->picture) $response->images[] = $profile->picture;
 
 			// add services to the response
 			$services = Connection::query("
@@ -1014,7 +1013,7 @@ class Utils
 
 		// create a new Request object
 		$request = new Request();
-		$request->person = clone $person;
+		$request->person = Social::prepareUserProfile(clone $person);
 		$request->input = $input;
 
 		// create a new Response
