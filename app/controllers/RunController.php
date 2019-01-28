@@ -71,9 +71,9 @@ class RunController extends Controller
 		else $command = str_replace("_", " ", $command);
 
 		// try login by token or load from the session
-		if($token){
+		if($token) {
 			$user = Security::loginByToken($token);
-			if(is_string($user)){
+			if(is_string($user)) {
 				echo $user;
 				header("Location:/login?redirect=$command");
 				exit;
@@ -85,28 +85,14 @@ class RunController extends Controller
 		if($user) $person = Utils::getPerson($user->email);
 		else {header("Location:/login?redirect=$command"); exit;}
 
-		// set the running environment
-		// @TODO do we need this? shall we erase it?
-		$this->di->set('environment', function() {return "web";});
-
 		// create the input
 		$input = new Input();
 		$input->command = $command;
 		$input->data = $data ? json_decode(base64_decode($data)) : new stdClass();
-		$input->files = []; // TODO get files via params
 		$input->environment = "web";
 		$input->ostype = "web";
 		$input->method = "web";
 		$input->apptype = "http";
-
-		//get files
-		if(!empty($_FILES)) foreach($_FILES as $file){
-			if ($file['error'] == UPLOAD_ERR_OK){
-				$path = Utils::getTempDir() . "attach_images/" .$file['name'];
-				move_uploaded_file($file['tmp_name'], $path);
-				$input->files[basename($path)] = $path;
-			}
-		}
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
@@ -116,7 +102,7 @@ class RunController extends Controller
 		$wwwhttp = $this->di->get('path')['http'];
 		$servicePath = Utils::getPathToService($response->serviceName);
 
-		if($response->template){
+		if($response->template) {
 			// get the HTML template and the JS and CSS files
 			$templateHTML = file_get_contents($response->template);
 
@@ -187,9 +173,6 @@ class RunController extends Controller
 		Connection::query("
 			INSERT INTO delivery (id, id_person, environment) 
 			VALUES ({$this->deliveryId}, {$this->person->id}, 'app')");
-
-		// set up environment
-		$this->di->set('environment', function() {return "app";});
 
 		// execute the service as app
 		$this->sendEmails = false;
@@ -263,9 +246,6 @@ class RunController extends Controller
 		$mailbox = str_replace(".", "", explode("@", $this->toEmail)[0]);
 		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
-
-		// set the running environment
-		$this->di->set('environment', function() use($environment) {return $environment;});
 
 		// if the app is reporting a failure
 		if($environment == "failure") {

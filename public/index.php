@@ -17,6 +17,7 @@ include_once "../vendor/autoload.php";
 
 // set the memory to be used by php
 ini_set('memory_limit', '1024M');
+
 try
 {
 	//Register autoLoader for Analytics
@@ -67,11 +68,6 @@ try
 		if(isset($config['global']['tier'])) return $config['global']['tier'];
 		else return "production";
 	});
-
-	// Set the environment parms
-	$di->set('environment', function () { return ""; }); // web|app|api|mail
-	$di->set('ostype', function () { return ""; }); // android|ios
-	$di->set('appversion', function () { return ""; }); // 0 if no app
 
 	// Set the routes
 	$di->set('router', function () {

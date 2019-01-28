@@ -102,7 +102,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function checkLogin()
+	public static function checkLogin()
 	{
 		// check if the user is logged, else redirect
 		$di = FactoryDefault::getDefault();
@@ -114,7 +114,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function checkAccess($page)
+	public static function checkAccess($page)
 	{
 		$di = FactoryDefault::getDefault();
 		$user = $di->getShared("session")->get("user");
@@ -128,7 +128,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function enforceLogin()
+	public static function enforceLogin()
 	{
 		// check if the user is logged, else redirect
 		$di = FactoryDefault::getDefault();
@@ -147,7 +147,8 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function getUser(){
+	public static function getUser()
+	{
 		$di = FactoryDefault::getDefault();
 		return $di->getShared("session")->get("user");
 	}

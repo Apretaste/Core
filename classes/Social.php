@@ -19,11 +19,14 @@ class Social
 	public static function profileToText($profile, $lang="es")
 	{
 		switch ($lang) {
-			case 'es': return Social::profileToTextSpanish($profile);
-			case 'en': return Social::profileToTextEnglish($profile);
-			default: return Social::profileToTextSpanish($profile);
+			case 'es': $text = Social::profileToTextSpanish($profile);
+			case 'en': $text = Social::profileToTextEnglish($profile);
+			default: $text = Social::profileToTextSpanish($profile);
 		}
-	 }
+
+		// delete all non-UTF chars that break the JSON
+		return iconv("UTF-8", "UTF-8//IGNORE", $text);
+	}
 
 	/**
 	 * Return description of profile as a paragraph, in Spanish
@@ -155,6 +158,10 @@ class Social
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 
+		// clear non-UTF chars that will break the JSON
+		$message = iconv("UTF-8", "UTF-8//IGNORE", $message);
+
+		// return the text with first letter capital
 		return ucfirst($message);
 	}
 
@@ -284,6 +291,10 @@ class Social
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 
+		// clear non-UTF chars that will break the JSON
+		$message = iconv("UTF-8", "UTF-8//IGNORE", $message);
+
+		// return the text with first letter capital
 		return ucfirst($message);
 	}
 
@@ -340,7 +351,10 @@ class Social
 		elseif($profile->country=="us" && $profile->usstate) $location = Social::getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="cu" && $profile->province) $location = Social::getProvinceNameFromCode($profile->province);
 		else $location = Social::getCountryNameFromCode($profile->country, $lang);
+
+		// shorten and remove any non-UTF char that break the JSON
 		$profile->location = substr($location, 0, 23);
+		$profile->location = iconv("UTF-8", "UTF-8//IGNORE", $profile->location);
 
 		// get the person's full name
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
@@ -356,7 +370,10 @@ class Social
 
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
-		for($i=0;$i<count($interests);$i++) $interests[$i]=trim(strtolower($interests[$i]));
+		for($i=0; $i<count($interests); $i++) {
+			$interests[$i] = trim(strtolower($interests[$i]));
+			$interests[$i] = iconv("UTF-8", "UTF-8//IGNORE", $interests[$i]);
+		}
 		$profile->interests = $interests;
 
 		// remove whitespaces at the begining and ending of string fields
