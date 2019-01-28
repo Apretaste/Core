@@ -52,3 +52,12 @@ var apretaste = {
 		return false;
 	}
 }
+
+File.prototype.toBase64 = function(){
+	return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(){resolve(reader.result.split(',')[1]);};
+        reader.onerror = reject;
+        reader.readAsDataURL(this);
+    }.bind(this));
+}
