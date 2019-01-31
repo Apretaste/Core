@@ -223,7 +223,7 @@ class DeveloperController extends Controller
 			if(file_exists("$servicesDir/$service/service.php")) return "Service exists in storage";
 			
 			$result = shell_exec("cd $servicesDir && git clone https://github.com/Apretaste/$service.git 2>&1");
-			Deploy::updateServiceInfo("$serviceDir/$service");
+			Deploy::updateServiceInfo("$servicesDir/$service");
 			return $result;
 		}
 		else{
