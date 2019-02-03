@@ -1131,9 +1131,8 @@ class Utils
 	{
 		// do not work for empty images
 		if(empty($images)) return;
-		// convert content to String
 
-		$content = str_replace('\\', '', $content); //prevent troubles with json parse
+		$content = str_replace('\\/', '/', $content); //prevent troubles with json parse
 
 		// for the web
 		if($input->environment == "web") {
