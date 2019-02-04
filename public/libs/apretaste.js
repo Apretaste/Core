@@ -1,6 +1,5 @@
 /**
  * Internal functions for the app
- * @author salvipascual
  */
 
 var apretaste = {
@@ -9,7 +8,7 @@ var apretaste = {
 	// 
 	// {
 	// 	command: "PERFIL EDITAR", 
-	// 	data: {"name":"Salvi", "eyes":"blue"}, 
+	// 	data: {"name":"Salvi", "eyes":"blue"},
 	// 	redirect: false,
 	// 	callback: {
 	// 		name: "reloadReport",
@@ -17,7 +16,7 @@ var apretaste = {
 	// 	}
 	// }
 	//
-	send: function(json){
+	send: function(json) {
 		// prepare to make a clean request
 		json.command = json.command.trim().replace(' ', '_');
 		if(json.redirect == undefined) json.redirect = true;
@@ -26,44 +25,38 @@ var apretaste = {
 		var href = '/run/web?cm='+json.command;
 
 		// make a simple redirect
-		if(json.redirect){
+		if(json.redirect) {
 			if(json.data) href += '&dt='+json.data;
 			setTimeout(() => { // delay redirect to avoid errors
 				window.location.replace(href);
-			}, 50);
-		}
-		else{
-			if(json.files==undefined){
-				//send the data via post and stay in the same page
-				setTimeout(() => { // delay redirect to avoid errors
-					$.post(href, {'dt': json.data, 'rd': false});
-				}, 50);
-			}
-			else{
-				let form_data = new FormData();
-				let n = 0;
-				json.files.forEach(file => {
-					form_data.append('file'+n, file);
-					n++;
+			}, 100);
+		} else {
+			//send the data via post and stay in the same page
+			setTimeout(function() { // delay redirect to avoid Phalcon errors
+				$.ajax({
+					type: "POST",
+					url: href,
+					data: {'dt': json.data},
+					success: function() {
+						// run the callback
+						if(json.callback != undefined && json.callback.name != undefined && json.callback.name != "") {
+							var data = json.callback.data == undefined ? {} : json.callback.data;
+							if(json.callback) window[json.callback.name](data);							
+						}
+					}
 				});
-
-				if(json.data) form_data.append('dt', json.data);
-				form_data.append('rd', false);
-
-				setTimeout(() => { // delay redirect to avoid errors
-					$.ajax({
-						url: href,
-						type:"POST",
-						cache:false,
-						processData:false,
-						contentType: false,
-						data: form_data
-					});
-				}, 50);		
-			}
-			//call the callback
-			if(json.callback) window[json.callback.name](json.callback.data);
+			}, 100);
 		}
+
 		return false;
 	}
+}
+
+File.prototype.toBase64 = function(){
+	return new Promise(function(resolve, reject) {
+		var reader = new FileReader();
+		reader.onload = function(){resolve(reader.result.split(',')[1]);};
+		reader.onerror = reject;
+		reader.readAsDataURL(this);
+	}.bind(this));
 }

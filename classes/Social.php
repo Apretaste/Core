@@ -20,11 +20,14 @@ class Social
 	public static function profileToText($profile, $lang="es")
 	{
 		switch ($lang) {
-			case 'es': return Social::profileToTextSpanish($profile);
-			case 'en': return Social::profileToTextEnglish($profile);
-			default: return Social::profileToTextSpanish($profile);
+			case 'es': $text = Social::profileToTextSpanish($profile);
+			case 'en': $text = Social::profileToTextEnglish($profile);
+			default: $text = Social::profileToTextSpanish($profile);
 		}
-	 }
+
+		// delete all non-UTF chars that break the JSON
+		return iconv("UTF-8", "UTF-8//IGNORE", $text);
+	}
 
 	/**
 	 * Return description of profile as a paragraph, in Spanish
@@ -40,47 +43,47 @@ class Social
 
 		// get the gender
 		$gender = "";
-		if ($profile->gender == "M") $gender = "hombre";
-		if ($profile->gender == "F") $gender = "mujer";
+		if($profile->gender == "M") $gender = "hombre";
+		if($profile->gender == "F") $gender = "mujer";
 
 		// get the final vowel based on the gender
 		$genderFinalVowel = "o";
-		if ($profile->gender == "F") $genderFinalVowel = "a";
+		if($profile->gender == "F") $genderFinalVowel = "a";
 
 		// get the eye color
 		$eyes = "";
-		if ($profile->eyes == "NEGRO") $eyes = "negros";
-		if ($profile->eyes == "CARMELITA") $eyes = "carmelita";
-		if ($profile->eyes == "AZUL") $eyes = "azules";
-		if ($profile->eyes == "VERDE") $eyes = "verdes";
-		if ($profile->eyes == "AVELLANA") $eyes = "avellana";
+		if($profile->eyes == "NEGRO") $eyes = "negros";
+		else if($profile->eyes == "CARMELITA") $eyes = "carmelita";
+		else if($profile->eyes == "AZUL") $eyes = "azules";
+		else if($profile->eyes == "VERDE") $eyes = "verdes";
+		else if($profile->eyes == "AVELLANA") $eyes = "avellana";
 
 		// get the eye tone
 		$eyesTone = "";
-		if ($profile->eyes == "NEGRO" || $profile->eyes == "CARMELITA" || $profile->eyes == "AVELLANA") $eyesTone = "oscuros";
-		if ($profile->eyes == "AZUL" || $profile->eyes == "VERDE") $eyesTone = "claros";
+		if($profile->eyes == "NEGRO" || $profile->eyes == "CARMELITA" || $profile->eyes == "AVELLANA") $eyesTone = "oscuros";
+		else if($profile->eyes == "AZUL" || $profile->eyes == "VERDE") $eyesTone = "claros";
 
 		// get the skin color
 		$skin = "";
-		if ($profile->skin == "NEGRO") $skin = "negr$genderFinalVowel";
-		if ($profile->skin == "BLANCO") $skin = "blanc$genderFinalVowel";
-		if ($profile->skin == "MESTIZO") $skin = "mestiz$genderFinalVowel";
+		if($profile->skin == "NEGRO") $skin = "negr$genderFinalVowel";
+		else if($profile->skin == "BLANCO") $skin = "blanc$genderFinalVowel";
+		else if($profile->skin == "MESTIZO") $skin = "mestiz$genderFinalVowel";
 
 		// get the type of body
 		$bodyType = "";
-		if ($profile->body_type == "DELGADO") $bodyType = "soy flac$genderFinalVowel";
-		if ($profile->body_type == "MEDIO") $bodyType = "no soy ni flac$genderFinalVowel ni grues$genderFinalVowel";
-		if ($profile->body_type == "EXTRA") $bodyType = "tengo unas libritas de mas";
-		if ($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atletico";
+		if($profile->body_type == "DELGADO") $bodyType = "soy flac$genderFinalVowel";
+		else if($profile->body_type == "MEDIO") $bodyType = "no soy ni flac$genderFinalVowel ni grues$genderFinalVowel";
+		else if($profile->body_type == "EXTRA") $bodyType = "tengo unas libritas de mas";
+		else if($profile->body_type == "ATLETICO") $bodyType = "tengo un cuerpazo atletico";
 
 		// get the hair color
 		$hair = "";
-		if ($profile->hair == "TRIGUENO") $hair = "trigueño";
-		if ($profile->hair == "CASTANO") $hair = "castaño";
-		if ($profile->hair == "RUBIO") $hair = "rubio";
-		if ($profile->hair == "NEGRO") $hair = "negro";
-		if ($profile->hair == "ROJO") $hair = "rojizo";
-		if ($profile->hair == "BLANCO") $hair = "canoso";
+		if($profile->hair == "TRIGUENO") $hair = "trigueño";
+		else if($profile->hair == "CASTANO") $hair = "castaño";
+		else if($profile->hair == "RUBIO") $hair = "rubio";
+		else if($profile->hair == "NEGRO") $hair = "negro";
+		else if($profile->hair == "ROJO") $hair = "rojizo";
+		else if($profile->hair == "BLANCO") $hair = "canoso";
 
 		// get the place where the person lives
 		$province = ($profile->province) ? Social::getProvinceNameFromCode($profile->province) : false;
@@ -92,27 +95,27 @@ class Social
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
-		if ($city && $country) $location = "Vivo en $country, en la ciudad de $city";
-		elseif ($countryCode=="US" && $usstate) $location = "Vivo en $usstate, $country";
-		elseif ($countryCode == "CU" && $province) $location = "Vivo en la provincia de $province";
-		elseif ($country) $location = "Vivo en $country";
+		if($city && $country) $location = "Vivo en $country, en la ciudad de $city";
+		elseif($countryCode=="US" && $usstate) $location = "Vivo en $usstate, $country";
+		elseif($countryCode == "CU" && $province) $location = "Vivo en la provincia de $province";
+		elseif($country) $location = "Vivo en $country";
 		else $location = "Aunque prefiero no decir donde vivo";
 
 		// get highest educational level
 		$education = "";
-		if ($profile->highest_school_level == "PRIMARIO") $education = "tengo sexto grado";
-		if ($profile->highest_school_level == "SECUNDARIO") $education = "soy graduad$genderFinalVowel de la secundaria";
-		if ($profile->highest_school_level == "TECNICO") $education = "soy tecnico medio";
-		if ($profile->highest_school_level == "UNIVERSITARIO") $education = "soy universitari$genderFinalVowel";
-		if ($profile->highest_school_level == "POSTGRADUADO") $education = "tengo estudios de postgrado";
-		if ($profile->highest_school_level == "DOCTORADO") $education = "tengo un doctorado";
+		if($profile->highest_school_level == "PRIMARIO") $education = "tengo sexto grado";
+		else if($profile->highest_school_level == "SECUNDARIO") $education = "soy graduad$genderFinalVowel de la secundaria";
+		else if($profile->highest_school_level == "TECNICO") $education = "soy tecnico medio";
+		else if($profile->highest_school_level == "UNIVERSITARIO") $education = "soy universitari$genderFinalVowel";
+		else if($profile->highest_school_level == "POSTGRADUADO") $education = "tengo estudios de postgrado";
+		else if($profile->highest_school_level == "DOCTORADO") $education = "tengo un doctorado";
 
 		// get marital status
 		$maritalStatus = "";
-		if ($profile->marital_status == "SOLTERO") $maritalStatus = "estoy solter$genderFinalVowel";
-		if ($profile->marital_status == "SALIENDO") $maritalStatus = "estoy saliendo con alguien";
-		if ($profile->marital_status == "COMPROMETIDO") $maritalStatus = "estoy comprometid$genderFinalVowel";
-		if ($profile->marital_status == "CASADO") $maritalStatus = "soy casad$genderFinalVowel";
+		if($profile->marital_status == "SOLTERO") $maritalStatus = "estoy solter$genderFinalVowel";
+		else if($profile->marital_status == "SALIENDO") $maritalStatus = "estoy saliendo con alguien";
+		else if($profile->marital_status == "COMPROMETIDO") $maritalStatus = "estoy comprometid$genderFinalVowel";
+		else if($profile->marital_status == "CASADO") $maritalStatus = "soy casad$genderFinalVowel";
 
 		// get occupation
 		$occupation = (empty($profile->occupation) || strlen($profile->occupation) < 5) ? false : strtolower($profile->occupation);
@@ -138,24 +141,28 @@ class Social
 
 		// create the message
 		$message = "Hola";
-		if ( ! empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
-		if ( ! empty($age)) $message .= ", tengo $age años";
-		if ( ! empty($gender)) $message .= ", soy $gender";
-		if ( ! empty($religion)) $message .= ", $religion";
-		if ( ! empty($skin)) $message .= ", soy $skin";
-		if ( ! empty($eyes)) $message .= ", de ojos $eyesTone (color $eyes)";
-		if ( ! empty($hair)) $message .= ", soy de pelo $hair ";
-		if ( ! empty($bodyType)) $message .= " y $bodyType";
+		if(!empty(trim($profile->first_name))) $message .= ", mi nombre es " . ucfirst(strtolower(trim($profile->first_name)));
+		if(!empty($age)) $message .= ", tengo $age años";
+		if(!empty($gender)) $message .= ", soy $gender";
+		if(!empty($religion)) $message .= ", $religion";
+		if(!empty($skin)) $message .= ", soy $skin";
+		if(!empty($eyes)) $message .= ", de ojos $eyesTone (color $eyes)";
+		if(!empty($hair)) $message .= ", soy de pelo $hair ";
+		if(!empty($bodyType)) $message .= " y $bodyType";
 		$message .= ". $location";
-		if ( ! empty($education)) $message .= ", $education";
-		if ( ! empty($occupation)) $message .= ", trabajo como $occupation";
-		if ( ! empty($maritalStatus)) $message .= " y $maritalStatus";
+		if(!empty($education)) $message .= ", $education";
+		if(!empty($occupation)) $message .= ", trabajo como $occupation";
+		if(!empty($maritalStatus)) $message .= " y $maritalStatus";
 		$message .= ".";
 
 		// remove double spaces
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 
+		// clear non-UTF chars that will break the JSON
+		$message = iconv("UTF-8", "UTF-8//IGNORE", $message);
+
+		// return the text with first letter capital
 		return ucfirst($message);
 	}
 
@@ -173,43 +180,43 @@ class Social
 
 		// get the gender
 		$gender = "";
-		if ($profile->gender == "M") $gender = "male";
-		if ($profile->gender == "F") $gender = "female";
+		if($profile->gender == "M") $gender = "male";
+		if($profile->gender == "F") $gender = "female";
 
 		// get the eye color
 		$eyes = "";
-		if ($profile->eyes == "NEGRO") $eyes = "black";
-		if ($profile->eyes == "CARMELITA") $eyes = "brown";
-		if ($profile->eyes == "AZUL") $eyes = "blue";
-		if ($profile->eyes == "VERDE") $eyes = "green";
-		if ($profile->eyes == "AVELLANA") $eyes = "hazelnut";
+		if($profile->eyes == "NEGRO") $eyes = "black";
+		if($profile->eyes == "CARMELITA") $eyes = "brown";
+		if($profile->eyes == "AZUL") $eyes = "blue";
+		if($profile->eyes == "VERDE") $eyes = "green";
+		if($profile->eyes == "AVELLANA") $eyes = "hazelnut";
 
 		// get the eye tone
 		$eyesTone = "";
-		if ($profile->eyes == "NEGRO" || $profile->eyes == "CARMELITA" || $profile->eyes == "AVELLANA") $eyesTone = "dark";
-		if ($profile->eyes == "AZUL" || $profile->eyes == "VERDE") $eyesTone = "light";
+		if($profile->eyes == "NEGRO" || $profile->eyes == "CARMELITA" || $profile->eyes == "AVELLANA") $eyesTone = "dark";
+		if($profile->eyes == "AZUL" || $profile->eyes == "VERDE") $eyesTone = "light";
 
 		// get the skin color
 		$skin = "";
-		if ($profile->skin == "NEGRO") $skin = "black";
-		if ($profile->skin == "BLANCO") $skin = "white";
-		if ($profile->skin == "MESTIZO") $skin = "mestizo";
+		if($profile->skin == "NEGRO") $skin = "black";
+		if($profile->skin == "BLANCO") $skin = "white";
+		if($profile->skin == "MESTIZO") $skin = "mestizo";
 
 		// get the type of body
 		$bodyType = "";
-		if ($profile->body_type == "DELGADO") $bodyType = "I am skinny";
-		if ($profile->body_type == "MEDIO") $bodyType = "I am neither skinny nor fat";
-		if ($profile->body_type == "EXTRA") $bodyType = "I have few extra pounds";
-		if ($profile->body_type == "ATLETICO") $bodyType = "my body is athletic";
+		if($profile->body_type == "DELGADO") $bodyType = "I am skinny";
+		if($profile->body_type == "MEDIO") $bodyType = "I am neither skinny nor fat";
+		if($profile->body_type == "EXTRA") $bodyType = "I have few extra pounds";
+		if($profile->body_type == "ATLETICO") $bodyType = "my body is athletic";
 
 		// get the hair color
 		$hair = "";
-		if ($profile->hair == "TRIGUENO") $hair = "brown";
-		if ($profile->hair == "CASTANO") $hair = "chestnut";
-		if ($profile->hair == "RUBIO") $hair = "blonde";
-		if ($profile->hair == "ROJO") $hair = "red";
-		if ($profile->hair == "NEGRO") $hair = "black";
-		if ($profile->hair == "BLANCO") $hair = "white";
+		if($profile->hair == "TRIGUENO") $hair = "brown";
+		if($profile->hair == "CASTANO") $hair = "chestnut";
+		if($profile->hair == "RUBIO") $hair = "blonde";
+		if($profile->hair == "ROJO") $hair = "red";
+		if($profile->hair == "NEGRO") $hair = "black";
+		if($profile->hair == "BLANCO") $hair = "white";
 
 		// get the place where the person lives
 		$province = ($profile->province) ? Social::getProvinceNameFromCode($profile->province) : false;
@@ -221,27 +228,27 @@ class Social
 		$city = empty(trim($profile->city)) ? false : $profile->city;
 
 		// get the location
-		if ($city && $country) $location = "I live in $country, in $city city";
-		elseif ($countryCode=="US" && $usstate) $location = "My home is $usstate, $country";
-		elseif ($countryCode == "CU" && $province) $location = "I live in the province of $province, in $country";
-		elseif ($country) $location = "My country is $country";
+		if($city && $country) $location = "I live in $country, in $city city";
+		elseif($countryCode=="US" && $usstate) $location = "My home is $usstate, $country";
+		elseif($countryCode == "CU" && $province) $location = "I live in the province of $province, in $country";
+		elseif($country) $location = "My country is $country";
 		else $location = "Although I prefer not to say where I live";
 
 		// get highest educational level
 		$education = "";
-		if ($profile->highest_school_level == "PRIMARIO") $education = "leave school at elementary";
-		if ($profile->highest_school_level == "SECUNDARIO") $education = "I have a high school degree";
-		if ($profile->highest_school_level == "TECNICO") $education = "I have a associate degree";
-		if ($profile->highest_school_level == "UNIVERSITARIO") $education = "I am a college graduate";
-		if ($profile->highest_school_level == "POSTGRADUADO") $education = "I got a Masters degree";
-		if ($profile->highest_school_level == "DOCTORADO") $education = "I have a PHD";
+		if($profile->highest_school_level == "PRIMARIO") $education = "leave school at elementary";
+		if($profile->highest_school_level == "SECUNDARIO") $education = "I have a high school degree";
+		if($profile->highest_school_level == "TECNICO") $education = "I have a associate degree";
+		if($profile->highest_school_level == "UNIVERSITARIO") $education = "I am a college graduate";
+		if($profile->highest_school_level == "POSTGRADUADO") $education = "I got a Masters degree";
+		if($profile->highest_school_level == "DOCTORADO") $education = "I have a PHD";
 
 		// get marital status
 		$maritalStatus = "";
-		if ($profile->marital_status == "SOLTERO") $maritalStatus = "I am single";
-		if ($profile->marital_status == "SALIENDO") $maritalStatus = "I am dating someone";
-		if ($profile->marital_status == "COMPROMETIDO") $maritalStatus = "I am engaged";
-		if ($profile->marital_status == "CASADO") $maritalStatus = "I am married";
+		if($profile->marital_status == "SOLTERO") $maritalStatus = "I am single";
+		if($profile->marital_status == "SALIENDO") $maritalStatus = "I am dating someone";
+		if($profile->marital_status == "COMPROMETIDO") $maritalStatus = "I am engaged";
+		if($profile->marital_status == "CASADO") $maritalStatus = "I am married";
 
 		// get occupation
 		$occupation = (empty($profile->occupation) || strlen($profile->occupation) < 5) ? false : strtolower($profile->occupation);
@@ -267,24 +274,28 @@ class Social
 
 		// create the message
 		$message = "Hi";
-		if ( ! empty(trim($profile->first_name))) $message .= ", my name is " . ucfirst(strtolower(trim($profile->first_name)));
-		if ( ! empty($age)) $message .= ", I am $age years old";
-		if ( ! empty($gender)) $message .= ", I am $gender";
-		if ( ! empty($religion)) $message .= ", $religion";
-		if ( ! empty($skin)) $message .= ", I am $skin";
-		if ( ! empty($eyes)) $message .= ", my eyes are $eyesTone $eyes";
-		if ( ! empty($hair)) $message .= ", my hair is $hair ";
-		if ( ! empty($bodyType)) $message .= " and $bodyType";
+		if(!empty(trim($profile->first_name))) $message .= ", my name is " . ucfirst(strtolower(trim($profile->first_name)));
+		if(!empty($age)) $message .= ", I am $age years old";
+		if(!empty($gender)) $message .= ", I am $gender";
+		if(!empty($religion)) $message .= ", $religion";
+		if(!empty($skin)) $message .= ", I am $skin";
+		if(!empty($eyes)) $message .= ", my eyes are $eyesTone $eyes";
+		if(!empty($hair)) $message .= ", my hair is $hair ";
+		if(!empty($bodyType)) $message .= " and $bodyType";
 		$message .= ". $location";
-		if ( ! empty($education)) $message .= ", $education";
-		if ( ! empty($occupation)) $message .= ", I work as $occupation";
-		if ( ! empty($maritalStatus)) $message .= " and $maritalStatus";
+		if(!empty($education)) $message .= ", $education";
+		if(!empty($occupation)) $message .= ", I work as $occupation";
+		if(!empty($maritalStatus)) $message .= " and $maritalStatus";
 		$message .= ".";
 
 		// remove double spaces
 		$message = str_replace(', ,', ',', $message);
 		$message = preg_replace('/([\s])\1+/', ' ', $message);
 
+		// clear non-UTF chars that will break the JSON
+		$message = iconv("UTF-8", "UTF-8//IGNORE", $message);
+
+		// return the text with first letter capital
 		return ucfirst($message);
 	}
 
@@ -302,9 +313,9 @@ class Social
 
 		// count how much filled is the profile
 		$counter = 0;
-		if( ! empty($profile->usstate) ||  ! empty($profile->province)) $counter++;
+		if(!empty($profile->usstate) || !empty($profile->province)) $counter++;
 		foreach ($keys as $key) {
-			if( ! empty($profile->$key)) $counter++;
+			if(!empty($profile->$key)) $counter++;
 		}
 
 		// calculate and return the completion percentage
@@ -323,7 +334,7 @@ class Social
 	{
 		// ensure only use known languages and Spanish is default
 		$lang = $profile->lang;
-		if( ! in_array($lang, ["en","es"])) $lang = "es";
+		if(!in_array($lang, ["en","es"])) $lang = "es";
 
 		// get the person's age
 		$profile->age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
@@ -341,37 +352,43 @@ class Social
 		elseif($profile->country=="us" && $profile->usstate) $location = Social::getStateNameFromCode($profile->usstate);
 		elseif($profile->country=="cu" && $profile->province) $location = Social::getProvinceNameFromCode($profile->province);
 		else $location = Social::getCountryNameFromCode($profile->country, $lang);
+
+		// shorten and remove any non-UTF char that break the JSON
 		$profile->location = substr($location, 0, 23);
+		$profile->location = iconv("UTF-8", "UTF-8//IGNORE", $profile->location);
 
 		// get the person's full name
 		$fullName = "{$profile->first_name} {$profile->middle_name} {$profile->last_name} {$profile->mother_name}";
 		$profile->full_name = trim(preg_replace("/\s+/", " ", $fullName));
 
-		// get the image of the person, if exist
+		// get the image of the person, ifexist
 		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 		if($profile->picture) $profile->picture = "$wwwroot/public/profile/{$profile->picture}.jpg";
 		else $profile->picture = false;
 
-		// get the extra images of the person if exist
+		// get the extra images of the person ifexist
 		// @TODO once we define how to save extra pictures
 		$profile->extra_pictures = [];
 
 		// get the interests as a lowercase array
 		$interests = preg_split('@,@', $profile->interests, NULL, PREG_SPLIT_NO_EMPTY);
-		for($i=0;$i<count($interests);$i++) $interests[$i]=trim(strtolower($interests[$i]));
+		for($i=0; $i<count($interests); $i++) {
+			$interests[$i] = trim(strtolower($interests[$i]));
+			$interests[$i] = iconv("UTF-8", "UTF-8//IGNORE", $interests[$i]);
+		}
 		$profile->interests = $interests;
 
 		// remove whitespaces at the begining and ending of string fields
-		foreach ($profile as $key=>$value) if( ! is_array($value)) $profile->$key = trim($value);
+		foreach ($profile as $key=>$value) if(!is_array($value)) $profile->$key = trim($value);
 
 		// get the completion percentage of your profile
 		$profile->completion = Social::getProfileCompletion($profile);
 
 		// get the about me section
-		if (empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
+		if(empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
+		unset($profile->email, $profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 		return $profile;
 	}
 
@@ -457,12 +474,12 @@ class Social
 		$chats = []; $unique = [];
 		foreach($notes as $n) {
 			// do not allow repeated or empty rows
-			if(empty($n->email) || in_array($n->email, $unique)) continue;
-			$unique[] = $n->email;
+			if(empty($n->id_person) || in_array($n->id_person, $unique)) continue;
+			$unique[] = $n->id_person;
 
 			// create new chat object
 			$chat = new stdClass();
-			$chat->email = $n->email;
+			$chat->id_person = $n->id_person;
 			$chat->last_sent = date('d/m/Y G:i',strtotime($n->last));
 			$chat->last_note_user = $n->from_user;
 			$chat->last_note_read = ($n->read_date != null && $n->from_user==$id) ? true : false;
@@ -494,7 +511,7 @@ public static function chatOcult($from_user,$to_user){
 }
 
 	/**
-	 * Get if the user is blocked or has been blocked by
+	 * Get ifthe user is blocked or has been blocked by
 	 * 
 	 * @author ricardo@apretaste.com
 	 * @param String $user1
@@ -528,7 +545,7 @@ public static function chatOcult($from_user,$to_user){
 	 */
 	public static function chatConversation($yourId, $friendId, $lastID=0, $limit=20)
 	{
-		// if a last ID is passed, do not cut the result based on the limit
+		// ifa last ID is passed, do not cut the result based on the limit
 		$lastID = ($lastID > 0) ? "" : "AND A.id > $lastID";
 
 		// retrieve conversation between users
