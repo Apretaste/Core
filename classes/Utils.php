@@ -207,38 +207,6 @@ class Utils
 	}
 
 	/**
-	 * Return the current Raffle or false if no Raffle was found
-	 *
-	 * @author salvipascual
-	 *
-	 * @return array|boolean
-	 */
-	public static function getCurrentRaffle()
-	{
-		// get the raffle
-		$raffle = Connection::query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
-
-		// return false if there is no open raffle
-		if (count($raffle)==0) return false;
-		else $raffle = $raffle[0];
-
-		// get number of tickets opened
-		$openedTickets = Connection::query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
-		$openedTickets = $openedTickets[0]->opened_tickets;
-
-		// get the image of the raffle
-		$di = FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".jpg";
-
-		// add elements to the response
-		$raffle->tickets = $openedTickets;
-		$raffle->image = $raffleImage;
-
-		return $raffle;
-	}
-
-	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
 	 * @author salvipascual

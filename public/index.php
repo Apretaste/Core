@@ -4,7 +4,6 @@ use Phalcon\Loader;
 use Phalcon\Mvc\View;
 use Phalcon\Mvc\Application;
 use Phalcon\DI\FactoryDefault;
-use Phalcon\Mvc\Url as UrlProvider;
 use Phalcon\Config\Adapter\Ini as ConfigIni;
 use Phalcon\Session\Adapter\Files as Session;
 

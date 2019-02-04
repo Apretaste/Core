@@ -1,6 +1,5 @@
 /**
  * Internal functions for the app
- * @author salvipascual
  */
 
 var apretaste = {
@@ -36,7 +35,7 @@ var apretaste = {
 			setTimeout(function() { // delay redirect to avoid Phalcon errors
 				$.ajax({
 					type: "POST",
-					url: '/run/web?cm='+json.command,
+					url: href,
 					data: {'dt': json.data},
 					success: function() {
 						// run the callback
@@ -55,9 +54,9 @@ var apretaste = {
 
 File.prototype.toBase64 = function(){
 	return new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(){resolve(reader.result.split(',')[1]);};
-        reader.onerror = reject;
-        reader.readAsDataURL(this);
-    }.bind(this));
+		var reader = new FileReader();
+		reader.onload = function(){resolve(reader.result.split(',')[1]);};
+		reader.onerror = reject;
+		reader.readAsDataURL(this);
+	}.bind(this));
 }
