@@ -139,7 +139,7 @@ class Security
 
 		// check if the user has permissions
 		$page = $di->get('router')->getControllerName();
-		if( ! $this->checkAccess($page)) die("You have no access to this page");
+		if( ! self::checkAccess($page)) die("You have no access to this page");
 	}
 
 	/**
