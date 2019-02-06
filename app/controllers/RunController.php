@@ -326,7 +326,7 @@ class RunController extends Controller
 		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 		$input->files = $attachs;
 		$input->environment = "app";
-		$input->data = isset($input->data)?json_decode($input->data):new stdClass();
+		if(!isset($input->data)) $input->data = new stdClass();
 		if(!isset($input->redirect)) $input->redirect = true;
 
 		// save Nauta password if passed
