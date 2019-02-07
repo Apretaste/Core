@@ -1,6 +1,7 @@
 <?php
 
 use Phalcon\Mvc\Controller;
+use Phalcon\DI\FactoryDefault;
 
 class AdminController extends Controller
 {
@@ -281,14 +282,16 @@ class AdminController extends Controller
 	 */
 	public function profilesearchAction()
 	{
-		$email = $this->request->get("email");
-
+		$identifier = $this->request->get("identifier");
 		// get the user profile
-		$utils = new Utils();
-		$email = (stripos($email,'@'))? $email:Utils::getEmailFromUsername($email);
-		if ($email) $profile = Utils::getPerson($email);
+		$profile = Utils::getPerson($identifier);
+		if($profile){
+			$path = FactoryDefault::getDefault()->get('path')['http'];
+			$profile->http_picture = "$path/profile/{$profile->picture}.jpg";
+			$profile = Social::prepareUserProfile($profile, false);
+		}
 
-		$this->view->email = $email;
+		$this->view->identifier = $identifier;
 		$this->view->profile = $profile;
 		$this->view->title = "Search for a profile";
 	}
@@ -306,16 +309,6 @@ class AdminController extends Controller
 		$utils = new Utils();
 		$utils->unsubscribeFromEmailList($email);
 
-		// mark the user inactive in the database
-		Connection::query("UPDATE person SET active=0 WHERE email='$email'");
-
-		// email the user user letting him know
-		$sender = new Email();
-		$sender->to = $email;
-		$sender->subject = "Siento ver que se nos va";
-		$sender->body = "Hola. A peticion suya le he excluido y ahora no debera recibir mas nuestra correspondencia. Si desea volver a usar Aprtate en un futuro, acceda a la plataforma y sera automaticamente incluido. Disculpa si le hemos causamos alguna molestia, y gracias por usar nuestra app. Siempre es bienvenido nuevamente.";
-		$sender->send();
-
 		// redirect back
 		header("Location: profilesearch?email=$email");
 	}
@@ -327,13 +320,13 @@ class AdminController extends Controller
 	 */
 	public function submitBlockAction()
 	{
-		$email = $this->request->get("email");
+		$id = $this->request->get("id");
 
 		// mark the user inactive in the database
-		Connection::query("UPDATE person SET blocked = (blocked ^ 1) WHERE email='$email'");
+		Connection::query("UPDATE person SET blocked = (blocked ^ 1) WHERE id='$id'");
 
 		// redirect back
-		header("Location: profilesearch?email=$email");
+		header("Location: profilesearch?identifier=$id");
 	}
 
 	/**
