@@ -903,7 +903,7 @@ class Utils
 			$services = Connection::query("
 				SELECT name, description, category
 				FROM service
-				WHERE listed=1");
+				WHERE listed=1 AND version>0");
 
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
