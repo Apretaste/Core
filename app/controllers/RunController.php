@@ -92,7 +92,7 @@ class RunController extends Controller
 		// create the input
 		$input = new Input();
 		$input->command = $command;
-		$input->data = $data ? json_decode(base64_decode($data)) : new stdClass();
+		$input->data = $data ? json_decode(urldecode(base64_decode(($data)))) : new stdClass();
 		$input->redirect = $redirect;
 		$input->environment = "web";
 		$input->ostype = "web";
