@@ -107,6 +107,8 @@ class Utils
 	 * @return object|boolean
 	 */
 	public static function getPerson($niddle){
+		if(!$niddle) return false;
+
 		// get the person via email, id or username
 		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "email";
 		else $where = is_numeric($niddle) ? "id" : "username";
@@ -903,7 +905,7 @@ class Utils
 			$services = Connection::query("
 				SELECT name, description, category
 				FROM service
-				WHERE listed=1");
+				WHERE listed=1 AND version>0");
 
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];

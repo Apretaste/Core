@@ -328,9 +328,10 @@ class Social
 	 *
 	 * @author salvipascual
 	 * @param object $profile
+	 * @param Bool $unset
 	 * @return object
 	 * */
-	public static function prepareUserProfile($profile)
+	public static function prepareUserProfile($profile, $unset = true)
 	{
 		// ensure only use known languages and Spanish is default
 		$lang = $profile->lang;
@@ -388,7 +389,7 @@ class Social
 		if(empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->email, $profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
+		if($unset) unset($profile->email, $profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 		return $profile;
 	}
 
