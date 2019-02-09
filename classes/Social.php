@@ -328,9 +328,10 @@ class Social
 	 *
 	 * @author salvipascual
 	 * @param object $profile
+	 * @param Bool $unset
 	 * @return object
 	 * */
-	public static function prepareUserProfile($profile)
+	public static function prepareUserProfile($profile, $unset = true)
 	{
 		// ensure only use known languages and Spanish is default
 		$lang = $profile->lang;
