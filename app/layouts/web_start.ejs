@@ -2,6 +2,8 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="/images/apretaste_icono_16x16.png" sizes="16x16" type="image/png"/>
+	<link rel="icon" href="/images/apretaste_icono_32x32.png" sizes="32x32" type="image/png"/>
 	<title>{{APP_SERVICE_NAME}}</title>
 
 	<!-- add external libs from inside the app -->
@@ -19,7 +21,7 @@
 </head>
 <body>
 	<!-- place to render the template -->
-	<content class="row"></content>
+	<div id="app_content_holder" class="container"></div>
 
 	<!-- run the template -->
 	<script type="text/javascript">
@@ -28,7 +30,7 @@
 		//make the variables accesible from everywhere
 		for (var variable in $res) window[variable] = $res[variable];
 		var html = ejs.render(`{{APP_LAYOUT_CODE}}`, $res);
-		document.getElementsByTagName('content')[0].innerHTML = html;
+		document.getElementById('app_content_holder').innerHTML = html;
 	</script>
 
 	<!-- web push notifications -->

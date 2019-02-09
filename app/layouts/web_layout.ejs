@@ -1,48 +1,46 @@
-<div class="col s12 m10 l8 offset-m1 offset-l2">
-	<!-- MENU -->
-	<div class="row">
-		<nav class="transparent z-depth-0">
-			<div class="nav-wrapper white">
-				<span class="brand-logo left green-text hide-on-small-only">
-					<span style="font-family:Tahoma;">Apretaste<span class="brown-text">!</span></span>
-				</span>
-				<ul class="right">
-					<li>
-						<a class="black-text" href="#!" onclick="apretaste.send({'command':'SERVICIOS'})">
-						<i class="material-icons">apps</i>
-						</a>
-					</li>
-					<li>
-						<a class="black-text" href="#!" onclick="apretaste.send({'command':'PERFIL'})">
-						<i class="material-icons">account_box</i>
-						</a>
-					</li>
-					<li>
-						<a class="black-text" href="#!" onclick="apretaste.send({'command':'NOTIFICACIONES'})">
-						<i class="material-icons">notifications</i>
-						</a>
-					</li>
-					<li>
-						<a class="red lighten-3" href="/logout">
-						<i class="material-icons">exit_to_app</i>
-						</a>
-					</li>
-				</ul>
-			</div>
-		</nav>
-	</div>
+<!-- MENU -->
+<div class="row">
+	<nav class="transparent z-depth-0">
+		<div class="nav-wrapper white">
+			<span class="brand-logo left green-text hide-on-small-only">
+				<img style="max-height: 64px; padding: 15px 0;" src="/images/apretaste_logo.png" alt="Apretaste!"/>
+			</span>
+			<ul class="right">
+				<li>
+					<a class="black-text" href="#!" onclick="apretaste.send({'command':'SERVICIOS'})">
+					<i class="material-icons">apps</i>
+					</a>
+				</li>
+				<li>
+					<a class="black-text" href="#!" onclick="apretaste.send({'command':'PERFIL'})">
+					<i class="material-icons">account_box</i>
+					</a>
+				</li>
+				<li>
+					<a class="black-text" href="#!" onclick="apretaste.send({'command':'NOTIFICACIONES'})">
+					<i class="material-icons">notifications</i>
+					</a>
+				</li>
+				<li>
+					<a class="red lighten-3" href="/logout">
+					<i class="material-icons">exit_to_app</i>
+					</a>
+				</li>
+			</ul>
+		</div>
+	</nav>
+</div>
 
-	<!-- CONTENT -->
-	<div class="row">
-		{{APP_TEMPLATE_CODE}}
-	</div>
+<!-- CONTENT -->
+<div class="content">
+	{{APP_TEMPLATE_CODE}}
+</div>
 
-	<!-- FOOTER -->
-	<div class="row center-align grey lighten-4" style="padding:20px 0px; margin-bottom:0px;">
-		Apretaste &copy; <%=(new Date).getFullYear()%>. All rights reserved
-		<br>
-		<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a>
-		&nbsp;&ndash;&nbsp;
-		<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">T&eacute;rminos</a>
-	</div>
+<!-- FOOTER -->
+<div class="row center-align grey lighten-4" style="padding:20px 0px; margin-bottom:0px;">
+	Apretaste &copy; <%=(new Date).getFullYear()%>. All rights reserved
+	<br>
+	<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a>
+	&nbsp;&ndash;&nbsp;
+	<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">T&eacute;rminos</a>
 </div>
