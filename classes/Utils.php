@@ -95,8 +95,7 @@ class Utils
 	public static function isAllowedDomain($email){
 		$domain = substr($email, strpos($email,'@') + 1);
 		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
-		if(!empty($isAllowed)) return true;
-		return false;
+		return !empty($isAllowed);
 	}
 
 	/**

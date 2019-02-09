@@ -11,7 +11,8 @@ class Security
 	 * @param String $email
 	 * @return Object | Boolean
 	 */
-	public static function login($person){
+	public static function login($person)
+	{
 		// get the path to root folder
 		$httproot = FactoryDefault::getDefault()->get('path')['http'];
 
@@ -49,7 +50,8 @@ class Security
 	 * @param String $emal
 	 * @return Boolean
 	 */
-	public static function loginByIP($person){
+	public static function loginByIP($person)
+	{
 		// check if user can be logged
 		$ip = php::getClientIP();
 		$localIP = $ip == "127.0.0.1";
