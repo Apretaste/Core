@@ -494,7 +494,7 @@ class Utils
 	 * @param Int $alert: 1 if is an alert
 	 * @return array
 	 */
-	public static function addNotification($to, $text, $icon='', $link='', $alert=0)
+	public static function addNotification($to, $text, $link='', $icon='', $alert=0)
 	{
 		// get the service name
 		$trace = debug_backtrace();
@@ -902,9 +902,9 @@ class Utils
 
 			// add services to the response
 			$services = Connection::query("
-				SELECT name, description, category
+				SELECT name, description, category, listed
 				FROM service
-				WHERE listed=1 AND version>0");
+				WHERE version>0");
 
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
@@ -917,6 +917,7 @@ class Utils
 				$serv->name = $s->name;
 				$serv->description = $s->description;
 				$serv->category = $s->category;
+				$serv->listed = $s->listed;
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}

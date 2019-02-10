@@ -21,7 +21,7 @@ var apretaste = {
 		json.command = json.command.trim().replace(' ', '_');
 		if(json.redirect == undefined) json.redirect = true;
 		if(json.callback == undefined) json.callback = false;
-		if(json.data != undefined) json.data = btoa(JSON.stringify(json.data));
+		if(json.data != undefined) json.data = btoa(encodeURIComponent(JSON.stringify(json.data)));
 		var href = '/run/web?cm='+json.command;
 
 		// make a simple redirect
