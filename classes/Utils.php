@@ -494,7 +494,7 @@ class Utils
 	 * @param Int $alert: 1 if is an alert
 	 * @return array
 	 */
-	public static function addNotification($to, $text, $icon='', $link='', $alert=0)
+	public static function addNotification($to, $text, $link='', $icon='', $alert=0)
 	{
 		// get the service name
 		$trace = debug_backtrace();
