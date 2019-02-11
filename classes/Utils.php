@@ -1077,7 +1077,10 @@ class Utils
 
 			foreach($files as $f){
 				$f = $path."/$f";
-				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+				if(file_exists($f)){
+					if(basename($f)!="scripts.js") $zip->addFile($f,"$name/".basename($f));
+					else $zip->addFile($f,"$name/".basename($f).'s');
+				}
 			}
 		}
 
