@@ -515,7 +515,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
-			$email = self::getEmailFromId($to);
+			$email = self::getPerson($to)->email;
 			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/web?cm=$link{$tokenStr}";
