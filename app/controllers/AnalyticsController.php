@@ -117,27 +117,6 @@ class AnalyticsController extends Controller
 		}
 
 		//
-		// LAST 30 DAYS ENVIRONMENT USAGE
-		//
-		$cache = $temp . "last30EnvironmentUsage" . date("Ymd") . ".cache";
-		if(file_exists($cache)) $last30EnvironmentUsage = unserialize(file_get_contents($cache));
-		else {
-			// get info from the database
-			$visits = Connection::query("
-				SELECT COUNT(id) AS number, environment
-				FROM  delivery
-				WHERE request_date > (NOW() - INTERVAL 1 MONTH)
-				GROUP BY environment");
-
-			// format as JSON
-			$last30EnvironmentUsage = [];
-			foreach($visits as $visit) $last30EnvironmentUsage[] = ["number"=>$visit->number, "environment"=>$visit->environment];
-
-			// save cache
-			file_put_contents($cache, serialize($last30EnvironmentUsage));
-		}
-
-		//
 		// APP VERSIONS
 		//
 		$cache = $temp . "appVersions" . date("Ymd") . ".cache";
@@ -247,7 +226,6 @@ class AnalyticsController extends Controller
 		$this->view->monthlyGrossTraffic = $monthlyGrossTraffic;
 		$this->view->monthlyUniqueTraffic = $monthlyUniqueTraffic;
 		$this->view->monthlyNewUsers = $monthlyNewUsers;
-		$this->view->last30EnvironmentUsage = $last30EnvironmentUsage;
 		$this->view->appVersions = $appVersions;
 		$this->view->last30DaysServiceUsage = $last30DaysServiceUsage;
 		$this->view->lastWeekEmailsSent = $lastWeekEmailsSent[0]->cnt;
