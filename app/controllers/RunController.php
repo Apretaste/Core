@@ -96,8 +96,8 @@ class RunController extends Controller
 		$input->redirect = $redirect;
 		$input->environment = "web";
 		$input->ostype = "web";
-		$input->method = "web";
-		$input->apptype = "http";
+		$input->method = "http";
+		$input->apptype = "web";
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
