@@ -1,5 +1,4 @@
 <?php 
-	$wwwhttp = $this->di->get('path')['http'];
 	$environment = $this->di->get('environment');
 	$home = isset($home) ? $home : "/manage";
 ?>
@@ -8,6 +7,9 @@
 <html lang="en">
 	<head>
 		<title><?= isset($title) ? $title : "Manage"; ?></title>
+		<link rel="icon" href="/images/apretaste_icon_16x16.png" sizes="16x16" type="image/png"/>
+		<link rel="icon" href="/images/apretaste_icon_32x32.png" sizes="32x32" type="image/png"/>
+		<link rel="icon" href="/images/apretaste_icon_64x64.png" sizes="64x64" type="image/png"/>
 
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -15,23 +17,22 @@
 		<meta name="description" content="Home-Made Analytics system and management tools for Apretaste">
 		<meta name="author" content="Salvi Pascual">
 		<meta name="author" content="hCarras">
-		<link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
 
 		<!-- jQuery -->
-		<script src="<?= $wwwhttp; ?>/js/jquery.js"></script>
+		<script src="/js/jquery.js"></script>
 
 		<!-- Bootstrap Core CSS -->
-		<link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
-		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<script src="/js/bootstrap.min.js"></script>
 
 		<!-- Bootstrap plugins -->
-		<script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
+		<script src="/js/validator.min.js"></script>
 
 		<!-- Font awesome -->
-		<link rel="stylesheet" href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
 
 		<!-- Custom stylesheets -->
-		<link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
+		<link href="/css/basics.css" rel="stylesheet">
 	</head>
 
 	<body>
