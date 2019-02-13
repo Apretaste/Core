@@ -124,7 +124,7 @@ class RunController extends Controller
 			// replace shortags on the HTML code
 			$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
-			$startHTML = str_replace('{{APP_SERVICE_PATH}}', str_replace('\\', '/', $servicePath), $startHTML);
+			$startHTML = str_replace('{{APP_SERVICE_PATH}}/images', '{{APP_IMAGE_PATH}}', $startHTML);
 			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/", $startHTML);
 			$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
 			$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
