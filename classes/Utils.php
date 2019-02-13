@@ -234,8 +234,8 @@ class Utils
 	public static function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
-		if(!file_exists($fromPath) || $quality == "ORIGINAL") return;
-		if($quality == "REDUCIDA") $quality = 40; else $quality == 15;
+		if(!file_exists($fromPath)) return;
+		if($quality == "REDUCIDA") $quality = 40; else $quality = 15;
 
 		// get path to save and extensions
 		if(empty($toPath)) $toPath = $fromPath;
@@ -1077,7 +1077,10 @@ class Utils
 
 			foreach($files as $f){
 				$f = $path."/$f";
-				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+				if(file_exists($f)){
+					if(basename($f)!="scripts.js") $zip->addFile($f,"$name/".basename($f));
+					else $zip->addFile($f,"$name/".basename($f).'s');
+				}
 			}
 		}
 
@@ -1130,14 +1133,17 @@ class Utils
 					$serviceImgs[] = $images[$i];
 					continue;
 				}
-
-				// optimize each image as webp for Android or jpg for iOS
-				$ext = $input->ostype == "android" ? "webp" : "jpg";
-				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
-				Utils::optimizeImage($images[$i], $file, $quality);
-				// replace image on both $content and $images
-				$content = str_replace($images[$i], basename($file), $content);
-				$images[$i] = $file;
+				
+				if($quality!="ORIGINAL"){
+					// optimize each image as webp for Android or jpg for iOS
+					$ext = $input->ostype == "android" ? "webp" : "jpg";
+					$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
+					Utils::optimizeImage($images[$i], $file, $quality);
+					// replace image on both $content and $images
+					$content = str_replace($images[$i], basename($file), $content);
+					$images[$i] = $file;
+				}
+				else $content = str_replace($images[$i], basename($images[$i]), $content);
 			}
 
 			//don't send images that are part of the service files
