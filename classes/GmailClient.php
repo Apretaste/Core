@@ -1,8 +1,5 @@
 <?php
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 class GmailClient
 {
 	/**
@@ -14,68 +11,51 @@ class GmailClient
 	 * @param mixed $attachment
 	 * @return mixed
 	 */
-	public function send($to, $subject, $body, $attachment=false)
-	{
-        // get the gmail account to use
-        $from = $this->getEmailFrom();
-        if($from->code != "200") return $from;
-
-        // load access token
-        $client = $this->getClient();
-        $client->setAccessToken($from->accessToken);
-
-        // refresh the token if it's expired
-        if ($client->isAccessTokenExpired()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-
-            $accessTokenJSON = json_encode($client->getAccessToken());
-			Connection::query("UPDATE delivery_gmail SET access_token='$accessTokenJSON', token_created=CURRENT_TIMESTAMP WHERE email='{$from->email}'");
-        }
-
-        //prepare the mail with PHPMailer
-        $fakeSenderName = Utils::randomSentence(1);
-        $mail = new PHPMailer();
-        $mail->CharSet = "UTF-8";
-        $mail->Encoding = "base64";
-        $mail->setFrom($from->email, $fakeSenderName);
-        $mail->addAddress($to);
-        $mail->addReplyTo("$fakeSenderName@gmail.com", $fakeSenderName);
-        if($attachment) $mail->addAttachment($attachment);
-        $mail->isHTML(false);
-        $mail->Subject = $subject;
-        $mail->Body = $body;
-
-        //create the MIME Message
-        $mail->preSend();
-        $mime = $mail->getSentMIMEMessage();
-        $mime = rtrim(strtr(base64_encode($mime), '+/', '-_'), '=');
-
-        //create the Gmail Message
-        $message = new Google_Service_Gmail_Message();
-        $message->setRaw($mime);
-
-        // send the email
-        try {
-            $service = new Google_Service_Gmail($client);
-            $service->users_messages->send('me', $message);
-        } catch (Exception $e) {
-            // put account on hold
-            Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$from->email}'");
-
-            // return error
-            $output = new stdClass();
-            $output->code = "500";
-            $output->message = "[GmailClient] Error sending from {$from->email}: " . $e->getMessage();
+	public function send($to, $subject, $body, $attachment=false){
+        $output = new stdClass();
+        $account = Connection::query("SELECT email, password FROM delivery_gmail WHERE sent<490 AND active=1");
+        
+        if(empty($account)){
+            $output->code = "520";
+            $output->message = "[GmailClient] No active account";
             return $output;
         }
 
-        // mark the email as sent
-        Connection::query("UPDATE delivery_gmail SET sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='{$from->email}'");
+        $from = $account[0]->email;
+        $password = $account[0]->password;
 
-        // respond with possitive message
-        $output = new stdClass();
-        $output->code = "200";
-        $output->message = $from->email;
+        $headers = array (
+            'From' => $from,
+            'To' => $to, 
+            'Subject' => $subject);
+
+        $crlf = "\n";
+        $mime = new Mail_mime($crlf);
+        $mime->setTXTBody($body);
+        if($attachment) $mime->addAttachment($attachment,'application/zip');
+
+        $body = $mime->get();
+        $headers = $mime->headers($headers);
+        
+        $smtp = Mail::factory('smtp', array(
+                'host' => 'ssl://smtp.gmail.com',
+                'port' => '465',
+                'auth' => true,
+                'username' => $from,
+                'password' => $password
+            ));
+
+        $mail = $smtp->send($to, $headers, $body);
+
+        if (PEAR::isError($mail)) {
+            $output->code = "500";
+            $output->message = "[GmailClient] Error sending from $from: " . $mail->getMessage();
+        } else {
+            $output->code = "200";
+            $output->message = $from;
+            Connection::query("UPDATE delivery_gmail SET sent=sent+1, daily=daily+1 last_sent=CURRENT_TIMESTAMP WHERE email='$from'");
+        }
+
         return $output;
     }
 
