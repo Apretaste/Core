@@ -11,7 +11,8 @@ class Security
 	 * @param String $email
 	 * @return Object | Boolean
 	 */
-	public static function login($person){
+	public static function login($person)
+	{
 		// get the path to root folder
 		$httproot = FactoryDefault::getDefault()->get('path')['http'];
 
@@ -49,7 +50,8 @@ class Security
 	 * @param String $emal
 	 * @return Boolean
 	 */
-	public static function loginByIP($person){
+	public static function loginByIP($person)
+	{
 		// check if user can be logged
 		$ip = php::getClientIP();
 		$localIP = $ip == "127.0.0.1";
@@ -102,7 +104,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function checkLogin()
+	public static function checkLogin()
 	{
 		// check if the user is logged, else redirect
 		$di = FactoryDefault::getDefault();
@@ -114,7 +116,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function checkAccess($page)
+	public static function checkAccess($page)
 	{
 		$di = FactoryDefault::getDefault();
 		$user = $di->getShared("session")->get("user");
@@ -128,7 +130,7 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function enforceLogin()
+	public static function enforceLogin()
 	{
 		// check if the user is logged, else redirect
 		$di = FactoryDefault::getDefault();
@@ -139,7 +141,7 @@ class Security
 
 		// check if the user has permissions
 		$page = $di->get('router')->getControllerName();
-		if( ! $this->checkAccess($page)) die("You have no access to this page");
+		if( ! self::checkAccess($page)) die("You have no access to this page");
 	}
 
 	/**
@@ -147,7 +149,8 @@ class Security
 	 *
 	 * @author salvipascual
 	 */
-	public function getUser(){
+	public static function getUser()
+	{
 		$di = FactoryDefault::getDefault();
 		return $di->getShared("session")->get("user");
 	}

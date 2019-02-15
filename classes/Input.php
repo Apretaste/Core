@@ -9,6 +9,7 @@ class Input
 	public $ostype; // web/android/ios
 	public $method; // email/http
 	public $apptype; // web/original/single
+	public $redirect; // true if the petition is expecting a response
 	public $osversion; // float con la version del software del mobil usado
 	public $appversion; // float con la version de la app que manda el request
 	public $serviceversion; // integer con la version del servicio que se esta pidiendo

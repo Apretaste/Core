@@ -1,10 +1,9 @@
 <?php 
 
 class Payment {
-	public $code;
-	public $price;
-	public $name;
-	public $seller;
-	public $buyer;
-	public $transfer;
+	public $code; // string
+	public $price; // float
+	public $name; // item name
+	public $seller; // Person object
+	public $buyer; // Person object
 }

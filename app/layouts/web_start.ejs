@@ -2,16 +2,19 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="/images/apretaste_icon_16x16.png" sizes="16x16" type="image/png"/>
+	<link rel="icon" href="/images/apretaste_icon_32x32.png" sizes="32x32" type="image/png"/>
+	<link rel="icon" href="/images/apretaste_icon_64x64.png" sizes="64x64" type="image/png"/>
 	<title>{{APP_SERVICE_NAME}}</title>
 
 	<!-- add external libs from inside the app -->
-	<link rel="stylesheet" href="{{APP_RESOURCES}}/materialize.min.css"/>
-	<link href="{{APP_RESOURCES}}/materializeicons.css" rel="stylesheet">
-	<link href="{{APP_RESOURCES}}/apretaste.css" rel="stylesheet">
-	<script src="{{APP_RESOURCES}}/jquery.min.js"></script>
-	<script src="{{APP_RESOURCES}}/ejs.min.js"></script>
-	<script src="{{APP_RESOURCES}}/materialize.min.js"></script>
-	<script src="{{APP_RESOURCES}}/apretaste.js"></script>
+	<link rel="stylesheet" href="{{APP_RESOURCES}}/libs/materialize.min.css"/>
+	<link href="{{APP_RESOURCES}}/libs/materializeicons.css" rel="stylesheet">
+	<link href="{{APP_RESOURCES}}/libs/apretaste.css" rel="stylesheet">
+	<script src="{{APP_RESOURCES}}/libs/jquery.min.js"></script>
+	<script src="{{APP_RESOURCES}}/libs/ejs.min.js"></script>
+	<script src="{{APP_RESOURCES}}/libs/materialize.min.js"></script>
+	<script src="{{APP_RESOURCES}}/libs/apretaste.js"></script>
 
 	<!-- add script and styles from the template folder -->
 	<style type="text/css">{{APP_TEMPLATE_CSS}}</style>
@@ -19,7 +22,7 @@
 </head>
 <body>
 	<!-- place to render the template -->
-	<content class="row"></content>
+	<div id="app_content_holder"></div>
 
 	<!-- run the template -->
 	<script type="text/javascript">
@@ -28,7 +31,7 @@
 		//make the variables accesible from everywhere
 		for (var variable in $res) window[variable] = $res[variable];
 		var html = ejs.render(`{{APP_LAYOUT_CODE}}`, $res);
-		document.getElementsByTagName('content')[0].innerHTML = html;
+		document.getElementById('app_content_holder').innerHTML = html;
 	</script>
 
 	<!-- web push notifications -->

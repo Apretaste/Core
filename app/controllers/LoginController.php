@@ -59,7 +59,7 @@ class LoginController extends Controller
 		$logger->log("Login| User {$email} start the login");
 
 		// check if the email is valid
-		if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)){
 			$logger->log("Login| {$email} is not valid email address, redirecting");
 			$logger->close();
 
@@ -68,7 +68,7 @@ class LoginController extends Controller
 			return false;
 		}
 
-		if(!Utils::isAllowedDomain($email)){
+		if( ! Utils::isAllowedDomain($email)){
 			$logger->log("Login| Domain of user {$email} is not allowed");
 			$logger->close();
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
@@ -155,13 +155,13 @@ class LoginController extends Controller
 		$logger->log("Login | Receive PIN code $pin from {$email}");
 
 		// check if the email is valid
-		if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		if( ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();
 			return;
 		}
 
-		if(!Utils::isAllowedDomain($email)){
+		if( ! Utils::isAllowedDomain($email)){
 			$logger->log("Login| Domain of user {$email} is not allowed");
 			$this->response->redirect("login?email=$email&redirect=$redirect&shake=true");
 			$this->view->disable();

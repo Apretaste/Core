@@ -84,16 +84,6 @@
     </div>
 
     <div class="col-xs-4">
-        <!-- LAST 30 DAYS ENVIRONMENT -->
-        <div class="panel panel-default">
-            <div class="panel-heading">Last 30 days of each environment</div>
-            <div class="panel-body">
-                <div id="last30EnvironmentUsage" style="width:100%;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xs-4">
         <!-- APP VERSIONS -->
         <div class="panel panel-default">
             <div class="panel-heading">Versions of the app</div>
@@ -203,22 +193,6 @@
     ]);
     var options = {legend: 'none'};
     var chart = new google.visualization.AreaChart(document.getElementById('monthlyNewUsers'));
-    chart.draw(data, options);
-    showSVG();
-  }
-
-  // Last 30 days Environment
-  google.setOnLoadCallback(last30EnvironmentUsage);
-
-  function last30EnvironmentUsage() {
-    var data = google.visualization.arrayToDataTable([
-      ['Environment', 'Usage'],
-      <?php foreach ($last30EnvironmentUsage as $data) { ?>
-      ['<?= $data['environment'] ?>', <?= $data['number'] ?>],
-      <?php } ?>
-    ]);
-    var options = {};
-    var chart = new google.visualization.PieChart(document.getElementById('last30EnvironmentUsage'));
     chart.draw(data, options);
     showSVG();
   }

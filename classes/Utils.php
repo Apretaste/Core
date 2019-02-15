@@ -95,22 +95,24 @@ class Utils
 	public static function isAllowedDomain($email){
 		$domain = substr($email, strpos($email,'@') + 1);
 		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
-		if(!empty($isAllowed)) return true;
-		return false;
+		return !empty($isAllowed);
 	}
 
 	/**
 	 * Check if a user exists and get the profile
 	 *
 	 * @author salvipascual
+	 * @param String $niddle: Can be an email, @username or ID
 	 * @return object|boolean
 	 */
-	public static function getPerson($identifier){
-		// get the person via email, id or username
-		if(filter_var($identifier, FILTER_VALIDATE_EMAIL)) $where = "email";
-		else $where = is_numeric($identifier) ? "id" : "username";
+	public static function getPerson($niddle){
+		if(!$niddle) return false;
 
-		$person = Connection::query("SELECT * FROM person WHERE $where = '$identifier'");
+		// get the person via email, id or username
+		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "email";
+		else $where = is_numeric($niddle) ? "id" : "username";
+
+		$person = Connection::query("SELECT * FROM person WHERE $where = '$niddle'");
 		return $person ? $person[0] : false;
 	}
 
@@ -135,49 +137,6 @@ class Utils
 		} while($exist);
 
 		return $username;
-	}
-
-	/**
-	 * Get the email from an username
-	 *
-	 * @author salvipascual
-	 * @param String $username
-	 * @return stdClass $person or false
-	 */
-	public static function getPersonFromUsername($username)
-	{
-		// do not try empty inputs
-		if(empty($username)) return false;
-
-		// remove the @ symbol
-		$username = str_replace("@", "", $username);
-
-		// get the email
-		$person = Connection::query("SELECT * FROM person WHERE username='$username'");
-
-		// return the email or false if not found
-		if(empty($person)) return false;
-		else return $person[0];
-	}
-
-	/**
-	 * Get the email from an id
-	 *
-	 * @author salvipascual
-	 * @param Int $id
-	 * @return String email or false
-	 */
-	public static function getEmailFromId($id)
-	{
-		// do not try empty inputs
-		if(empty($id)) return false;
-
-		// get the email
-		$email = Connection::query("SELECT email FROM person WHERE id=$id");
-
-		// return the email or false if not found
-		if(empty($email)) return false;
-		else return $email[0]->email;
 	}
 
 	/**
@@ -249,38 +208,6 @@ class Utils
 	}
 
 	/**
-	 * Return the current Raffle or false if no Raffle was found
-	 *
-	 * @author salvipascual
-	 *
-	 * @return array|boolean
-	 */
-	public static function getCurrentRaffle()
-	{
-		// get the raffle
-		$raffle = Connection::query("SELECT * FROM raffle WHERE CURRENT_TIMESTAMP BETWEEN start_date AND end_date");
-
-		// return false if there is no open raffle
-		if (count($raffle)==0) return false;
-		else $raffle = $raffle[0];
-
-		// get number of tickets opened
-		$openedTickets = Connection::query("SELECT count(ticket_id) as opened_tickets FROM ticket WHERE raffle_id is NULL");
-		$openedTickets = $openedTickets[0]->opened_tickets;
-
-		// get the image of the raffle
-		$di = FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
-		$raffleImage = "$wwwroot/public/raffle/" . md5($raffle->raffle_id) . ".jpg";
-
-		// add elements to the response
-		$raffle->tickets = $openedTickets;
-		$raffle->image = $raffleImage;
-
-		return $raffle;
-	}
-
-	/**
 	 * Generate a new random hash. Mostly to be used for temporals
 	 *
 	 * @author salvipascual
@@ -307,8 +234,8 @@ class Utils
 	public static function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
-		if(!file_exists($fromPath) || $quality == "ORIGINAL") return;
-		if($quality == "REDUCIDA") $quality = 40; else $quality == 15;
+		if(!file_exists($fromPath)) return;
+		if($quality == "REDUCIDA") $quality = 40; else $quality = 15;
 
 		// get path to save and extensions
 		if(empty($toPath)) $toPath = $fromPath;
@@ -560,37 +487,44 @@ class Utils
 	 * Insert a notification in the database
 	 *
 	 * @author kumahacker
-	 * @param string $email
-	 * @param string $origin
-	 * @param string $text
-	 * @param string $link
-	 * @param string $tag
+	 * @param Int $to: Id of the receiver
+	 * @param String $text: Notification text
+	 * @param JSON $link: JSON of the request
+	 * @param String $icon: A materialize class icon
+	 * @param Int $alert: 1 if is an alert
 	 * @return array
 	 */
-	public static function addNotification($id, $origin, $text, $link='', $tag='INFO'){
-		// check if we should send a web push
-		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$id' AND appname='apretaste' AND platform='web'");
+	public static function addNotification($to, $text, $link='', $icon='', $alert=0)
+	{
+		// get the service name
+		$trace = debug_backtrace();
+		$service = strtolower(basename(dirname(($trace[0]['file']))));
+
+		// get the Materialize icon: materializecss.com/icons.html
+		if($alert) $icon = 'warning';
+		elseif(empty($icon)) $icon = 'info_outline';
+
+		// check if we should also send a web push
+		$row = Connection::query("SELECT appid FROM authentication WHERE person_id='$to' AND appname='apretaste' AND platform='web'");
 		$ispush = empty($row[0]->appid) ? 0 : 1;
 
 		// if the person has a valid appid, send a web push
-		if($ispush)
-		{
+		if($ispush) {
 			$di = FactoryDefault::getDefault();
 			$wwwroot = $di->get('path')['root'];
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
-      $email = self::getEmailFromId($id);
+			$email = self::getPerson($to)->email;
 			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/web?cm=$link{$tokenStr}";
 
 			// get the image for the service
-			$service = strtolower($origin);
 			$img = file_exists("$wwwroot/public/temp/$service.png") ? "$wwwhttp/temp/$service.png" : "";
 
 			// create title and message
-			$title = ucfirst($origin);
+			$title = ucfirst($service);
 			$message = substr($text, 0, 80);
 
 			// send web push notification for users of the web
@@ -599,82 +533,19 @@ class Utils
 		}
 
 		// increase number of notifications
-		Connection::query("UPDATE person SET notifications = notifications+1 WHERE id=$id");
+		Connection::query("UPDATE person SET notifications=notifications+1 WHERE id=$to");
 
-		// insert notification in the db and get id
-		return Connection::query("INSERT INTO notifications (id_person, origin, `text`, link, tag, ispush) VALUES ($id,'$origin','$text','$link','$tag','$ispush')");
-	}
-
-	/**
-	 * Return the number of notifications for a user
-	 *
-	 * @param string $id_person
-	 * @return integer
-	 */
-	public static function getNumberOfNotifications($id_person)
-	{
-		// temporal mechanism?
-		$r = Connection::query("SELECT notifications FROM person WHERE notifications is null AND id = $id_person");
-		if ( ! isset($r[0])) {
-			$r[0] = new stdClass();
-			$r[0]->notifications = '';
-		}
-
-		$notifications = $r[0]->notifications;
-		if (trim($notifications) == '') {
-			// calculate notifications and update the number
-			$r = Connection::query("SELECT count(id_person) as total FROM notifications WHERE id_person = $id_person AND viewed = 0;");
-			$notifications = $r[0]->total * 1;
-			Connection::query("UPDATE person SET notifications = $notifications WHERE id = $id_person");
-		}
-
-		return $notifications * 1;
-	}
-
-	/**
-	 * Return a list of notifications and mark as seen
-	 *
-	 * @author salvipascual
-	 * @param Integer $personId
-	 * @param Integer $limit
-	 * @param String[] $origin, list of services IE [pizarra,nota,chat]
-	 * @return array
-	 */
-	public static function getNotifications($personId, $limit=20, $origin=[])
-	{
-		// get origins SQL if passed
-		$services = "";
-		if( ! empty($origin)) {
-			$temp = [];
-			foreach ($origin as $o) $temp[] = "origin LIKE '$o%'";
-			$services = implode(" OR ", $temp);
-			$services = "AND ($services)";
-		}
-
-		// create SQL to get notifications
-		$notifications = Connection::query("
-			SELECT origin, inserted_date, text, viewed, viewed_date, link, tag, ispush
-			FROM notifications
-			WHERE id_person = $personId AND hidden = 0 
-			$services
-			ORDER BY inserted_date DESC
-			LIMIT $limit");
-
-		// mark all notifications as seen
-		if($notifications) {
-			Connection::query("UPDATE notifications SET viewed=1, viewed_date=CURRENT_TIMESTAMP WHERE id_person=$personId");
-		}
-
-		return $notifications;
+		// insert the notification and return the id
+		return Connection::query("
+			INSERT INTO notification (`to`, `service`, `icon`, `text`, `link`, `alert`)
+			VALUES ($to, '$service', '$icon', '$text', '$link', $alert)");
 	}
 
 	/**
 	 * Encript a message using the user's public key.
 	 *
 	 * @author salvipascual
-	 *
 	 * @param String $text
-	 *
 	 * @return String
 	 * @throws Exception
 	 */
@@ -697,9 +568,7 @@ class Utils
 	 * The message should be encrypted with RSA OAEP 1024 bits and passed in String Base 64.
 	 *
 	 * @author salvipascual
-	 *
 	 * @param String $text
-	 *
 	 * @return String
 	 * @throws Exception
 	 */
@@ -872,12 +741,10 @@ class Utils
 		$html = $doc->saveHTML();
 
 		$pbody = stripos($html, '<body>');
-		if ($pbody !== false)
-			$html = substr($html, $pbody + 6);
+		if ($pbody !== false) $html = substr($html, $pbody + 6);
 
 		$pbody = stripos($html, '</body');
-		if ($pbody !== false)
-			$html = substr($html, 0, $pbody);
+		if ($pbody !== false) $html = substr($html, 0, $pbody);
 
 		return $html;
 	}
@@ -887,39 +754,18 @@ class Utils
 	 *
 	 * @param string $path
 	 */
-	public static function rmdir($path){
+	public static function rmdir($path)
+	{
 		if (is_dir($path)) {
 			$dir = scandir($path);
-			foreach ( $dir as $d )
-			{
+			foreach ( $dir as $d ) {
 				if ($d != "." && $d != "..") {
-					if (is_dir("$path/$d"))
-					{
-						self::rmdir("$path/$d");
-					}
-					else
-					{
-						unlink("$path/$d");
-					}
+					if (is_dir("$path/$d")) self::rmdir("$path/$d");
+					else unlink("$path/$d");
 				}
 			}
 			rmdir($path);
 		}
-	}
-
-	/**
-	 * Get the completion percentage of a profile
-	 *
-	 * @REMOVE delete from the system and remove
-	 * @author salvipascual
-	 * @param String $email
-	 *
-	 * @return Number, percentage of completion
-	 */
-	public static function getProfileCompletion($email)
-	{
-		$profile = self::getPerson($email);
-		return $profile->completion;
 	}
 
 	/**
@@ -1040,25 +886,25 @@ class Utils
 	 * @param stdClass $person
 	 * @param Input $input
 	 * @param Response $response
-	 * @return array (Object, Attachments)
+	 * @return stdClass $appData
 	 */
-	public static function getAppData($person, $input, &$response){
-
+	public static function getAppData($person, $input, &$response)
+	{	
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
 
 		if($appData->reload){
 			$profile = Social::prepareUserProfile(clone $person);
-			$appData->profile_picture = basename($profile->picture_internal);
+			$appData->profile_picture = basename($profile->picture);
 			// attach user picture if exist
-			if($profile->picture_internal) $response->attachments[] = $profile->picture_internal;
+			if($profile->picture) $response->images[] = $profile->picture;
 
 			// add services to the response
 			$services = Connection::query("
-				SELECT name, description, category
+				SELECT name, description, category, listed
 				FROM service
-				WHERE listed=1");
+				WHERE version>0");
 
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
@@ -1071,6 +917,7 @@ class Utils
 				$serv->name = $s->name;
 				$serv->description = $s->description;
 				$serv->category = $s->category;
+				$serv->listed = $s->listed;
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}
@@ -1136,7 +983,7 @@ class Utils
 
 		// create a new Request object
 		$request = new Request();
-		$request->person = clone $person;
+		$request->person = Social::prepareUserProfile(clone $person);
 		$request->input = $input;
 
 		// create a new Response
@@ -1230,7 +1077,10 @@ class Utils
 
 			foreach($files as $f){
 				$f = $path."/$f";
-				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+				if(file_exists($f)){
+					if(basename($f)!="scripts.js") $zip->addFile($f,"$name/".basename($f));
+					else $zip->addFile($f,"$name/".basename($f).'s');
+				}
 			}
 		}
 
@@ -1254,9 +1104,8 @@ class Utils
 	{
 		// do not work for empty images
 		if(empty($images)) return;
-		// convert content to String
 
-		$content = str_replace('\\', '', $content); //prevent troubles with json parse
+		$content = str_replace('\\/', '/', $content); //prevent troubles with json parse
 
 		// for the web
 		if($input->environment == "web") {
@@ -1284,14 +1133,17 @@ class Utils
 					$serviceImgs[] = $images[$i];
 					continue;
 				}
-
-				// optimize each image as webp for Android or jpg for iOS
-				$ext = $input->ostype == "android" ? "webp" : "jpg";
-				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
-				Utils::optimizeImage($images[$i], $file, $quality);
-				// replace image on both $content and $images
-				$content = str_replace($images[$i], basename($file), $content);
-				$images[$i] = $file;
+				
+				if($quality!="ORIGINAL"){
+					// optimize each image as webp for Android or jpg for iOS
+					$ext = $input->ostype == "android" ? "webp" : "jpg";
+					$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
+					Utils::optimizeImage($images[$i], $file, $quality);
+					// replace image on both $content and $images
+					$content = str_replace($images[$i], basename($file), $content);
+					$images[$i] = $file;
+				}
+				else $content = str_replace($images[$i], basename($images[$i]), $content);
 			}
 
 			//don't send images that are part of the service files

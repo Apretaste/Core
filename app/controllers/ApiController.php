@@ -672,7 +672,7 @@ class ApiController extends Controller {
             {
               $pin = intval($r[0]->pin);
               $res = null;
-              $this->sendPIN($data_email, $pin, 'es', $res);
+              $this->sendPIN($data_email, $pin, $res);
               $msg = Connection::escape("Te envie el PIN a $data_email! Revisa tu correo y dime quien eres...");
               $sendMessage($chat_id, $msg, $token,'{
               "inline_keyboard": [

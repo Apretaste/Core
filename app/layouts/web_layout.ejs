@@ -1,10 +1,13 @@
-<div class="col s12 m10 l8 offset-m1 offset-l2">
-	<!-- MENU -->
+<!-- MENU -->
+<div class="container">
 	<div class="row">
-		<nav>
+		<nav class="transparent z-depth-0">
 			<div class="nav-wrapper white">
-				<span class="brand-logo left green-text hide-on-small-only">
-					<span style="font-family:Tahoma;">Apretaste!</span>
+				<span class="brand-logo left hide-on-small-only">
+					<img style="max-height: 64px; padding: 15px 0;" src="/images/apretaste_logo_250x90.png" alt="Apretaste!"/>
+				</span>
+				<span class="brand-logo left show-on-small hide-on-med-and-up">
+					<img style="max-height: 64px; padding: 15px 0;" src="/images/apretaste_icon_64x64.png" alt="A!"/>
 				</span>
 				<ul class="right">
 					<li>
@@ -23,7 +26,7 @@
 						</a>
 					</li>
 					<li>
-						<a class="btn-small red lighten-1" href="/logout">
+						<a class="red lighten-3" href="/logout">
 						<i class="material-icons">exit_to_app</i>
 						</a>
 					</li>
@@ -31,17 +34,18 @@
 			</div>
 		</nav>
 	</div>
+</div>
 
-	<!-- CONTENT -->
-	<div class="row">
-		{{APP_TEMPLATE_CODE}}
-	</div>
+<!-- CONTENT -->
+<div class="content container">
+	{{APP_TEMPLATE_CODE}}
+</div>
 
-	<!-- FOOTER -->
-	<div class="row center-align">
-		Apretaste &copy; <%=(new Date).getFullYear()%>; All rights reserved.
-		<div class="divider"></div>
-		<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a> |
-		<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">Términos</a>
-	</div>
+<!-- FOOTER -->
+<div class="row center-align grey lighten-4" style="padding:20px 0px; margin-top:20px;">
+	Apretaste &copy; <%=(new Date).getFullYear()%>. All rights reserved
+	<br>
+	<a href="#!" onclick="apretaste.send({'command':'SOPORTE'});">Soporte</a>
+	&nbsp;&ndash;&nbsp;
+	<a href="#!" onclick="apretaste.send({'command':'TERMINOS'});">T&eacute;rminos</a>
 </div>

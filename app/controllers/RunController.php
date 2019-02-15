@@ -65,14 +65,19 @@ class RunController extends Controller
 		$command = $this->request->get("cm");
 		$data = $this->request->get("dt");
 		$token = $this->request->get('token');
+		$redirect = $this->request->get('rd');
 
 		// if empty get the default service
 		if(empty($command)) $command = "SERVICIOS";
+		else $command = str_replace("_", " ", $command);
+
+		if(empty($redirect)) $redirect = true;
+		else $redirect = ($redirect==='false')?false:true;
 
 		// try login by token or load from the session
-		if($token){
+		if($token) {
 			$user = Security::loginByToken($token);
-			if(is_string($user)){
+			if(is_string($user)) {
 				echo $user;
 				header("Location:/login?redirect=$command");
 				exit;
@@ -84,28 +89,15 @@ class RunController extends Controller
 		if($user) $person = Utils::getPerson($user->email);
 		else {header("Location:/login?redirect=$command"); exit;}
 
-		// set the running environment
-		// @TODO do we need this? shall we erase it?
-		$this->di->set('environment', function() {return "web";});
-
 		// create the input
 		$input = new Input();
 		$input->command = $command;
-		$input->data = ($data)?json_decode($data):new stdClass();
-		$input->files = [];
+		$input->data = $data ? json_decode(urldecode(base64_decode(($data)))) : new stdClass();
+		$input->redirect = $redirect;
 		$input->environment = "web";
 		$input->ostype = "web";
-		$input->method = "web";
-		$input->apptype = "http";
-
-		//get files
-		if(!empty($_FILES)) foreach($_FILES as $file){
-			if ($file['error'] == UPLOAD_ERR_OK){
-				$path = Utils::getTempDir() . "attach_images/" .$file['name'];
-				move_uploaded_file($file['tmp_name'], $path);
-				$input->files[basename($path)] = $path;
-			}
-		}
+		$input->method = "http";
+		$input->apptype = "web";
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
@@ -115,7 +107,7 @@ class RunController extends Controller
 		$wwwhttp = $this->di->get('path')['http'];
 		$servicePath = Utils::getPathToService($response->serviceName);
 
-		if($response->template){
+		if($response->template && $redirect) {
 			// get the HTML template and the JS and CSS files
 			$templateHTML = file_get_contents($response->template);
 
@@ -133,7 +125,7 @@ class RunController extends Controller
 			$startHTML = str_replace('{{APP_LAYOUT_CODE}}', $layoutHTML, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_NAME}}', $response->serviceName, $startHTML);
 			$startHTML = str_replace('{{APP_SERVICE_PATH}}/images', '{{APP_IMAGE_PATH}}', $startHTML);
-			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/app/", $startHTML);
+			$startHTML = str_replace('{{APP_RESOURCES}}', "$wwwhttp/", $startHTML);
 			$startHTML = str_replace('{{APP_IMAGE_PATH}}', "$wwwhttp/temp/", $startHTML);
 			$startHTML = str_replace('{{APP_JSON_RESPONSE}}', $response->json, $startHTML);
 			$startHTML = str_replace('{{APP_TEMPLATE_CSS}}', $startCSS, $startHTML);
@@ -142,7 +134,6 @@ class RunController extends Controller
 			// display the template on screen
 			echo $startHTML;
 		}
-		
 
 		// create a new entry on the delivery table
 		Connection::query("
@@ -182,15 +173,11 @@ class RunController extends Controller
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
 		$this->person = Utils::getPerson($user->email);
-		$this->beforeExecuteRoute();
 
 		// create a new entry on the delivery table
 		Connection::query("
 			INSERT INTO delivery (id, id_person, environment) 
 			VALUES ({$this->deliveryId}, {$this->person->id}, 'app')");
-
-		// set up environment
-		$this->di->set('environment', function() {return "app";});
 
 		// execute the service as app
 		$this->sendEmails = false;
@@ -203,8 +190,6 @@ class RunController extends Controller
 			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
 			WHERE id={$this->deliveryId}");
-
-		$this->afterExecuteRoute();
 
 		// move the file to the public temp folder
 		$path = "";
@@ -266,9 +251,6 @@ class RunController extends Controller
 		$mailbox = str_replace(".", "", explode("@", $this->toEmail)[0]);
 		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
 		$environment = empty($res) ? "default" : $res[0]->environment;
-
-		// set the running environment
-		$this->di->set('environment', function() use($environment) {return $environment;});
 
 		// if the app is reporting a failure
 		if($environment == "failure") {
@@ -344,7 +326,8 @@ class RunController extends Controller
 		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 		$input->files = $attachs;
 		$input->environment = "app";
-		$input->data = isset($input->data)?json_decode($input->data):new stdClass();
+		if(!isset($input->data)) $input->data = new stdClass();
+		if(!isset($input->redirect)) $input->redirect = true;
 
 		// save Nauta password if passed
 		if($input->token) {
@@ -377,7 +360,7 @@ class RunController extends Controller
 		}
 
 		// if the request needs an email back
-		if($response->render || $isReload){
+		if(($response->render && $input->redirect) || $isReload){
 			// get extra data for the app and create an attachment file for the data structure
 			$appData = Utils::getAppData($this->person, $input, $response);
 

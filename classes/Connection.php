@@ -115,7 +115,7 @@ class Connection
 		$safeStr = trim($safeStr, "'");
 
 		// cut the string if a max number is passed
-		if($cut) $safeStr = trim(substr($safeStr, 0, $cut));
+		if($cut) $safeStr = trim(mb_strcut($safeStr, 0, $cut,mb_detect_encoding($cut)));
 		return rtrim($safeStr, "\\");
 	}
 

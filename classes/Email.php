@@ -3,27 +3,16 @@
 use Nette\Mail\Message;
 
 class Email {
-
   public $from;
-
   public $to;
-
   public $requestDate;
-
   public $deliveryId;
-
   public $subject;
-
   public $body;
-
   public $replyId; // id to reply
-
   public $attachments = []; // array of paths
-
   public $images = []; // array of paths
-
   public $method;
-
   public $sent; // date
 
   /**
