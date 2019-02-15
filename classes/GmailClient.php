@@ -13,7 +13,7 @@ class GmailClient
 	 */
 	public function send($to, $subject, $body, $attachment=false){
         $output = new stdClass();
-        $account = Connection::query("SELECT email, password FROM delivery_gmail WHERE sent<490 AND active=1");
+        $account = Connection::query("SELECT email, password FROM delivery_gmail WHERE daily<490 AND active=1");
         
         if(empty($account)){
             $output->code = "520";
