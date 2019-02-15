@@ -53,7 +53,7 @@ class GmailClient
         } else {
             $output->code = "200";
             $output->message = $from;
-            Connection::query("UPDATE delivery_gmail SET sent=sent+1, daily=daily+1 last_sent=CURRENT_TIMESTAMP WHERE email='$from'");
+            Connection::query("UPDATE delivery_gmail SET sent=sent+1, daily=daily+1, last_sent=CURRENT_TIMESTAMP WHERE email='$from'");
         }
 
         return $output;

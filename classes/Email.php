@@ -44,7 +44,7 @@ class Email {
 
       // failover to Gmail
       $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
-      if($res->code != 200 && $active) $res = $this->sendEmailViaGmail();
+      if($res->code != 200 && $active=="1") $res = $this->sendEmailViaGmail();
     }
     // respond to people outside Cuba
     else {
