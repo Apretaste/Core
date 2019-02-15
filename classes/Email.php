@@ -36,17 +36,15 @@ class Email {
     // respond to people in Cuba
     if (substr($this->to, -3) === ".cu") {
 
-      // try sending ssh
+      // try sending via Webmail
       $res = $this->sendEmailViaWebmail();
 
-      if ($res->code != 200)
-      {
-        // try sending via Webmail
-        $res = $this->sendEmailViaSSH();
-      }
+      // try sending ssh
+      if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
-      //if($res->code != "200") $res = $this->sendEmailViaGmail();
+      $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
+      if($res->code != 200 && $active) $res = $this->sendEmailViaGmail();
     }
     // respond to people outside Cuba
     else {
