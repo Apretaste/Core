@@ -468,7 +468,7 @@ class SurveyController extends Controller {
     foreach ($unfinished as $u) {
       $exclude[] = "'{$u->email}'";
     }
-    $exclude = implode(',', $exclude);
+    $exclude = !empty($exclude)?implode(',', $exclude):"''";
 
     return $exclude;
   }
