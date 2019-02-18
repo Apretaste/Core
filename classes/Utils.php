@@ -917,7 +917,7 @@ class Utils
 				$serv->name = $s->name;
 				$serv->description = $s->description;
 				$serv->category = $s->category;
-				$serv->listed = $s->listed;
+				$serv->listed = boolval($s->listed);
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}
