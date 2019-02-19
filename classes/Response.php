@@ -62,6 +62,7 @@ class Response
 	public function setTemplate($template, $content = false, $images=[], $files=[]){
 		// encode the response, send empty object if there is no data
 		if(!$content) $content = new stdClass();
+
 		$content = json_encode($content, JSON_UNESCAPED_UNICODE);
 
 		// optimize the images 

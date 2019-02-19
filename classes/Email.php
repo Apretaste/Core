@@ -28,11 +28,7 @@ class Email {
       // try sending ssh
       $res = $this->sendEmailViaWebmail();
 
-      if ($res->code != 200)
-      {
-        // try sending via Webmail
-        $res = $this->sendEmailViaSSH();
-      }
+      //if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
       //if($res->code != "200") $res = $this->sendEmailViaGmail();
@@ -479,8 +475,8 @@ class Email {
         'subject'    => $this->subject,
         'body'       => $body,
         'attachment' => $attach,
-        'from_name' => $person_from->full_name,
-        'to_name' => $person_to->full_name
+        'from_name' => $person_from->first_name,
+        'to_name' => $person_to->first_name
       ];
 
       $logger->log("SEND post to ssh webhook: ".json_encode($postData)."\n");
