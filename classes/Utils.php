@@ -889,7 +889,7 @@ class Utils
 	 * @return stdClass $appData
 	 */
 	public static function getAppData($person, $input, &$response)
-	{	
+	{
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
