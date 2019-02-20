@@ -1192,7 +1192,6 @@ class Utils
    * Check if user is blocked
    *
    * @param $email
-   *
    * @return bool
    */
   static function isUserBlocked($email) {

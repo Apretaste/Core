@@ -8,3 +8,10 @@
 .success { color:#747941; background-color:#DFF0D8; }
 .danger { color:#B64850; background-color:#F2DEDE; }
 .warning { color:#BF8740; background-color:#FCF8E3; }
+
+/*Floating Action Buttons*/
+.floating-action {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+}
