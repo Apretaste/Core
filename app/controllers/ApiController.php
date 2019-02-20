@@ -303,7 +303,7 @@ class ApiController extends Controller {
    * @return string | boolean
    */
   public function startAction() {
-    $wwwroot = $this->di->get('path')['root'];
+     $wwwroot = $this->di->get('path')['root'];
 
     // allow JS clients to use the API
     header("Access-Control-Allow-Origin: *");
