@@ -1,5 +1,4 @@
 <?php
-	$wwwhttp = $this->di->get('path')['http'];
 	$security = new Security();
 	$manager = $security->getUser();
 ?>
@@ -8,33 +7,35 @@
 <html lang="en">
 	<head>
 		<title><?= isset($title) ? strip_tags($title) : "Manage"; ?></title>
+		<link rel="icon" href="/images/apretaste_icon_16x16.png" sizes="16x16" type="image/png"/>
+		<link rel="icon" href="/images/apretaste_icon_32x32.png" sizes="32x32" type="image/png"/>
+		<link rel="icon" href="/images/apretaste_icon_64x64.png" sizes="64x64" type="image/png"/>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="description" content="Conectando miles de cubanos a la Web por vias efectivas, accesibles y legales">
 		<meta name="author" content="Salvi Pascual">
-		<link rel="icon" href="<?= $wwwhttp; ?>/images/apretaste.icon.png">
 
 		<!-- jQuery -->
-		<script src="<?= $wwwhttp; ?>/js/jquery-2.1.1.js"></script>
-		<link href="<?= $wwwhttp; ?>/css/jquery-ui.min.css" rel="stylesheet">
+		<script src="/js/jquery-2.1.1.js"></script>
+		<link href="/css/jquery-ui.min.css" rel="stylesheet">
 
 		<!-- Bootstrap Core CSS -->
-		<link href="<?= $wwwhttp; ?>/css/bootstrap.min.css" rel="stylesheet">
-		<script src="<?= $wwwhttp; ?>/js/bootstrap.min.js"></script>
+		<link href="/css/bootstrap.min.css" rel="stylesheet">
+		<script src="/js/bootstrap.min.js"></script>
 
 		<!-- Bootstrap plugins -->
-		<link href="<?= $wwwhttp; ?>/css/fileinput.min.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/animate.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
-		<link href="<?= $wwwhttp; ?>/css/basics.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/manage.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/toastr.min.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/jquery.gritter.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/datatables.min.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/jasny-bootstrap.min.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/css/iCheck/custom.css" rel="stylesheet">
-		<link href="<?= $wwwhttp; ?>/js/summernote/summernote.css" rel="stylesheet">
+		<link href="/css/fileinput.min.css" rel="stylesheet">
+		<link href="/css/animate.css" rel="stylesheet">
+		<link href="/font-awesome/css/font-awesome.min.css" rel="stylesheet" >
+		<link href="/css/basics.css" rel="stylesheet">
+		<link href="/css/manage.css" rel="stylesheet">
+		<link href="/css/toastr.min.css" rel="stylesheet">
+		<link href="/css/jquery.gritter.css" rel="stylesheet">
+		<link href="/css/datatables.min.css" rel="stylesheet">
+		<link href="/css/jasny-bootstrap.min.css" rel="stylesheet">
+		<link href="/css/iCheck/custom.css" rel="stylesheet">
+		<link href="/js/summernote/summernote.css" rel="stylesheet">
 	</head>
 
 	<body>
@@ -171,7 +172,6 @@
 							<a href="#"><i class="fa fa-laptop"></i> <span class="nav-label">Developers</span> <span class="fa arrow"></span></a>
 							<ul class="nav nav-second-level">
 								<li><a href="/developer/services">Services</a></li>
-								<li><a href="/developer/deploy">Deploy</a></li>
 								<li><a href="/developer/alerts">Alerts</a></li>
 								<li><a href="/developer/errors">General errors log</a></li>
 								<li><a href="/developer/mysql">Mysql errors log</a></li>
@@ -215,20 +215,20 @@
 			</div>
 		</div>
 
-		<script src="<?= $wwwhttp; ?>/js/jquery.metisMenu.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/jquery.slimscroll.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/jquery.peity.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/manage.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/pace.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/jquery.gritter.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/jquery.sparkline.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/toastr.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/datatables.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/jasny-bootstrap.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/validator.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/fileinput.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/bootstrap-notify.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/icheck.min.js"></script>
-		<script src="<?= $wwwhttp; ?>/js/summernote/summernote.js"></script>
+		<script src="/js/jquery.metisMenu.js"></script>
+		<script src="/js/jquery.slimscroll.min.js"></script>
+		<script src="/js/jquery.peity.min.js"></script>
+		<script src="/js/manage.js"></script>
+		<script src="/js/pace.min.js"></script>
+		<script src="/js/jquery.gritter.min.js"></script>
+		<script src="/js/jquery.sparkline.min.js"></script>
+		<script src="/js/toastr.min.js"></script>
+		<script src="/js/datatables.min.js"></script>
+		<script src="/js/jasny-bootstrap.min.js"></script>
+		<script src="/js/validator.min.js"></script>
+		<script src="/js/fileinput.min.js"></script>
+		<script src="/js/bootstrap-notify.min.js"></script>
+		<script src="/js/icheck.min.js"></script>
+		<script src="/js/summernote/summernote.js"></script>
 	</body>
 </html>

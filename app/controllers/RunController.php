@@ -92,12 +92,12 @@ class RunController extends Controller
 		// create the input
 		$input = new Input();
 		$input->command = $command;
-		$input->data = $data ? json_decode(base64_decode($data)) : new stdClass();
+		$input->data = $data ? json_decode(urldecode(base64_decode(($data)))) : new stdClass();
 		$input->redirect = $redirect;
 		$input->environment = "web";
 		$input->ostype = "web";
-		$input->method = "web";
-		$input->apptype = "http";
+		$input->method = "http";
+		$input->apptype = "web";
 
 		// run the service and get the response
 		$response = Utils::runService($person, $input);
@@ -374,7 +374,6 @@ class RunController extends Controller
 				$email->subject = $this->subject;
 				$email->body = $this->body;
 				$email->response = $response;
-				$email->images = $response->images;
 				$email->attachments = [$this->resPath];
 				$email->send();
 			}

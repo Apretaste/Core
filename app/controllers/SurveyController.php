@@ -463,12 +463,29 @@ class SurveyController extends Controller {
 			FROM _survey_question 
 			WHERE survey = $id)");
 
+	$incompleteProfile = Connection::query(
+        "SELECT A.`email` FROM `person` A JOIN `_survey_answer_choosen` B 
+        ON A.email = B.email WHERE B.survey=$id 
+        AND (
+          A.date_of_birth IS NULL OR
+          A.gender IS NULL OR
+          A.province IS NULL OR
+          A.skin IS NULL OR
+          A.highest_school_level IS NULL
+        )
+        ");
+
     $exclude = [];
 
     foreach ($unfinished as $u) {
       $exclude[] = "'{$u->email}'";
     }
-    $exclude = implode(',', $exclude);
+
+    foreach ($incompleteProfile as $incomplete) {
+      $exclude[] = "'{$incomplete->email}'";
+    }
+
+    $exclude = !empty($exclude)?implode(',', $exclude):"''";
 
     return $exclude;
   }
@@ -847,11 +864,12 @@ class SurveyController extends Controller {
     $id                 = intval($_GET['id']);
     $survey             = self::getSurvey($id);
     $participants_table = uniqid('_survey_participants_');
-    $total_answer       = Connection::query("SELECT COUNT(*) AS total FROM _survey_answer_choosen WHERE survey =  $id;")[0]->total * 1;
+    $exclude            = $this->excludedUsers($id);
+    $total_answer       = Connection::query("SELECT COUNT(*) AS total FROM _survey_answer_choosen WHERE survey =  $id AND email NOT IN($exclude);")[0]->total * 1;
     $total_questions    = Connection::query("SELECT COUNT(*) as total  FROM _survey_question WHERE survey =  $id;")[0]->total * 1;
 
     Connection::query("CREATE TABLE $participants_table (email varchar(255), total bigint(11));");
-    Connection::query("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id GROUP BY email HAVING total = {$total_questions};");
+    Connection::query("INSERT INTO $participants_table SELECT email, COUNT(email) AS total FROM `_survey_answer_choosen` WHERE survey = $id AND email NOT IN($exclude) GROUP BY email HAVING total = {$total_questions};");
 
     $results = function ($fields, $participants_table) {
       if (!is_array($fields)) {
@@ -868,8 +886,7 @@ class SurveyController extends Controller {
                     FROM ( 
                       SELECT *, TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) as age 
                       FROM person
-                      WHERE updated_by_user = 1 
-                        AND active = 1
+                      WHERE updated_by_user = 1
                         AND email IN (SELECT email FROM $participants_table)
                       ) subq 
                     WHERE $where

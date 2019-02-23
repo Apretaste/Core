@@ -95,8 +95,7 @@ class Utils
 	public static function isAllowedDomain($email){
 		$domain = substr($email, strpos($email,'@') + 1);
 		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
-		if(!empty($isAllowed)) return true;
-		return false;
+		return !empty($isAllowed);
 	}
 
 	/**
@@ -235,8 +234,8 @@ class Utils
 	public static function optimizeImage($fromPath, &$toPath=false, $quality=50)
 	{
 		// do not accept non-existing images
-		if(!file_exists($fromPath) || $quality == "ORIGINAL") return;
-		if($quality == "REDUCIDA") $quality = 40; else $quality == 15;
+		if(!file_exists($fromPath)) return;
+		if($quality == "REDUCIDA") $quality = 40; else $quality = 15;
 
 		// get path to save and extensions
 		if(empty($toPath)) $toPath = $fromPath;
@@ -495,7 +494,7 @@ class Utils
 	 * @param Int $alert: 1 if is an alert
 	 * @return array
 	 */
-	public static function addNotification($to, $text, $icon='', $link='', $alert=0)
+	public static function addNotification($to, $text, $link='', $icon='', $alert=0)
 	{
 		// get the service name
 		$trace = debug_backtrace();
@@ -516,7 +515,7 @@ class Utils
 			$wwwhttp = $di->get('path')['http'];
 
 			// convert the link to URL
-			$email = self::getEmailFromId($to);
+			$email = self::getPerson($to)->email;
 			$token = self::detokenize($email);
 			$tokenStr = $token ? "&token=$token" : "";
 			$url = empty($link) ? "" : "$wwwhttp/run/web?cm=$link{$tokenStr}";
@@ -890,7 +889,7 @@ class Utils
 	 * @return stdClass $appData
 	 */
 	public static function getAppData($person, $input, &$response)
-	{	
+	{
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
@@ -903,9 +902,9 @@ class Utils
 
 			// add services to the response
 			$services = Connection::query("
-				SELECT name, description, category
+				SELECT name, description, category, listed
 				FROM service
-				WHERE listed=1 AND version>0");
+				WHERE version>0");
 
 			$appData->active_services = [];
 			$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
@@ -918,6 +917,7 @@ class Utils
 				$serv->name = $s->name;
 				$serv->description = $s->description;
 				$serv->category = $s->category;
+				$serv->listed = boolval($s->listed);
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}
@@ -1077,7 +1077,10 @@ class Utils
 
 			foreach($files as $f){
 				$f = $path."/$f";
-				if(file_exists($f)) $zip->addFile($f,"$name/".basename($f));
+				if(file_exists($f)){
+					if(basename($f)!="scripts.js") $zip->addFile($f,"$name/".basename($f));
+					else $zip->addFile($f,"$name/".basename($f).'s');
+				}
 			}
 		}
 
@@ -1130,14 +1133,17 @@ class Utils
 					$serviceImgs[] = $images[$i];
 					continue;
 				}
-
-				// optimize each image as webp for Android or jpg for iOS
-				$ext = $input->ostype == "android" ? "webp" : "jpg";
-				$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
-				Utils::optimizeImage($images[$i], $file, $quality);
-				// replace image on both $content and $images
-				$content = str_replace($images[$i], basename($file), $content);
-				$images[$i] = $file;
+				
+				if($quality!="ORIGINAL"){
+					// optimize each image as webp for Android or jpg for iOS
+					$ext = $input->ostype == "android" ? "webp" : "jpg";
+					$file = Utils::getTempDir() . "attachments/".Utils::generateRandomHash().".$ext";
+					Utils::optimizeImage($images[$i], $file, $quality);
+					// replace image on both $content and $images
+					$content = str_replace($images[$i], basename($file), $content);
+					$images[$i] = $file;
+				}
+				else $content = str_replace($images[$i], basename($images[$i]), $content);
 			}
 
 			//don't send images that are part of the service files
@@ -1186,7 +1192,6 @@ class Utils
    * Check if user is blocked
    *
    * @param $email
-   *
    * @return bool
    */
   static function isUserBlocked($email) {
