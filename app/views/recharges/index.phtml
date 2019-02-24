@@ -1,0 +1,36 @@
+<div class="row">
+	<div class="col-xs-12">
+		<table class="table table-striped table-bordered table-hover">
+			<thead>
+				<tr>
+					<th>Buyer</th>
+					<th>Product</th>
+					<th>Price</th>
+					<th>Dated</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ($recharges as $recharge) { ?>
+					<tr>
+						<td><a target="_blank" href="/admin/profilesearch?identifier=<?= $recharge->email ?>"><?= $recharge->email ?></a></td>
+						<td><?= $recharge->name ?></td>
+						<td class="text-center">§<?= number_format($recharge->price, 2) ?></td>
+						<td><?= $recharge->inserted ?></td>
+						<td class="text-center">
+							<?php if(empty($recharge->paid)) { ?>
+								<a onclick="return ask();" href="/recharges/pay?id=<?= $recharge->id ?>" class="btn btn-xs btn-default"><span class="toggle-active-icon glyphicon glyphicon-check"></span></a>
+							<?php } ?>
+						</td>
+					</tr>
+				<?php } ?>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<script type="text/javascript">
+	function ask() {
+		return confirm("Are you sure to mark as Paid? Only mark recharges that you had personally made.");
+	}
+</script>

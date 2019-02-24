@@ -103,15 +103,10 @@
 						</li>
 						<?php } ?>
 
-						<!-- MARKET -->
-						<?php if($security->checkAccess("market")) { ?>
+						<!-- RECHARGES -->
+						<?php if($security->checkAccess("recharges")) { ?>
 						<li>
-							<a href="#"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Market</span> <span class="fa arrow"></span></a>
-							<ul class="nav nav-second-level">
-								<li><a href="/market/market">Products</a></li>
-								<li><a href="/market/marketOrders">Orders</a></li>
-								<li><a href="/market/marketStats">Stats</a></li>
-							</ul>
+							<a href="/recharges"><i class="fa fa-mobile"></i> <span class="nav-label">Recharges</span></a>
 						</li>
 						<?php } ?>
 
