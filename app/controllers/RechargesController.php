@@ -23,7 +23,7 @@ class RechargesController extends Controller
 
 		// get the unpaid recharges
 		$recharges = Connection::query("
-			SELECT A.id, A.paid, B.email, B.username, A.inserted, C.name, C.price
+			SELECT A.id, A.cellphone, A.inserted, A.paid, B.email, B.username, C.name, C.price
 			FROM _recargas A
 			JOIN person B
 			JOIN inventory C

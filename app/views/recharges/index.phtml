@@ -5,6 +5,7 @@
 				<tr>
 					<th>Buyer</th>
 					<th>Product</th>
+					<th>Phone</th>
 					<th>Price</th>
 					<th>Dated</th>
 					<th>Actions</th>
@@ -15,6 +16,7 @@
 					<tr>
 						<td><a target="_blank" href="/admin/profilesearch?identifier=<?= $recharge->email ?>"><?= $recharge->email ?></a></td>
 						<td><?= $recharge->name ?></td>
+						<td><?= $recharge->cellphone ?></td>
 						<td class="text-center">§<?= number_format($recharge->price, 2) ?></td>
 						<td><?= $recharge->inserted ?></td>
 						<td class="text-center">
