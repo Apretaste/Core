@@ -79,7 +79,8 @@ class Utils
 	 * @param String $name, name or alias of the service
 	 * @return String, name of service or false if not exist
 	 */
-	public static function serviceExist($name){
+	public static function serviceExist($name)
+	{
 		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 
 		if(file_exists("$wwwroot/services/$name/service.php")) return $name;
@@ -92,7 +93,8 @@ class Utils
 	 * @author salvipascual
 	 * @return boolean
 	 */
-	public static function isAllowedDomain($email){
+	public static function isAllowedDomain($email)
+	{
 		$domain = substr($email, strpos($email,'@') + 1);
 		$isAllowed = Connection::query("SELECT * FROM allowed_domains WHERE domain='$domain'");
 		return !empty($isAllowed);
@@ -105,8 +107,13 @@ class Utils
 	 * @param String $niddle: Can be an email, @username or ID
 	 * @return object|boolean
 	 */
-	public static function getPerson($niddle){
-		if(!$niddle) return false;
+	public static function getPerson($niddle) 
+	{
+		// do not allow empty values
+		if( ! $niddle) return false;
+
+		// clean niddle if passed with @ or spaces
+		$niddle = trim($niddle, " @");
 
 		// get the person via email, id or username
 		if(filter_var($niddle, FILTER_VALIDATE_EMAIL)) $where = "email";
