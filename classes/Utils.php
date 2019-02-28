@@ -892,7 +892,7 @@ class Utils
 	 * @return stdClass $appData
 	 */
 	public static function getAppData($person, $input, &$response)
-	{	
+	{
 		// create the response
 		$appData = new stdClass();
 		$appData->reload = $input->command=="reload";
@@ -920,7 +920,7 @@ class Utils
 				$serv->name = $s->name;
 				$serv->description = $s->description;
 				$serv->category = $s->category;
-				$serv->listed = $s->listed;
+				$serv->listed = boolval($s->listed);
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}
@@ -1195,7 +1195,6 @@ class Utils
    * Check if user is blocked
    *
    * @param $email
-   *
    * @return bool
    */
   static function isUserBlocked($email) {

@@ -374,7 +374,6 @@ class RunController extends Controller
 				$email->subject = $this->subject;
 				$email->body = $this->body;
 				$email->response = $response;
-				$email->images = $response->images;
 				$email->attachments = [$this->resPath];
 				$email->send();
 			}

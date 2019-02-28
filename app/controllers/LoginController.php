@@ -205,7 +205,7 @@ class LoginController extends Controller
 	public function getIcon($redirect)
 	{
 		// create the default icon path
-		$icon = "/images/apretaste.logo.small.transp.png";
+		$icon = "/images/apretaste_logo_250x90.png";
 
 		// get the path to the icon of the service
 		$wwwroot = $this->di->get('path')['root'];
