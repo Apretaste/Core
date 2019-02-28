@@ -535,9 +535,12 @@ class Utils
 		// increase number of notifications
 		Connection::query("UPDATE person SET notifications=notifications+1 WHERE id=$to");
 
+		$text = Connection::escape($text);
+		$link = Connection::escape($link);
+
 		// insert the notification and return the id
 		return Connection::query("
-			INSERT INTO notification (`to`, `service`, `icon`, `text`, `link`, `alert`)
+			INSERT INTO notifications (`to`, `service`, `icon`, `text`, `link`, `alert`)
 			VALUES ($to, '$service', '$icon', '$text', '$link', $alert)");
 	}
 
