@@ -41,7 +41,7 @@ var apretaste = {
 						// run the callback
 						if(json.callback != undefined && json.callback.name != undefined && json.callback.name != "") {
 							var data = json.callback.data == undefined ? {} : json.callback.data;
-							if(json.callback) window[json.callback.name](data);							
+							if(json.callback) window[json.callback.name](data);
 						}
 					}
 				});
@@ -49,6 +49,22 @@ var apretaste = {
 		}
 
 		return false;
+	}
+}
+
+var setOnChangeHandler = true;
+
+function loadFileToBase64(){
+	$('input:file')[0].click();
+	if(setOnChangeHandler){
+		setOnChangeHandler = false;
+		$('input:file').change(() => {
+			let file = $('input:file').prop("files")[0];
+			file.toBase64().then(data => {
+				sendFile(data) // sendFile func must be defined in service script
+			});
+			return false;
+		});
 	}
 }
 
