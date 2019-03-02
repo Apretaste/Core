@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir keys
 mkdir temp
 mkdir temp/templates_c
 mkdir temp/thumbnails
@@ -26,6 +27,7 @@ touch logs/api.log
 touch logs/amazon.log
 chmod -R 777 temp
 chmod -R 777 logs
+chmod 777 keys
 chmod 777 services
 chmod 777 public/ads
 chmod 777 public/profile
