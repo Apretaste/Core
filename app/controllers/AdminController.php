@@ -285,6 +285,7 @@ class AdminController extends Controller
 		$identifier = $this->request->get("identifier");
 		// get the user profile
 		$profile = Utils::getPerson($identifier);
+
 		if($profile){
 			$path = FactoryDefault::getDefault()->get('path')['http'];
 			$profile->http_picture = "$path/profile/{$profile->picture}.jpg";

@@ -9,6 +9,7 @@ use Phalcon\Session\Adapter\Files as Session;
 
 // locate language and charset
 setlocale(LC_TIME, "es_ES");
+date_default_timezone_set('US/Eastern');
 header("Content-Type: text/html; charset=utf-8");
 
 // include composer

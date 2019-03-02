@@ -389,7 +389,7 @@ class Social
 		if(empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->last_ip, $profile->active, $profile->mail_list, $profile->blocked, $profile->appversion, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
+		unset($profile->last_ip, $profile->img_quality, $profile->token, $profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 		return $profile;
 	}
 
