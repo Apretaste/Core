@@ -250,7 +250,7 @@ class RunController extends Controller
 		// get the environment from the mailbox
 		$mailbox = str_replace(".", "", explode("@", $this->toEmail)[0]);
 		$res = Connection::query("SELECT environment FROM delivery_input WHERE email='$mailbox'");
-		$environment = empty($res) ? "default" : $res[0]->environment;
+		$environment = empty($res) ? "app" : $res[0]->environment;
 
 		// if the app is reporting a failure
 		if($environment == "failure") {

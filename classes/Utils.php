@@ -962,7 +962,7 @@ class Utils
 		}
 
 		// add the response mailbox
-		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='app' AND active=1 ORDER BY received ASC");
+		$inboxes = Connection::query("SELECT email FROM delivery_input WHERE environment='neoapp' AND active=1 ORDER BY received ASC");
 		$max90Percent = intval((count($inboxes)-1) * 0.9);
 		$inbox = $inboxes[rand(0, $max90Percent)]->email; // pick an inbox btw the first 90%
 		$inbox = substr_replace($inbox, ".", rand(1, strlen($inbox)-1), 0); // add a dot
