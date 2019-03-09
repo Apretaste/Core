@@ -28,7 +28,7 @@ class Email {
       // try sending ssh
       $res = $this->sendEmailViaWebmail();
 
-      //if ($res->code != 200) $res = $this->sendEmailViaSSH();
+      if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
       //if($res->code != "200") $res = $this->sendEmailViaGmail();
@@ -460,7 +460,7 @@ class Email {
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
       //Set the Url
-      curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.9/web2smtp/');
+      curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.4/web2smtp/');
 
       $attach = empty($this->attachments) ? FALSE : $this->attachments[0];
       $attach = basename($attach);
