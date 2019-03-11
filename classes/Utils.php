@@ -1146,7 +1146,7 @@ class Utils
 					$serviceImgs[] = $images[$i];
 					continue;
 				}
-				
+
 				if($quality!="ORIGINAL"){
 					// optimize each image as webp for Android or jpg for iOS
 					$ext = $input->ostype == "android" ? "webp" : "jpg";

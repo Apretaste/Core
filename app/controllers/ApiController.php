@@ -278,13 +278,6 @@ class ApiController extends Controller {
     $sender->body = $body;
     $res = $sender->send();
 
-    try {
-      $res = $sender->sendEmailViaGmail();
-    } catch (Exception $e) {
-      $res       = new stdClass();
-      $res->code = "404";
-    }
-
     if ($res->code != "200") {
       $res = $sender->send();
     }
