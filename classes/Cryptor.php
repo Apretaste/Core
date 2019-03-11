@@ -13,7 +13,7 @@ class Cryptor{
 	 * @return String
 	 */
 	public static function createAESKey(){
-		return openssl_random_pseudo_bytes(16);
+		return openssl_random_pseudo_bytes(32);
 //		return "T4\xb1\x8d\xa9\x98\x05\\x8c\xbe\x1d\x07&[\x99\x18\xa4~Lc1\xbeW\xb3";
 	}
 
