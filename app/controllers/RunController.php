@@ -301,7 +301,7 @@ class RunController extends Controller
 			return Utils::createAlert("[RunController::runApp] Error ZIP file was not received for delivery ID: {$this->deliveryId}");
 
 		// get path to the folder to save
-		$requestFile = ""; $attachs = [];
+		$requestFile = ""; $keyFile = ""; $attachs = []; 
 		$folderName = str_replace(".zip", "", basename($this->attachment));
 
 		// get the text file and attached files
@@ -312,6 +312,7 @@ class RunController extends Controller
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if($filename == "request.json") $requestFile = $filename;
+				else if($filename == "AES.key") $keyFile = $filename;
 				else $attachs[$filename] = "$temp/attachments/$folderName/$filename";
 			}
 
@@ -321,8 +322,17 @@ class RunController extends Controller
 		} 
 		else return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 
-		// get the request data from the JSON file
-		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
+		// decrypt the AES key if exists, and then decrypt the request
+		if(isset($keyFile)){
+			$keyFile = file_get_contents("$temp/attachments/$folderName/$keyFile");
+			$AESkey = base64_decode(Cryptor::decryptRSA($this->person->id, $keyFile, 'server'));
+			$jsonFileDecoded = Cryptor::decryptAES($AESkey, file_get_contents("$temp/attachments/$folderName/$requestFile"));
+			// get the request data the JSON decoded file
+			$input = json_decode($jsonFileDecoded);
+		}
+		// compatibility hack while the beta is running
+		else $input = json_decode(file_get_contents("$temp/attachments/$folderName/$requestFile"));
+
 		$input->osversion = filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 		$input->files = $attachs;
 		$input->environment = "app";
@@ -351,6 +361,7 @@ class RunController extends Controller
 		if ($isReload) {
 			$response = new Response();
 			$attachService = false;
+			Cryptor::saveAppRSAKey($this->person->id, $input->publicKey);
 		}
 		else {
 			// process the service

@@ -931,6 +931,9 @@ class Utils
 				$serv->icon = basename($icon);
 				$appData->active_services[] = $serv;
 			}
+
+			Cryptor::createRSAKeys($person->id);
+			$appData->serverPublicKey = Cryptor::getRSAPublicKey($person->id, 'server');
 		}
 
 		$appData->username = $person->username;

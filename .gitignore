@@ -4,6 +4,8 @@ public/temp/*
 public/tmp/*
 services/*
 logs/*
+configs/RSAPrivate.key
+configs/RSAPublic.pub
 nbproject/*
 vendor/*
 cert/*
