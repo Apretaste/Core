@@ -323,7 +323,7 @@ class RunController extends Controller
 		else return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 
 		// decrypt the AES key if exists, and then decrypt the request
-		if(isset($keyFile)){
+		if($keyFile){
 			$keyFile = file_get_contents("$temp/attachments/$folderName/$keyFile");
 			$AESkey = base64_decode(Cryptor::decryptRSA($this->person->id, $keyFile, 'server'));
 			$jsonFileDecoded = Cryptor::decryptAES($AESkey, file_get_contents("$temp/attachments/$folderName/$requestFile"));
