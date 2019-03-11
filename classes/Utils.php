@@ -934,7 +934,7 @@ class Utils
 
 			Cryptor::createRSAKeys($person->id);
 			$appData->serverPublicKey = Cryptor::getRSAPublicKey($person->id, 'server');
-			$appData->serverPublicKey = trim(str_replace(['-----BEGIN RSA PUBLIC KEY-----','-----END RSA PUBLIC KEY-----'], "", $appData->serverPublicKey));
+			$appData->serverPublicKey = trim(str_replace(['-----BEGIN PUBLIC KEY-----','-----END PUBLIC KEY-----'], "", $appData->serverPublicKey));
 		}
 
 		$appData->username = $person->username;

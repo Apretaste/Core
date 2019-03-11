@@ -1,6 +1,5 @@
 <?php
 
-use Phalcon\Crypt;
 use Phalcon\DI\FactoryDefault;
 use phpseclib\Crypt\RSA;
 
@@ -53,21 +52,12 @@ class Cryptor{
 		if(empty($userId)) return false;
 
 		// do not recreate the key if the file exist
-		$di = FactoryDefault::getDefault();
-		$wwwroot = $di->get('path')['root'];
+		$wwwroot = FactoryDefault::getDefault()->get('path')['root'];
 		$filePrivateKey = "$wwwroot/keys/server_{$userId}_private";
 		$filePublicKey = "$wwwroot/keys/server_{$userId}_public";
 		if(file_exists($filePrivateKey) && file_exists($filePublicKey)) return false;
 
-		// create keys
-		$rsa = new RSA();
-		$rsa->setPrivateKeyFormat(RSA::PRIVATE_FORMAT_PKCS1);
-		$rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_PKCS1);
-		$keys = $rsa->createKey();
-
-		// replace keys on the file system
-		file_put_contents($filePrivateKey, $keys['privatekey']);
-		file_put_contents($filePublicKey, $keys['publickey']);
+		exec("openssl genrsa -out $filePrivateKey 2048 && openssl rsa -in $filePrivateKey -pubout > $filePublicKey");
 		return true;
 	}
 
