@@ -1038,7 +1038,7 @@ class Utils
 	 */
 	public static function generateZipResponse(Response $response, $appData, $attachService = false, $keyFile, $userId){
 		// get a random name for the file and folder
-		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
+		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8).".zipi";
 
 		// create the zip file
 		$zip = new ZipArchive;
