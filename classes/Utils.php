@@ -1036,7 +1036,7 @@ class Utils
 	 * @param Response $response
 	 * @return String, path to the file created
 	 */
-	public static function generateZipResponse(Response $response, $appData, $attachService = false){
+	public static function generateZipResponse(Response $response, $appData, $attachService = false, $keyFile, $userId){
 		// get a random name for the file and folder
 		$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".zip";
 
@@ -1100,6 +1100,34 @@ class Utils
 
 		// close the zip file
 		$zip->close();
+
+		// if the request is from an app with encryption
+		if($keyFile){
+			// generate a new zip to encrypt
+			$rawData = $zipFile;
+			$zipFile = Utils::getTempDir() . substr(md5(rand() . date('dHhms')), 0, 8) . ".jpg";
+
+			// create the new zip file
+			$zip = new ZipArchive;
+			$zip->open($zipFile, ZipArchive::CREATE);
+
+			// generate the new key and encrypt the data with a random AES key
+			$AESKey = Cryptor::createAESKey();
+			$encryptedZip = Cryptor::encryptAES($AESKey, file_get_contents($rawData));
+
+			// encrypt the AES key with the user app RSA key
+			$AESKey = Cryptor::encryptRSA($userId, $AESKey);
+
+			// save the data and the key in the zip
+			$zip->addFromString(basename($rawData), $encryptedZip);
+			$zip->addFromString("AES.key", $AESKey);
+
+			// close the zip file
+			$zip->close();
+
+			// delete the raw zip
+			unlink($rawData);
+		}
 
 		// return the path to the file
 		return $zipFile;

@@ -302,7 +302,7 @@ class RunController extends Controller
 
 		// get path to the folder to save
 		$requestFile = ""; $keyFile = ""; $attachs = []; 
-		$folderName = str_replace(".zip", "", basename($this->attachment));
+		$folderName = str_replace(".jpg", "", basename($this->attachment));
 
 		// get the text file and attached files
 		$temp = Utils::getTempDir();
@@ -375,7 +375,7 @@ class RunController extends Controller
 			// get extra data for the app and create an attachment file for the data structure
 			$appData = Utils::getAppData($this->person, $input, $response);
 
-			$this->resPath = Utils::generateZipResponse($response, $appData, $attachService);
+			$this->resPath = Utils::generateZipResponse($response, $appData, $attachService, $keyFile, $this->person->id);
 			if($this->sendEmails){
 				// prepare and send the email
 				$email = new Email();
