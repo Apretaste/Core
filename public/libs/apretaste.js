@@ -76,3 +76,19 @@ File.prototype.toBase64 = function(){
 		reader.readAsDataURL(this);
 	}.bind(this));
 }
+
+
+$(function(){
+
+	// after render
+  $(".link").attr('href', '#!');
+  $(".link-simple").click(function(){
+    apretaste.send({
+      command: $(this).attr('data-command'),
+      data: {
+        query: eval($(this).attr('data-query'))
+      }
+    });
+  });
+
+});

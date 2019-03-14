@@ -33,16 +33,6 @@
 		var html = ejs.render(`{{APP_LAYOUT_CODE}}`, $res);
 		document.getElementById('app_content_holder').innerHTML = html;
 
-		// after render
-		$(".link").attr('href', '#!');
-		$(".link-simple").click(function(){
-          apretaste.send({
-            command: $(this).attr('data-command'),
-            data: {
-              query: eval($(this).attr('data-query'))
-            }
-          });
-        });
 	</script>
 
 	<!-- web push notifications -->
