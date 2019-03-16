@@ -386,7 +386,7 @@ class RunController extends Controller
 				$email->body = $this->body;
 				$email->response = $response;
 				$email->attachments = [$this->resPath];
-				$email->send();
+				$email->queue();
 			}
 		}
 

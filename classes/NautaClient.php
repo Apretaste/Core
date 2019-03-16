@@ -79,8 +79,8 @@ class NautaClient
 	 */
 	public function __construct($user=null, $pass=null, $proxy=false, $tor = false)
 	{
-    $di = \Phalcon\DI\FactoryDefault::getDefault();
-    $wwwroot = $di->get('path')['root'];
+	$di = \Phalcon\DI\FactoryDefault::getDefault();
+	$wwwroot = $di->get('path')['root'];
 	  $this->logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/nautaclient.log");
 
 		// save global user/pass
@@ -93,16 +93,16 @@ class NautaClient
 		// set proxy if passed
 		if($proxy) {
 		  if ($tor) {
-        $this->logger->log("--- {$this->user} using TOR");
-        curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
-        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
-      } else
-      {
-        $this->logger->log("--- {$this->user} using PROXY");
-        curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
-        curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
-      }
-  	}
+		$this->logger->log("--- {$this->user} using TOR");
+		curl_setopt($this->client, CURLOPT_PROXY, "localhost:9050");
+		curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+	  } else
+	  {
+		$this->logger->log("--- {$this->user} using PROXY");
+		curl_setopt($this->client, CURLOPT_PROXY, "209.126.120.13:8080");
+		curl_setopt($this->client, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+	  }
+	}
 
 		// save cookie file
 		$this->sessionFile = Utils::getTempDir() . "nautaclient/{$this->user}.session";
@@ -254,10 +254,10 @@ class NautaClient
 	{
 		if ($this->checkLogin()) return true;
 
-    $tries = 3;
-    TryAgain:
+	$tries = 3;
+	TryAgain:
 
-    $this->logger->log("Login {$this->user} ... try $tries ...");
+	$this->logger->log("Login {$this->user} ... try $tries ...");
 
 		// save the captcha image in the temp folder
 		$captchaImage = Utils::getTempDir() . "capcha/" . Utils::generateRandomHash() . ".jpg";
@@ -339,37 +339,37 @@ class NautaClient
 		$response = false;
 		for($i =0; $i<3; $i++)
 		{
-      //$this->logger->log("Login for {$this->user}...attempt $i");
+	  //$this->logger->log("Login for {$this->user}...attempt $i");
 			$response = curl_exec($this->client);
 			if ($response !== false) break;
 		}
 
 		if ($response === false)
 		{
-      $this->logger->log("Curl fail while login {$this->user} ...");
+	  $this->logger->log("Curl fail while login {$this->user} ...");
 		  return false;
-    }
+	}
 
 		if (stripos($response, 'digo de verificaci') !== false && stripos($response, 'n incorrecto') !== false)
-    {
-      $this->logger->log("Invalid captcha code for {$this->user} ...tries = $tries ...");
-      if ($tries-- < 0) goto TryAgain;
+	{
+	  $this->logger->log("Invalid captcha code for {$this->user} ...tries = $tries ...");
+	  if ($tries-- < 0) goto TryAgain;
 
-      return false;
-    }
+	  return false;
+	}
 
 		if (stripos($response, 'Login failed') !== false && stripos($response, '<ul class="notices">') !== false)
-    {
-      $this->logger->log("Login failed for {$this->user} ...");
-      return false;
-    }
+	{
+	  $this->logger->log("Login failed for {$this->user} ...");
+	  return false;
+	}
 
 		// get tokens
 		$this->mobileToken  = php::substring($response, '"token":"', '"}');
 		$this->logoutToken  = php::substring($response, 'horde_logout_token=', '&');
 		$this->composeToken = php::substring($response, 'u=', '">New');
 		$this->captchaText = $captchaText;
-    //$this->logger->log("Login success for {$this->user}");
+	//$this->logger->log("Login success for {$this->user}");
 		$this->saveSession();
 		return true;
 	}
@@ -493,13 +493,12 @@ class NautaClient
 	 */
 	public function send($to, $subject, $body, $attachment=false)
 	{
-    $this->logger->log("Sending from {$this->user} to {$to} subject = $subject ...");
+		$this->logger->log("Sending from {$this->user} to {$to} subject = $subject ...");
 
 		// attaching file if exist
 		$composeCache = "";
 		$composeHmac = "";
-		if($attachment)
-		{
+		if($attachment) {
 			// create emails params
 			$url = 'http://webmail.nauta.cu/services/ajax.php/imp/addAttachment';
 			$params['MAX_FILE_SIZE'] = "20971520";
@@ -518,8 +517,7 @@ class NautaClient
 
 			$output = false;
 
-			for($i =0; $i<3; $i++)
-			{
+			for($i =0; $i<3; $i++) {
 				$output = curl_exec($this->client);
 				if ($output !== false) break;
 			}
@@ -531,8 +529,7 @@ class NautaClient
 			//echo $output;
 			$output = json_decode($output);
 
-			if (isset($output->tasks))
-			{
+			if (isset($output->tasks)) {
 				$composeCache = $output->tasks->{'imp:compose'}->cacheid;
 				$composeHmac = $output->tasks->{'imp:compose'}->hmac;
 			}
@@ -737,6 +734,6 @@ class NautaClient
 	}
 
 	public function __destruct() {
-    $this->logger->close();
+	$this->logger->close();
   }
 }

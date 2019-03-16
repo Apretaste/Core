@@ -127,7 +127,7 @@ class LoginController extends Controller
 		$codeEmail->to = $email;
 		$codeEmail->subject = "Code: $pin";
 		$codeEmail->body = $body;
-		$res = $codeEmail->send();
+		$res = $codeEmail->queue();
 
 		$logger->log("Login| PIN code $pin sent successful to {$email}");
 		$logger->close();

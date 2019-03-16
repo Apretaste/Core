@@ -32,25 +32,16 @@ $di->set('config', function () {
 $console = new ConsoleApp();
 $console->setDI($di);
 
-// process the console arguments
+// process arguments for the current task and action
 $arguments = [];
-foreach ($argv as $k => $arg) {
-	if ($k == 1) $arguments['task'] = $arg;
-	if ($k == 2) $arguments['action'] = $arg;
-	if ($k >= 3) $arguments['params'][] = $arg;
-}
-
-// define global constants for the current task and action
-define('CURRENT_TASK',   (isset($argv[1]) ? $argv[1] : null));
-define('CURRENT_ACTION', (isset($argv[2]) ? $argv[2] : null));
+$arguments['task'] = $argv[1];
+$arguments['action'] = "main";
+$arguments['params'] = array_slice($argv, 2);
 
 // load the task selected
-try
-{
+try {
 	$console->handle($arguments);
-}
-catch (\Phalcon\Exception $e)
-{
+} catch (\Phalcon\Exception $e) {
 	echo $e->getMessage();
 	exit(255);
 }

@@ -213,7 +213,7 @@ class SupportController extends Controller
 		$email->to = $to;
 		$email->subject = $subject;
 		$email->body = str_replace("\r", "<br/>", $content);
-		$email->send();
+		$email->queue();
 
 		// go to the list of tickets
 		$this->response->redirect("support/index");

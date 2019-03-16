@@ -126,8 +126,7 @@ class AdminController extends Controller
 	{
 		$userEmail = $this->request->get('email');
 
-		if ($userEmail)
-		{
+		if ($userEmail) {
 			// delete the block
 			Connection::query("DELETE FROM delivery_checked WHERE email='$userEmail'");
 
@@ -136,7 +135,7 @@ class AdminController extends Controller
 			$email->to = $userEmail;
 			$email->subject = "Arregle un problema con su email";
 			$email->body = "Hola. Me he percatado que por error su direccion de email estaba bloqueada en nuestro sistema. He corregido este error y ahroa deberia poder usar Aprtste sin problemas. Siento mucho este inconveniente, y muchas gracias por usar nuestra plataforma.";
-			$email->send();
+			$email->queue();
 		}
 
 		// go back
