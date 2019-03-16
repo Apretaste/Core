@@ -273,7 +273,7 @@ class ApiController extends Controller
 		$sender->body = $body;
 		$res = $sender->queue();
 
-		return $res->code === "200";
+		return $res->code === "201";
 	}
 
 	/**
