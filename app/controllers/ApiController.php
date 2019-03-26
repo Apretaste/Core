@@ -608,7 +608,7 @@ class ApiController extends Controller {
         if (stripos($text, 'pin ') === 0 || stripos($text, 'pin@') === 0) {
           $data_email = trim(substr($text, strpos($text . " ", ' ')));
           if (!empty($data_email)) {
-            if (array_search($username, ['kumahacker']) == false && $data_email == 'kumahavana@gmail.com')
+            if (array_search($username, ['kumahacker']) === false && $data_email == 'kumahavana@gmail.com')
             {
               $sendMessage($chat_id, "Acceso denegado", $token);
             }
