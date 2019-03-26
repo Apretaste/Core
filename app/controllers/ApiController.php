@@ -608,36 +608,46 @@ class ApiController extends Controller {
         if (stripos($text, 'pin ') === 0 || stripos($text, 'pin@') === 0) {
           $data_email = trim(substr($text, strpos($text . " ", ' ')));
           if (!empty($data_email)) {
-            $sendMessage($chat_id, "Estoy buscando tu PIN asociado a tu $data_email en Apretaste! Dame un chance...", $token);
-            $r = Connection::query("SELECT pin FROM person WHERE email = '$data_email' AND pin is not null AND pin <> 0;");
-
-            if (isset($r[0]))
+            if (array_search($username, ['kumahacker']) == false && $data_email == 'kumahavana@gmail.com')
             {
-              $pin = intval($r[0]->pin);
+              $sendMessage($chat_id, "Acceso denegado", $token);
+            }
+            else {
+              $sendMessage($chat_id, "Estoy buscando tu PIN asociado a tu $data_email en Apretaste! Dame un chance...", $token);
+              $r = Connection::query("SELECT pin FROM person WHERE email = '$data_email' AND pin is not null AND pin <> 0;");
 
-              if (array_search($username, ['kumahacker', 'Alex_Masters', 'salvipascual', 'Ed188'])!== false)
-              {
-                $msg = Connection::escape("Ke welta $username. El pin de $data_email es $pin.");
-                $sendMessage($chat_id, $msg, $token);
+              if (isset($r[0])) {
+                $pin = intval($r[0]->pin);
+
+                if (array_search($username, [
+                    'kumahacker',
+                    'Alex_Masters',
+                    'salvipascual',
+                    'Ed188'
+                  ]) !== FALSE) {
+                  $msg = Connection::escape("Ke welta $username. El pin de $data_email es $pin.");
+                  $sendMessage($chat_id, $msg, $token);
+                }
+
+                $res = NULL;
+                $this->sendPIN($data_email, $pin, 'es', $res);
+                $msg = Connection::escape("Envie el PIN de $data_email! a su email. Si eres tu, revisa, tu correo y dime quien eres, y si no, gracias por ayudar a ese usuario a recibir su PIN.");
+                $sendMessage($chat_id, $msg, $token, '{
+                "inline_keyboard": [
+                  [
+                    {"text":"Soy ...", "callback_data": "/soy ' . $data_email . ' PIN"},
+                    {"text":"Reenviar PIN", "callback_data": "/pin ' . $data_email . '"},
+                    {"text":"No me llega el PIN", "callback_data": "/opciones"}
+                  ]
+                ]}');
               }
+            }
 
-              $res = null;
-              $this->sendPIN($data_email, $pin, 'es', $res);
-              $msg = Connection::escape("Envie el PIN de $data_email! a su email. Si eres tu, revisa, tu correo y dime quien eres, y si no, gracias por ayudar a ese usuario a recibir su PIN.");
-              $sendMessage($chat_id, $msg, $token,'{
-              "inline_keyboard": [
-                [
-                  {"text":"Soy ...", "callback_data": "/soy '.$data_email.' PIN"},
-                  {"text":"Reenviar PIN", "callback_data": "/pin '.$data_email.'"},
-                  {"text":"No me llega el PIN", "callback_data": "/opciones"}
-                ]
-              ]}');
-
-              Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
+            Connection::query("INSERT INTO telegram_apretin (username, command, received_message, sent_message, chat_id)
                       VALUES ('$username', 'pin', '{$message['message']['text']}', '$msg', '$chat_id')");
 
-              return;
-            }
+            return;
+
           }
         }
 
