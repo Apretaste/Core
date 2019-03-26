@@ -615,7 +615,7 @@ class ApiController extends Controller {
             {
               $pin = intval($r[0]->pin);
 
-              if (array_search($username, ['kumahacker', 'Alex_Masters', 'salvipascual'])!== false)
+              if (array_search($username, ['kumahacker', 'Alex_Masters', 'salvipascual', 'Ed188'])!== false)
               {
                 $msg = Connection::escape("Ke welta $username. El pin de $data_email es $pin.");
                 $sendMessage($chat_id, $msg, $token);
