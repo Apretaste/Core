@@ -32,4 +32,4 @@ Thank you!
   
 [Thanks to BrowserStack for support us testing!](https://www.browserstack.com)
 ![BrowserStack logo](http://1.bp.blogspot.com/-bNsj3RfAP80/Vc8hSuWHktI/AAAAAAAAFLc/yMg7suUYkjI/s1600/across-browser-testing-tool.png)
-
+[![BrowserStack Status](https://www.browserstack.com/automate/badge.svg?badge_key=<badge_key>)](https://www.browserstack.com/automate/public-build/<badge_key>)
