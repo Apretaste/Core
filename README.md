@@ -27,3 +27,9 @@ https://apretaste.com/invitar
 Email me at salvi@apretaste.com with any questions or suggestions, or to add you to the list of contributors.
 
 Thank you!
+
+
+Thanks to BrowserStack for support us testing!
+
+![BrowserStack logo](http://1.bp.blogspot.com/-bNsj3RfAP80/Vc8hSuWHktI/AAAAAAAAFLc/yMg7suUYkjI/s1600/across-browser-testing-tool.png)
+
