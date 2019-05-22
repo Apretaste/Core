@@ -3,27 +3,16 @@
 use Nette\Mail\Message;
 
 class Email {
-
   public $from;
-
   public $to;
-
   public $requestDate;
-
   public $deliveryId;
-
   public $subject;
-
   public $body;
-
   public $replyId; // id to reply
-
   public $attachments = []; // array of paths
-
   public $images = []; // array of paths
-
   public $method;
-
   public $sent; // date
 
   /**
@@ -43,8 +32,8 @@ class Email {
       if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
-      $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
-      if($res->code != 200 && $active) $res = $this->sendEmailViaGmail();
+      //$active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
+      //if($res->code != 200 && $active=="1") $res = $this->sendEmailViaGmail();
     }
     // respond to people outside Cuba
     else {
@@ -196,7 +185,7 @@ class Email {
     }
 
     // get a random body, else Gmail will give an error
-    $this->body = Utils::randomSentence();
+    $this->body = Connection::query("SELECT text FROM _pizarra_notes ORDER BY RAND() LIMIT 1")[0]->text;
 
     // send via Gmail
     $gmailClient = new GmailClient();
@@ -473,7 +462,7 @@ class Email {
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 
       //Set the Url
-      curl_setopt($ch, CURLOPT_URL, 'http://10.0.0.9/web2smtp/');
+      curl_setopt($ch, CURLOPT_URL, 'localhost/web2smtp/');
 
       $attach = empty($this->attachments) ? FALSE : $this->attachments[0];
       $attach = basename($attach);
