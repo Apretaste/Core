@@ -1,6 +1,8 @@
 <?php
 
 use Nette\Mail\Message;
+use Phalcon\Di\FactoryDefault;
+use Phalcon\Logger\Adapter\File;
 
 class Email {
 
@@ -37,14 +39,15 @@ class Email {
     if (substr($this->to, -3) === ".cu") {
 
       // try sending via Webmail
-      $res = $this->sendEmailViaWebmail();
+      //$res = $this->sendEmailViaWebmail();
 
       // try sending ssh
+			$res = $this->sendEmailViaGmail();
       if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
-      $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
-      if($res->code != 200 && $active) $res = $this->sendEmailViaGmail();
+      // $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
+
     }
     // respond to people outside Cuba
     else {
@@ -180,34 +183,108 @@ class Email {
     return $this->smtp($host, $user, $pass, $port, $security);
   }
 
-  /**
-   * Sends an email using Gmail
-   *
-   * @author salvipascual
-   * @return string {"code", "message"}
-   */
-  public function sendEmailViaGmail() {
-    $this->method = "gmail";
+	/**
+	 * Sends an email using the servers raid
+	 *
+	 * @author kumahacker
+	 * @return string {"code", "message"}
+	 */
+	public function sendEmailViaGmail()
+	{
+		$this->method = "gmail";
 
-    // get attachment if exist
-    $attachment = FALSE;
-    if (!empty($this->attachments[0])) {
-      $attachment = $this->attachments[0];
-    }
+		// clean Gmail table
+		Connection::query("update delivery_gmail set active = 1 where last_error = 'Forbidden';");
+		Connection::query("UPDATE delivery_gmail SET daily = 0, sent_limit = sent_limit + 10 WHERE sent_limit < 110 AND daily > 0 AND last_sent < CURRENT_DATE AND active = 1;");
+		Connection::query("UPDATE delivery_gmail SET daily = 0 WHERE daily > 0 AND last_sent < CURRENT_DATE AND active = 1;");
+		Connection::query("UPDATE delivery_gmail SET active = 1, last_error = '' 
+															WHERE last_error LIKE '%Missing configuration%' 
+					   									OR (TIMESTAMPDIFF(HOUR, last_sent, now()) >= 24 AND TIMESTAMPDIFF(HOUR, last_sent, now()) <= 72);");
 
-    // get a random body, else Gmail will give an error
-    $this->body = Utils::randomSentence();
+		// save to the log
+		$di = FactoryDefault::getDefault();
+		$wwwroot = $di->get('path')['root'];
+		$logger = new File("$wwwroot/logs/nodemailer.log");
 
-    // send via Gmail
-    $gmailClient = new GmailClient();
-    $output      = $gmailClient->send($this->to, $this->subject, $this->body, $attachment);
+		// set the sending method
+		$response = (object) [
+			"code" => 500,
+			"message" => "Email not sent",
+		];
 
-    // create notice if Gmail fails
-    if ($output->code != "200") {
-      Utils::createAlert("[{$this->method}] {$output->message}");
-    }
-    return $output;
-  }
+		// get a random body if no body was passed
+		if(empty($this->body)) $this->body = Utils::randomSentence();
+
+		$result = Connection::query("SELECT * FROM delivery_gmail where active = 1 and daily < sent_limit and TIME_TO_SEC(timediff(now(),last_sent)) > 30 order by last_sent asc limit 1");
+
+		if (isset($result[0])) {
+			$account = $result[0];
+			$person = Utils::getPerson($this->to);
+			$toName = "{$person->first_name} {$person->middle_name} {$person->last_name} {$person->mother_name}";
+
+			// prepare data to be sent
+			$data = (object) [
+				"From" => $account->email,
+				"FromName" => $account->name,
+				"Username" => $account->email,
+				"Password" => $account->password,
+				"ReplyTo" => (object) [
+					"Address" => $this->to,
+					"Name" => $toName
+				],
+				"Addresses" => [
+					(object) [
+						"Name" => $toName,
+						"Address" => $this->to,
+						"Type" => "Address"
+					]
+				],
+				"Subject" => $this->subject,
+				"WordWrap" => 78,
+				"Body" => base64_encode($this->body),
+				"Attachments" => array_map(function($attach) {
+					return (object) [
+						"Name"    => basename($attach),
+						"Content" => base64_encode(file_get_contents($attach))
+					];
+				}, $this->attachments ?? [])
+			];
+
+			$logger->log("From: {$account->email} To: $this->to");
+
+			// TODO: load api key from config
+			$response = Utils::postJSON("http://{$account->server_ip}/?api_key=aksdjfqo34i78ry5234hb52j34hb5234y5234h5b23j4h5", $data);
+			$response = json_decode($response);
+			$last_response = Connection::escape(serialize($response));
+
+			Connection::query("UPDATE delivery_gmail SET last_sent = now(), sent = sent + 1, daily = daily + 1, last_error = '$last_response' WHERE email = '{$account->email}'");
+
+			// deactivate the account
+			if ($response->code != 200) Connection::query("UPDATE delivery_gmail SET active = 0 WHERE email = '{$account->email}'");
+			else Connection::query("UPDATE delivery SET mailer_account = '{$account->email}' WHERE id = '{$this->deliveryId}'");
+		} else {
+			$response = (object) [
+				"code" => 500,
+				"message" => "No more active account",
+			];
+		}
+
+		if (($response->code ?? 500) != 200) {
+			$output = (object) [
+				"code" => 520,
+				"message" => "Error sending to {$this->to}: ".json_encode($response)
+			];
+
+			Utils::createAlert("[{$this->method}] {$output->code} {$output->message}");
+			$logger->log(json_encode($output)."\n");
+
+			return $output;
+		}
+
+		$logger->log(json_encode($response)."\n");
+
+		return $response;
+	}
 
   /**
    * Sends an email using Nauta webmail
