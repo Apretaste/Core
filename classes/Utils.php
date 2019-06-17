@@ -1335,4 +1335,46 @@ class Utils
     }
     return false;
   }
+
+	/**
+	 * Post a mixed value as JSON
+	 *
+	 * @param       $url
+	 * @param null  $postData
+	 * @param array $headers
+	 *
+	 * @return bool|mixed
+	 */
+	static function postJSON($url, $postData = null, $headers = [])
+	{
+
+		$data_string = json_encode($postData);
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_HEADER, false);
+
+		$headers[] = 'Content-Type: application/json';
+		$headers[] =' Content-Length: ' . strlen($data_string);
+
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+
+		$data = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+		if($httpCode == 404)
+		{
+			$data = false;
+		}
+
+		curl_close($ch);
+
+		return $data;
+	}
 }
