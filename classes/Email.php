@@ -252,8 +252,9 @@ class Email {
 
 			$logger->log("From: {$account->email} To: $this->to");
 
-			// TODO: load api key from config
-			$response = Utils::postJSON("http://{$account->server_ip}/?api_key=aksdjfqo34i78ry5234hb52j34hb5234y5234h5b23j4h5", $data);
+			$di = FactoryDefault::getDefault();
+			$api_key = $di->get('config')['nodemailer']['api_key'];
+			$response = Utils::postJSON("http://{$account->server_ip}/?api_key=$api_key", $data);
 			$response = json_decode($response);
 			$last_response = Connection::escape(serialize($response));
 
