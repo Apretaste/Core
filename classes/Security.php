@@ -39,8 +39,8 @@ class Security
 		$user->startPage = empty($manager) ? "" : $manager[0]->start_page;
 
 		// save the last user's IP and access time
-		$ip = php::getClientIP();
-		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
+		//$ip = php::getClientIP();
+		//Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
 
 		// save the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
