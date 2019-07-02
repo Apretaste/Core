@@ -42,8 +42,8 @@ class Email {
       //$res = $this->sendEmailViaWebmail();
 
       // try sending ssh
-	    $res = $this->sendEmailViaGmail();
-      if ($res->code != 200) $res = $this->sendEmailViaSSH();
+	   $res = $this->sendEmailViaGmail();
+      // if ($res->code != 200) $res = $this->sendEmailViaSSH();
 
       // failover to Gmail
       // $active = \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['active'];
