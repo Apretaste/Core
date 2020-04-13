@@ -10,23 +10,26 @@ class Connection
 	 * Creates a new connection
 	 * 
 	 * @author salvipascual
-	 * @return mysqli object 
+	 * @param Boolean $write
+	 * @return mysqli object
 	 */
-	public static function connect()
+	public static function connect($write=false)
 	{
-		if(is_null(self::$db) || ! self::$db->ping())
-		{
-			// get the config
-			$config = Di::getDefault()->get('config');
-			$host = $config['database']['host'];
-			$user = $config['database']['user'];
-			$pass = $config['database']['password'];
-			$name = $config['database']['database'];
+		// get the host count
+		$config = Di::getDefault()->get('config');
+		$count = $config['database']['host_count'];
 
-			// connect to the database
-			self::$db = new mysqli($host, $user, $pass, $name);
-		}
-		
+		// select host to use
+		$stream = $write ? 1 : rand(1, $count);
+
+		// get the config for the host
+		$host = $config['database']["host_$stream"];
+		$user = $config['database']['user'];
+		$pass = $config['database']['password'];
+		$name = $config['database']['database'];
+
+		// connect to the database
+		self::$db = new mysqli($host, $user, $pass, $name);
 		return self::$db;
 	}
 
@@ -40,31 +43,33 @@ class Connection
 	 */
 	public static function query($sql)
 	{
-		// ensure we have a connection
-		$db = self::connect();
-
 		try {
 			// only fetch for selects
-			if(stripos(trim($sql), "select") === 0)
-			{
+			if(stripos(trim($sql), "select") === 0) {
+				// connect to a reader stream
+				$db = self::connect();
+
 				// query the database
 				$result = $db->query($sql);
+
 				// convert to array of objects
 				$rows = [];
 				while ($data = $result->fetch_object()) $rows[] = $data;
 				return $rows;
 			}
 			// run query and return last insertd id
-			else
-			{
+			else {
+				// connect to the writer stream
+				$db = self::connect(true);
+
+				// query the database
 				$db->multi_query($sql);
-				while ($db->next_result());
+				while ($db->next_result()); // @TODO do we need this line? 
 				return $db->insert_id;
 			}
 		}
 		// log the error and rethrow it
-		catch(mysqli_sql_exception $e)
-		{
+		catch(mysqli_sql_exception $e) {
 			// create the message
 			$query = isset($e->getTrace()[0]['args'][0]) ? $e->getTrace()[0]['args'][0] : "Query not available";
 			$message = $e->getMessage() . "\nQUERY: $query\n";
@@ -119,9 +124,11 @@ class Connection
 	 *
 	 * @author salvipascual
 	 */
-	public static function close(){
-		if( ! is_null(self::$db) && self::$db->ping()) {
+	public static function close()
+	{
+		if( ! is_null(self::$db)) {
 			self::$db->close();
+			self::$db = null;
 		}
 	}
 }

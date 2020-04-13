@@ -97,7 +97,7 @@ class DeveloperController extends Controller
 	{
 		// get the error logs file
 		$wwwroot = $this->di->get('path')['root'];
-		$logfile = "$wwwroot/logs/error.log";
+		$logfile = "/var/log/apache2/error.log";
 
 		// tail the log file
 		$numlines = "50";
@@ -174,7 +174,14 @@ class DeveloperController extends Controller
 
 		}
 
-		$alerts = Connection::query($sql);
+		// alerts
+		// TODO: refactor to model
+		$config = $this->di->get('config')['database_dev'];
+		$db = new mysqli($config['host'], $config['user'], $config['password'], $config['database']);
+		$result = $db->query($sql);
+		$alerts = [];
+		while ($data = $result->fetch_object()) $alerts[] = $data;
+
 		$this->view->no_results = false;
 		if (count($alerts) == 0)
 		{
@@ -182,7 +189,7 @@ class DeveloperController extends Controller
 			$this->view->no_results = true;
 		}
 
-		$total = Connection::query("SELECT count(*) as total FROM alerts WHERE fixed =0;");
+		$total = [$db->query("SELECT count(*) as total FROM alerts WHERE fixed =0;")->fetch_object()];
 		$total = $total[0]->total;
 
 		foreach($alerts as $alert) $alert->text = str_replace("|","<br/>", nl2br($alert->text));

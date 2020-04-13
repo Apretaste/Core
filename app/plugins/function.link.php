@@ -9,33 +9,33 @@
 function smarty_function_link($params, $template)
 {
 	// get params
-	$href = $params["href"];
+	$href = trim($params["href"]);
 	$caption = $params["caption"];
 	$desc = isset($params["desc"]) ? $params["desc"] : "Inserte una palabra o frase a buscar.";
 	$style = isset($params["style"]) ? "style='{$params["style"]}'" : "";
 	$title = isset($params["title"]) ? "title='{$params["title"]}'" : "";
+	$onclick = "";
 
 	// create link for the web and app
 	$di = \Phalcon\DI\FactoryDefault::getDefault();
-	if(in_array($di->get('environment'), ["app", "appnet", "web"]))
+	$environment = $di->get('environment');
+	if(in_array($environment, ["app", "web"]))
 	{
-		$popup = empty($params["popup"]) ? "false" : $params["popup"];
-		$wait = empty($params["wait"]) ? "true" : $params["wait"];
-		if($popup == "false") $desc = "";
-		$onclick = 'apretaste.doaction("'.$href.'", '.$popup.', "'.$desc.'", '.$wait.'); return false;';
+		// set emprty callback for new versions and the web
+		$appversion = $di->get('appversion');
+		$callback = ($environment=="web" || $appversion > 3.1) ? ',""' : '';
+
+		// create onclick and href params
+		$onclick = 'apretaste.doaction("'.$href.'", false, "", true '.$callback.'); return false;';
 		$href = "#!";
 	}
 	// create link for the email system
 	else
 	{
-		$utils = new Utils();
-		$apEmail = $utils->getValidEmailAddress();
-
-		$desc = str_replace("|", " y seguido ", $desc);
-		$desc = "$desc\n Agregue el texto en el asunto a continuacion de $href";
-		$onclick = "";
-		$href = "mailto:$apEmail?subject=$href&amp;body=$desc";
+		$apEmail = Utils::getValidEmailAddress();
+		$href = "mailto:$apEmail?subject=$href&amp;body=Inserte una palabra o frase a buscar";
 	}
 
+	// create the link
 	return "<a href='$href' onclick='$onclick' $title $style>$caption</a>";
 }

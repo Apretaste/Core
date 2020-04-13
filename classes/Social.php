@@ -36,7 +36,7 @@ class Social
 	private static function profileToTextSpanish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
@@ -169,7 +169,7 @@ class Social
 	private static function profileToTextEnglish($profile)
 	{
 		// get the age
-		$age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// get the gender
 		$gender = "";
@@ -329,7 +329,7 @@ class Social
 		if( ! in_array($lang, ["en","es"])) $lang = "es";
 
 		// get the person's age
-		$profile->age = empty($profile->date_of_birth) ? "" : date_diff(date_create($profile->date_of_birth), date_create('today'))->y;
+		$profile->age = empty($profile->year_of_birth) ? "" : date('Y') - $profile->year_of_birth;
 
 		// try to guest the location based on the domain
 		$inCuba = strrpos($profile->email, ".cu") == strlen($profile->email)-strlen(".cu");
@@ -391,7 +391,7 @@ class Social
 		if (empty($profile->about_me)) $profile->about_me = Social::profileToText($profile, $lang);
 
 		// remove dangerous attributes from the response
-		unset($profile->pin,$profile->insertion_date,$profile->active,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source,$profile->blocked);
+		unset($profile->pin,$profile->insertion_date,$profile->last_update_date,$profile->updated_by_user,$profile->cupido,$profile->source);
 
 		return $profile;
 	}
@@ -486,15 +486,12 @@ class Social
 			$chat->email = $n->email;
 			$chat->last_sent = date('d/m/Y G:i',strtotime($n->last));
 			$chat->last_note_user = $n->from_user;
-			$chat->last_note_read = ($n->read_date!=null and $n->from_user==$id)?true:false;
-			$chat->last_note_readDate=($chat->last_note_read)?date('d/m/Y G:i',strtotime($n->read_date)):"";
-			$chat->last_note = (strlen($n->lastNote)>30)?substr($n->lastNote,0,30).'...':$n->lastNote;
-			$chat->last_note = ($n->from_user!=$id and $n->read_date==null)?"<strong>$chat->last_note</strong>":$chat->last_note;
+			$chat->last_note_read = ($n->read_date != null && $n->from_user==$id) ? true : false;
+			$chat->last_note_readDate = ($chat->last_note_read) ? date('d/m/Y G:i',strtotime($n->read_date)) : "";
+			$chat->last_note = (strlen($n->lastNote) > 30) ? substr($n->lastNote,0,30).'...' : $n->lastNote;
+			$chat->last_note = ($n->from_user!=$id && $n->read_date==null) ? "<strong>$chat->last_note</strong>" : $chat->last_note;
 			$chat->profile = Social::prepareUserProfile($n);
-			$chat->cantidad = Connection::query("SELECT count(*) AS cantidad
-						FROM _note
-						WHERE from_user=$chat->last_note_user  AND to_user =$id AND read_date is NULL
-						AND (active=10 OR active=11)");
+			$chat->cantidad = []; // @TODO delete
 			$chats[] = $chat;
 		}
 

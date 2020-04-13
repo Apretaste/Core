@@ -75,10 +75,10 @@ try
 		else return "production";
 	});
 
-	// Set the environment (app | api | email | web | default)
-	$di->set('environment', function () {
-		return "default";
-	});
+	// Set the environment parms
+	$di->set('environment', function () { return ""; }); // web|app|api|mail
+	$di->set('ostype', function () { return ""; }); // android|ios
+	$di->set('appversion', function () { return ""; }); // 0 if no app
 
 	// Set the routes
 	$di->set('router', function () {
@@ -92,17 +92,14 @@ try
 }
 catch(Exception $e)
 {
-	$message = $e->getMessage();
-	$utils = new Utils();
-
 	// we assume is traying to access a service
-	if ($e instanceof Phalcon\Mvc\Dispatcher\Exception)
-	{
+	if ($e instanceof Phalcon\Mvc\Dispatcher\Exception) {
 		// get the service name from the error message
+		$message = $e->getMessage();
 		$service = strtolower(substr($message, 0, strpos($message, "Controller")));
 
 		// check if the service or alias exists
-		$service = $utils->serviceExist($service);
+		$service = Utils::serviceExist($service);
 		if(empty($service)) $service = "servicios";
 
 		// redirect to the service or to the services page
@@ -110,10 +107,14 @@ catch(Exception $e)
 	}
 
 	// log error
-	$utils->createAlert(Debug::getReadableException($e), 'ERROR');
+	Utils::createAlert(Debug::getReadableException($e), 'ERROR');
 
 	// show 404 page
 	header('HTTP/1.0 404 Not Found');
 	echo "<h1>Error 404</h1><p>We apologize, but this page was not found.</p>";
 }
-Connection::close();
+finally 
+{
+	// close the connection to the database
+	Connection::close();
+}

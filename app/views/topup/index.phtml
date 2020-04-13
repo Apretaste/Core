@@ -7,7 +7,7 @@
 				<div class="form-group">
 					<label class="control-label" for="email"><b>Paso #1:</b> Email a recargar</label>
 					<p class="label-support">Escriba el email que usa en la app</p>
-					<input required id="email" class="form-control" type="email" name="email" placeholder="yo@nauta.cu"/>
+					<input required id="email" class="form-control" type="email" name="email" value="<?= $email ?>" placeholder="yo@nauta.cu"/>
 					<p id="error-email" class="label-support error">El email que escribi&oacute; no es una cuenta de Apretaste.</p>
 				</div>
 
@@ -58,6 +58,17 @@
 		</div>
 	</div>
 </div>
+
+<style type="text/css">
+	.lead {
+		font-family: Arial;
+		color: #5DBB48;
+		text-transform: uppercase;
+		font-size: 22px;
+		text-align: center;
+		font-weight: normal;		
+	}
+</style>
 
 <script src="/js/jquery.js"></script>
 <script src="https://checkout.stripe.com/checkout.js"></script>

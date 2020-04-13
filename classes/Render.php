@@ -15,9 +15,8 @@ class Render
 	public static function runRequest($email, $subject, $body, $attachments, $input=false)
 	{
 		// sanitize subject and body to avoid mysql injections
-		$utils = new Utils();
-		$subject = $utils->sanitize($subject);
-		$body = $utils->sanitize($body);
+		$subject = Utils::sanitize($subject);
+		$body = Utils::sanitize($body);
 
 		// get the name of the service or alias based on the subject line
 		$subjectPieces = explode(" ", $subject);
@@ -25,11 +24,11 @@ class Render
 		unset($subjectPieces[0]);
 
 		// get the service name, or use default service if the service does not exist
-		$serviceName = $utils->serviceExist($serviceName);
-		if( ! $serviceName) $serviceName = "ayuda";
+		$serviceName = Utils::serviceExist($serviceName);
+		if( ! $serviceName) $serviceName = "servicios";
 
 		// include the service code
-		$pathToService = $utils->getPathToService($serviceName);
+		$pathToService = Utils::getPathToService($serviceName);
 		include_once "$pathToService/service.php";
 
 		// get the subservice
@@ -74,8 +73,11 @@ class Render
 		$request->query = $query;
 		$request->params = $params;
 		$request->lang = $lang;
+		$request->environment = $environment; // web|app|api
 		$request->appversion = empty($input->appversion) ? 1 : floatval($input->appversion);
-		$request->environment = $environment;
+		$request->ostype = empty($input->ostype) ? "" : $input->ostype; // android|ios
+		$request->apptype = empty($input->apptype) ? "original" : $input->apptype; // original|single
+		$request->appmethod = empty($input->method) ? "email" : $input->method; // email|http
 
 		// create a new Service Object with info from the database
 		$result = Connection::query("SELECT * FROM service WHERE name = '$serviceName'");
@@ -96,7 +98,7 @@ class Render
 		}
 
 		$service->pathToService = $pathToService;
-		$service->utils = $utils;
+		$service->utils = new Utils();
 		$service->social = new Social();
 		$service->request = $request;
 
@@ -137,6 +139,7 @@ class Render
 
 		// get the path
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
+		$environment = $di->get('environment');
 		$wwwroot = $di->get('path')['root'];
 
 		// select the right file to load
@@ -157,40 +160,37 @@ class Render
 		$smarty->caching = false;
 
 		// get the person
-		$utils = new Utils();
-		$person = $utils->getPerson($response->email);
+		$person = Utils::getPerson($response->email);
 		$username = isset($person->username) ? "@{$person->username}" : "";
 
 		// get a valid email address
-		$validEmailAddress = $utils->getValidEmailAddress($username);
-
-		// get app environment
-		$environment = $di->get('environment');
-		if($environment == 'appnet') $environment = 'app';
+		$validEmailAddress = Utils::getValidEmailAddress();
 
 		// list the system variables
 		$systemVariables = [
 			// system variables
 			"WWWROOT" => $wwwroot,
-			"APRETASTE_ENVIRONMENT" => $environment,
+			"APRETASTE_ENVIRONMENT" => $environment, // app|web|api
 			// template variables
 			"APRETASTE_USER_TEMPLATE" => $userTemplateFile,
 			"APRETASTE_SERVICE_NAME" => strtolower($service->serviceName),
 			"APRETASTE_SERVICE_CREATOR" => $service->creatorEmail,
 			"APRETASTE_EMAIL" => $validEmailAddress,
 			"APRETASTE_EMAIL_LIST" => isset($person->mail_list) ? $person->mail_list==1 : 0,
-			"APRETASTE_SUPPORT_EMAIL" => $utils->getSupportEmailAddress(),
+			"APRETASTE_SUPPORT_EMAIL" => Utils::getSupportEmailAddress(),
 			// app only variables
 			"APP_VERSION" => empty($service->input->appversion) ? 1 : floatval($service->input->appversion),
 			"APP_LATEST_VERSION" => floatval($di->get('config')['global']['appversion']),
-			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype,
+			"APP_OS" => empty($service->input->ostype) ? "" : $service->input->ostype, // android|ios
+			"APP_TYPE" => empty($service->input->apptype) ? "original" : $service->input->apptype, // original|single
+			"APP_METHOD" => empty($service->input->method) ? "email" : $service->input->method, // email|http
 			// user variables
-			"num_notifications" => $utils->getNumberOfNotifications($person->id),
+			"num_notifications" => Utils::getNumberOfNotifications($person->id),
 			"USER_USERNAME" => $username,
 			"USER_NAME" => isset($person->first_name) ? $person->first_name : (isset($person->username) ? "@{$person->username}" : ""),
 			"USER_FULL_NAME" => isset($person->full_name) ? $person->full_name : "",
 			"USER_EMAIL" => isset($person->email) ? $person->email : "",
-			"USER_MAILBOX" => $utils->getUserPersonalAddress($response->email),
+			"USER_MAILBOX" => Utils::getUserPersonalAddress($response->email),
 			// advertisement
 			"TOP_AD" => self::getAd($service)
 		];
@@ -218,7 +218,7 @@ class Render
 		}
 
 		// optimize images for the app
- 		self::optimizeImages($response, $rendered);
+		self::optimizeImages($response, $rendered, $service);
 
 		// remove tabs, double spaces and break lines
 		return preg_replace('/\s+/S', " ", $rendered);
@@ -243,11 +243,13 @@ class Render
 	 * Optimize images of response and associated html
 	 * @param $response
 	 * @param $html
+	 * @param $service
 	 */
-	private static function optimizeImages(&$response, &$html = "")
+	private static function optimizeImages(&$response, &$html, $service)
 	{
 		// get the image quality
-		$res = Connection::query("SELECT img_quality FROM person WHERE email='{$response->email}'");
+		$userId = isset($service->request->userId)?$service->request->userId:false;
+		$res = ($userId)?Connection::query("SELECT img_quality FROM person WHERE id=$userId"):[];
 		if(empty($res)) $quality = "ORIGINAL";
 		else $quality = $res[0]->img_quality;
 
@@ -258,11 +260,13 @@ class Render
 		if($quality == "SIN_IMAGEN") $response->images = [];
 		else
 		{
+			// get link to the http
 			$di = \Phalcon\DI\FactoryDefault::getDefault();
 			$wwwhttp = $di->get('path')['http'];
-			$format = $di->get('environment') == 'app' ? 'webp' : 'jpg';
-			$quality = $di->get('environment') == 'app' ? 10 : 50;
-			$utils = new Utils();
+
+			// setup params for the app
+			$format = $service->request->environment=='app' && $service->request->ostype=='android' ? 'webp' : 'jpg';
+			$quality = $service->request->environment=='app' ? 10 : 50;
 
 			// create thumbnails for images
 			$images = [];
@@ -271,13 +275,13 @@ class Render
 				if(file_exists($file))
 				{
 					// thumbnail the image or use thumbnail cache
-					$thumbnail = $utils->getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
+					$thumbnail = Utils::getTempDir()."thumbnails/".pathinfo(basename($file), PATHINFO_FILENAME).".$format";
 
 					// optimize image or use the optimized cache
 					if( ! file_exists($thumbnail)) {
-						$utils->optimizeImage($file, $thumbnail, $quality);
+						Utils::optimizeImage($file, $thumbnail, $quality);
 						if( ! file_exists($thumbnail)) {
-							$utils->createAlert("[Render::optimizeImages] file cannot be optimized: $file");
+							Utils::createAlert("[Render::optimizeImages] file cannot be optimized: $file");
 							$thumbnail = $file;
 						}
 					}
@@ -288,9 +292,7 @@ class Render
 					$original = basename($file);
 					$better = basename($better);
 
-					if (stripos($html, "'$wwwhttp/temp/$original'") !== false ||
-						stripos($html, "\"$wwwhttp/temp/$original\"") !== false)
-					{
+					if (stripos($html, "'$wwwhttp/temp/$original'") !== false || stripos($html, "\"$wwwhttp/temp/$original\"") !== false) {
 						$wwwroot = $di->get('path')['root'];
 						@copy($thumbnail,"$wwwroot/public/temp/$better");
 					}
@@ -354,7 +356,7 @@ class Render
 			// get a random add
 			$ad = Connection::query("
 				SELECT id, icon, title
-				FROM ads 
+				FROM ads
 				WHERE active=1
 				AND paid=1
 				AND (expires IS NULL OR expires > CURRENT_TIMESTAMP)

@@ -588,3 +588,21 @@ footer {
 .no-margin{
 	margin: 0px;
 }
+
+.iconlink {
+	color: white;
+}
+
+.iconlink:hover {
+	color: #DBEAD7;
+	text-decoration: none;
+}
+
+.whitelink {
+	color: white;
+	text-decoration: underline;
+}
+
+.whitelink:hover {
+	color: #DBEAD7;
+}

@@ -296,8 +296,8 @@ class AdminController extends Controller
 
 		// get the user profile
 		$utils = new Utils();
-		if (stripos($email,'@')) $profile = $utils->getPerson($email);
-        else $profile = $utils->getPerson($utils->getEmailFromUsername($email));
+		$email = (stripos($email,'@'))? $email:Utils::getEmailFromUsername($email);
+		if ($email) $profile = Utils::getPerson($email);
 
 		$this->view->email = $email;
 		$this->view->profile = $profile;
@@ -326,6 +326,22 @@ class AdminController extends Controller
 		$sender->subject = "Siento ver que se nos va";
 		$sender->body = "Hola. A peticion suya le he excluido y ahora no debera recibir mas nuestra correspondencia. Si desea volver a usar Aprtate en un futuro, acceda a la plataforma y sera automaticamente incluido. Disculpa si le hemos causamos alguna molestia, y gracias por usar nuestra app. Siempre es bienvenido nuevamente.";
 		$sender->send();
+
+		// redirect back
+		header("Location: profilesearch?email=$email");
+	}
+
+	/**
+	 * Block or unblock an user from Apretaste
+	 * @author ricardo
+	 * @param Int $id
+	 */
+	public function submitBlockAction()
+	{
+		$email = $this->request->get("email");
+
+		// mark the user inactive in the database
+		Connection::query("UPDATE person SET blocked = (blocked ^ 1) WHERE email='$email'");
 
 		// redirect back
 		header("Location: profilesearch?email=$email");
@@ -381,5 +397,34 @@ class AdminController extends Controller
 
 		// redirect back
 		header("Location: gmail");
+	}
+
+	/**
+	 * add credits
+	 *
+	 * @author kuma
+	 */
+	public function addcreditAction()
+	{
+		if ($this->request->isPost())
+		{
+			$email = $this->request->getPost('email');
+			$credit = $this->request->getPost('credit');
+			// check if the person exists
+			$id = Utils::personExist($email);
+			// check all values are correct
+			if(!$id || empty($credit) || $credit <= 0) {
+				$this->view->message = "Error incorrect email or amount";
+				$this->view->messageType = 'danger';
+			} else {
+				// add credit
+				Connection::query("UPDATE person SET credit=credit+$credit WHERE id=$id");
+				$this->view->message = "User's credit updated successfull";
+				// show ok message
+				$this->view->message = "Credito agregado correctamente. <a href='/admin/profilesearch?email=$email'>Check user profile</a>.";
+				$this->view->messageType = 'success';
+			}
+		}
+		$this->view->title = "Add credit";
 	}
 }

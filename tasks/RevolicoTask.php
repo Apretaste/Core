@@ -6,16 +6,14 @@ use GuzzleHttp\Client as GuzzleClient;
 /**
  * Revolico Crawler Task
  *
- * @author kuma
+ * @author kuma updated by salvipascual
  * @version 2.0
  */
 
 class revolicoTask extends \Phalcon\Cli\Task
 {
-
 	private $revolicoURL = "https://revolico.com/";
 	private $client;
-	public $utils;
 
 	/**
 	 * Crawler client
@@ -34,26 +32,12 @@ class revolicoTask extends \Phalcon\Cli\Task
 	}
 
 	/**
-	 * Return utils object
-	 *
-	 * @return \Utils
-	 */
-	public function getUtils()
-	{
-		if (is_null($this->utils))
-			$this->utils = new Utils();
-		return $this->utils;
-	}
-
-	/**
 	 * Main action
 	 *
 	 * @param array $revolicoMainUrls
 	 */
 	public function mainAction($revolicoMainUrls = null)
 	{
-
-
 		// empty(null) === true && empty([]) === null
 		if (empty($revolicoMainUrls))
 		{
@@ -152,8 +136,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 							echo "[ERROR] Page $ru.$href request error \n";
 						}
 
-						echo "\tMEMORY USED: " . $this->getUtils()->getFriendlySize(memory_get_usage(true)) . "\n";
-
+						echo "\tMEMORY USED: " . Utils::getFriendlySize(memory_get_usage(true)) . "\n";
 					}
 				}
 			} catch(Exception $e)
@@ -164,7 +147,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 		// ending message, log and time
 		$totalTime = (time() - $timeCrawlerStart) / 60; // time in minutes
-		$totalMem = $this->getUtils()->getFriendlySize(memory_get_usage(true));
+		$totalMem = Utils::getFriendlySize(memory_get_usage(true));
 		$message = "CRAWLER ENDED - EXECUTION TIME: $totalTime min - NEW POSTS: $totalPosts - TOTAL MEMORY USED: $totalMem";
 		$this->saveCrawlerLog($message);
 		echo "\n\n$message\n\n";
@@ -247,16 +230,16 @@ class revolicoTask extends \Phalcon\Cli\Task
 		$province = "";
 
 		// get email
-		$email = $this->getUtils()->getEmailFromText($title);
-		if (empty($email)) $email = $this->getUtils()->getEmailFromText($body);
+		$email = Utils::getEmailFromText($title);
+		if (empty($email)) $email = Utils::getEmailFromText($body);
 
 		// get the phone number
-		$phone = $this->getUtils()->getPhoneFromText($title);
-		if (empty($phone)) $phone = $this->getUtils()->getPhoneFromText($body);
+		$phone = Utils::getPhoneFromText($title);
+		if (empty($phone)) $phone = Utils::getPhoneFromText($body);
 
 		// get the cell number
-		$cell = $this->getUtils()->getCellFromText($title);
-		if (empty($cell)) $cell = $this->getUtils()->getCellFromText($body);
+		$cell = Utils::getCellFromText($title);
+		if (empty($cell)) $cell = Utils::getCellFromText($body);
 
 		// get all code into lineBloks
 		$nodes = $crawler->filter('#lineBlock');
@@ -294,15 +277,15 @@ class revolicoTask extends \Phalcon\Cli\Task
 
 				case "Tel�fono:":
 				{
-					if (empty($phone)) $phone = $this->getUtils()->getPhoneFromText($data);
-					if (empty($cell)) $cell = $this->getUtils()->getCellFromText($data);
+					if (empty($phone)) $phone = Utils::getPhoneFromText($data);
+					if (empty($cell)) $cell = Utils::getCellFromText($data);
 					break;
 				}
 				case "Email:":
 				{
 					$email = '';
 					if (empty($email))
-						$data = $this->getUtils()->getEmailFromText($data);
+						$data = Utils::getEmailFromText($data);
 					if ($data !== false)
 						$email = $data;
 					else
@@ -315,7 +298,7 @@ class revolicoTask extends \Phalcon\Cli\Task
 		}
 
 		// get the province
-		if (empty($province) && ! empty($phone)) $province = $this->getUtils()->getProvinceFromPhone($phone);
+		if (empty($province) && ! empty($phone)) $province = Utils::getProvinceFromPhone($phone);
 
 		// download images
 		$pictures = $crawler->filter('.view img');

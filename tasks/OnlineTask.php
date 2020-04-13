@@ -1,5 +1,7 @@
 <?php
 
+// set what users are currently online
+
 class OnlineTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
@@ -8,8 +10,7 @@ class OnlineTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 
 		// set what users are currently online
-		$connection = new Connection();
-		$connection->query("
+		Connection::query("
 			START TRANSACTION;
 			UPDATE person SET `online`=0;
 			UPDATE person SET `online`=1 WHERE TIMESTAMPDIFF(MINUTE,last_access,NOW()) < 20;
@@ -17,6 +18,6 @@ class OnlineTask extends \Phalcon\Cli\Task
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='online'");
+		Connection::query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='online'");
 	}
 }

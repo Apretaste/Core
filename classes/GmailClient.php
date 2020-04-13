@@ -1,8 +1,5 @@
 <?php
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
 class GmailClient
 {
 	/**
@@ -14,68 +11,61 @@ class GmailClient
 	 * @param mixed $attachment
 	 * @return mixed
 	 */
-	public function send($to, $subject, $body, $attachment=false)
-	{
-        // get the gmail account to use
-        $from = $this->getEmailFrom();
-        if($from->code != "200") return $from;
+	public function send($to, $subject, $body, $attachment=false){
+        $output = new stdClass();
+        $account = Connection::query("SELECT email, server_ip FROM delivery_gmail WHERE daily<490 AND active=1 AND TIMESTAMPDIFF(SECOND,last_sent,NOW())>5");
 
-        // load access token
-        $client = $this->getClient();
-        $client->setAccessToken($from->accessToken);
-
-        // refresh the token if it's expired
-        if ($client->isAccessTokenExpired()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-
-            $accessTokenJSON = json_encode($client->getAccessToken());
-			Connection::query("UPDATE delivery_gmail SET access_token='$accessTokenJSON', token_created=CURRENT_TIMESTAMP WHERE email='{$from->email}'");
-        }
-
-        //prepare the mail with PHPMailer
-        $fakeSenderName = Utils::randomSentence(1);
-        $mail = new PHPMailer();
-        $mail->CharSet = "UTF-8";
-        $mail->Encoding = "base64";
-        $mail->setFrom($from->email, $fakeSenderName);
-        $mail->addAddress($to);
-        $mail->addReplyTo("$fakeSenderName@gmail.com", $fakeSenderName);
-        if($attachment) $mail->addAttachment($attachment);
-        $mail->isHTML(false);
-        $mail->Subject = $subject;
-        $mail->Body = $body;
-
-        //create the MIME Message
-        $mail->preSend();
-        $mime = $mail->getSentMIMEMessage();
-        $mime = rtrim(strtr(base64_encode($mime), '+/', '-_'), '=');
-
-        //create the Gmail Message
-        $message = new Google_Service_Gmail_Message();
-        $message->setRaw($mime);
-
-        // send the email
-        try {
-            $service = new Google_Service_Gmail($client);
-            $service->users_messages->send('me', $message);
-        } catch (Exception $e) {
-            // put account on hold
-            Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='{$from->email}'");
-
-            // return error
-            $output = new stdClass();
-            $output->code = "500";
-            $output->message = "[GmailClient] Error sending from {$from->email}: " . $e->getMessage();
+        if(empty($account)){
+            $output->code = "520";
+            $output->message = "[GmailClient] No active account";
             return $output;
         }
 
-        // mark the email as sent
-        Connection::query("UPDATE delivery_gmail SET sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='{$from->email}'");
+        $from = $account[0]->email;
+        $ip = $account[0]->server_ip;
 
-        // respond with possitive message
-        $output = new stdClass();
-        $output->code = "200";
-        $output->message = $from->email;
+        $headers = array (
+            'From' => $from,
+            'To' => $to,
+            'Subject' => $subject);
+
+        $crlf = "\n";
+        $mime = new Mail_mime($crlf);
+        $mime->setTXTBody($body);
+        if($attachment) $mime->addAttachment($attachment,'application/zip');
+
+        $body = $mime->get();
+        $headers = $mime->headers($headers);
+
+        $post = [
+            'to' => $to,
+            'headers' => json_encode($headers),
+            'body' => $body,
+            'token' => \Phalcon\DI\FactoryDefault::getDefault()->get('config')['gmail-failover']['token']
+        ];
+
+        $ch = curl_init("http://{$ip}");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+
+        $output = curl_exec($ch);
+
+        if (curl_error($ch)) {
+            $error_msg = curl_error($ch);
+            $output->code = "500";
+            $output->message = "[GmailClient] curl error: $error_msg";
+        }
+        else $output = json_decode($output);
+
+        curl_close($ch);
+
+        if($output->code=="200")
+            Connection::query("UPDATE delivery_gmail SET daily=daily+1, sent=sent+1, last_sent=CURRENT_TIMESTAMP WHERE email='$from'");
+        else{
+            $output->message = Connection::escape($output->message,500);
+            Connection::query("UPDATE delivery_gmail SET last_error='{$output->message}', active=0 WHERE email='$from'");
+        }
+
         return $output;
     }
 

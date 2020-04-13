@@ -17,6 +17,9 @@
 		"cmfcmf/openweathermap-php-api": "^2.3",
 		"google/apiclient": "^2.0",
 		"phpmailer/phpmailer": "^6.0",
-		"stripe/stripe-php": "6.19.1"
+		"stripe/stripe-php": "6.19.1",
+		"fabiang/xmpp": "^0.7.0",
+		"pear/Mail": "^1.4",
+		"pear/Mail_Mime": "^1.10"
 	}
 }

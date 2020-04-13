@@ -23,9 +23,9 @@ class Response
 	public function __construct()
 	{
 		$this->template = "message.tpl";
-		$this->content = array("text"=>"Empty response");
-		$this->images = array();
-		$this->attachments = array();
+		$this->content = ["text"=>"Empty response"];
+		$this->images = [];
+		$this->attachments = [];
 		$this->json = null;
 		$this->internal = true;
 		$this->render = false;
@@ -33,12 +33,10 @@ class Response
 		// get the service that is calling me, if the object was created from inside a service
 		$trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		$file = isset($trace[0]['file']) ? $trace[0]['file'] : "";
-		if(php::endsWith($file, "/service.php")) $this->service = php::substring($file, "services/", "/service.php");
+		if(php::endsWith($file, "service.php")) $this->service = basename(dirname($file));
 
-		// load the layout from the session, or pick default
-		$di = \Phalcon\DI\FactoryDefault::getDefault();
-		$layout = $di->getShared("session")->get("layout");
-		$this->layout = empty($layout) ? "email_default.tpl" : $layout;
+		// select the default layout
+		$this->layout = "email_default.tpl";
 	}
 
 	/**
@@ -85,26 +83,20 @@ class Response
 	 * @author salvipascual
 	 * @param String $layout, empty to set default layout
 	 */
-	public function setEmailLayout($layout=false)
+	public function setEmailLayout($layout)
 	{
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$wwwroot = $di->get('path')['root'];
 
 		// check if a public layout is passed
 		$file = "$wwwroot/app/layouts/$layout";
-		if(file_exists($file)) {$this->layout = $file; return true;}
+		if(file_exists($file)) $this->layout = $file;
 
 		// else, check if is a service layout
-		$utils = new Utils();
-		$file = $utils->getPathToService($this->service) . "/layouts/$layout";
-		if(file_exists($file)) {
-			$this->layout = $file;
-			$di->getShared("session")->set("layout", $file);
-			return true;
+		else {
+			$file = Utils::getPathToService($this->service) . "/layouts/$layout";
+			if(file_exists($file)) $this->layout = $file;
 		}
-
-		// else select the default layout
-		$this->layout = "$wwwroot/app/layouts/email_default.tpl";
 	}
 
 	/**
@@ -118,7 +110,7 @@ class Response
 	public function createFromText($text, $code="OK", $message="")
 	{
 		$this->template = "message.tpl";
-		$this->content = array("code"=>$code, "message"=>$message, "text"=>$text);
+		$this->content = ["code"=>$code, "message"=>$message, "text"=>$text];
 		$this->internal = true;
 		$this->render = true;
 		return $this;
@@ -147,7 +139,7 @@ class Response
 	 * @param String[] $images, paths to the images to embeb
 	 * @param String[] $attachments, paths to the files to attach
 	 */
-	public function createFromTemplate($template, $content, $images=array(), $attachments=array())
+	public function createFromTemplate($template, $content, $images=[], $attachments=[])
 	{
 		if(empty($content['code'])) $content['code'] = "ok"; // for the API
 

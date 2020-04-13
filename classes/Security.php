@@ -39,8 +39,8 @@ class Security
 		$user->startPage = empty($manager) ? "" : $manager[0]->start_page;
 
 		// save the last user's IP and access time
-		$ip = php::getClientIP();
-		Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
+		//$ip = php::getClientIP();
+		//Connection::query("UPDATE person SET last_ip='$ip', last_access=CURRENT_TIMESTAMP WHERE id={$person->id}");
 
 		// save the user in the session
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
@@ -84,8 +84,9 @@ class Security
 		if(empty($token)) return false;
 
 		// get the email and pin using the token
-		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token'");
+		$person = Connection::query("SELECT email, pin FROM person WHERE token='$token' AND blocked=0");
 		if(empty($person)) return false;
+		else if(!Utils::isAllowedDomain($person[0]->email)) return false;
 
 		// log in the user and return
 		return $this->login($person[0]->email, $person[0]->pin);
@@ -101,8 +102,6 @@ class Security
 		// get the group from the configs file
 		$di = \Phalcon\DI\FactoryDefault::getDefault();
 		$di->getShared("session")->remove("user");
-		$di->getShared("session")->remove("layout");
-
 		header("Location: /login"); exit;
 	}
 

@@ -1,3 +1,4 @@
+#!/bin/bash
 ./deploy.sh
 a2enmod rewrite
 a2enmod expires

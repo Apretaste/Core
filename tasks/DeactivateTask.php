@@ -1,5 +1,7 @@
 <?php
 
+// mark as innactive users who has been more than 45 days without using the app
+
 class DeactivateTask extends \Phalcon\Cli\Task
 {
 	public function mainAction()
@@ -8,11 +10,10 @@ class DeactivateTask extends \Phalcon\Cli\Task
 		$timeStart = time();
 
 		// deactivating old users
-		$connection = new Connection();
-		$connection->query("UPDATE person SET active=0 WHERE DATEDIFF(CURRENT_TIMESTAMP, last_access) > 45");
+		Connection::query("UPDATE person SET active=0 WHERE DATEDIFF(CURRENT_TIMESTAMP, last_access) > 45");
 
 		// save the status in the database
 		$timeDiff = time() - $timeStart;
-		$connection->query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='deactivate'");
+		Connection::query("UPDATE task_status SET executed=CURRENT_TIMESTAMP, delay='$timeDiff' WHERE task='deactivate'");
 	}
 }

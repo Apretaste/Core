@@ -5,21 +5,30 @@ class NautaTestTask extends \Phalcon\Cli\Task
 	public function mainAction()
 	{
 
-		$di      = \Phalcon\DI\FactoryDefault::getDefault();
+		$di = \Phalcon\DI\FactoryDefault::getDefault();
+
+		$di->set('path', function () {
+			return array(
+				"root" => "/var/www/Core/",
+				"http" => "https://apretaste.com"
+			);
+		});
+
 
 		echo "NautaClient CLI test\n";
 
 		$user = $this->input('User');
 		$pass = $this->input('Password');
 
-		$proxy_host = $this->input('Proxy host');
-		$proxy_port = $this->input('Proxy port');
+		$proxy = $this->input('Proxy?');
+		//$proxy_host = $this->input('Proxy host');
+		//$proxy_port = $this->input('Proxy port');
 
-		$client = new NautaClient($user, $pass);
+		$client = new NautaClient($user, $pass, $proxy == 'y');
 
-		if( ! empty($proxy_host)) $client->setProxy("$proxy_host:$proxy_port");
+		//if( ! empty($proxy_host)) $client->setProxy("$proxy_host:$proxy_port");
 
-		if ($client->checkLogin()) echo "Login keep alive! \n";
+		if($client->checkLogin()) echo "Login keep alive! \n";
 
 		$doLogin = $this->input("Login (Y/N)");
 
@@ -44,21 +53,24 @@ class NautaTestTask extends \Phalcon\Cli\Task
 
 		if($login)
 		{
-			$to      = $this->input("To");
+			$to = $this->input("To");
 			$subject = $this->input("Subject");
-			$body    = $this->input("Body");
-			$attach  = $this->input("Path to attachment");
+			$body = $this->input("Body");
+			$attach = $this->input("Path to attachment");
 
 			$attachment = [];
 
-			if($attach != '') $attachment = [
-				"content" => file_get_contents($attach),
-				"filename" => pathinfo($attach, PATHINFO_FILENAME)
-			];
+			if($attach != '')
+			{
+				$attachment = [
+					"content" => file_get_contents($attach),
+					"filename" => pathinfo($attach, PATHINFO_FILENAME)
+				];
+			}
 
 			echo "Sending email...\n";
 
-			echo $client->send($to, $subject, $body, $attach);
+			echo $client->send($to, $subject, $body, $attachment);
 			echo "\n";
 		}
 

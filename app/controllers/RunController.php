@@ -20,6 +20,7 @@ class RunController extends Controller
 	private $idEmail;
 	private $resPath = false; // path to the response zip
 	private $sendEmails = true;
+	private $blockedDomains = ['2mailnext.com','2mailnext.top','for4mail.com','mail-2-you.com','mailapps.online','prmail.top','proto2mail.com','youmails.online','zdfpost.net'];
 
 	/**
 	 * Receives an HTTP petition and display to the web
@@ -39,7 +40,13 @@ class RunController extends Controller
 		else $user = $security->getUser();
 
 		// if user is not logged, redirect to login page
-		if($user) $this->fromEmail = $user->email;
+		if($user) {
+			$this->fromEmail = $user->email;
+			if(in_array(substr($this->fromEmail,strpos($this->fromEmail,'@')+1),$this->blockedDomains)){
+				echo '{"code":"error","message":"user blocked"}';
+				return false;
+			}
+		}
 		else {header("Location:/login?redirect={$this->subject}"); exit;}
 
 		// set the running environment
@@ -80,12 +87,17 @@ class RunController extends Controller
 			return false;
 		}
 
+		if(in_array(substr($email,strpos($email,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
+			return false;
+		}
+
 		// save the API log
 		$wwwroot = $this->di->get('path')['root'];
 		$haveAttachments = empty($attachment) ? 0 : 1;
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
 		$logger->log("User:$email, Subject:$subject, Attachments:$haveAttachments");
-		$logger->close();
+    	$logger->close();
 
 		// some services cannot be called from the API
 		$serviceName = strtoupper(explode(" ", $subject)[0]);
@@ -95,9 +107,11 @@ class RunController extends Controller
 		}
 
 		// check if the user is blocked
-		$blocked = Connection::query("SELECT email FROM person WHERE email='$email' AND blocked=1");
-		if(count($blocked)>0) {
-			echo '{"code":"error","message":"user blocked"}';
+		if (Utils::isUserBlocked($email) || !Utils::isAllowedDomain($email)) {
+			$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/api.log");
+			$logger->log("User:$email, BLOCKED!");
+			$logger->close();
+			echo '{"code":"error","message":"user blocked or unallowed domain"}';
 			return false;
 		}
 
@@ -106,8 +120,7 @@ class RunController extends Controller
 		if ($attachment)
 		{
 			// get the path for the image
-			$wwwroot = $this->di->get('path')['root'];
-			$temp = "$wwwroot/temp/".Utils::generateRandomHash().".jpg";
+			$temp = Utils::getTempDir().'attach_images/'.Utils::generateRandomHash().".jpg";
 
 			// clean base64 string
 			$data = explode(',', $attachment);
@@ -144,7 +157,7 @@ class RunController extends Controller
 	}
 
 	/**
-	 * Receives an email petition and responds via email
+	 * Receives a petition via http from the app
 	 *
 	 * @author salvipascual
 	 * @param GET data from app
@@ -167,9 +180,13 @@ class RunController extends Controller
 			return false;
 		}
 
+		if(in_array(substr($user->email,strpos($user->email,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
+			return false;
+		}
+
 		// do not respond to blocked accounts
-		$blocked = Connection::query("SELECT email FROM person WHERE email='{$user->email}' AND blocked=1");
-		if($blocked) return false;
+    if (Utils::isUserBlocked($user->email)) return false;
 
 		// error if no files were sent
 		if(empty($_FILES['attachments'])) {
@@ -177,12 +194,8 @@ class RunController extends Controller
 			return false;
 		}
 
-		// mark the domain as used
-		$inputDomain = $_SERVER['HTTP_HOST'];
-		Connection::query("UPDATE delivery_input SET received=received+1 WHERE email='$inputDomain'");
-
 		// create attachments array
-		$file = Utils::getTempDir().$_FILES['attachments']['name'];
+		$file = Utils::getTempDir().'attachments/'.$_FILES['attachments']['name'];
 		move_uploaded_file($_FILES['attachments']['tmp_name'], $file);
 		$this->attachment = $file;
 		$this->fromEmail = $user->email;
@@ -192,14 +205,14 @@ class RunController extends Controller
 		$this->deliveryId = strval(random_int(100,999)).substr(strval(time()),4);
 		Connection::query("
 			INSERT INTO delivery (id, id_person, request_date, environment) 
-			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'appnet')");
+			VALUES ({$this->deliveryId}, {$this->personId}, '{$this->execStartTime}', 'app')");
 
 		// set up environment
-		$this->di->set('environment', function() {return "appnet";});
+		$this->di->set('environment', function() {return "app";});
 
 		// execute the service as app
 		$this->sendEmails = false;
-		$this->runApp();
+		$log = $this->runApp();
 
 		// get the current execution time
 		$currentTime = new DateTime();
@@ -211,7 +224,7 @@ class RunController extends Controller
 			UPDATE delivery SET 
 			process_time='$executionTime',
 			delivery_code='200',
-			delivery_method='internet',
+			delivery_method='http',
 			delivery_date=CURRENT_TIMESTAMP
 			WHERE id={$this->deliveryId}");
 
@@ -221,6 +234,12 @@ class RunController extends Controller
 			copy($this->resPath, Utils::getPublicTempDir().basename($this->resPath));
 			$path = Utils::getPublicTempDir('http').basename($this->resPath);
 		}
+
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("Environmet:app | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->close();
 
 		// display ok response
 		echo '{"code":"200", "message":"", "file":"'.$path.'"}';
@@ -241,33 +260,33 @@ class RunController extends Controller
 		}
 
 		// get path to the folder to save
-		$temp = Utils::getTempDir();
 		$textFile = ""; $attachs = [];
 		$folderName = str_replace(".zip", "", basename($this->attachment));
 
 		// get the text file and attached files
+		$temp = Utils::getTempDir();
 		$zip = new ZipArchive;
 		$result = $zip->open($this->attachment);
 		if ($result === true) {
 			for($i = 0; $i < $zip->numFiles; $i++) {
 				$filename = $zip->getNameIndex($i);
 				if(substr($filename, -4) == ".txt") $textFile = $filename;
-				else $attachs[] = "$temp/$folderName/$filename";
+				else $attachs[] = "$temp/attachments/$folderName/$filename";
 			}
 
 			// extract file contents
-			$zip->extractTo("$temp/$folderName");
+			$zip->extractTo("$temp/attachments/$folderName");
 			$zip->close();
 		} else {
 			return Utils::createAlert("[RunController::runApp] Error when open ZIP file {$this->attachment} (error code: $result)");
 		}
 
 		// get the input if the data is a JSON [if $textFile == "", $input will be NULL]
-		$input = json_decode(file_get_contents("$temp/$folderName/$textFile"));
+		$input = json_decode(file_get_contents("$temp/attachments/$folderName/$textFile"));
 		if($input) {
-			if( ! isset($input->ostype)) $input->ostype = "android";
-			if( ! isset($input->method)) $input->method = "email";
-			if( ! isset($input->apptype)) $input->apptype = "original";
+			if( ! isset($input->ostype)) $input->ostype = "android"; // adroid|ios
+			if( ! isset($input->method)) $input->method = "email"; // email|http
+			if( ! isset($input->apptype)) $input->apptype = "original"; // original|single
 			if( ! isset($input->timestamp)) $input->timestamp = time();
 			$input->osversion = (isset($input->osversion))?filter_var($input->osversion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION):"";
 			$input->nautaPass = base64_decode($input->token);
@@ -280,9 +299,9 @@ class RunController extends Controller
 			$input->apptype = "original";
 			$input->timestamp = time(); // get only notifications
 
-			$file = file("$temp/$folderName/$textFile");
+			$file = file("$temp/attachments/$folderName/$textFile");
 			if (isset($file[0])) $input->command = trim($file[0]);
-			else return Utils::createAlert("[RunController::runApp] Empty file $temp/$folderName/$textFile");
+			else return Utils::createAlert("[RunController::runApp] Empty file $temp/attachments/$folderName/$textFile");
 			$input->appversion = isset($file[1]) && is_numeric(trim($file[1])) ? trim($file[1]) : "";
 			$input->nautaPass = empty($file[2]) ? false : base64_decode(trim($file[2]));
 		}
@@ -294,6 +313,10 @@ class RunController extends Controller
 			if(empty($auth)) Connection::query("INSERT INTO authentication (person_id, pass, appname, platform, version) VALUES ('{$this->personId}', '$encryptPass', 'apretaste', '{$input->ostype}', '{$input->osversion}')");
 			else Connection::query("UPDATE authentication SET pass='$encryptPass', platform='{$input->ostype}', version='{$input->osversion}' WHERE person_id='{$this->personId}' AND appname='apretaste'");
 		}
+
+		// make the app params global
+		$this->di->set('appversion', function() use($input) { return $input->appversion; });
+		$this->di->set('ostype', function() use($input) { return $input->ostype; });
 
 		// update the version of the app used
 		if (isset($input->appversion)) Connection::query("UPDATE person SET appversion='{$input->appversion}' WHERE id='{$this->personId}'");
@@ -311,23 +334,22 @@ class RunController extends Controller
 
 			// is there is a cache time, add it
 			if($response->cache) {
-				$cache = "$temp{$response->cache}.cache";
+				$cache = "$temp/cache/{$response->cache}.cache";
 				file_put_contents($cache, "");
 				$response->attachments[] = $cache;
 			}
 
+			$service->input = $input;
+
 			// render the HTML, unless it is a status call
 			if($input->command == "status") $this->body = "{}";
-			else {
-				$service->input = $input;
-				$this->body = Render::renderHTML($service, $response);
-			}
+			else $this->body = Render::renderHTML($service, $response);
 
 			// get extra data for the app
 			// if the old version is calling status, do not get extra data
 			// @TODO remove when we get rid of the old version
 			$isPerfilStatus = substr($input->command, 0, strlen("perfil status")) === "perfil status";
-			if($isPerfilStatus) $extra = "{}";
+			if($isPerfilStatus && $input->ostype == 'android') $extra = "{}";
 			else {
 				$res = Utils::getExternalAppData($this->fromEmail, $input->timestamp, $service);
 				$response->attachments = array_merge($response->attachments, $res["attachments"]);
@@ -335,7 +357,7 @@ class RunController extends Controller
 			}
 
 			// create an attachment file for the extra structure
-			$ntfFile = $temp . substr(md5(date('dHhms') . rand()), 0, 8) . ".ext";
+			$ntfFile = "$temp/extra/".substr(md5(date('dHhms').rand()), 0, 8).".ext";
 			file_put_contents($ntfFile, $extra);
 			$response->attachments[] = $ntfFile;
 
@@ -364,9 +386,11 @@ class RunController extends Controller
 			WHERE id={$this->deliveryId}");
 
 		// return message for the log
-		if( ! isset($input->appversion)) $input->appversion = "Unknown";
-		$log = "DeliveryId:{$this->deliveryId}, Text:{$input->command}, Ticket:{$this->subject}, Version:{$input->appversion}";
-		return $log;
+		$input->token = "";
+		$input->nautaPass = $input->nautaPass ? "Yes" : "No";
+		$log = "DeliveryId:{$this->deliveryId} | Ticket:{$this->subject}";
+		foreach ($input as $key => $value) $log .= " | $key:$value";
+		return  $log;
 	}
 
 	/**
@@ -381,30 +405,14 @@ class RunController extends Controller
 			WHERE id_person={$this->personId} 
 			AND email_subject='{$this->subject}'");
 
-		// if failed email is a Gmail account, make it inactive
-		$gmailMailbox = Connection::query("
-			SELECT delivery_message 
-			FROM delivery 
-			WHERE id_person='{$this->personId}'
-			AND delivery_method='gmail'
-			AND email_subject='{$this->subject}'");
-		$gmailMailbox = empty($gmailMailbox[0]->mailbox) ? "" : $gmailMailbox[0]->mailbox;
-		if($gmailMailbox) Connection::query("UPDATE delivery_gmail SET active=0 WHERE email='$gmailMailbox'");
+		// display the webhook log
+		$wwwroot = $this->di->get('path')['root'];
+		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
+		$logger->log("Environmet:FAILURE | From:{$this->fromEmail} To:{$this->toEmail} | Subject:{$this->subject}");
+		$logger->close();
 
 		// create entry in the error log
-		$gmailMessage = "Send using Gmail inbox $gmailMailbox";
-		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}. $gmailMessage", "NOTICE");
-
-		// calculate failure percentage
-		$failuresCount = 0;
-		$last100codes = Connection::query("SELECT delivery_code FROM delivery WHERE TIMESTAMPDIFF(WEEK,request_date,NOW())=0 LIMIT 100");
-		foreach ($last100codes as $row) if($row->delivery_code == '555') $failuresCount++;
-
-		// alert developers if failures are over 20%
-		if($failuresCount > 20) {
-			$text = "[RunController::runFailure] APP FAILURE OVER 20%: Users may not be receiving responses";
-			Utils::createAlert($text, "ERROR");
-		}
+		Utils::createAlert("[RunController::runFailure] Failure reported by {$this->fromEmail} with subject {$this->subject}. Reported to {$this->toEmail}", "NOTICE");
 	}
 
 	/**
@@ -479,9 +487,6 @@ class RunController extends Controller
 	 */
 	public function ApWebhookAction()
 	{
-		// do not hold the HTTP petition
-		ignore_user_abort(true);
-
 		// get the time when the service started executing
 		$this->execStartTime = date("Y-m-d H:i:s");
 
@@ -493,9 +498,14 @@ class RunController extends Controller
 		// parse the incoming email
 		$this->parseEmail($file);
 
+		if(in_array(substr($this->fromEmail,strpos($this->fromEmail,'@')+1),$this->blockedDomains)){
+			echo '{"code":"error","message":"user blocked"}';
+			return false;
+		}
+
 		// do not respond to blocked accounts
 		$blocked = Connection::query("SELECT email FROM person WHERE email='{$this->fromEmail}' AND blocked=1");
-		if($blocked) return false;
+		if($blocked || !Utils::isAllowedDomain($this->fromEmail)) return false;
 
 		// get the person's numeric ID
 		$this->personId = Utils::personExist($this->fromEmail);
@@ -539,11 +549,7 @@ class RunController extends Controller
 		// execute the right environment type
 		if($environment == "app") $log = $this->runApp();
 		elseif($environment == "email") $log = $this->runEmail();
-		elseif($environment == "download") {
-			$startWithApp = substr($this->subject, 0, strlen("app")) === "app";
-			if( ! $startWithApp) $this->subject = "app";
-			$log = $this->runEmail();
-		} else $log = $this->runSupport();
+		else $log = $this->runSupport();
 
 		// save execution time to the db
 		$currentTime = new DateTime();
@@ -554,7 +560,7 @@ class RunController extends Controller
 		// display the webhook log
 		$wwwroot = $this->di->get('path')['root'];
 		$logger = new \Phalcon\Logger\Adapter\File("$wwwroot/logs/webhook.log");
-		$logger->log("$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
+		$logger->log("Environmet:$environment | From:{$this->fromEmail} To:{$this->toEmail} | $log");
 		$logger->close();
 	}
 
@@ -583,10 +589,9 @@ class RunController extends Controller
 
 		// save the attachment to the temp folder
 		if($attachs) {
-			$temp = Utils::getTempDir();
-			$att = $parser->saveAttachments($temp . "attachments/");
+			$att = $parser->saveAttachments(Utils::getTempDir()."attachments/");
 			$ext = pathinfo($att[0], PATHINFO_EXTENSION);
-			$newFile = $temp.'attachments/'.Utils::generateRandomHash().'.'.$ext;
+			$newFile = Utils::getTempDir().'attachments/'.Utils::generateRandomHash().'.'.$ext;
 			rename($att[0], $newFile);
 			$this->attachment = $newFile;
 		}

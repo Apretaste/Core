@@ -108,10 +108,12 @@
 	var apretaste = {
 		url: "",
 		wait: false,
+		callback: false,
 
-		doaction: function (href, popup, desc, wait) {
+		doaction: function (href, popup, desc, wait, callback) {
 			apretaste.url = "/run/display?subject=" + href;
 			apretaste.wait = Boolean(wait);
+			apretaste.callback = callback;
 
 			if(Boolean(popup)) {
 				$('#modalRequestMoreDataBody').empty();
@@ -168,7 +170,9 @@
 
 		sendMoreData: function() {
 			var params = "";
-			var redirect = true;
+			var paramsArr = [];
+			var toSend = true;
+
 			$('#modalRequestMoreDataBody .input').each(function(){
 				$(this).css("border", "1px solid #A9A9A9");
 
@@ -182,64 +186,80 @@
 
 				if(invalid || (required && value == "")) {
 					$(this).css("border", "1px solid red");
-					redirect = false;
+					toSend = false;
 					return false;
 				}
 
 				if(type=='file') {
 					var id = $(this).attr('id');
-					value = apretaste.uploadFile(id);
+					apretaste.uploadFile(id);
+					modalClose('modalRequestMoreData');
+					toSend = false;
 				}
+
 				if(type=='checkbox') value="";
+
 				params += encodeURIComponent(value) + "|";
+				paramsArr.push(value);
 			});
 
-			params = params.replace(/\|$/, "");
-
-			if(redirect) {
-				apretaste.url += " " + params;
+			if(toSend) {
+				apretaste.url += " " + params.replace(/\|$/, "");
 				modalClose('modalRequestMoreData');
-				apretaste.send();
+				apretaste.send(paramsArr);
 			}
 		},
 
 		uploadFile: function(id) {
+			modalOpen('modalRequestSent');
+
+			apretaste.wait = false;
 			var file = $('#'+id).prop("files")[0];
 			var form = new FormData();
 			form.append("file", file);
 
-			var ret = "";
 			$.ajax({
 				url:'/api/upload',
 				dataType:'json',
 				cache:false,
 				contentType:false,
 				processData:false,
-				async:false,
 				data: form,
 				type: 'post',
 				success: function(data) {
-					if(data.code=='ok') ret = data.message;
+					if(data.code != 'ok') return false;
+					apretaste.url += " " + data.message;
+					apretaste.send([data.message]);
+				},
+				error: function(jqXHR, str) {
+					console.log(str);
 				}
 			});
-			return ret;
 		},
 
-		send: function() {
+		send: function(values=[]) {
+			modalOpen('modalRequestSent');
+
 			if(apretaste.wait) {
 				window.location = apretaste.url;
 			}else{
 				$.get(apretaste.url, function(data) {
-					modalOpen('modalRequestSent');
-					location.reload();
+					if(apretaste.callback) {
+						var arr = apretaste.callback.split(':');
+						var funct = arr[0];
+						arr.shift();
+						window[funct](values.concat(arr));
+					}
 				});
 			}
+
+			modalClose('modalRequestSent');
 		},
 
 		onSelect: function(href) {
 			apretaste.wait = false;
 			apretaste.url = "/run/display?subject=" + href;
-			apretaste.send();
+			apretaste.send([href]);
 		},
 
 		onControlPlusEnter: function(e) {
